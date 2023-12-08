@@ -11,10 +11,74 @@ from TTS.tts.models.xtts import Xtts
 ##########################
 #### Webserver Imports####
 ##########################
-from fastapi import FastAPI, Form, Request, HTTPException, BackgroundTasks, Response, Depends
+from fastapi import (
+    FastAPI,
+    Form,
+    Request,
+    HTTPException,
+    BackgroundTasks,
+    Response,
+    Depends,
+)
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
+
+
+###########################
+#### STARTUP VARIABLES ####
+###########################
+# STARTUP VARIABLE - Create "this_dir" variable as the current script directory
+this_dir = Path(__file__).parent.resolve()
+# STARTUP VARIABLE - Set "device" to cuda if exists, otherwise cpu
+device = "cuda" if torch.cuda.is_available() else "cpu"
+# STARTUP VARIABLE - Import languges file for Gradio to be able to display them in the interface
+with open(this_dir / "languages.json", encoding="utf8") as f:
+    languages = json.load(f)
+
+
+##############################################################
+#### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
+##############################################################
+
+
+# Load config file and get settings
+def load_config(file_path):
+    with open(file_path, "r") as configfile_path:
+        configfile_data = json.load(configfile_path)
+    return configfile_data
+
+
+# Define the path to the config.json file
+configfile_path = this_dir / "config.json"
+
+# Load config.json and assign it to a different variable (config_data)
+params = load_config(configfile_path)
+
+# Define the path to the JSON file
+config_file_path = this_dir / "modeldownload.json"
+
+#############################################
+#### LOAD PARAMS FROM MODELDOWNLOAD.JSON ####
+############################################
+# This is used only in the instance that someone has changed their model path
+# Define the path to the JSON file
+modeldownload_config_file_path = this_dir / "modeldownload.json"
+
+# Check if the JSON file exists
+if modeldownload_config_file_path.exists():
+    with open(modeldownload_config_file_path, "r") as modeldownload_config_file:
+        modeldownload_settings = json.load(modeldownload_config_file)
+
+    # Extract settings from the loaded JSON
+    modeldownload_base_path = Path(modeldownload_settings.get("base_path", ""))
+    modeldownload_model_path = Path(modeldownload_settings.get("model_path", ""))
+else:
+    # Default settings if the JSON file doesn't exist or is empty
+    print(
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m modeldownload.config is missing so please re-download it and save it in the coquii_tts main folder."
+    )
+
 
 ########################
 #### STARTUP CHECKS ####
@@ -24,151 +88,160 @@ try:
     from TTS.utils.synthesizer import Synthesizer
 except ModuleNotFoundError:
     logger.error(
-        "[CoquiTTS Startup] \033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the coqui_tts extension."
-        "[CoquiTTS Startup] \033[91mWarning\033[0m Linux / Mac:\npip install -r extensions/coqui_tts/requirements.txt\n"
-        "[CoquiTTS Startup] \033[91mWarning\033[0m Windows:\npip install -r extensions\\coqui_tts\\requirements.txt\n"
-        "[CoquiTTS Startup] \033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the \"cmd_\" script. On Windows, that's \"cmd_windows.bat\"."
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the alltalk_tts extension."
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m Linux / Mac:\npip install -r extensions/alltalk_tts/requirements.txt\n"
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m Windows:\npip install -r extensions\\alltalk_tts\\requirements.txt\n"
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the cmd_ script. On Windows, that's cmd_windows.bat."
     )
     raise
 
-#DEEPSPEED Import - Check for DeepSpeed and import it if it exists
+# DEEPSPEED Import - Check for DeepSpeed and import it if it exists
 try:
     import deepspeed
+
     deepspeed_installed = True
-    print("[CoquiTTS Startup] DeepSpeed \033[93mDetected\033[0m")
-    print("[CoquiTTS Startup] Activate DeepSpeed in Coqui settings")
+    print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
+    print(
+        f"[{params['branding']}Startup] Activate DeepSpeed in "
+        + params["branding"]
+        + " settings"
+    )
 except ImportError:
     deepspeed_installed = False
-    print("[CoquiTTS Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed") 
+    print(
+        f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed"
+    )
+
 
 @asynccontextmanager
 async def startup_shutdown(no_actual_value_it_demanded_something_be_here):
     await setup()
-    yield  
+    yield
     # Shutdown logic
 
-###########################
-#### STARTUP VARIABLES ####
-###########################
-#STARTUP VARIABLE - Set "device" to cuda if exists, otherwise cpu
-device = "cuda" if torch.cuda.is_available() else "cpu"
-#STARTUP VARIABLE - Create "this_dir" variable as the current script directory
-this_dir = Path(__file__).parent.resolve()
-#STARTUP VARIABLE - Import languges file for Gradio to be able to display them in the interface
-with open(this_dir / 'languages.json', encoding='utf8') as f:
-    languages = json.load(f)
+
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=startup_shutdown)
 
-######################################
-#### LOAD PARAMS FROM CONFIG.JSON ####
-######################################
-def load_config(file_path):
-    with open(file_path, 'r') as config_file:
-        config = json.load(config_file)
-    return config
-
-config_file_path = (this_dir / 'config.json')
-params = load_config(config_file_path)
-
-#############################################
-#### LOAD PARAMS FROM MODELDOWNLOAD.JSON ####
-############################################
-#This is used only in the instance that someone has changed their model path
-# Define the path to the JSON file
-modeldownload_config_file_path = this_dir / 'modeldownload.json'
-
-#Check if the JSON file exists
-if modeldownload_config_file_path.exists():
-    with open(modeldownload_config_file_path, 'r') as modeldownload_config_file:
-        modeldownload_settings = json.load(modeldownload_config_file)
-
-    #Extract settings from the loaded JSON
-    modeldownload_base_path = Path(modeldownload_settings.get("base_path", ""))
-    modeldownload_model_path = Path(modeldownload_settings.get("model_path", ""))
-else:
-    #Default settings if the JSON file doesn't exist or is empty
-    print("[CoquiTTS Startup] \033[91mWarning\033[0m modeldownload.config is missing so please re-download it and save it in the coquii_tts main folder.")
 
 #####################################
 #### MODEL LOADING AND UNLOADING ####
 #####################################
-#MODEL LOADERS Picker For API TTS, API Local, XTTSv2 Local
+# MODEL LOADERS Picker For API TTS, API Local, XTTSv2 Local
 async def setup():
     global device
-    #Set a timer to calculate load times
+    # Set a timer to calculate load times
     generate_start_time = time.time()  # Record the start time of loading the model
-    #Start loading the correct model as set by "tts_method_api_tts", "tts_method_api_local" or "tts_method_xtts_local" being True/False
+    # Start loading the correct model as set by "tts_method_api_tts", "tts_method_api_local" or "tts_method_xtts_local" being True/False
     if params["tts_method_api_tts"]:
-        print(f"[CoquiTTS Model] \033[94mAPI TTS Loading\033[0m {params['model_name']} \033[94minto\033[93m", device, "\033[0m")
+        print(
+            f"[{params['branding']}Model] \033[94mAPI TTS Loading\033[0m {params['model_name']} \033[94minto\033[93m",
+            device,
+            "\033[0m",
+        )
         model = await api_load_model()
     elif params["tts_method_api_local"]:
-        print(f"[CoquiTTS Model] \033[94mAPI Local Loading\033[0m {modeldownload_model_path} \033[94minto\033[93m", device, "\033[0m")
+        print(
+            f"[{params['branding']}Model] \033[94mAPI Local Loading\033[0m {modeldownload_model_path} \033[94minto\033[93m",
+            device,
+            "\033[0m",
+        )
         model = await api_manual_load_model()
     elif params["tts_method_xtts_local"]:
-        print(f"[CoquiTTS Model] \033[94mXTTSv2 Local Loading\033[0m {modeldownload_model_path} \033[94minto\033[93m", device, "\033[0m")
+        print(
+            f"[{params['branding']}Model] \033[94mXTTSv2 Local Loading\033[0m {modeldownload_model_path} \033[94minto\033[93m",
+            device,
+            "\033[0m",
+        )
         model = await xtts_manual_load_model()
-    #Create an end timer for calculating load times
+    # Create an end timer for calculating load times
     generate_end_time = time.time()
-    #Calculate start time minus end time
+    # Calculate start time minus end time
     generate_elapsed_time = generate_end_time - generate_start_time
-    #Print out the result of the load time
-    print(f"[CoquiTTS Model] \033[94mModel Loaded in \033[93m{generate_elapsed_time:.2f} seconds.\033[0m")
-    #Set "model_loaded" to true
+    # Print out the result of the load time
+    print(
+        f"[{params['branding']}Model] \033[94mModel Loaded in \033[93m{generate_elapsed_time:.2f} seconds.\033[0m"
+    )
+    # Set "model_loaded" to true
     params["model_loaded"] = True
-    #Set the output path for wav files
+    # Set the output path for wav files
     Path(f'{params["output_folder_wav"]}outputs/').mkdir(parents=True, exist_ok=True)
 
-#MODEL LOADER For "API TTS"
+
+# MODEL LOADER For "API TTS"
 async def api_load_model():
     global model
     model = TTS(params["model_name"]).to(device)
     return model
 
-#MODEL LOADER For "API Local"
+
+# MODEL LOADER For "API Local"
 async def api_manual_load_model():
     global model
-    #check to see if a custom path has been set in modeldownload.json and use that path to load the model if so
+    # check to see if a custom path has been set in modeldownload.json and use that path to load the model if so
     if str(modeldownload_base_path) == "models":
-        model = TTS(model_path=this_dir / 'models' / modeldownload_model_path,config_path=this_dir / 'models' / modeldownload_model_path / 'config.json').to(device)
+        model = TTS(
+            model_path=this_dir / "models" / modeldownload_model_path,
+            config_path=this_dir / "models" / modeldownload_model_path / "config.json",
+        ).to(device)
     else:
-        print("[CoquiTTS Model] \033[94mInfo\033[0m Loading your custom model set in \033[93mmodeldownload.json\033[0m:", modeldownload_base_path / modeldownload_model_path)
-        model = TTS(model_path=modeldownload_base_path / modeldownload_model_path,config_path=modeldownload_base_path / modeldownload_model_path / 'config.json').to(device)
+        print(
+            f"[{params['branding']}Model] \033[94mInfo\033[0m Loading your custom model set in \033[93mmodeldownload.json\033[0m:",
+            modeldownload_base_path / modeldownload_model_path,
+        )
+        model = TTS(
+            model_path=modeldownload_base_path / modeldownload_model_path,
+            config_path=modeldownload_base_path
+            / modeldownload_model_path
+            / "config.json",
+        ).to(device)
     return model
 
-#MODEL LOADER For "XTTSv2 Local"
+
+# MODEL LOADER For "XTTSv2 Local"
 async def xtts_manual_load_model():
     global model
     config = XttsConfig()
-    #check to see if a custom path has been set in modeldownload.json and use that path to load the model if so
+    # check to see if a custom path has been set in modeldownload.json and use that path to load the model if so
     if str(modeldownload_base_path) == "models":
-        config_path = this_dir / 'models' / modeldownload_model_path / 'config.json'
-        checkpoint_dir = this_dir / 'models' / modeldownload_model_path
+        config_path = this_dir / "models" / modeldownload_model_path / "config.json"
+        checkpoint_dir = this_dir / "models" / modeldownload_model_path
     else:
-        print("[CoquiTTS Model] \033[94mInfo\033[0m Loading your custom model set in \033[93mmodeldownload.json\033[0m:", modeldownload_base_path / modeldownload_model_path)
-        config_path = modeldownload_base_path / modeldownload_model_path / 'config.json'
+        print(
+            f"[{params['branding']}Model] \033[94mInfo\033[0m Loading your custom model set in \033[93mmodeldownload.json\033[0m:",
+            modeldownload_base_path / modeldownload_model_path,
+        )
+        config_path = modeldownload_base_path / modeldownload_model_path / "config.json"
         checkpoint_dir = modeldownload_base_path / modeldownload_model_path
     config.load_json(str(config_path))
     model = Xtts.init_from_config(config)
-    model.load_checkpoint(config, checkpoint_dir=str(checkpoint_dir), use_deepspeed=params['deepspeed_activate'])
+    model.load_checkpoint(
+        config,
+        checkpoint_dir=str(checkpoint_dir),
+        use_deepspeed=params["deepspeed_activate"],
+    )
     model.cuda()
     model.to(device)
     return model
 
-#MODEL UNLOADER
+
+# MODEL UNLOADER
 async def unload_model(model):
-    print("[CoquiTTS Model] \033[94mUnloading model \033[0m")
+    print(f"[{params['branding']}Model] \033[94mUnloading model \033[0m")
     del model
     torch.cuda.empty_cache()
     params["model_loaded"] = False
     return None
 
-#MODEL - Swap model based on Gradio selection API TTS, API Local, XTTSv2 Local
+
+# MODEL - Swap model based on Gradio selection API TTS, API Local, XTTSv2 Local
 async def handle_tts_method_change(tts_method):
     global model
-    #Update the params dictionary based on the selected radio button
-    print("[CoquiTTS Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m")
-    #Set other parameters to False
+    # Update the params dictionary based on the selected radio button
+    print(
+        f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
+    )
+    # Set other parameters to False
     if tts_method == "API TTS":
         params["tts_method_api_local"] = False
         params["tts_method_xtts_local"] = False
@@ -184,38 +257,40 @@ async def handle_tts_method_change(tts_method):
         params["tts_method_api_local"] = False
         params["tts_method_xtts_local"] = True
 
-    #Unload the current model
+    # Unload the current model
     model = await unload_model(model)
 
-    #Load the correct model based on the updated params
+    # Load the correct model based on the updated params
     await setup()
 
-#MODEL WEBSERVER- API Swap Between Models
+
+# MODEL WEBSERVER- API Swap Between Models
 @app.route("/api/reload", methods=["POST"])
 async def reload(request: Request):
     tts_method = request.query_params.get("tts_method")
     if tts_method not in ["API TTS", "API Local", "XTTSv2 Local"]:
-        return {"status": "error", "message": "Invalid TTS method specified"}     
+        return {"status": "error", "message": "Invalid TTS method specified"}
     await handle_tts_method_change(tts_method)
     return Response(
-        content=json.dumps({"status": "model-success"}),
-        media_type="application/json"
+        content=json.dumps({"status": "model-success"}), media_type="application/json"
     )
+
 
 ##################
 #### LOW VRAM ####
 ##################
-#LOW VRAM - MODEL MOVER VRAM(cuda)<>System RAM(cpu) for Low VRAM setting
+# LOW VRAM - MODEL MOVER VRAM(cuda)<>System RAM(cpu) for Low VRAM setting
 async def switch_device():
     global model, device
     if device == "cuda":
         device = "cpu"
-        model.to(device) 
+        model.to(device)
         torch.cuda.empty_cache()
-    else:    
+    else:
         device == "cpu"
         device = "cuda"
         model.to(device)
+
 
 @app.post("/api/lowvramsetting")
 async def set_low_vram(request: Request, new_low_vram_value: bool):
@@ -225,38 +300,64 @@ async def set_low_vram(request: Request, new_low_vram_value: bool):
             raise ValueError("Missing 'low_vram' parameter")
         if params["low_vram"] == new_low_vram_value:
             return Response(
-                content=json.dumps({"status": "success", "message": f"[CoquiTTS Model] LowVRAM is already {'enabled' if new_low_vram_value else 'disabled'}."}))
+                content=json.dumps(
+                    {
+                        "status": "success",
+                        "message": f"[{params['branding']}Model] LowVRAM is already {'enabled' if new_low_vram_value else 'disabled'}.",
+                    }
+                )
+            )
         params["low_vram"] = new_low_vram_value
         if params["low_vram"]:
             await unload_model(model)
             device = "cpu"
-            print("[CoquiTTS Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m")
-            print("[CoquiTTS Model] \033[94mLowVRAM Enabled.\033[0m Model will move between \033[93mVRAM(cuda) <> System RAM(cpu)\033[0m")
+            print(
+                f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
+            )
+            print(
+                f"[{params['branding']}Model] \033[94mLowVRAM Enabled.\033[0m Model will move between \033[93mVRAM(cuda) <> System RAM(cpu)\033[0m"
+            )
             await setup()
         else:
             await unload_model(model)
             device = "cuda"
-            print("[CoquiTTS Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m")
-            print("[CoquiTTS Model] \033[94mLowVRAM Disabled.\033[0m Model will stay in \033[93mVRAM(cuda)\033[0m")
+            print(
+                f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
+            )
+            print(
+                f"[{params['branding']}Model] \033[94mLowVRAM Disabled.\033[0m Model will stay in \033[93mVRAM(cuda)\033[0m"
+            )
             await setup()
         return Response(content=json.dumps({"status": "lowvram-success"}))
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
 
+
 ###################
 #### DeepSpeed ####
 ###################
-#DEEPSPEED - Reload the model when DeepSpeed checkbox is enabled/disabled
+# DEEPSPEED - Reload the model when DeepSpeed checkbox is enabled/disabled
 async def handle_deepspeed_change(value):
     global model
     if value:
         # DeepSpeed enabled
-        print("[CoquiTTS Model] \033[93mDeepSpeed Activating\033[0m")
-        print("[CoquiTTS Model] \033[94mChanging model \033[92m(DeepSpeed can take 30 seconds to activate)\033[0m")
-        print("[CoquiTTS Model] \033[91mInformation\033[0m If you have not set CUDA_HOME path, DeepSpeed may fail to load/activate")
-        print("[CoquiTTS Model] \033[91mInformation\033[0m DeepSpeed needs to find nvcc from the CUDA Toolkit. Please check your CUDA_HOME path is")
-        print("[CoquiTTS Model] \033[91mInformation\033[0m pointing to the correct location and use 'set CUDA_HOME=putyoutpathhere' (Windows) or")
-        print("[CoquiTTS Model] \033[91mInformation\033[0m 'export CUDA_HOME=putyoutpathhere' (Linux) within your Python Environment")
+        print(f"[{params['branding']}Model] \033[93mDeepSpeed Activating\033[0m")
+
+        print(
+            f"[{params['branding']}Model] \033[94mChanging model \033[92m(DeepSpeed can take 30 seconds to activate)\033[0m"
+        )
+        print(
+            f"[{params['branding']}Model] \033[91mInformation\033[0m If you have not set CUDA_HOME path, DeepSpeed may fail to load/activate"
+        )
+        print(
+            f"[{params['branding']}Model] \033[91mInformation\033[0m DeepSpeed needs to find nvcc from the CUDA Toolkit. Please check your CUDA_HOME path is"
+        )
+        print(
+            f"[{params['branding']}Model] \033[91mInformation\033[0m pointing to the correct location and use 'set CUDA_HOME=putyoutpathhere' (Windows) or"
+        )
+        print(
+            f"[{params['branding']}Model] \033[91mInformation\033[0m 'export CUDA_HOME=putyoutpathhere' (Linux) within your Python Environment"
+        )
         model = await unload_model(model)
         params["tts_method_api_tts"] = False
         params["tts_method_api_local"] = False
@@ -265,15 +366,18 @@ async def handle_deepspeed_change(value):
         await setup()
     else:
         # DeepSpeed disabled
-        print("[CoquiTTS Model] \033[93mDeepSpeed De-Activating\033[0m")
-        print("[CoquiTTS Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m")
-        params["deepspeed_activate"] = False 
+        print(f"[{params['branding']}Model] \033[93mDeepSpeed De-Activating\033[0m")
+        print(
+            f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
+        )
+        params["deepspeed_activate"] = False
         model = await unload_model(model)
         await setup()
 
-    return value # Return new checkbox value
+    return value  # Return new checkbox value
 
-#DEEPSPEED WEBSERVER- API Enable/Disable DeepSpeed
+
+# DEEPSPEED WEBSERVER- API Enable/Disable DeepSpeed
 @app.post("/api/deepspeed")
 async def deepspeed(request: Request, new_deepspeed_value: bool):
     try:
@@ -281,55 +385,67 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
             raise ValueError("Missing 'deepspeed' parameter")
         if params["deepspeed_activate"] == new_deepspeed_value:
             return Response(
-                content=json.dumps({"status": "success", "message": f"DeepSpeed is already {'enabled' if new_deepspeed_value else 'disabled'}."}))
+                content=json.dumps(
+                    {
+                        "status": "success",
+                        "message": f"DeepSpeed is already {'enabled' if new_deepspeed_value else 'disabled'}.",
+                    }
+                )
+            )
         params["deepspeed_activate"] = new_deepspeed_value
         await handle_deepspeed_change(params["deepspeed_activate"])
         return Response(content=json.dumps({"status": "deepspeed-success"}))
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
 
+
 ########################
 #### TTS GENERATION ####
 ########################
-#TTS VOICE GENERATION METHODS (called from voice_preview and output_modifer)
+# TTS VOICE GENERATION METHODS (called from voice_preview and output_modifer)
 async def generate_audio(text, voice, language, output_file):
     global model
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
-    #XTTSv2 LOCAL Method
-    if params["tts_method_xtts_local"]:     
-        print("[CoquiTTS TTSGen] {}".format(text))
-        gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(audio_path=[f"{this_dir}/voices/{voice}"])
+    # XTTSv2 LOCAL Method
+    if params["tts_method_xtts_local"]:
+        print("[" + params["branding"] + "TTSGen] {}".format(text))
+        gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(
+            audio_path=[f"{this_dir}/voices/{voice}"]
+        )
         out = model.inference(
-        text, 
-        language,
-        gpt_cond_latent=gpt_cond_latent,
-        speaker_embedding=speaker_embedding,
-        temperature=0.7,
-        enable_text_splitting=True
+            text,
+            language,
+            gpt_cond_latent=gpt_cond_latent,
+            speaker_embedding=speaker_embedding,
+            temperature=0.7,
+            enable_text_splitting=True,
         )
         torchaudio.save(output_file, torch.tensor(out["wav"]).unsqueeze(0), 24000)
-    #API TTS and API LOCAL Methods 
+    # API TTS and API LOCAL Methods
     elif params["tts_method_api_tts"] or params["tts_method_api_local"]:
-        #Set the correct output path (different from the if statement)
-        print("[CoquiTTS TTSGen] Using API TTS/Local Method")
+        # Set the correct output path (different from the if statement)
+        print("[" + params["branding"] + "TTSGen] Using API TTS/Local Method")
         model.tts_to_file(
             text=text,
             file_path=output_file,
             speaker_wav=[f"{this_dir}/voices/{voice}"],
             language=language,
         )
-    #Print Generation time and settings
+    # Print Generation time and settings
     generate_end_time = time.time()  # Record the end time to generate TTS
     generate_elapsed_time = generate_end_time - generate_start_time
-    print(f"[CoquiTTS TTSGen] \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{params['low_vram']} \033[94mDeepSpeed: \033[33m{params['deepspeed_activate']}\033[0m")
-    #Move model back to cpu system ram if needed.
+    print(
+        f"[{params['branding']}TTSGen] \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{params['low_vram']} \033[94mDeepSpeed: \033[33m{params['deepspeed_activate']}\033[0m"
+    )
+    # Move model back to cpu system ram if needed.
     if params["low_vram"] and device == "cuda":
         await switch_device()
     return
 
-#TTS VOICE GENERATION METHODS - generate TTS API
+
+# TTS VOICE GENERATION METHODS - generate TTS API
 @app.route("/api/generate", methods=["POST"])
 async def generate(request: Request):
     try:
@@ -338,35 +454,48 @@ async def generate(request: Request):
         text = data["text"]
         voice = data["voice"]
         language = data["language"]
-        output_file = data["output_file"] 
+        output_file = data["output_file"]
         # Generation logic
-        await generate_audio(text, voice, language, output_file)       
-        return JSONResponse(content={"status": "generate-success", "data": {"audio_path": output_file}})    
+        await generate_audio(text, voice, language, output_file)
+        return JSONResponse(
+            content={"status": "generate-success", "data": {"audio_path": output_file}}
+        )
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)})
+
 
 #############################
 #### JSON CONFIG UPDATER ####
 #############################
 
-#Create an instance of Jinja2Templates for rendering HTML templates
+# Create an instance of Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=this_dir / "templates")
 
-#Create a dependency to get the current JSON data
+
+# Create a dependency to get the current JSON data
 def get_json_data():
-    with open(this_dir / 'config.json', "r") as json_file:
+    with open(this_dir / "config.json", "r") as json_file:
         data = json.load(json_file)
     return data
 
-#Define an endpoint function
+
+# Define an endpoint function
 @app.get("/settings")
 async def get_settings(request: Request):
     # Render the template with the current JSON data
-    return templates.TemplateResponse("generate_form.html", {"request": request, "data": get_json_data(), "modeldownload_model_path": modeldownload_model_path})
+    return templates.TemplateResponse(
+        "generate_form.html",
+        {
+            "request": request,
+            "data": get_json_data(),
+            "modeldownload_model_path": modeldownload_model_path,
+        },
+    )
+
 
 @app.post("/update-settings")
 async def update_settings(
-    request: Request, 
+    request: Request,
     activate: bool = Form(...),
     autoplay: bool = Form(...),
     deepspeed_activate: bool = Form(...),
@@ -403,12 +532,13 @@ async def update_settings(
     data["tts_method_xtts_local"] = tts_method == "xtts_local"
     data["voice"] = voice
 
-    #Save the updated settings back to the JSON file
-    with open(this_dir / 'config.json', "w") as json_file:
+    # Save the updated settings back to the JSON file
+    with open(this_dir / "config.json", "w") as json_file:
         json.dump(data, json_file)
 
-    #Redirect to the settings page to display the updated settings
+    # Redirect to the settings page to display the updated settings
     return RedirectResponse(url="/settings", status_code=303)
+
 
 #############################################################
 #### DOCUMENTATION - README ETC - PRESENTED AS A WEBPAGE ####
@@ -421,7 +551,7 @@ simple_webpage = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoquiTTS for Text-generation-WebUI</title>
+    <title>AllTalk TTS for Text-generation-WebUI</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -517,7 +647,7 @@ simple_webpage = """
 </head>
 
 <body>
-    <h1 id="toc">CoquiTTS for Text-generation-WebUI</h1>
+    <h1 id="toc">AllTalk TTS for Text-generation-WebUI</h1>
     <p>If you are looking for your <b>Text-generation-WebUI</b> webpage, try visiting <a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a>.</p>
     <p><b>Text-generation-WebUI</b> documentation and wiki <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">https://github.com/oobabooga/text-generation-webui/wiki</a>.</p>
 
@@ -525,14 +655,14 @@ simple_webpage = """
     
     <h3>Table of Contents</h3>
     <ul>
-        <li><a href="#getting-started">Getting Started with CoquiTTS</a></li>
+        <li><a href="#getting-started">Getting Started with AllTalk TTS</a></li>
         <li><a href="#server-information">Server Information</a></li>
         <li><a href="#using-voice-samples">Using Voice Samples</a></li>
         <li><a href="#where-are-the-outputs-stored">Automatic output wav file deletion</a></li>
         <li><a href="#low-vram-option-overview">Low VRAM Overview</a></li>
         <li><a href="#deepspeed-simplified">DeepSpeed Simplified</a></li>
         <li><a href="#setup_deepspeed">Setup DeepSpeed</a></li>
-        <li><a href="#other-features">Other Features of Coqui_TTS Extension for Text-generation-webui</a></li>
+        <li><a href="#other-features">Other Features of AllTalk_TTS Extension for Text-generation-webui</a></li>
         <li><a href="#TTSmodels">TTS Models/Methods</a></li>
         <li><a href="#customTTSmodels">Custom TTS Models and Model path</a></li>
         <li><a href="#curl-commands">CURL Commands</a></li>
@@ -542,7 +672,7 @@ simple_webpage = """
     </ul>
 
     <h2 id="getting-started">Getting Started</h2>
-    <p>To generate TTS, you can use the provided interface or interact with the server using CURL commands. Below are some details and examples:</p>
+    <p>AllTalk is a web interface, based around the Coqui TTS speech generation system. To generate TTS, you can use the provided interface or interact with the server using CURL commands. Below are some details and examples:</p>
 
     <h3 id="server-information">Server Information</h3>
     <ul>
@@ -553,12 +683,12 @@ simple_webpage = """
 
     <h3 id="using-voice-samples"><strong>Using Voice Samples</strong></h3>
     <h4 id="where-are-the-sample-voices-stored">Where are the sample voices stored?</h4>
-    <p>Voice samples are stored in <b>/extensions/coqui_tts/voices/</b> and should be named using the following format <b>name.wav</b></p>
+    <p>Voice samples are stored in <b>/extensions/alltalk_tts/voices/</b> and should be named using the following format <b>name.wav</b></p>
     <h4 id="where-are-the-outputs-stored">Where are the outputs stored & Automatic output wav file deletion.</h4>
-    <p>Voice samples are stored in <b>/extensions/coqui_tts/outputs/</b></p>
+    <p>Voice samples are stored in <b>/extensions/alltalk_tts/outputs/</b></p>
     <p>You can configure automatic maintenence deletion of old wav files by setting <b>"Del WAV's older than"</b> in the settings above. When <b>"Disabled"</b> your output wav files will be left untouched. When set to a setting <b>"1 Day"</b> or greater, your output wav files older than that time period will be automatically deleted on startup.</p>
     <h4>Where are the models stored?</h4>
-    <p>This extension will download the 2.0.2 model to <b>/extensions/coqui_tts/models/</b></p>
+    <p>This extension will download the 2.0.2 model to <b>/extensions/alltalk_tts/models/</b></p>
     <p>This TTS engine will also download the latest available model and store it wherever it normally stores it for your OS (Windows/Linux/Mac).</p>
     <h4>How do I create a new voice sample?</h4>
     <p>To create a new voice sample you need to make a <b>wav</b> file that is <b>22050Hz</b>, <b>Mono</b>, <b>16 bit</b> and between <b>6 to 12 seconds long</b>, though 7 to 9 seconds is usually good.</p>
@@ -567,7 +697,7 @@ simple_webpage = """
     <h4>Generating the sample!</h4>
     <p>So youve downloaded your favoutie celebrity interview off Youtube or wherever. From here you need to chop it down to 6 to 12 seconds in length and resample it. If you need to clean it up, do audio processing, volume level changes etc, do it before the steps I am about to describe.</p>
     <p>Using the latest version of <b>Audacity</b>, select your clip and <b>Tracks > Resample to 22050Hz</b>, then <b>Tracks > Mix > Stereo to Mono</b>. and then <b>File > Export Audio</b>, saving it as a WAV of 22050Hz.</p>
-    <p>Save your generated wav file in <b>/extensions/coqui_tts/voices/</b></p>
+    <p>Save your generated wav file in <b>/extensions/alltalk_tts/voices/</b></p>
     <p><b>Note:</b> Using AI generated audio clips <b>may</b> introduce unwanted sounds as its already a copy/simulation of a voice.</p>
     <h4>Why doesnt it sound like XXX Person?</h4>
     <p>The reasons can be that you:</p>
@@ -611,7 +741,7 @@ simple_webpage = """
     <p><strong>Note:</strong> Requires Nvidia Cuda Toolkit installation and correct CUDA_HOME path configuration.</p>
 
     <h4>How to Use It:</h4>
-    <p>In CoquiTTS, the DeepSpeed checkbox will only be available if DeepSpeed is detected on your system. Check the checkbox, wait 10 to 30 seconds and off you go!</p>
+    <p>In AllTalkTTS, the DeepSpeed checkbox will only be available if DeepSpeed is detected on your system. Check the checkbox, wait 10 to 30 seconds and off you go!</p>
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="setup_deepspeed">Setup DeepSpeed</h3>
@@ -692,7 +822,7 @@ simple_webpage = """
 
     <p><a href="#toc">Back to top of page</a></p>
 
-    <h2 id="other-features"><strong>Other Features of Coqui_TTS Extension for Text-generation-webui</strong></h2>
+    <h2 id="other-features"><strong>Other Features of AllTalk_TTS Extension for Text-generation-webui</strong></h2>
 
     <h3>Start-up Checks</h3>
     <p>Ensures a minimum TTS version (0.21.3) is installed and provides an error/instructions if not.</p>
@@ -701,21 +831,21 @@ simple_webpage = """
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="TTSmodels">TTS Models/Methods</h3>
-    <p>It's worth noting that all models and methods can and do sound different from one another. Many people complained about the quality of audio produced by the 2.0.<b>3</b> model, so this extension will download the 2.0.<b>2</b> model to your models folder and give you the choice to use 2.0.<b>2</b> <b>(API Local and XTTSv2 Local)</b> or use the most current model 2.0.<b>3</b> <b>(API TTS)</b>. As/When a new model is released by Coqui it will be downloaded by the TTS service on startup and stored wherever the TTS service keeps new models on your operating system of choice.</p>
+    <p>It's worth noting that all models and methods can and do sound different from one another. Many people complained about the quality of audio produced by the 2.0.<b>3</b> model, so this extension will download the 2.0.<b>2</b> model to your models folder and give you the choice to use 2.0.<b>2</b> <b>(API Local and XTTSv2 Local)</b> or use the most current model 2.0.<b>3</b> <b>(API TTS)</b>. As/When a new model is released by AllTalk it will be downloaded by the TTS service on startup and stored wherever the TTS service keeps new models on your operating system of choice.</p>
     <ul>
         <li><strong>API TTS:</strong> Uses the current TTS model available that's downloaded by the TTS API process (e.g. version 2.0.3 at the time of writing). This model is not stored in your "models" folder, but elsewhere on your system and managed by the TTS software.</li>
-        <li><strong>API Local:</strong> Utilizes the <b>2.0.2</b> local model stored at <b>/coqui_tts/models/xttsv2_2.0.2</b>.</li>
-        <li><strong>XTTSv2 Local:</strong> Employs the <b>2.0.2</b> local model <b>/coqui_tts/models/xttsv2_2.0.2</b> and utilizes a distinct TTS generation method. <b>Supports DeepSpeed acceleration</b>.</li>
+        <li><strong>API Local:</strong> Utilizes the <b>2.0.2</b> local model stored at <b>/alltalk_tts/models/xttsv2_2.0.2</b>.</li>
+        <li><strong>XTTSv2 Local:</strong> Employs the <b>2.0.2</b> local model <b>/alltalk_tts/models/xttsv2_2.0.2</b> and utilizes a distinct TTS generation method. <b>Supports DeepSpeed acceleration</b>.</li>
     </ul>
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="customTTSmodels">Custom TTS Models and Model path</h3>
 
-    <p>Its possible to set a custom model for the <strong>API Local</strong> and<strong> XTTSv2</strong> Local methods, or ideed point it at the same model that <strong>API TTS</strong> uses (wherever it is stored on your OS of choice). Many people did not like the sound quality of the Coqui <strong>2.0.<span style="color:#e74c3c">3</span></strong> model, and as such the Coqui_tts extension downloads the <strong>2.0.<span style="color:#2980b9">2</span></strong> model seperately to the <strong>2.0.<span style="color:#e74c3c">3</span></strong> model that TTS service downloads and manages. Typically the <strong>2.0.<span style="color:#2980b9">2</span></strong> model is stored in your <strong>/extensions/coqui_tts/models</strong> folder and it is always downloaded on first start-up of the&nbsp;Coqui_tts extension. However, you may either want to use a custom model version of your choosing, or point it to a different path on your system, or even point it so that&nbsp;API Local and XTTSv2 <strong>both</strong> use the same model that API TTS is using.</p>
+    <p>Its possible to set a custom model for the <strong>API Local</strong> and<strong> XTTSv2</strong> Local methods, or ideed point it at the same model that <strong>API TTS</strong> uses (wherever it is stored on your OS of choice). Many people did not like the sound quality of the Coqui <strong>2.0.<span style="color:#e74c3c">3</span></strong> model, and as such the AllTalk tts extension downloads the <strong>2.0.<span style="color:#2980b9">2</span></strong> model seperately to the <strong>2.0.<span style="color:#e74c3c">3</span></strong> model that TTS service downloads and manages. Typically the <strong>2.0.<span style="color:#2980b9">2</span></strong> model is stored in your <strong>/extensions/alltalk_tts/models</strong> folder and it is always downloaded on first start-up of the&nbsp;AllTalk_tts extension. However, you may either want to use a custom model version of your choosing, or point it to a different path on your system, or even point it so that&nbsp;API Local and XTTSv2 <strong>both</strong> use the same model that API TTS is using.</p>
     <p>If you do choose to change the location there are a couple of things to note.&nbsp;</p>
     <p>- The folder you place the model in, <strong><span style="color:#e74c3c">cannot</span></strong> be called &quot;<strong>models</strong>&quot;. This name is reserved solely for the system to identify you are or are not using a custom model.</p>
-    <p>- On each startup, the&nbsp;Coqui_tts extension will check the custom location and if it does not exist, it will create it and download the files it needs. It will also re download any missing files in that location that are needed for the model to function.</p>
-    <p>- There will be extra output at the console to inform you that you are using a custom model and each time you load up the Coqui_tts extension or switch between models.</p>
+    <p>- On each startup, the&nbsp;AllTalk tts extension will check the custom location and if it does not exist, it will create it and download the files it needs. It will also re download any missing files in that location that are needed for the model to function.</p>
+    <p>- There will be extra output at the console to inform you that you are using a custom model and each time you load up the AllTalk_tts extension or switch between models.</p>
     <p>To change the model path, there are at minimum 2x settings you need to alter in the <strong>modeldownload.json</strong> file, <strong>base_path</strong> and <strong>model_path</strong>. These two settings are further detailed in the section below called <strong>Explanation of the modeldownload.json file</strong></p>
     <p>You would edit the settings in the <strong>modeldownload.json</strong> file as follows (make a backup of your current file in case):&nbsp;</p>
     <p><strong>Windows example:</strong>&nbsp;<span style="color:#2980b9">c:\mystuff\mydownloads\myTTSmodel\</span><em>{files in here}</em></p>
@@ -733,8 +863,8 @@ simple_webpage = """
 	    <li>&nbsp; &nbsp; &nbsp; &nbsp;<strong>model_path</strong> would be:<span style="color:#2980b9">&nbsp;&quot;TTSmodel&quot;</span></li>
     </ul>
 
-    <p>Once you restart the&nbsp;Coqui_tts extension, it will check this path for the files and output any details at the console.</p>
-    <p>When you are happy it's' working correctly, you are welcome to go delete the models folder stored at&nbsp;<strong>/extensions/coqui_tts/models.</strong></p>
+    <p>Once you restart the&nbsp;AllTalk_tts extension, it will check this path for the files and output any details at the console.</p>
+    <p>When you are happy it's' working correctly, you are welcome to go delete the models folder stored at&nbsp;<strong>/extensions/alltalk_tts/models.</strong></p>
     <p>If you wish to change the files that the modeldownloader is pulling at startup, you can futher edit the <strong>modeldownload.json</strong> and change the http addresses within this files&nbsp;<strong>files_to_download</strong> section &nbsp;e.g.</p>
     <p>&nbsp; &nbsp; &quot;files_to_download&quot;: {<br />
     &nbsp; &nbsp; &nbsp; &nbsp; &quot;LICENSE.txt&quot;: &quot;https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true&quot;,<br />
@@ -758,7 +888,7 @@ simple_webpage = """
     <code><span class="key">"model_loaded:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
     <code><span class="key">"model_name:"</span> <span class="value">"tts_models/multilingual/multi-dataset/xtts_v2"</span>,</code><span class="key"> Specifies the model that the "API TTS" method will use for TTS generation.</span><br>
     <code><span class="key">"port_number:"</span> <span class="value">"7851"</span>,</code><span class="key"> Specifies the default port number for the web server.</span><br>
-    <code><span class="key">"output_folder_wav:"</span> <span class="value">"extensions/coqui_tts/outputs/"</span>,</code><span class="key"> Sets the output folder to send files to on generating TTS.</span><br>
+    <code><span class="key">"output_folder_wav:"</span> <span class="value">"extensions/alltalk_tts/outputs/"</span>,</code><span class="key"> Sets the output folder to send files to on generating TTS.</span><br>
     <code><span class="key">"remove_trailing_dots:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether trailing dots are removed from text segments before generation.</span><br>
     <code><span class="key">"show_text:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether message text is shown under the audio player.</span><br>
     <code><span class="key">"tts_method_api_local:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the "API Local" model/method is turned on or off.</span><br>
@@ -811,7 +941,7 @@ simple_webpage = """
 
     <h3 id="debugging-and-tts-generation-information"><strong>Debugging and TTS Generation Information:</strong></h3>
     <p>Command line outputs are more verbose to assist in understanding backend processes and debugging.</p>
-    <p>Its possible during startup you can get a warning message such as <b>[CoquiTTS Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum</b> This is normal behavior if the subprocess is taking a while to start, however, if there is an issue starting the subprocess, you may see multiples of this message and an it will time out after 60 seconds, resulting in the TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
+    <p>Its possible during startup you can get a warning message such as <b>[AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum</b> This is normal behavior if the subprocess is taking a while to start, however, if there is an issue starting the subprocess, you may see multiples of this message and an it will time out after 60 seconds, resulting in the TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
     <p>Typically the command line console will output any warning or error messages. If you need to reset your default configuation, the settings are all listed above in the configuration details.</p>
     <p><a href="#toc">Back to top of page</a></p>
 
@@ -841,21 +971,25 @@ simple_webpage = """
 </html>
 """
 
+
 ###################################################
 #### Webserver Startup & Initial model Loading ####
 ###################################################
-@app.get("/ready") 
+@app.get("/ready")
 async def ready():
     return Response("Ready endpoint")
+
 
 @app.get("/")
 async def read_root():
     return HTMLResponse(content=simple_webpage, status_code=200)
 
-#Start Uvicorn Webserver
+
+# Start Uvicorn Webserver
 host_parameter = {params["ip_address"]}
 port_parameter = str(params["port_number"])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host=host_parameter, port=port_parameter, log_level="warning")
