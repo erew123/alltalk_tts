@@ -21,3 +21,5 @@ Once there git clone this repository e.g.
 ```git clone https://github.com/erew123/alltalk_tts```
 
 You can now start up Text generation web UI and activate AllTalk in your extensions. To start it every time when Text generation webUI loads, edit the `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`
+![image](https://github.com/oobabooga/text-generation-webui/assets/35898566/aca0a031-5426-4239-abac-cc3149c4d8c4)
+![image](https://github.com/oobabooga/text-generation-webui/assets/35898566/dbb731c9-761f-4a54-9c30-96839d2bb973)
