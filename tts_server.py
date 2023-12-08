@@ -101,16 +101,10 @@ try:
 
     deepspeed_installed = True
     print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
-    print(
-        f"[{params['branding']}Startup] Activate DeepSpeed in "
-        + params["branding"]
-        + " settings"
-    )
+    print(f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']} settings")
 except ImportError:
     deepspeed_installed = False
-    print(
-        f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed"
-    )
+    print(f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed")
 
 
 @asynccontextmanager
@@ -411,7 +405,7 @@ async def generate_audio(text, voice, language, output_file):
     generate_start_time = time.time()  # Record the start time of generating TTS
     # XTTSv2 LOCAL Method
     if params["tts_method_xtts_local"]:
-        print("[" + params["branding"] + "TTSGen] {}".format(text))
+        print(f"[{params['branding']}TTSGen] {text}")
         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(
             audio_path=[f"{this_dir}/voices/{voice}"]
         )
@@ -427,7 +421,7 @@ async def generate_audio(text, voice, language, output_file):
     # API TTS and API LOCAL Methods
     elif params["tts_method_api_tts"] or params["tts_method_api_local"]:
         # Set the correct output path (different from the if statement)
-        print("[" + params["branding"] + "TTSGen] Using API TTS/Local Method")
+        print(f"[{params['branding']}TTSGen] Using API TTS/Local Method")
         model.tts_to_file(
             text=text,
             file_path=output_file,

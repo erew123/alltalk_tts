@@ -43,12 +43,10 @@ try:
     from TTS.utils.synthesizer import Synthesizer
 except ModuleNotFoundError:
     logger.error(
-        "[params['branding']]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the "
-        + params["branding"]
-        + " extension."
-        "[params['branding']]\033[91mWarning\033[0m Linux / Mac:\npip install -r extensions/alltalk_tts/requirements.txt\n"
-        "[params['branding']]\033[91mWarning\033[0m Windows:\npip install -r extensions\\alltalk_tts\\requirements.txt\n"
-        "[params['branding']]\033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the cmd_ script. On Windows, that's cmd_windows.bat."
+        f"[{params['branding']}]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the {params['branding']} extension."
+        f"[{params['branding']}]\033[91mWarning\033[0m Linux / Mac:\npip install -r extensions/alltalk_tts/requirements.txt\n"
+        f"[{params['branding']}]\033[91mWarning\033[0m Windows:\npip install -r extensions\\alltalk_tts\\requirements.txt\n"
+        f"[{params['branding']}]\033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the cmd_ script. On Windows, that's cmd_windows.bat."
     )
     raise
 
@@ -78,8 +76,8 @@ def get_available_voices():
 #### LICENSE DISPLAY ####
 #########################
 # STARTUP Display Licence Information
-print("[" + params["branding"] + "Startup] \033[94mCoqui Public Model License\033[0m")
-print("[" + params["branding"] + "Startup] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
+print(f"[{params['branding']}Startup] \033[94mCoqui Public Model License\033[0m")
+print(f"[{params['branding']}Startup] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
 
 
 ############################################
@@ -87,12 +85,7 @@ print("[" + params["branding"] + "Startup] \033[94mhttps://coqui.ai/cpml.txt\033
 ############################################
 def delete_old_files(folder_path, days_to_keep):
     current_time = datetime.now()
-    print(
-        "["
-        + params["branding"]
-        + "Startup] Deletion of old output folder WAV files is currently enabled and set at",
-        delete_output_wavs_setting,
-    )
+    print(f"[{params['branding']}Startup] Deletion of old output folder WAV files is currently enabled and set at", delete_output_wavs_setting)
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
@@ -254,7 +247,7 @@ while time.time() - start_time < timeout:
     except requests.RequestException as e:
         # Print the exception for debugging purposes
         print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum"
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum. Please wait."
         )
     time.sleep(1)
 else:
