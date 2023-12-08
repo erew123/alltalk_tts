@@ -349,7 +349,7 @@ deepspeed_condition = params["tts_method_xtts_local"] == "True" and deepspeed_in
 ########################
 # PREVIEW VOICE - Generate Random Sentence if Voice Preview box is empty
 def random_sentence():
-    with open(Path("extensions/alltalk_tts/harvard_sentences.txt")) as f:
+    with open(this_dir / "harvard_sentences.txt") as f:
         return random.choice(list(f))
 
 

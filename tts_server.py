@@ -76,7 +76,7 @@ if modeldownload_config_file_path.exists():
 else:
     # Default settings if the JSON file doesn't exist or is empty
     print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m modeldownload.config is missing so please re-download it and save it in the coquii_tts main folder."
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m modeldownload.config is missing so please re-download it and save it in the alltalk_tts main folder."
     )
 
 
@@ -165,7 +165,8 @@ async def setup():
     # Set "model_loaded" to true
     params["model_loaded"] = True
     # Set the output path for wav files
-    Path(f'{params["output_folder_wav"]}outputs/').mkdir(parents=True, exist_ok=True)
+    Path(f'{params["output_folder_wav"]}').mkdir(parents=True, exist_ok=True)
+
 
 
 # MODEL LOADER For "API TTS"
@@ -551,7 +552,7 @@ simple_webpage = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AllTalk TTS for Text-generation-WebUI</title>
+    <title>AllTalk TTS for Text generation webUI</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -647,9 +648,9 @@ simple_webpage = """
 </head>
 
 <body>
-    <h1 id="toc">AllTalk TTS for Text-generation-WebUI</h1>
-    <p>If you are looking for your <b>Text-generation-WebUI</b> webpage, try visiting <a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a>.</p>
-    <p><b>Text-generation-WebUI</b> documentation and wiki <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">https://github.com/oobabooga/text-generation-webui/wiki</a>.</p>
+    <h1 id="toc">AllTalk TTS for Text generation webUI</h1>
+    <p>If you are looking for your <b>Text generation webUI</b> webpage, try visiting <a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a>.</p>
+    <p><b>Text generation webUI</b> documentation and wiki <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">https://github.com/oobabooga/text-generation-webui/wiki</a>.</p>
 
     <iframe src="http://127.0.0.1:7851/settings" width="100%" height="440" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     
@@ -662,7 +663,7 @@ simple_webpage = """
         <li><a href="#low-vram-option-overview">Low VRAM Overview</a></li>
         <li><a href="#deepspeed-simplified">DeepSpeed Simplified</a></li>
         <li><a href="#setup_deepspeed">Setup DeepSpeed</a></li>
-        <li><a href="#other-features">Other Features of AllTalk_TTS Extension for Text-generation-webui</a></li>
+        <li><a href="#other-features">Other Features of AllTalk_TTS Extension for Text generation webUI</a></li>
         <li><a href="#TTSmodels">TTS Models/Methods</a></li>
         <li><a href="#customTTSmodels">Custom TTS Models and Model path</a></li>
         <li><a href="#curl-commands">CURL Commands</a></li>
@@ -745,25 +746,25 @@ simple_webpage = """
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="setup_deepspeed">Setup DeepSpeed</h3>
-      <p><strong>Note:</strong> DeepSpeed WILL throw up a load of errors if you have not installed it fully, correctly, or installed the Nvidia Cuda Toolkit and correctly set the CUDA_HOME environment variable or if load text-generation-webui via its start-up scripts.</p>
+      <p><strong>Note:</strong> DeepSpeed WILL throw up a load of errors if you have not installed it fully, correctly, or installed the Nvidia Cuda Toolkit and correctly set the CUDA_HOME environment variable or if load Text generation webUI via its start-up scripts.</p>
 
     <h4>Linux - DeepSpeed - Installation Instructions</h4>
     <ol>
         <li>Download and install the <a href="https://developer.nvidia.com/cuda-toolkit-archive">Nvidia Cuda Toolkit for Linux</a>.</li>
         <li>Load up a terminal console.</li>
         <li>Install libaio-dev (however your Linux version installs things) e.g. <code>sudo apt install libaio-dev</code></li>
-        <li>Move into your text-generation-webui folder e.g. <code>cd text-generation-webui</code></li>
-        <li>Start the text-generation-webui Python environment e.g. <code>./start_linux.sh</code></li>
-        <li>Text-generation-webui overwrites the CUDA_HOME variable on each startup, so you will need to either force this to be changed within the environment OR change it each time you <code>./start_linux.sh</code></li>
+        <li>Move into your Text generation webUI folder e.g. <code>cd text-generation-webui</code></li>
+        <li>Start the Text generation webUI Python environment e.g. <code>./start_linux.sh</code></li>
+        <li>Text generation webUI overwrites the CUDA_HOME variable on each startup, so you will need to either force this to be changed within the environment OR change it each time you <code>./start_linux.sh</code></li>
         <li>You can set the CUDA_HOME environment with <code>export CUDA_HOME=/usr/local/cuda</code> or <code>export CUDA_HOME=/etc/alternatives/cuda</code>. On some systems only one of those two commands may be the correct command, so you may need to try one, see if it works, if not try the other. IF you do not set it, expect a big messy output to the log when you try to activate DeepSpeed.</li>
         <li>Now install deepspeed with <code>pip install deepspeed</code></li>
         <p><strong>Note:</strong> You can run <code>ds_report</code> when you have installed DeepSpeed on your system to see if it is working correctly</p>
-        <li>You can now start text-generation-webui <code>python server.py</code> ensuring to activate your extensions.</li>
+        <li>You can now start Text generation webUI <code>python server.py</code> ensuring to activate your extensions.</li>
     </ol>
     <p><a href="#toc">Back to top of page</a></p>
 
     <h4>Windows - DeepSpeed Version 8.3 & CUDA 11.8 or CUDA 12.1 - Installation Instructions</h4>
-    <p>Currently DeepSpeed 8.3 is the latest build that works on Windows and it has to run inside a Python 3.9.18 environment. As such, either you need to have your own, already set up Python 3.9.18 environment and have installed the correct text-generation-webui requirements file into it. Or you can create a new Python environment. DeepSpeed version 9.x, 10.x, 11.x, and 12.x will all fail to compile <strong>(on Windows)</strong> for a multitude of reasons. As such, DeepSpeed v8.3 is the most recent build for Windows.</p>
+    <p>Currently DeepSpeed 8.3 is the latest build that works on Windows and it has to run inside a Python 3.9.18 environment. As such, either you need to have your own, already set up Python 3.9.18 environment and have installed the correct Text generation webUI requirements file into it. Or you can create a new Python environment. DeepSpeed version 9.x, 10.x, 11.x, and 12.x will all fail to compile <strong>(on Windows)</strong> for a multitude of reasons. As such, DeepSpeed v8.3 is the most recent build for Windows.</p>
 
     <h4>DeepSpeed on Windows - <span class="option-a">Option A</span></h4>
     <p><span class="option-a">Option A</span> is to fully go through the process of compiling DeepSpeed yourself. This takes a longer time to perform, but you can be sure it's set up for your system correctly.</p>
@@ -813,8 +814,8 @@ simple_webpage = """
     <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Now <strong>cd dist</strong> to go into your <strong>dist</strong> folder or wherever you have put your downloaded wheel file and you can now <strong>pip install deepspeed-_YOURFILENAME_.whl</strong> (or whatever your WHL file is called).
         <br><strong><br>Note:</strong> You can run <code>ds_report</code> when you have installed DeepSpeed on your system to see if it is working correctly
     </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Move into your text-generation-webui folder e.g. <code>cd text-generation-webui</code></li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Don't forget to have <code>pip install -r requirements.txt</code> or whichever requirements file you want to use for your system, within the text-generation-webui folder.</li>
+    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Move into your Text generation webUI folder e.g. <code>cd Text generation webUI</code></li>
+    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Don't forget to have <code>pip install -r requirements.txt</code> or whichever requirements file you want to use for your system, within the Text generation webUI folder.</li>
     <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Start the text-generation=web-ui with Python e.g. <code>python server.py</code> ensuring to activate your extensions.
         <br><strong><br>Note:</strong> you can't use <strong>start_windows.bat</strong> or <strong>cmd_windows.bat</strong> because it will use a different environment, incorrect version of Python and it will overwrite the CUDA_HOME path.
     </li>
@@ -822,7 +823,7 @@ simple_webpage = """
 
     <p><a href="#toc">Back to top of page</a></p>
 
-    <h2 id="other-features"><strong>Other Features of AllTalk_TTS Extension for Text-generation-webui</strong></h2>
+    <h2 id="other-features"><strong>Other Features of AllTalk TTS Extension for Text generation webUI</strong></h2>
 
     <h3>Start-up Checks</h3>
     <p>Ensures a minimum TTS version (0.21.3) is installed and provides an error/instructions if not.</p>
@@ -879,7 +880,7 @@ simple_webpage = """
     <p>Explanation of the <b>config.json</b> file:</p>
 
     <code><span class="key">"activate:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
-    <code><span class="key">"autoplay:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the TTS audio plays automatically within Text-generation-webUI.</span><br>
+    <code><span class="key">"autoplay:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the TTS audio plays automatically within Text generation webUI.</span><br>
     <code><span class="key">"deepspeed_activate:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the DeepSpeed option is activated or disabled in the Gradio interface.</span><br>
     <code><span class="key">"delete_output_wavs:"</span> <span class="value">""Disabled""</span>,</code><span class="key"> If set this will delete your old output wav files, older than the date set, when the system starts up.</span><br>
     <code><span class="key">"ip_address:"</span> <span class="value">"127.0.0.1"</span>,</code><span class="key"> Specifies the default IP address for the web server.</span><br>
@@ -955,7 +956,7 @@ simple_webpage = """
     <ul>
         <li><a href="https://github.com/erew123" target="_blank">Erew123 GitHub Profile</a></li>
     </ul>    
-    <h3>Thanks to & Text-generation-WebUI</h3>
+    <h3>Thanks to & Text generation webUI</h3>
     <ul>
         <li><a href="https://github.com/oobabooga/text-generation-webui" target="_blank">Ooobabooga GitHub Repository</a> (Portions of orginal Coquii_TTS extension)</li>
     </ul>    
