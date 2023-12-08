@@ -10,9 +10,14 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - Clear command line output for any warnings or issues.
 - Can be used with 3rd party applications via JSON calls.
 
+**Mac compatibility is not yet guaranteed due to CUDA requirement**
+
 ## Installation on Text generation web UI
 In a command prompt/terminal window you need to move into your Text generation webUI folder e.g. `cd text-generation-webui`
 and then into your extensions folder e.g. `cd extensions`
 
-One there git clone this repository e.g.
+Once there git clone this repository e.g.
+
 ```git clone https://github.com/erew123/alltalk_tts```
+
+You can now start up Text generation web UI and activate AllTalk in your extensions. To start it every time when Text generation webUI loads, edit the `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`
