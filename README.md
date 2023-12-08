@@ -1,4 +1,4 @@
-# alltalk_tts
+# AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
 - Settings page to adjust your base startup settings.
@@ -8,3 +8,4 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - Configurable deletion of old wav file outputs.
 - Built in manual & settings on a web page.
 - Clear command line output for any warnings or issues.
+- Can be used with 3rd party applications via JSON calls.
