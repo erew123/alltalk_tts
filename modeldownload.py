@@ -50,8 +50,8 @@ with open(this_dir / "requirements.txt", "r") as req_file:
 
 tts_version_required = None
 for req in requirements:
-    if req.startswith("TTS=="):
-        tts_version_required = req.strip().split("==")[1]
+    if req.startswith("TTS>="):
+        tts_version_required = req.strip().split(">=")[1]
         break
 
 if tts_version_required is None:
