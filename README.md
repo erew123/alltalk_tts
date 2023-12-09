@@ -18,7 +18,7 @@ In a command prompt/terminal window you need to move into your Text generation w
 
 `cd text-generation-webui`
 
-Start the Text generation webUI Python environment:
+Start the Text generation webUI Python environment for your OS:
 
 `cmd_windows.bat` or `./cmd_linux.sh` (read note below about Mac support)
 
@@ -28,22 +28,23 @@ move into your extensions folder:
 
 Once there git clone this repository e.g.
 
-```git clone https://github.com/erew123/alltalk_tts```
+`git clone https://github.com/erew123/alltalk_tts`
 
 Install the requirements:
 
-```pip install -r requirements.txt```
+`pip install -r requirements.txt`
 
-You can now start Text generation webUI and load the AllTalk extension in the **session** tab.
+You can now start Text generation webUI and load the AllTalk extension in the Text generation webUI **session** tab.
 
-AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface.
+On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface.
 
 Once the extension is loaded, please find all documentation and settings on the link provided in the interface.
 
-You can now start up Text generation web UI and activate AllTalk in your extensions. To start it every time when Text generation webUI loads, edit the `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`
+To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
 
-## Main Page
-![image](https://github.com/oobabooga/text-generation-webui/assets/35898566/aca0a031-5426-4239-abac-cc3149c4d8c4)
+## Screenshots
+### Main Page
+![image](https://github.com/erew123/alltalk_tts/assets/35898566/77007001-2bec-4cf7-a427-524ceb8bd1a6)
 
-## Settings Page
-![image](https://github.com/oobabooga/text-generation-webui/assets/35898566/dbb731c9-761f-4a54-9c30-96839d2bb973)
+### Settings Page
+![Screenshot 2023-12-09 190108](https://github.com/erew123/alltalk_tts/assets/35898566/ecd75913-5c33-4a99-810c-15b74cc6c91a)
