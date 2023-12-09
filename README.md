@@ -24,11 +24,11 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 `cmd_windows.bat` or `./cmd_linux.sh` (read note below about Mac support)
 
-3) move into your extensions folder:
+3) Move into your extensions folder:
 
 `cd extensions`
 
-4) Once there git clone this repository e.g.
+4) Once there git clone this repository:
 
 `git clone https://github.com/erew123/alltalk_tts`
 
