@@ -36,9 +36,10 @@ Install the requirements:
 
 You can now start Text generation webUI and load the AllTalk extension in the Text generation webUI **session** tab.
 
-On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface.
+### Other installation notes
+On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface (details in documentation).
 
-Once the extension is loaded, please find all documentation and settings on the link provided in the interface.
+Once the extension is loaded, please find all documentation and settings on the link provided in the interface (as shown in the screenshot below).
 
 To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
 
