@@ -14,12 +14,31 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 **Note: Mac compatibility is not yet guaranteed due to CUDA requirement**
 
 ## Installation on Text generation web UI
-In a command prompt/terminal window you need to move into your Text generation webUI folder e.g. `cd text-generation-webui`
-and then into your extensions folder e.g. `cd extensions`
+In a command prompt/terminal window you need to move into your Text generation webUI folder:
+
+`cd text-generation-webui`
+
+Start the Text generation webUI Python environment:
+
+`cmd_windows.bat` or `./cmd_linux.sh` (read note below about Mac support)
+
+move into your extensions folder:
+
+`cd extensions`
 
 Once there git clone this repository e.g.
 
 ```git clone https://github.com/erew123/alltalk_tts```
+
+Install the requirements:
+
+```pip install -r requirements.txt```
+
+You can now start Text generation webUI and load the AllTalk extension in the **session** tab.
+
+AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface.
+
+Once the extension is loaded, please find all documentation and settings on the link provided in the interface.
 
 You can now start up Text generation web UI and activate AllTalk in your extensions. To start it every time when Text generation webUI loads, edit the `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`
 
