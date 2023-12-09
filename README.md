@@ -40,7 +40,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 `pip install -r requirements.txt`
 
-7) You can now start Text generation webUI and load the AllTalk extension in the Text generation webUI **session** tab.
+7) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI and load the AllTalk extension in the Text generation webUI **session** tab.
 
 ### Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface (details in documentation).
