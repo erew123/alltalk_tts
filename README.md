@@ -44,7 +44,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 **Note: It can take a while to start up.** Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
 
-**Documentation:** Click on the link when inside Text generation webUI as shown [here](https://github.com/erew123/alltalk_tts#screenshots)
+**Documentation:** Click on the link when inside Text generation webUI as shown in the screenshot [here](https://github.com/erew123/alltalk_tts#screenshots)
 
 ### Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface (details in documentation).
