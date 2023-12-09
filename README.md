@@ -46,5 +46,5 @@ Once the extension is loaded, please find all documentation and settings on the 
 To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
 
 ## Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/77007001-2bec-4cf7-a427-524ceb8bd1a6) | ![Screenshot 2023-12-09 190108](https://github.com/erew123/alltalk_tts/assets/35898566/ecd75913-5c33-4a99-810c-15b74cc6c91a) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/1ef942b9-654e-42cc-9144-cf48597ec791) | ![Screenshot 2023-12-09 190108](https://github.com/erew123/alltalk_tts/assets/35898566/ecd75913-5c33-4a99-810c-15b74cc6c91a) |
 |:---:|:---:|
