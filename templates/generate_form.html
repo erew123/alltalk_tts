@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoquiTTS Settings</title>
+    <title>AllTalk Startup Settings</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -78,7 +78,7 @@
 </head>
 
 <body>
-    <h3>CoquiTTS Startup Settings</h3><br>
+    <h3>AllTalk Startup Settings</h3><br>
     <form action="/update-settings" method="post">
 
         <label for="activate" style="color: #33cc33;">Activate TTS:</label>
@@ -123,12 +123,20 @@
 				<option value="Turkish" {% if data.language == 'Turkish' %}selected{% endif %}>Turkish</option>
 		</select>
 
-        <label for="remove_trailing_dots" style="color: #33cc33;">&nbsp; &nbsp;&nbsp;Remove Trailing Dots:</label>
+        <label for="narrator_voice" style="color: #33cc33;">&nbsp; &nbsp; Narrator voice:</label>
+        <input id="narrator_voice" name="narrator_voice" required="" type="text" value="{{ data.narrator_voice }}" />
+
+        <label for="remove_trailing_dots" style="color: #33cc33;"> Remove Trailing Dots:</label>
         <select id="remove_trailing_dots" name="remove_trailing_dots" required="">
             <option {% if data.remove_trailing_dots %}selected{% endif %} value="true">True</option>
             <option {% if not data.remove_trailing_dots %}selected{% endif %} value="false">False</option>
         </select>
 
+        <label for="narrator_enabled" style="color: #33cc33;">&nbsp; &nbsp; Narrator enabled:</label>
+        <select id="narrator_enabled" name="narrator_enabled" required="">
+            <option {% if data.narrator_enabled %}selected{% endif %} value="true">True</option>
+            <option {% if not data.narrator_enabled %}selected{% endif %} value="false">False</option>
+        </select>
 
 		<label for="delete_output_wavs" style="color: #33cc33;">Del WAV's older than:</label>
 			<select id="delete_output_wavs" name="delete_output_wavs" required="">

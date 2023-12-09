@@ -500,6 +500,8 @@ async def update_settings(
     low_vram: bool = Form(...),
     model_loaded: bool = Form(...),
     model_name: str = Form(...),
+    narrator_enabled: bool = Form(...),
+    narrator_voice: str = Form(...),
     output_folder_wav: str = Form(...),
     port_number: str = Form(...),
     remove_trailing_dots: bool = Form(...),
@@ -518,6 +520,8 @@ async def update_settings(
     data["low_vram"] = low_vram
     data["model_loaded"] = model_loaded
     data["model_name"] = model_name
+    data["narrator_enabled"] = narrator_enabled
+    data["narrator_voice"] = narrator_voice
     data["output_folder_wav"] = output_folder_wav
     data["port_number"] = port_number
     data["remove_trailing_dots"] = remove_trailing_dots
@@ -646,7 +650,7 @@ simple_webpage = """
     <p>If you are looking for your <b>Text generation webUI</b> webpage, try visiting <a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a>.</p>
     <p><b>Text generation webUI</b> documentation and wiki <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">https://github.com/oobabooga/text-generation-webui/wiki</a>.</p>
 
-    <iframe src="http://127.0.0.1:7851/settings" width="100%" height="440" frameborder="0" style="margin: 0; padding: 0;"></iframe>
+    <iframe src="http://127.0.0.1:7851/settings" width="100%" height="470" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     
     <h3>Table of Contents</h3>
     <ul>
@@ -668,6 +672,7 @@ simple_webpage = """
 
     <h2 id="getting-started">Getting Started</h2>
     <p>AllTalk is a web interface, based around the Coqui TTS speech generation system. To generate TTS, you can use the provided interface or interact with the server using CURL commands. Below are some details and examples:</p>
+    <p><b>Note:</b> When loading up a new character in Text generation webUI it may look like nothing is happening for 20-30 seconds. Its actually processing the introduction section of the text and once that is completed, it will appear. You can see the activity occuring in the console window. Refreshing the page multiple times will try force the TTS engine to keep re-generating the text, so please just wait and check the console if needed. </p>
 
     <h3 id="server-information">Server Information</h3>
     <ul>
@@ -875,6 +880,7 @@ simple_webpage = """
 
     <code><span class="key">"activate:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
     <code><span class="key">"autoplay:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the TTS audio plays automatically within Text generation webUI.</span><br>
+    <code><span class="key">"branding:"</span> <span class="value">true</span>,</code><span class="key"> Used to change the default name shown on the command line. The name needs a space after it e.g. "Mybrand ".</span><br>
     <code><span class="key">"deepspeed_activate:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the DeepSpeed option is activated or disabled in the Gradio interface.</span><br>
     <code><span class="key">"delete_output_wavs:"</span> <span class="value">""Disabled""</span>,</code><span class="key"> If set this will delete your old output wav files, older than the date set, when the system starts up.</span><br>
     <code><span class="key">"ip_address:"</span> <span class="value">"127.0.0.1"</span>,</code><span class="key"> Specifies the default IP address for the web server.</span><br>
@@ -882,6 +888,8 @@ simple_webpage = """
     <code><span class="key">"low_vram:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the Low VRAM option is enabled or disabled.</span><br>
     <code><span class="key">"model_loaded:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
     <code><span class="key">"model_name:"</span> <span class="value">"tts_models/multilingual/multi-dataset/xtts_v2"</span>,</code><span class="key"> Specifies the model that the "API TTS" method will use for TTS generation.</span><br>
+    <code><span class="key">"narrator_enabled:"</span> <span class="value">"female_02.wav"</span>,</code><span class="key"> Specifies the default narrator voice to use for TTS.</span><br>
+    <code><span class="key">"narrator_voice:"</span> <span class="value">"false"</span>,</code><span class="key"> Enables and disables the narrator function.</span><br>
     <code><span class="key">"port_number:"</span> <span class="value">"7851"</span>,</code><span class="key"> Specifies the default port number for the web server.</span><br>
     <code><span class="key">"output_folder_wav:"</span> <span class="value">"extensions/alltalk_tts/outputs/"</span>,</code><span class="key"> Sets the output folder to send files to on generating TTS.</span><br>
     <code><span class="key">"remove_trailing_dots:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether trailing dots are removed from text segments before generation.</span><br>

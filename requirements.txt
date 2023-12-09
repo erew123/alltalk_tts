@@ -1,1 +1,13 @@
-TTS==0.21.3
+numpy>=1.24.4
+soundfile>=0.12.1
+uvicorn>=0.24.0.post1
+TTS>=0.21.3
+deepspeed>=0.4.2
+torch>=2.1.1+cu121
+torchaudio>=2.1.1+cu121
+fastapi>=0.104.1
+Jinja2>=3.1.2
+requests>=2.31.0
+tqdm>=4.66.1
+importlib-metadata>=4.8.1
+packaging>=23.2

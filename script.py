@@ -19,6 +19,11 @@ from modules.logging_colors import logger
 from modules.ui import create_refresh_button
 from modules.utils import gradio
 
+import numpy as np
+import soundfile as sf
+import uuid
+
+
 ##############################################################
 #### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
 ##############################################################
@@ -85,7 +90,10 @@ print(f"[{params['branding']}Startup] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
 ############################################
 def delete_old_files(folder_path, days_to_keep):
     current_time = datetime.now()
-    print(f"[{params['branding']}Startup] Deletion of old output folder WAV files is currently enabled and set at", delete_output_wavs_setting)
+    print(
+        f"[{params['branding']}Startup] Deletion of old output folder WAV files is currently enabled and set at",
+        delete_output_wavs_setting,
+    )
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
@@ -131,6 +139,7 @@ def check_required_files():
 # STARTUP Call Check routine
 check_required_files()
 
+
 #################################################
 #### SET GRADIO BUTTONS BASED ON CONFIG.JSON ####
 #################################################
@@ -141,6 +150,8 @@ elif params["tts_method_api_local"] == True:
     gr_modelchoice = "API Local"
 elif params["tts_method_xtts_local"] == True:
     gr_modelchoice = "XTTSv2 Local"
+
+gr_narrator_enabled = str(params["narrator_enabled"]).lower()
 
 
 ######################
@@ -337,9 +348,96 @@ def send_deepspeed_request(deepspeed_param):
 deepspeed_condition = params["tts_method_xtts_local"] == "True" and deepspeed_installed
 
 
-########################
-#### TTS GENERATION ####
-########################
+#############################################################
+#### TTS STRING CLEANING & PROCESSING PRE SENDING TO TTS ####
+#############################################################
+def new_split_into_sentences(self, text):
+    sentences = self.seg.segment(text)
+    if params["remove_trailing_dots"]:
+        sentences_without_dots = []
+        for sentence in sentences:
+            if sentence.endswith(".") and not sentence.endswith("..."):
+                sentence = sentence[:-1]
+
+            sentences_without_dots.append(sentence)
+
+        return sentences_without_dots
+    else:
+        return sentences
+
+
+Synthesizer.split_into_sentences = new_split_into_sentences
+
+
+# TTS STRING CLEANING - Clean String before TTS generation (Called from voice_preview and output_modifer)
+def before_audio_generation(string, params):
+    # Check Model is loaded into cuda or cpu and error if not
+    if not params["model_loaded"]:
+        print(
+            f"[{params['branding']}Model] \033[91mWarning\033[0m Model is still loading, please wait before trying to generate TTS"
+        )
+        return
+    string = html.unescape(string) or random_sentence()
+    # Replace double quotes with single, asterisks, carriage returns, and line feeds
+    # string = (
+    #   string.replace('"', "'")
+    #  .replace(".'", "'.")
+    # .replace("*", "")
+    # .replace("\r", "")
+    # .replace("\n", "")
+    # )
+    if string == "":
+        return "*Empty string*"
+    return string
+
+
+##################
+#### Narrator ####
+##################
+
+
+def combine(audio_files, output_folder, state):
+    audio = np.array([])
+    
+    for audio_file in audio_files:
+        audio_data, sample_rate = sf.read(audio_file)
+        # Ensure all audio files have the same sample rate
+        if audio.size == 0:
+            audio = audio_data
+        else:
+            audio = np.concatenate((audio, audio_data))
+        
+    # Save the combined audio to a file with a specified sample rate
+    output_file_path = os.path.join(
+        output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav'
+    )
+    sf.write(output_file_path, audio, samplerate=sample_rate)
+
+    # Clean up unnecessary files
+    for audio_file in audio_files:
+        os.remove(audio_file)
+
+    return output_file_path
+
+
+def preprocess_narrator(raw_input):
+    raw_input = preprocess(raw_input)
+    raw_input = raw_input.replace("***", "*")
+    raw_input = raw_input.replace("**", "*")
+    narrated_text = raw_input.split("*")
+    narrated_text = [part.replace("&quot;", '"') for part in narrated_text]
+    return raw_input, narrated_text
+
+
+def preprocess(raw_input):
+    raw_input = html.unescape(raw_input)
+    # raw_input = raw_input.strip("\"")
+    return raw_input
+
+
+################################
+#### TTS PREVIEW GENERATION ####
+################################
 # PREVIEW VOICE - Generate Random Sentence if Voice Preview box is empty
 def random_sentence():
     with open(this_dir / "harvard_sentences.txt") as f:
@@ -381,6 +479,9 @@ def voice_preview(string):
         return f"[{params['branding']}Server] Audio generation failed. Status: {generate_response.get('status')}"
 
 
+#################################
+#### TTS STANDARD GENERATION ####
+#################################
 # STANDARD VOICE - Generate TTS Function
 def output_modifier(string, state):
     if not params["activate"]:
@@ -390,23 +491,51 @@ def output_modifier(string, state):
     if cleaned_string is None:
         return
     string = cleaned_string
-    # Setup the output file
-    output_file = Path(
-        f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav'
-    )
-    # Generate the audio and handle the response
     language_code = languages.get(params["language"])
-    # Convert the WindowsPath object to a string before using it in JSON payload
-    output_file_str = output_file.as_posix()
-
-    # Lock before making the generate request
-    with process_lock:
-        generate_response = send_generate_request(
-            string, params["voice"], language_code, output_file_str
-        )
-
-    # Check if lock is already acquired
-    if process_lock.locked():
+    # Create a list to store generated audio paths
+    audio_files = []
+    if process_lock.acquire(blocking=False):
+        try:
+            if params["narrator_enabled"]:
+                # Split the string using asterisks and keep the asterisks in the resulting parts
+                original_string, narrated_text = preprocess_narrator(original_string)
+                for i, part in enumerate(narrated_text):
+                    # Skip empty parts
+                    if not part.strip():
+                        continue
+                    # Determine the voice based on whether the part is encapsulated with asterisks
+                    is_narrator = i % 2 != 0
+                    voice_to_use = (
+                        params["narrator_voice"] if is_narrator else params["voice"]
+                    )
+                    output_file = Path(
+                        f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}_{i}.wav'
+                    )
+                    output_file_str = output_file.as_posix()
+                    generate_response = send_generate_request(
+                        part, voice_to_use, language_code, output_file_str
+                    )
+                    audio_path = generate_response.get("data", {}).get("audio_path")
+                    audio_files.append(audio_path)
+                final_output_file = combine(
+                    audio_files, params["output_folder_wav"], state
+                )
+            else:
+                output_file = Path(
+                    f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav'
+                )
+                output_file_str = output_file.as_posix()
+                output_file = get_output_filename(state)
+                generate_response = send_generate_request(
+                    string, params["voice"], language_code, output_file_str
+                )
+                audio_path = generate_response.get("data", {}).get("audio_path")
+                final_output_file = audio_path
+        finally:
+            # Always release the lock, whether an exception occurs or not
+            process_lock.release()
+    else:
+        # The lock is already acquired
         print(
             f"[{params['branding']}Model] \033[91mWarning\033[0m Audio generation is already in progress. Please wait."
         )
@@ -417,7 +546,9 @@ def output_modifier(string, state):
         if audio_path:
             # Handle Gradio and playback
             autoplay = "autoplay" if params["autoplay"] else ""
-            string = f'<audio src="file/{audio_path}" controls {autoplay}></audio>'
+            string = (
+                f'<audio src="file/{final_output_file}" controls {autoplay}></audio>'
+            )
 
             if params["show_text"]:
                 string += f"\n\n{original_string}"
@@ -435,6 +566,12 @@ def output_modifier(string, state):
         )
 
 
+def get_output_filename(state):
+    return Path(
+        f'{params["output_folder_wav"]}/{state["character_menu"]}_{str(uuid.uuid4())[:8]}.wav'
+    ).as_posix()
+
+
 def send_generate_request(text, voice, language, output_file):
     url = f"{base_url}/api/generate"
     payload = {
@@ -446,55 +583,6 @@ def send_generate_request(text, voice, language, output_file):
     headers = {"Content-Type": "application/json"}
     response = requests.post(url, json=payload, headers=headers)
     return response.json()
-
-
-#############################################################
-#### TTS STRING CLEANING & PROCESSING PRE SENDING TO TTS ####
-#############################################################
-def preprocess(raw_input):
-    raw_input = html.unescape(raw_input)
-    # raw_input = raw_input.strip("\"")
-    return raw_input
-
-
-def new_split_into_sentences(self, text):
-    sentences = self.seg.segment(text)
-    if params["remove_trailing_dots"]:
-        sentences_without_dots = []
-        for sentence in sentences:
-            if sentence.endswith(".") and not sentence.endswith("..."):
-                sentence = sentence[:-1]
-
-            sentences_without_dots.append(sentence)
-
-        return sentences_without_dots
-    else:
-        return sentences
-
-
-Synthesizer.split_into_sentences = new_split_into_sentences
-
-
-# TTS STRING CLEANING - Clean String before TTS generation (Called from voice_preview and output_modifer)
-def before_audio_generation(string, params):
-    # Check Model is loaded into cuda or cpu and error if not
-    if not params["model_loaded"]:
-        print(
-            f"[{params['branding']}Model] \033[91mWarning\033[0m Model is still loading, please wait before trying to generate TTS"
-        )
-        return
-    string = html.unescape(string) or random_sentence()
-    # Replace double quotes with single, asterisks, carriage returns, and line feeds
-    string = (
-        string.replace('"', "'")
-        .replace(".'", "'.")
-        .replace("*", "")
-        .replace("\r", "")
-        .replace("\n", "")
-    )
-    if string == "":
-        return "*Empty string*"
-    return string
 
 
 ################################
@@ -513,6 +601,13 @@ def state_modifier(state):
 
     state["stream"] = False
     return state
+
+
+def update_narrator_enabled(value):
+    if value == "Enabled":
+        params["narrator_enabled"] = True
+    elif value == "Disabled":
+        params["narrator_enabled"] = False
 
 
 def input_modifier(string, state):
@@ -546,6 +641,47 @@ def ui():
             )
 
         with gr.Row():
+            with gr.Row():
+                voice = gr.Dropdown(
+                    get_available_voices(), label="Default Voice", value=params["voice"]
+                )
+                create_refresh_button(
+                    voice,
+                    lambda: None,
+                    lambda: {
+                        "choices": get_available_voices(),
+                        "value": params["voice"],
+                    },
+                    "refresh-button",
+                )
+
+            language = gr.Dropdown(
+                languages.keys(), label="Language", value=params["language"]
+            )
+
+        with gr.Row():
+            with gr.Row():
+                narrator_voice_gr = gr.Dropdown(
+                    get_available_voices(),
+                    label="Narrator Voice",
+                    value=params["narrator_voice"],
+                )
+                create_refresh_button(
+                    narrator_voice_gr,
+                    lambda: None,
+                    lambda: {
+                        "choices": get_available_voices(),
+                        "value": params["narrator_voice"],
+                    },
+                    "refresh-button",
+                )
+            narrator_enabled_gr = gr.Radio(
+                choices={"Enabled": "true", "Disabled": "false"},
+                label="Narrator Activation",
+                value="Enabled" if gr_narrator_enabled == "true" else "Disabled",
+            )
+
+        with gr.Row():
             low_vram = gr.Checkbox(
                 value=params["low_vram"], label="Low VRAM mode (Read NOTE)"
             )
@@ -563,25 +699,6 @@ def ui():
             )
             explanation_text = gr.HTML(
                 f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>"
-            )
-
-        with gr.Row():
-            with gr.Row():
-                voice = gr.Dropdown(
-                    get_available_voices(), label="Voice wav", value=params["voice"]
-                )
-                create_refresh_button(
-                    voice,
-                    lambda: None,
-                    lambda: {
-                        "choices": get_available_voices(),
-                        "value": params["voice"],
-                    },
-                    "refresh-button",
-                )
-
-            language = gr.Dropdown(
-                languages.keys(), label="Language", value=params["language"]
             )
 
         with gr.Row():
@@ -660,6 +777,12 @@ def ui():
     )
     voice.change(lambda x: params.update({"voice": x}), voice, None)
     language.change(lambda x: params.update({"language": x}), language, None)
+
+    # Narrator selection actions
+    narrator_enabled_gr.change(update_narrator_enabled, narrator_enabled_gr, None)
+    narrator_voice_gr.change(
+        lambda x: params.update({"narrator_voice": x}), narrator_voice_gr, None
+    )
 
     # Play preview
     preview_text.submit(voice_preview, preview_text, preview_audio)
