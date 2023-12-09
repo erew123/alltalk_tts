@@ -1,13 +1,13 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
-- **Custom Startup Settings:** Adjust your standard startup settings.
-- **Nararator:** Use different voices for main character and narration.
-- **Low VRAM mode:** Improve generation performance if your VRAM is filled by your LLM.
+- **Custom Startup Settings:** Adjust your standard startup settings. [Screenshot](https://github.com/erew123/alltalk_tts#settings-page)
+- **Nararator:** Use different voices for main character and narration. [Screenshot](https://github.com/erew123/alltalk_tts#main-page)
+- **Low VRAM mode:** Improve generation performance if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#main-page)
 - **DeepSpeed:** When DeepSpeed is installed you can get a 3-4x performance boost generating TTS.
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
-- **Wav file maintenance:** Configurable deletion of old output wav files.
-- **Documentation:** Fully documented with a built in webpage.
+- **Wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#settings-page)
+- **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#settings-page)
 - **Console output** Clear command line output for any warnings or issues.
 - **3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
 
