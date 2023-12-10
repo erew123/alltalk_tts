@@ -933,7 +933,7 @@ simple_webpage = """
     <p><b>Generating TTS - Linux</b></p>
     <code><span class="key">curl -X POST -H "Content-Type: application/json" -d '{"text": "This is text to generate as TTS","voice": "female_01.wav", "language": "en", "output_file": "outputfile.wav"}' "http://127.0.0.1:7851/api/generate"</code></span>
     <p><b>Generating TTS - Windows</b></p>
-    <code><span class="key">curl -X POST -H "Content-Type: application/json" -d="{&#92;&quot;text&#92;&quot;: &#92;&quot;This is text to generate as TTS&#92;&quot;,&#92;&quot;voice&#92;&quot;: &#92;&quot;female_01.wav&#92;&quot;, &#92;&quot;language&#92;&quot;: &#92;&quot;en&#92;&quot;, &#92;&quot;output_file&#92;&quot;: &#92;&quot;outputfile.wav&#92;&quot;}" 'http://127.0.0.1:7851/api/generate'</span></code>
+    <code><span class="key">curl -X POST -H "Content-Type: application/json" -d "{&#92;&quot;text&#92;&quot;: &#92;&quot;This is text to generate as TTS&#92;&quot;, &#92;&quot;voice&#92;&quot;: &#92;&quot;female_01.wav&#92;&quot;, &#92;&quot;language&#92;&quot;: &#92;&quot;en&#92;&quot;, &#92;&quot;output_file&#92;&quot;: &#92;&quot;outputfile.wav&#92;&quot;}" http://127.0.0.1:7851/api/generate</span></code>
     <p><b>Generating TTS - Notes</b></p>
     <p>Replace <code>This is text to generate as TTS</code> with whatever you want it to say. <code>female_01.wav</code> with the voice sample you want to use. <code>output_file.wav</code> with the file name you want it to create.</p>
     <p>JSON return <code>{"status":"generate-success","data":{"audio_path":"outputfile.wav"}}</code></p>

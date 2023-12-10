@@ -12,18 +12,9 @@ import atexit
 from pathlib import Path
 from datetime import datetime, timedelta
 import re
-
-import gradio as gr
-
-from modules import chat, shared, ui_chat
-from modules.logging_colors import logger
-from modules.ui import create_refresh_button
-from modules.utils import gradio
-
 import numpy as np
 import soundfile as sf
 import uuid
-
 
 ##############################################################
 #### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
@@ -31,17 +22,15 @@ import uuid
 # STARTUP VARIABLE - Create "this_dir" variable as the current script directory
 this_dir = Path(__file__).parent.resolve()
 
-
 # load config file in and get settings
 def load_config(file_path):
     with open(file_path, "r") as config_file:
         config = json.load(config_file)
     return config
 
-
 config_file_path = this_dir / "config.json"
+# Load the params dictionary from the config.json file
 params = load_config(config_file_path)
-
 
 # Required for sentence splitting
 try:
@@ -56,13 +45,28 @@ except ModuleNotFoundError:
     )
     raise
 
-# IMPORT - Attempt Importing DeepSpeed
+# IMPORT - Attempt Importing DeepSpeed (required for displaying Deepspeed checkbox in gradio)
 try:
     import deepspeed
 
     deepspeed_installed = True
 except ImportError:
     deepspeed_installed = False
+
+# Import gradio if being used within text generation webUI
+try:
+    import gradio as gr
+
+    from modules import chat, shared, ui_chat
+    from modules.logging_colors import logger
+    from modules.ui import create_refresh_button
+    from modules.utils import gradio
+    # This is set to check if the script is being run within text generation webui or as a standalone script. False is running as part of text gen web ui or a gradio interface
+    running_in_standalone = False
+except ModuleNotFoundError:
+    print(f"[{params['branding']}Startup] Running script.py in standalone mode")
+    # This is set to check if the script is being run within text generation webui or as a standalone script. true means standalone
+    running_in_standalone = True
 
 ###########################
 #### STARTUP VARIABLES ####
@@ -73,10 +77,9 @@ with open(this_dir / "languages.json", encoding="utf8") as f:
 # Create a global lock
 process_lock = threading.Lock()
 
-
+# Gather the voice files
 def get_available_voices():
     return sorted([voice.name for voice in Path(f"{this_dir}/voices").glob("*.wav")])
-
 
 #########################
 #### LICENSE DISPLAY ####
@@ -811,3 +814,15 @@ def ui():
     # Play preview
     preview_text.submit(voice_preview, preview_text, preview_audio)
     preview_play.click(voice_preview, preview_text, preview_audio)
+
+
+##########################################
+#### STANDALONE MODE LOOP TERMINATION ####
+##########################################
+## Loop to keep the script from exiting out if its being run as a standalone script and not part of text-generation-webui
+if running_in_standalone:
+    while True:
+        try:
+            time.sleep(1)  # Add a small delay to avoid high CPU usage
+        except KeyboardInterrupt:
+            break  # Allow graceful exit on Ctrl+C
