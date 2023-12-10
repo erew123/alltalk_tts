@@ -11,8 +11,6 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Console output** Clear command line output for any warnings or issues.
 - **3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
 
-**Note: Mac compatibility is not yet guaranteed due to CUDA requirement**
-
 ## Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, instructions [here](https://github.com/oobabooga/text-generation-webui#getting-updates)
 
@@ -22,7 +20,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 2) Start the Text generation webUI Python environment for your OS:
 
-`cmd_windows.bat` or `./cmd_linux.sh` ( Mac users, read note below above re current Mac support)
+`cmd_windows.bat`, `./cmd_linux.sh` `cmd_macos.sh` or `cmd_wsl.bat`
 
 3) Move into your extensions folder:
 
@@ -38,7 +36,9 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 6) Install the requirements:
 
-`pip install -r requirements.txt`
+**Nvidia graphics card users** - `pip install -r requirements_nvidia.txt`
+
+**Other users** - `pip install -r requirements_other.txt`
 
 7) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat` or `./start_linux.sh`)  and load the AllTalk extension in the Text generation webUI **session** tab.
 
