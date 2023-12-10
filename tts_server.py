@@ -459,13 +459,20 @@ async def generate(request: Request):
         return JSONResponse(content={"status": "error", "message": str(e)})
 
 
+###################################################
+#### POPULATE FILES LIST FROM VOICES DIRECTORY ####
+###################################################
+# List files in the "voices" directory
+def list_files(directory):
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith('.wav')]
+    return files
+
 #############################
 #### JSON CONFIG UPDATER ####
 #############################
 
 # Create an instance of Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=this_dir / "templates")
-
 
 # Create a dependency to get the current JSON data
 def get_json_data():
@@ -477,16 +484,17 @@ def get_json_data():
 # Define an endpoint function
 @app.get("/settings")
 async def get_settings(request: Request):
-    # Render the template with the current JSON data
+    wav_files = list_files(this_dir / "voices")
+    # Render the template with the current JSON data and list of WAV files
     return templates.TemplateResponse(
         "generate_form.html",
         {
             "request": request,
             "data": get_json_data(),
             "modeldownload_model_path": modeldownload_model_path,
+            "wav_files": wav_files,
         },
     )
-
 
 @app.post("/update-settings")
 async def update_settings(
