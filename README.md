@@ -22,7 +22,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 2) Start the Text generation webUI Python environment for your OS:
 
-`cmd_windows.bat` or `./cmd_linux.sh` (read note below about Mac support)
+`cmd_windows.bat` or `./cmd_linux.sh` (read note below above re current Mac support)
 
 3) Move into your extensions folder:
 
