@@ -100,7 +100,11 @@
         </select>
 
         <label for="voice" style="color: #33cc33;">&nbsp; &nbsp; Default voice:</label>
-        <input id="voice" name="voice" required="" type="text" value="{{ data.voice }}" />
+		<select id="voice" name="voice" required="">
+		{% for file in wav_files %}
+		<option value="{{ file }}" {% if data.voice == file %}selected{% endif %}>{{ file }}</option>
+		{% endfor %}
+		</select>
 
 
 		<label for="language" style="color: #33cc33;">Default Language:</label>
@@ -124,7 +128,11 @@
 		</select>
 
         <label for="narrator_voice" style="color: #33cc33;">&nbsp; &nbsp; Narrator voice:</label>
-        <input id="narrator_voice" name="narrator_voice" required="" type="text" value="{{ data.narrator_voice }}" />
+		<select id="narrator_voice" name="narrator_voice" required="">
+		{% for file in wav_files %}
+		<option value="{{ file }}" {% if data.narrator_voice == file %}selected{% endif %}>{{ file }}</option>
+		{% endfor %}
+		</select>
 
         <label for="remove_trailing_dots" style="color: #33cc33;"> Remove Trailing Dots:</label>
         <select id="remove_trailing_dots" name="remove_trailing_dots" required="">
