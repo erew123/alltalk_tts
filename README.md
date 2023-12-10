@@ -40,7 +40,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 *Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
 
-7) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat` or `./start_linux.sh`)  and load the AllTalk extension in the Text generation webUI **session** tab.
+7) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh`, or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.
 
 **Note: It can take a while to start up.** Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
 
