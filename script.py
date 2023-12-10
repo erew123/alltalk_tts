@@ -11,6 +11,7 @@ import sys
 import atexit
 from pathlib import Path
 from datetime import datetime, timedelta
+import re
 
 import gradio as gr
 
@@ -369,7 +370,7 @@ def new_split_into_sentences(self, text):
 Synthesizer.split_into_sentences = new_split_into_sentences
 
 
-# TTS STRING CLEANING - Clean String before TTS generation (Called from voice_preview and output_modifer)
+# Check model is loaded and string isnt empty, before sending a TTS request.
 def before_audio_generation(string, params):
     # Check Model is loaded into cuda or cpu and error if not
     if not params["model_loaded"]:
@@ -378,14 +379,6 @@ def before_audio_generation(string, params):
         )
         return
     string = html.unescape(string) or random_sentence()
-    # Replace double quotes with single, asterisks, carriage returns, and line feeds
-    # string = (
-    #   string.replace('"', "'")
-    #  .replace(".'", "'.")
-    # .replace("*", "")
-    # .replace("\r", "")
-    # .replace("\n", "")
-    # )
     if string == "":
         return "*Empty string*"
     return string
@@ -394,11 +387,9 @@ def before_audio_generation(string, params):
 ##################
 #### Narrator ####
 ##################
-
-
 def combine(audio_files, output_folder, state):
     audio = np.array([])
-    
+
     for audio_file in audio_files:
         audio_data, sample_rate = sf.read(audio_file)
         # Ensure all audio files have the same sample rate
@@ -406,33 +397,19 @@ def combine(audio_files, output_folder, state):
             audio = audio_data
         else:
             audio = np.concatenate((audio, audio_data))
-        
+
     # Save the combined audio to a file with a specified sample rate
     output_file_path = os.path.join(
         output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav'
     )
     sf.write(output_file_path, audio, samplerate=sample_rate)
+    print(f"[{params['branding']}TTSGen] Narrated audio generated")
 
     # Clean up unnecessary files
     for audio_file in audio_files:
         os.remove(audio_file)
 
     return output_file_path
-
-
-def preprocess_narrator(raw_input):
-    raw_input = preprocess(raw_input)
-    raw_input = raw_input.replace("***", "*")
-    raw_input = raw_input.replace("**", "*")
-    narrated_text = raw_input.split("*")
-    narrated_text = [part.replace("&quot;", '"') for part in narrated_text]
-    return raw_input, narrated_text
-
-
-def preprocess(raw_input):
-    raw_input = html.unescape(raw_input)
-    # raw_input = raw_input.strip("\"")
-    return raw_input
 
 
 ################################
@@ -484,6 +461,7 @@ def voice_preview(string):
 #################################
 # STANDARD VOICE - Generate TTS Function
 def output_modifier(string, state):
+    # DEBUG print("THE ORIGINAL STRING IS:", string,"\n")
     if not params["activate"]:
         return string
     original_string = string
@@ -497,28 +475,56 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                # Split the string using asterisks and keep the asterisks in the resulting parts
-                original_string, narrated_text = preprocess_narrator(original_string)
-                for i, part in enumerate(narrated_text):
-                    # Skip empty parts
-                    if not part.strip():
-                        continue
-                    # Determine the voice based on whether the part is encapsulated with asterisks
-                    is_narrator = i % 2 != 0
+                processed_string = original_string
+                processed_string = processed_string.replace("***", "*")
+                processed_string = processed_string.replace("**", "*")
+                processed_string = processed_string.replace(".*", "*")
+                processed_string = processed_string.replace(".'", "'")
+                processed_string = processed_string.replace(".&#x27;", "'")
+                # Remove new lines
+                processed_string = processed_string.replace("\n", " ")
+                #DEBUG print("PROCESSED STRING IS NOW:", processed_string)
+                # Split the processed string into lines
+                lines = processed_string.split("\n")
+                audio_files_all_paragraphs = []
+                is_narrator = False
+                for line in lines:
+                    # Decode HTML entities
+                    decoded_text = html.unescape(line)
+                    # Initialize variables to track narrator and voice parts
+                    is_narrator = "*" in line or is_narrator
+                    # Split the line using double quotes
+                    parts = re.split(r'"', decoded_text)
+                    audio_files_paragraph = []
+                    for i, part in enumerate(parts):
+                        # Skip empty parts
+                        if not part:
+                            continue
+                        # Determine if it's a narrator or voice part within double quotes
+                        is_narrator_part = is_narrator if i % 2 == 0 else False
+                        voice_to_use = (
+                            params["narrator_voice"] if is_narrator_part else params["voice"]
+                        )
+                        # DEBUG print(f"THE STRING TO BE USED: {voice_to_use} {part.strip()}")
+                        # Process the part
+                        output_file = Path(
+                            f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}_{i}.wav'
+                        )
+                        output_file_str = output_file.as_posix()
+                        generate_response = send_generate_request(
+                            part, voice_to_use, language_code, output_file_str
+                        )
+                        audio_path = generate_response.get("data", {}).get("audio_path")
+                        audio_files_paragraph.append(audio_path)
+                    is_narrator_part = is_narrator if i % 2 == 0 else False
                     voice_to_use = (
-                        params["narrator_voice"] if is_narrator else params["voice"]
+                        params["narrator_voice"] if is_narrator_part else params["voice"]
                     )
-                    output_file = Path(
-                        f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}_{i}.wav'
-                    )
-                    output_file_str = output_file.as_posix()
-                    generate_response = send_generate_request(
-                        part, voice_to_use, language_code, output_file_str
-                    )
-                    audio_path = generate_response.get("data", {}).get("audio_path")
-                    audio_files.append(audio_path)
+                    # Accumulate audio files within the paragraph
+                    audio_files_all_paragraphs.extend(audio_files_paragraph)
+                # Combine audio files across paragraphs
                 final_output_file = combine(
-                    audio_files, params["output_folder_wav"], state
+                    audio_files_all_paragraphs, params["output_folder_wav"], state
                 )
             else:
                 output_file = Path(
@@ -572,6 +578,9 @@ def get_output_filename(state):
     ).as_posix()
 
 
+###############################################
+#### SEND GENERATION REQUEST TO TTS ENGINE ####
+###############################################
 def send_generate_request(text, voice, language, output_file):
     url = f"{base_url}/api/generate"
     payload = {
@@ -647,9 +656,16 @@ def ui():
                 # Check if the default voice is in the list of available voices
                 if default_voice not in available_voices:
                     # Handle the case where the default voice is not in the list (choose a default value or update it)
-                    default_voice = available_voices[0]  # Choose the first available voice as the default
+                    default_voice = available_voices[
+                        0
+                    ]  # Choose the first available voice as the default
                 # Add allow_custom_value=True to the Dropdown
-                voice = gr.Dropdown(available_voices, label="Default Voice", value=default_voice, allow_custom_value=True)
+                voice = gr.Dropdown(
+                    available_voices,
+                    label="Default Voice",
+                    value=default_voice,
+                    allow_custom_value=True,
+                )
                 create_refresh_button(
                     voice,
                     lambda: None,
@@ -661,7 +677,10 @@ def ui():
                 )
 
             language = gr.Dropdown(
-                languages.keys(), label="Language", allow_custom_value=True, value=params["language"]
+                languages.keys(),
+                label="Language",
+                allow_custom_value=True,
+                value=params["language"],
             )
 
         with gr.Row():
