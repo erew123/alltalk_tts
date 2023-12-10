@@ -36,9 +36,9 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 6) Install the requirements:
 
-**Nvidia graphics card users** - `pip install -r requirements_nvidia.txt`
+*Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`
 
-**Other users** - `pip install -r requirements_other.txt`
+*Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
 
 7) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat` or `./start_linux.sh`)  and load the AllTalk extension in the Text generation webUI **session** tab.
 
