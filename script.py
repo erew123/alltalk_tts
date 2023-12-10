@@ -642,9 +642,14 @@ def ui():
 
         with gr.Row():
             with gr.Row():
-                voice = gr.Dropdown(
-                    get_available_voices(), label="Default Voice", value=params["voice"]
-                )
+                available_voices = get_available_voices()
+                default_voice = params["voice"]
+                # Check if the default voice is in the list of available voices
+                if default_voice not in available_voices:
+                    # Handle the case where the default voice is not in the list (choose a default value or update it)
+                    default_voice = available_voices[0]  # Choose the first available voice as the default
+                # Add allow_custom_value=True to the Dropdown
+                voice = gr.Dropdown(available_voices, label="Default Voice", value=default_voice, allow_custom_value=True)
                 create_refresh_button(
                     voice,
                     lambda: None,
@@ -656,7 +661,7 @@ def ui():
                 )
 
             language = gr.Dropdown(
-                languages.keys(), label="Language", value=params["language"]
+                languages.keys(), label="Language", allow_custom_value=True, value=params["language"]
             )
 
         with gr.Row():
@@ -664,6 +669,7 @@ def ui():
                 narrator_voice_gr = gr.Dropdown(
                     get_available_voices(),
                     label="Narrator Voice",
+                    allow_custom_value=True,
                     value=params["narrator_voice"],
                 )
                 create_refresh_button(
