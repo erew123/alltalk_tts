@@ -44,8 +44,8 @@ else:
         f"[{params['branding']}Startup] \033[91mWarning\033[0m API Local and XTTSv2 Local will error unless this is corrected."
     )
 
-# Read the version specifier from requirements.txt
-with open(this_dir / "requirements.txt", "r") as req_file:
+# Read the version specifier from requirements_nvidia.txt
+with open(this_dir / "requirements_nvidia.txt", "r") as req_file:
     requirements = req_file.readlines()
 
 tts_version_required = None
@@ -56,7 +56,7 @@ for req in requirements:
 
 if tts_version_required is None:
     raise ValueError(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find TTS version specifier in requirements.txt"
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find TTS version specifier in requirements_nvidia.txt"
     )
 
 

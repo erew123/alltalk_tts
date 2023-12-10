@@ -24,7 +24,6 @@ from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
-
 ###########################
 #### STARTUP VARIABLES ####
 ###########################
@@ -36,24 +35,22 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 with open(this_dir / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
 
-
 ##############################################################
 #### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
 ##############################################################
-
-
 # Load config file and get settings
 def load_config(file_path):
     with open(file_path, "r") as configfile_path:
         configfile_data = json.load(configfile_path)
     return configfile_data
 
-
 # Define the path to the config.json file
 configfile_path = this_dir / "config.json"
 
 # Load config.json and assign it to a different variable (config_data)
 params = load_config(configfile_path)
+# check someone hasnt enabled lowvram on a system thats not cuda enabled 
+params["low_vram"] = "false" if not torch.cuda.is_available() else params["low_vram"]
 
 # Define the path to the JSON file
 config_file_path = this_dir / "modeldownload.json"
@@ -215,7 +212,6 @@ async def xtts_manual_load_model():
         checkpoint_dir=str(checkpoint_dir),
         use_deepspeed=params["deepspeed_activate"],
     )
-    model.cuda()
     model.to(device)
     return model
 
@@ -224,7 +220,8 @@ async def xtts_manual_load_model():
 async def unload_model(model):
     print(f"[{params['branding']}Model] \033[94mUnloading model \033[0m")
     del model
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     params["model_loaded"] = False
     return None
 
@@ -258,7 +255,6 @@ async def handle_tts_method_change(tts_method):
     # Load the correct model based on the updated params
     await setup()
 
-
 # MODEL WEBSERVER- API Swap Between Models
 @app.route("/api/reload", methods=["POST"])
 async def reload(request: Request):
@@ -270,22 +266,22 @@ async def reload(request: Request):
         content=json.dumps({"status": "model-success"}), media_type="application/json"
     )
 
-
 ##################
 #### LOW VRAM ####
 ##################
 # LOW VRAM - MODEL MOVER VRAM(cuda)<>System RAM(cpu) for Low VRAM setting
 async def switch_device():
     global model, device
-    if device == "cuda":
-        device = "cpu"
-        model.to(device)
-        torch.cuda.empty_cache()
-    else:
-        device == "cpu"
-        device = "cuda"
-        model.to(device)
-
+    # Check if CUDA is available before performing GPU-related operations
+    if torch.cuda.is_available():
+        if device == "cuda":
+            device = "cpu"
+            model.to(device)
+            torch.cuda.empty_cache()
+        else:
+            device == "cpu"
+            device = "cuda"
+            model.to(device)
 
 @app.post("/api/lowvramsetting")
 async def set_low_vram(request: Request, new_low_vram_value: bool):
@@ -293,6 +289,7 @@ async def set_low_vram(request: Request, new_low_vram_value: bool):
     try:
         if new_low_vram_value is None:
             raise ValueError("Missing 'low_vram' parameter")
+
         if params["low_vram"] == new_low_vram_value:
             return Response(
                 content=json.dumps(
@@ -305,28 +302,37 @@ async def set_low_vram(request: Request, new_low_vram_value: bool):
         params["low_vram"] = new_low_vram_value
         if params["low_vram"]:
             await unload_model(model)
-            device = "cpu"
-            print(
-                f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
-            )
-            print(
-                f"[{params['branding']}Model] \033[94mLowVRAM Enabled.\033[0m Model will move between \033[93mVRAM(cuda) <> System RAM(cpu)\033[0m"
-            )
-            await setup()
+            if torch.cuda.is_available():
+                device = "cpu"
+                print(
+                    f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
+                )
+                print(
+                    f"[{params['branding']}Model] \033[94mLowVRAM Enabled.\033[0m Model will move between \033[93mVRAM(cuda) <> System RAM(cpu)\033[0m"
+                )
+                await setup()
+            else:
+                # Handle the case where CUDA is not available
+                print(f"[{params['branding']}Model] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode.")
+                params["low_vram"] = False
         else:
             await unload_model(model)
-            device = "cuda"
-            print(
-                f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
-            )
-            print(
-                f"[{params['branding']}Model] \033[94mLowVRAM Disabled.\033[0m Model will stay in \033[93mVRAM(cuda)\033[0m"
-            )
-            await setup()
+            if torch.cuda.is_available():
+                device = "cuda"
+                print(
+                    f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
+                )
+                print(
+                    f"[{params['branding']}Model] \033[94mLowVRAM Disabled.\033[0m Model will stay in \033[93mVRAM(cuda)\033[0m"
+                )
+                await setup()
+            else:
+                # Handle the case where CUDA is not available
+                print(f"[{params['branding']}Model] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode.")
+                params["low_vram"] = False
         return Response(content=json.dumps({"status": "lowvram-success"}))
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
-
 
 ###################
 #### DeepSpeed ####
@@ -392,7 +398,6 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
         return Response(content=json.dumps({"status": "deepspeed-success"}))
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
-
 
 ########################
 #### TTS GENERATION ####
@@ -718,6 +723,7 @@ simple_webpage = """
     
     <h3 id="low-vram-option-overview"><strong>Low VRAM Overview:</strong></h3>
     <p>The Low VRAM option is a crucial feature designed to enhance performance under constrained Video Random Access Memory (VRAM) conditions, as the TTS models require 2GB-3GB of VRAM to run effectively. This feature strategically manages the relocation of the Text-to-Speech (TTS) model between your system's Random Access Memory (RAM) and VRAM, moving it between the two on the fly.</p>
+    <p><b>Note: </b>An Nvidia Graphics card is required for LowVRAM, as you will be using system memory for the models otherwise.</p>
 
     <h4>How It Works:</h4>
     <p>The Low VRAM option intelligently orchestrates the relocation of the entire TTS model. When the TTS engine requires VRAM for processing, the entire model seamlessly moves into VRAM, causing your LLM to unload/displace some layers, ensuring optimal performance of the TTS engine.</p>
@@ -730,6 +736,7 @@ simple_webpage = """
 
     <h4>What's DeepSpeed?</h4>
     <p>DeepSpeed, developed by Microsoft, is like a speed boost for Text-to-Speech (TTS) tasks. It's all about making TTS happen faster and more efficiently.</p>
+    <p><b>Note: </b>An Nvidia Graphics card is required for DeepSpeed</p>
 
     <h4>How Does It Speed Things Up?</h5>
     <ul>
@@ -888,7 +895,7 @@ simple_webpage = """
 
     <code><span class="key">"activate:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
     <code><span class="key">"autoplay:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the TTS audio plays automatically within Text generation webUI.</span><br>
-    <code><span class="key">"branding:"</span> <span class="value">true</span>,</code><span class="key"> Used to change the default name shown on the command line. The name needs a space after it e.g. "Mybrand ".</span><br>
+    <code><span class="key">"branding:"</span> <span class="value">"AllTalk "</span>,</code><span class="key"> Used to change the default name shown on the command line. The name needs a space after it e.g. "Mybrand ".</span><br>
     <code><span class="key">"deepspeed_activate:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the DeepSpeed option is activated or disabled in the Gradio interface.</span><br>
     <code><span class="key">"delete_output_wavs:"</span> <span class="value">""Disabled""</span>,</code><span class="key"> If set this will delete your old output wav files, older than the date set, when the system starts up.</span><br>
     <code><span class="key">"ip_address:"</span> <span class="value">"127.0.0.1"</span>,</code><span class="key"> Specifies the default IP address for the web server.</span><br>

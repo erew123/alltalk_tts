@@ -404,7 +404,6 @@ def combine(audio_files, output_folder, state):
     )
     sf.write(output_file_path, audio, samplerate=sample_rate)
     print(f"[{params['branding']}TTSGen] Narrated audio generated")
-
     # Clean up unnecessary files
     for audio_file in audio_files:
         os.remove(audio_file)
