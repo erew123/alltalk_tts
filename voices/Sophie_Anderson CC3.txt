@@ -1,0 +1,11 @@
+https://commons.wikimedia.org/wiki/File:Sophie_Anderson%27s_Voice.flac
+Description	
+English: A clip of Sophie Anderson's voice as she speaks on a podcast hosted by James English and published on the 17th of July 2022
+Date	17 July 2022
+Source	YouTube: https://www.youtube.com/watch?v=qTyBoU1Xw2w%7C (Time: 1h19m7s) – View/save archived versions on archive.org and archive.today
+Author	Anything Goes With James English
+
+This file is licensed under the Creative Commons Attribution 3.0 Unported license.
+https://creativecommons.org/licenses/by/3.0/deed.en
+
+Downsampled to 22050hz, mono and cut shorter

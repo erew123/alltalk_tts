@@ -1,0 +1,11 @@
+https://commons.wikimedia.org/wiki/File:Sir_David_Attenborough_BBC_Radio4_Desert_Island_Discs_29_Jan_2012_b01b8yy0.flac
+Description	
+English: The speaking voice of David Attenborough, from the BBC Radio 4 programme Desert Island Discs. Attenborough is describing an interaction he had with a Rwandan mountain gorilla while filming an episode of Life on Earth (1979).
+Date	29 January 2012
+Source	http://www.bbc.co.uk/programmes/b01b8yy0
+Author	BBC
+
+This file is licensed under the Creative Commons Attribution 3.0 Unported license.
+https://creativecommons.org/licenses/by/3.0/deed.en
+
+Downsampled to 22050hz, mono and cut shorter

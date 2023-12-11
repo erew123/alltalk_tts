@@ -1,0 +1,11 @@
+https://commons.wikimedia.org/wiki/File:Morgan_freeman_bbc_radio4_film_programme_12_09_2008_b00dbcdn.flac
+Description	
+English: The speaking voice of American actor Morgan Freeman, from the BBC Radio 4 programme The Film Programme. He discusses people's perception that he "embodies gravitas".
+Date	12 September 2008
+Source	http://www.bbc.co.uk/programmes/b00dbcdn
+Author	BBC
+
+This file is licensed under the Creative Commons Attribution 3.0 Unported license.
+https://creativecommons.org/licenses/by/3.0/deed.en
+
+Downsampled to 22050hz, mono and cut shorter

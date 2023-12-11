@@ -1,0 +1,12 @@
+https://commons.wikimedia.org/wiki/File:James_Earl_Jones_BBC_Radio4_Front_Row_31_Dec_2009_b00pfl98.flac
+
+Description	
+English: The speaking voice of James Earl Jones, from the BBC programme Front Row.
+Date	31 December 2009
+Source	http://www.bbc.co.uk/programmes/b00pfl98
+Author	BBC
+
+This file is licensed under the Creative Commons Attribution 3.0 Unported license.
+https://creativecommons.org/licenses/by/3.0/deed.en
+
+Downsampled to 22050hz, mono and cut shorter
