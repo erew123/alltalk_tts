@@ -35,6 +35,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 with open(this_dir / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
 
+
 ##############################################################
 #### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
 ##############################################################
@@ -44,12 +45,13 @@ def load_config(file_path):
         configfile_data = json.load(configfile_path)
     return configfile_data
 
+
 # Define the path to the config.json file
 configfile_path = this_dir / "config.json"
 
 # Load config.json and assign it to a different variable (config_data)
 params = load_config(configfile_path)
-# check someone hasnt enabled lowvram on a system thats not cuda enabled 
+# check someone hasnt enabled lowvram on a system thats not cuda enabled
 params["low_vram"] = "false" if not torch.cuda.is_available() else params["low_vram"]
 
 # Define the path to the JSON file
@@ -98,10 +100,14 @@ try:
 
     deepspeed_installed = True
     print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
-    print(f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']} settings")
+    print(
+        f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']} settings"
+    )
 except ImportError:
     deepspeed_installed = False
-    print(f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed")
+    print(
+        f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed"
+    )
 
 
 @asynccontextmanager
@@ -157,7 +163,6 @@ async def setup():
     params["model_loaded"] = True
     # Set the output path for wav files
     Path(f'{params["output_folder_wav"]}').mkdir(parents=True, exist_ok=True)
-
 
 
 # MODEL LOADER For "API TTS"
@@ -255,6 +260,7 @@ async def handle_tts_method_change(tts_method):
     # Load the correct model based on the updated params
     await setup()
 
+
 # MODEL WEBSERVER- API Swap Between Models
 @app.route("/api/reload", methods=["POST"])
 async def reload(request: Request):
@@ -265,6 +271,7 @@ async def reload(request: Request):
     return Response(
         content=json.dumps({"status": "model-success"}), media_type="application/json"
     )
+
 
 ##################
 #### LOW VRAM ####
@@ -282,6 +289,7 @@ async def switch_device():
             device == "cpu"
             device = "cuda"
             model.to(device)
+
 
 @app.post("/api/lowvramsetting")
 async def set_low_vram(request: Request, new_low_vram_value: bool):
@@ -313,7 +321,9 @@ async def set_low_vram(request: Request, new_low_vram_value: bool):
                 await setup()
             else:
                 # Handle the case where CUDA is not available
-                print(f"[{params['branding']}Model] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode.")
+                print(
+                    f"[{params['branding']}Model] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode."
+                )
                 params["low_vram"] = False
         else:
             await unload_model(model)
@@ -328,11 +338,14 @@ async def set_low_vram(request: Request, new_low_vram_value: bool):
                 await setup()
             else:
                 # Handle the case where CUDA is not available
-                print(f"[{params['branding']}Model] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode.")
+                print(
+                    f"[{params['branding']}Model] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode."
+                )
                 params["low_vram"] = False
         return Response(content=json.dumps({"status": "lowvram-success"}))
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
+
 
 ###################
 #### DeepSpeed ####
@@ -399,6 +412,7 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
 
+
 ########################
 #### TTS GENERATION ####
 ########################
@@ -412,21 +426,42 @@ async def generate_audio(text, voice, language, output_file):
     if params["tts_method_xtts_local"]:
         print(f"[{params['branding']}TTSGen] {text}")
         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(
-            audio_path=[f"{this_dir}/voices/{voice}"]
+            audio_path=[f"{this_dir}/voices/{voice}"],
+            gpt_cond_len=model.config.gpt_cond_len,
+            max_ref_length=model.config.max_ref_len,
+            sound_norm_refs=model.config.sound_norm_refs,
         )
         out = model.inference(
             text,
             language,
             gpt_cond_latent=gpt_cond_latent,
             speaker_embedding=speaker_embedding,
-            temperature=0.7,
+            temperature=model.config.temperature,
+            length_penalty=model.config.length_penalty,
+            repetition_penalty=model.config.repetition_penalty,
+            top_k=model.config.top_k,
+            top_p=model.config.top_p,
             enable_text_splitting=True,
         )
         torchaudio.save(output_file, torch.tensor(out["wav"]).unsqueeze(0), 24000)
-    # API TTS and API LOCAL Methods
-    elif params["tts_method_api_tts"] or params["tts_method_api_local"]:
+    # API LOCAL Methods
+    elif params["tts_method_api_local"]:
         # Set the correct output path (different from the if statement)
-        print(f"[{params['branding']}TTSGen] Using API TTS/Local Method")
+        print(f"[{params['branding']}TTSGen] Using API Local")
+        model.tts_to_file(
+            text=text,
+            file_path=output_file,
+            speaker_wav=[f"{this_dir}/voices/{voice}"],
+            language=language,
+            temperature=model.config.temperature,
+            length_penalty=model.config.length_penalty,
+            repetition_penalty=model.config.repetition_penalty,
+            top_k=model.config.top_k,
+            top_p=model.config.top_p,
+        )
+    # API TTS
+    elif params["tts_method_api_tts"]:
+        print(f"[{params['branding']}TTSGen] Using API TTS")
         model.tts_to_file(
             text=text,
             file_path=output_file,
@@ -469,8 +504,13 @@ async def generate(request: Request):
 ###################################################
 # List files in the "voices" directory
 def list_files(directory):
-    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith('.wav')]
+    files = [
+        f
+        for f in os.listdir(directory)
+        if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")
+    ]
     return files
+
 
 #############################
 #### JSON CONFIG UPDATER ####
@@ -478,6 +518,7 @@ def list_files(directory):
 
 # Create an instance of Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=this_dir / "templates")
+
 
 # Create a dependency to get the current JSON data
 def get_json_data():
@@ -500,6 +541,7 @@ async def get_settings(request: Request):
             "wav_files": wav_files,
         },
     )
+
 
 @app.post("/update-settings")
 async def update_settings(
