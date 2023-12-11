@@ -499,8 +499,8 @@ def output_modifier(string, state):
                     parts = re.split(r'"', decoded_text)
                     audio_files_paragraph = []
                     for i, part in enumerate(parts):
-                        # Skip empty parts
-                        if not part:
+                        # Skip parts that are too short
+                        if len(part.strip()) <= 1:
                             continue
                         # Determine if it's a narrator or voice part within double quotes
                         is_narrator_part = is_narrator if i % 2 == 0 else False
