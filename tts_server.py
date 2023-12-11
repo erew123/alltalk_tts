@@ -436,11 +436,11 @@ async def generate_audio(text, voice, language, output_file):
             language,
             gpt_cond_latent=gpt_cond_latent,
             speaker_embedding=speaker_embedding,
-            temperature=model.config.temperature,
-            length_penalty=model.config.length_penalty,
-            repetition_penalty=model.config.repetition_penalty,
-            top_k=model.config.top_k,
-            top_p=model.config.top_p,
+            temperature=float(params["local_temperature"]),
+            length_penalty=float(model.config.length_penalty),
+            repetition_penalty=float(params["local_repetition_penalty"]),
+            top_k=int(model.config.top_k),  # Convert to int if necessary
+            top_p=float(model.config.top_p),
             enable_text_splitting=True,
         )
         torchaudio.save(output_file, torch.tensor(out["wav"]).unsqueeze(0), 24000)
@@ -453,9 +453,9 @@ async def generate_audio(text, voice, language, output_file):
             file_path=output_file,
             speaker_wav=[f"{this_dir}/voices/{voice}"],
             language=language,
-            temperature=model.config.temperature,
+            temperature=float(params["local_temperature"]),
             length_penalty=model.config.length_penalty,
-            repetition_penalty=model.config.repetition_penalty,
+            repetition_penalty=float(params["local_repetition_penalty"]),
             top_k=model.config.top_k,
             top_p=model.config.top_p,
         )
@@ -552,6 +552,8 @@ async def update_settings(
     delete_output_wavs: str = Form(...),
     ip_address: str = Form(...),
     language: str = Form(...),
+    local_temperature: str = Form(...),
+    local_repetition_penalty: str = Form(...),
     low_vram: bool = Form(...),
     model_loaded: bool = Form(...),
     model_name: str = Form(...),
@@ -572,6 +574,8 @@ async def update_settings(
     data["delete_output_wavs"] = delete_output_wavs
     data["ip_address"] = ip_address
     data["language"] = language
+    data["local_temperature"] = local_temperature
+    data["local_repetition_penalty"] = local_repetition_penalty
     data["low_vram"] = low_vram
     data["model_loaded"] = model_loaded
     data["model_name"] = model_name
@@ -705,13 +709,14 @@ simple_webpage = """
     <p>If you are looking for your <b>Text generation webUI</b> webpage, try visiting <a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a>.</p>
     <p><b>Text generation webUI</b> documentation and wiki <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">https://github.com/oobabooga/text-generation-webui/wiki</a>.</p>
 
-    <iframe src="http://127.0.0.1:7851/settings" width="100%" height="470" frameborder="0" style="margin: 0; padding: 0;"></iframe>
+    <iframe src="http://127.0.0.1:7851/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     
     <h3>Table of Contents</h3>
     <ul>
         <li><a href="#getting-started">Getting Started with AllTalk TTS</a></li>
         <li><a href="#server-information">Server Information</a></li>
         <li><a href="#using-voice-samples">Using Voice Samples</a></li>
+        <li><a href="#local-model-temperature-and-repetition-settings">Local Model temperature and repitition settings</a></li>
         <li><a href="#where-are-the-outputs-stored">Automatic output wav file deletion</a></li>
         <li><a href="#low-vram-option-overview">Low VRAM Overview</a></li>
         <li><a href="#deepspeed-simplified">DeepSpeed Simplified</a></li>
@@ -762,7 +767,67 @@ simple_webpage = """
     <li>Try using the 3x different generation methods: <b>API TTS</b>, <b>API Local</b>, and <b>XTTSv2 Local</b> within the web interface, as they generate output in different ways and sound different.</li>
     </ul>
     <p><a href="#toc">Back to top of page</a></p>
-    
+
+
+    <h3 id="local-model-temperature-and-repetition-settings"><strong>Local Model Temperature and Repetition Settings</strong></h3>
+    <p><strong>Caution:</strong> It is recommended not to modify these settings unless you fully comprehend their effects. A general overview is provided below for reference.</p>
+    <p><strong>Note:</strong> Any changes to these two settings won't take effect until you restart AllTalk/Text generation webUI.</p>
+
+    <p>These settings only affect <b>API Local</b> and <b>XTTSv2 Local</b> methods.</p>
+
+    <h4>Repetition Penalty:</h4>
+    <p>In the context of text-to-speech (TTS), the <strong>Repetition Penalty</strong> (e.g., "local_repetition_penalty") influences how the model handles the repetition of sounds, phonemes, or intonation patterns. Here's how it works:</p>
+    <ul>
+        <li><strong>Higher Repetition Penalty (e.g. 10.0):</strong> The model is less likely to repeat sounds or patterns. It promotes diversity and reduces redundancy in the generated speech. This can result in a more varied and expressive output, introducing elements of unpredictability and creativity.</li>
+        <li><strong>Lower Repetition Penalty (e.g. 2.0):</strong> The model is more tolerant of repeating sounds or patterns. This might lead to more repetition in the generated speech, potentially making it sound more structured or rhythmically consistent. Lower values can still introduce expressive variations, but to a lesser extent. This tendency means that the generated speech may remain closer to the original sample.</li>
+    </ul>
+
+    <h4>Temperature:</h4>
+    <p>In the context of text-to-speech (TTS), the <strong>Temperature</strong> (e.g., "local_temperature") influences the randomness of the generated speech. Here's how it affects the output:</p>
+    <ul>
+        <li><strong>Higher Temperature (e.g. 0.75):</strong> Increases randomness in how the model selects and pronounces phonemes or intonation patterns. This can result in more creative, but potentially less controlled or "stable," speech that may deviate from the input sample. It adds an element of unpredictability and variety, contributing to expressiveness in the voice output created.</li>
+        <li><strong>Lower Temperature (e.g. 0.20):</strong> Reduces randomness, making the model more likely to closely mimic the input sample's voice, intonation, and overall style. This tends to produce more "coherent" speech that aligns closely with the characteristics of the training data or input voice sample. It adds a level of predictability and consistency, potentially reducing expressive variations.</li>
+    </ul>
+
+    <h4><strong>Temperature and Repetition Settings Examples:</strong></h4>
+
+    <ul>
+        <li>
+            <strong>Temp High (e.g. 0.90) and Repetition High (e.g. 10.0):</strong><br>
+            Result: Speech may sound highly creative and diverse, with reduced repetition. It could be more expressive and unpredictable.
+        </li>
+
+        <li>
+            <strong>Temp Low (e.g. 0.20) and Repetition High (e.g. 10.0):</strong><br>
+            Result: Output tends to be focused and deterministic, but with reduced repetition. It may sound structured and less expressive.
+        </li>
+
+        <li>
+            <strong>Temp High (e.g. 0.90) and Repetition Low (e.g. 2.0):</strong><br>
+            Result: Speech may be more creative and diverse, with tolerance for repeating sounds. It could have expressive variations but with some structured patterns.
+        </li>
+
+        <li>
+            <strong>Temp Low (e.g. 0.20) and Repetition Low (e.g. 2.0):</strong><br>
+            Result: Output is focused and deterministic, with tolerance for repeating sounds. It may sound more structured and less expressive.
+        </li>
+    </ul>
+
+    <h4>Default Values for XTTSv2 version 2.0.2:</h4>
+
+    <p>In the XTTSv2 version 2.0.2 model, the default factory values are:</p>
+
+    <ul>
+        <li><strong>Default Temperature:</strong> "temperature": 0.75 - A balanced value that provides a good trade-off between creativity and stability.</li>
+        <li><strong>Default Repetition Penalty:</strong> "repetition_penalty": 10.0 - A higher value that encourages diversity and reduces repetition of sounds, contributing to a more expressive output.</li>
+    </ul>
+
+    <p>The temperature has been set at 0.70 here though, as it often produces a slightly better result (in my estimation).</p>
+
+    <p>The default settings for any model are usually provided in the config.json file that comes wtih the model and this file can be found within the folder where the model is stored.</p>
+    <p>These default values are carefully chosen to offer a reasonable starting point for users, and adjustments can be made based on individual preferences and use cases. However, it's important to note that changing these settings or setting them to extremes may result in unexpected outcomes. Setting extremely high or low values, especially without a good understanding of their effects, may lead to flat-sounding output or very strange-sounding output. It's advisable to experiment with adjustments incrementally and observe the impact on the generated speech to find a balance that suits your desired outcome.</p>
+    <p><a href="#toc">Back to top of page</a></p>
+
     <h3 id="low-vram-option-overview"><strong>Low VRAM Overview:</strong></h3>
     <p>The Low VRAM option is a crucial feature designed to enhance performance under constrained Video Random Access Memory (VRAM) conditions, as the TTS models require 2GB-3GB of VRAM to run effectively. This feature strategically manages the relocation of the Text-to-Speech (TTS) model between your system's Random Access Memory (RAM) and VRAM, moving it between the two on the fly.</p>
     <p><b>Note: </b>An Nvidia Graphics card is required for LowVRAM, as you will be using system memory for the models otherwise.</p>
@@ -943,6 +1008,8 @@ simple_webpage = """
     <code><span class="key">"ip_address:"</span> <span class="value">"127.0.0.1"</span>,</code><span class="key"> Specifies the default IP address for the web server.</span><br>
     <code><span class="key">"language:"</span> <span class="value">"English"</span>,</code><span class="key"> Specifies the default language to use for TTS.</span><br>
     <code><span class="key">"low_vram:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the Low VRAM option is enabled or disabled.</span><br>
+    <code><span class="key">"local_temperature:"</span> <span class="value">"0.70"</span>,</code><span class="key"> Sets the temperature to use with the API Local and XTTSv2 Local methods.</span><br>
+    <code><span class="key">"local_repetition_penalty:"</span> <span class="value">"10.0"</span>,</code><span class="key"> Sets the repetition penalty to use with the API Local and XTTSv2 Local methods.</span><br>
     <code><span class="key">"model_loaded:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
     <code><span class="key">"model_name:"</span> <span class="value">"tts_models/multilingual/multi-dataset/xtts_v2"</span>,</code><span class="key"> Specifies the model that the "API TTS" method will use for TTS generation.</span><br>
     <code><span class="key">"narrator_enabled:"</span> <span class="value">"female_02.wav"</span>,</code><span class="key"> Specifies the default narrator voice to use for TTS.</span><br>
