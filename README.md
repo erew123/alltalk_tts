@@ -9,7 +9,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Console output** Clear command line output for any warnings or issues.
-- **3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
+- **Standalone/3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
 
 ## Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, instructions [here](https://github.com/oobabooga/text-generation-webui#getting-updates)
@@ -54,5 +54,5 @@ Once the extension is loaded, please find all documentation and settings on the 
 To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
 
 ## Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/1ef942b9-654e-42cc-9144-cf48597ec791) | ![Screenshot 2023-12-09 190108](https://github.com/erew123/alltalk_tts/assets/35898566/ecd75913-5c33-4a99-810c-15b74cc6c91a) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/dfb972dd-817b-45f8-8878-3d3f82ac1ecc) | ![Screenshot 2023-12-09 190108](https://github.com/erew123/alltalk_tts/assets/35898566/ecd75913-5c33-4a99-810c-15b74cc6c91a) |
 |:---:|:---:|
