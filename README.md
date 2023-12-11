@@ -46,7 +46,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 **Documentation:** Click on the link when inside Text generation webUI as shown in the screenshot [here](https://github.com/erew123/alltalk_tts#screenshots)
 
-**Where to find voices** https://aiartes.com/voiceai (is one example) or interviews on youtube etc. Instructions on how to cut down and prepare a voice sample are within the built in documentation.
+**Where to find voices** https://aiartes.com/voiceai or https://commons.wikimedia.org/ or interviews on youtube etc. Instructions on how to cut down and prepare a voice sample are within the built in documentation.
 
 ### Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface (details in documentation).
