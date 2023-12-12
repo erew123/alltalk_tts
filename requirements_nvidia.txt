@@ -1,4 +1,4 @@
-numpy>=1.24.4
+numpy>=1.22.0
 soundfile>=0.12.1
 uvicorn>=0.24.0.post1
 TTS>=0.21.3
