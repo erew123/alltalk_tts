@@ -508,8 +508,10 @@ def output_modifier(string, state):
                     .replace('&quot;', '&quot;<')
                     # Capture new conversations which wont have things like &quote in them
                     .replace('"', '&quot;<')
-
                 )
+                #capturing another outlier in inital character paragraph
+                processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
+                processed_string = processed_string.replace('< *"', '< *')
                 # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
                 # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
