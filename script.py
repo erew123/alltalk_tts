@@ -48,7 +48,6 @@ except ModuleNotFoundError:
 # IMPORT - Attempt Importing DeepSpeed (required for displaying Deepspeed checkbox in gradio)
 try:
     import deepspeed
-
     deepspeed_installed = True
 except ImportError:
     deepspeed_installed = False
@@ -155,8 +154,8 @@ elif params["tts_method_api_local"] == True:
 elif params["tts_method_xtts_local"] == True:
     gr_modelchoice = "XTTSv2 Local"
 
-gr_narrator_enabled = str(params["narrator_enabled"]).lower()
-
+# Set the default for Narrated text without asterisk or quotes to be Narrator
+non_quoted_text_is = True
 
 ######################
 #### GRADIO STUFF ####
@@ -289,6 +288,21 @@ def send_reload_request(tts_method):
         if json_response.get("status") == "model-success":
             # Update model_loaded to True if the reload was successful
             params["model_loaded"] = True
+            # Update local script parameters based on the tts_method
+            if tts_method == "API TTS":
+                params["tts_method_api_local"] = False
+                params["tts_method_xtts_local"] = False
+                params["tts_method_api_tts"] = True
+                params["deepspeed_activate"] = False
+            elif tts_method == "API Local":
+                params["tts_method_api_tts"] = False
+                params["tts_method_xtts_local"] = False
+                params["tts_method_api_local"] = True
+                params["deepspeed_activate"] = False
+            elif tts_method == "XTTSv2 Local":
+                params["tts_method_api_tts"] = False
+                params["tts_method_api_local"] = False
+                params["tts_method_xtts_local"] = True
         return json_response
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
@@ -402,11 +416,11 @@ def combine(audio_files, output_folder, state):
             audio = np.concatenate((audio, audio_data))
 
     # Save the combined audio to a file with a specified sample rate
-    output_file_path = os.path.join(
-        output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav'
-    )
+    if "character_menu" in state:
+        output_file_path = os.path.join(output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav')
+    else:
+        output_file_path = os.path.join(output_folder, f'TTSOUT_{int(time.time())}_combined.wav')
     sf.write(output_file_path, audio, samplerate=sample_rate)
-    print(f"[{params['branding']}TTSGen] Narrated audio generated")
     # Clean up unnecessary files
     for audio_file in audio_files:
         os.remove(audio_file)
@@ -463,7 +477,6 @@ def voice_preview(string):
 #################################
 # STANDARD VOICE - Generate TTS Function
 def output_modifier(string, state):
-    # DEBUG print("THE ORIGINAL STRING IS:", string,"\n")
     if not params["activate"]:
         return string
     original_string = string
@@ -477,65 +490,88 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                processed_string = original_string
-                processed_string = processed_string.replace("***", "*")
-                processed_string = processed_string.replace("**", "*")
-                processed_string = processed_string.replace(".*", "*")
-                processed_string = processed_string.replace(".'", "'")
-                processed_string = processed_string.replace(".&#x27;", "'")
-                # Remove new lines
-                processed_string = processed_string.replace("\n", " ")
-                #DEBUG print("PROCESSED STRING IS NOW:", processed_string)
-                # Split the processed string into lines
-                lines = processed_string.split("\n")
+                # Do Some basic stripping and remove any double CR's
+                processed_string = (
+                    original_string
+                    .replace("***", "*")
+                    .replace("**", "*")
+                    .replace("\n\n", "\n")
+                )
+                # Clean up two asterisks (narrators) being made between a newline, making it one sentence.
+                processed_string = re.sub(r'\.\*\n\*', '. ', processed_string)
+                # Clean up a few other bits.
+                processed_string = (
+                    processed_string
+                    .replace("&#x27;", "'")
+                    .replace("\n", " ")
+                    # Add special characters to the quote so that we can use it to identify things later after its been split
+                    .replace('&quot;', '&quot;<')
+                    # Capture new conversations which wont have things like &quote in them
+                    .replace('"', '&quot;<')
+
+                )
+                # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
-                is_narrator = False
-                for line in lines:
-                    # Decode HTML entities
-                    decoded_text = html.unescape(line)
-                    # Initialize variables to track narrator and voice parts
-                    is_narrator = "*" in line or is_narrator
-                    # Split the line using double quotes
-                    parts = re.split(r'"', decoded_text)
-                    audio_files_paragraph = []
-                    for i, part in enumerate(parts):
-                        # Skip parts that are too short
-                        if len(part.strip()) <= 1:
-                            continue
-                        # Determine if it's a narrator or voice part within double quotes
-                        is_narrator_part = is_narrator if i % 2 == 0 else False
-                        voice_to_use = (
-                            params["narrator_voice"] if is_narrator_part else params["voice"]
-                        )
-                        # DEBUG print(f"THE STRING TO BE USED: {voice_to_use} {part.strip()}")
-                        # Process the part
-                        output_file = Path(
-                            f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}_{i}.wav'
-                        )
-                        output_file_str = output_file.as_posix()
-                        generate_response = send_generate_request(
-                            part, voice_to_use, language_code, output_file_str
-                        )
-                        audio_path = generate_response.get("data", {}).get("audio_path")
-                        audio_files_paragraph.append(audio_path)
-                    is_narrator_part = is_narrator if i % 2 == 0 else False
-                    voice_to_use = (
-                        params["narrator_voice"] if is_narrator_part else params["voice"]
+                # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
+                parts = re.split(r'&quot;|\.\*', processed_string)
+                audio_files_paragraph = []
+                for i, part in enumerate(parts):
+                    # Skip parts that are too short
+                    if len(part.strip()) <= 1:
+                        continue
+                    # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
+                    # Character will always be a < with a letter immediately after it
+                    if '<' in part and '< *' not in part and '<*' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
+                        cleaned_part = html.unescape(part.replace('<', ''))
+                        voice_to_use = params["voice"]
+                    #Narrator will always be am * or < with an * a position or two after it.
+                    elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
+                        cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', ''))
+                        voice_to_use = params["narrator_voice"]
+                    #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
+                    elif non_quoted_text_is:
+                        cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
+                        voice_to_use = params["voice"]
+                    else:
+                        cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
+                        voice_to_use = params["narrator_voice"]
+                    # Check if character name exists and if not, just call it TTSOUT_
+                    if "character_menu" in state:
+                        output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}_{i}.wav')
+                    else:
+                        output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}_{i}.wav')
+                    # Generate that TTS and output to a file
+                    output_file_str = output_file.as_posix()
+                    generate_response = send_generate_request(
+                        cleaned_part, voice_to_use, language_code, output_file_str
                     )
-                    # Accumulate audio files within the paragraph
-                    audio_files_all_paragraphs.extend(audio_files_paragraph)
+                    audio_path = generate_response.get("data", {}).get("audio_path")
+                    audio_files_paragraph.append(audio_path)
+                # Accumulate audio files within the paragraph
+                audio_files_all_paragraphs.extend(audio_files_paragraph)
                 # Combine audio files across paragraphs
                 final_output_file = combine(
                     audio_files_all_paragraphs, params["output_folder_wav"], state
                 )
             else:
-                output_file = Path(
-                    f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav'
+                processed_string = (
+                    original_string
+                    .replace("***", "")
+                    .replace("**", "")
+                    .replace("*", "")
+                    .replace("\n\n", "\n")
+                    .replace("&#x27;", "'")
                 )
+                cleaned_part = html.unescape(processed_string)                
+                # Process the part and give it a non-character name if being used vai API or standalone.
+                if "character_menu" in state:
+                    output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')
+                else:
+                    output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav')
                 output_file_str = output_file.as_posix()
                 output_file = get_output_filename(state)
                 generate_response = send_generate_request(
-                    string, params["voice"], language_code, output_file_str
+                    cleaned_part, params["voice"], language_code, output_file_str
                 )
                 audio_path = generate_response.get("data", {}).get("audio_path")
                 final_output_file = audio_path
@@ -620,6 +656,12 @@ def update_narrator_enabled(value):
     elif value == "Disabled":
         params["narrator_enabled"] = False
 
+def update_non_quoted_text_is(value):
+    global non_quoted_text_is
+    if value == "Narrator":
+        non_quoted_text_is = False
+    elif value == "Char":
+        non_quoted_text_is = True
 
 def input_modifier(string, state):
     if not params["activate"]:
@@ -702,11 +744,16 @@ def ui():
                     },
                     "refresh-button",
                 )
-            narrator_enabled_gr = gr.Radio(
-                choices={"Enabled": "true", "Disabled": "false"},
-                label="Narrator Activation",
-                value="Enabled" if gr_narrator_enabled == "true" else "Disabled",
-            )
+                narrator_enabled_gr = gr.Radio(
+                    choices={"Enabled": "true", "Disabled": "false"},
+                    label="Narrator Activation",
+                    value="Enabled" if params.get("narrator_enabled") else "Disabled",
+                )
+                non_quoted_text_is_gr = gr.Radio(
+                    choices={"Char": "true", "Narrator": "false"},
+                    label='Text NOT inside of * or " is',
+                    value="Char" if non_quoted_text_is else "Narrator",
+                )
 
         with gr.Row():
             low_vram = gr.Checkbox(
@@ -807,9 +854,8 @@ def ui():
 
     # Narrator selection actions
     narrator_enabled_gr.change(update_narrator_enabled, narrator_enabled_gr, None)
-    narrator_voice_gr.change(
-        lambda x: params.update({"narrator_voice": x}), narrator_voice_gr, None
-    )
+    non_quoted_text_is_gr.change(update_non_quoted_text_is, non_quoted_text_is_gr, None)
+    narrator_voice_gr.change(lambda x: params.update({"narrator_voice": x}), narrator_voice_gr, None)
 
     # Play preview
     preview_text.submit(voice_preview, preview_text, preview_audio)

@@ -1,5 +1,4 @@
 import json
-import random
 import time
 import os
 from pathlib import Path
@@ -15,13 +14,12 @@ from fastapi import (
     FastAPI,
     Form,
     Request,
-    HTTPException,
-    BackgroundTasks,
     Response,
     Depends,
 )
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 ###########################
@@ -511,7 +509,6 @@ def list_files(directory):
     ]
     return files
 
-
 #############################
 #### JSON CONFIG UPDATER ####
 #############################
@@ -541,7 +538,8 @@ async def get_settings(request: Request):
             "wav_files": wav_files,
         },
     )
-
+# Define an endpoint to serve static files
+app.mount("/static", StaticFiles(directory=str(this_dir / "templates")), name="static")
 
 @app.post("/update-settings")
 async def update_settings(
@@ -716,6 +714,7 @@ simple_webpage = """
         <li><a href="#getting-started">Getting Started with AllTalk TTS</a></li>
         <li><a href="#server-information">Server Information</a></li>
         <li><a href="#using-voice-samples">Using Voice Samples</a></li>
+        <li><a href="#text-not-inside">Text Not inside function</a></li>
         <li><a href="#local-model-temperature-and-repetition-settings">Local Model temperature and repetition settings</a></li>
         <li><a href="#where-are-the-outputs-stored">Automatic output wav file deletion</a></li>
         <li><a href="#low-vram-option-overview">Low VRAM Overview</a></li>
@@ -768,6 +767,15 @@ simple_webpage = """
     </ul>
     <p><a href="#toc">Back to top of page</a></p>
 
+    <h3 id="text-not-inside"><strong>Text Not inside function</strong></h3>
+    <p>When using the Narrator function, most AI models should be using asterisks or double quotes to differentiate between the Narrator or the Character, however, many models sometimes switch between using asterisks and double quotes or nothing at all. This leaves a bit of a mess because sometimes that text is narration and sometimes its the character talking and there's no clear way to know where to split sentences. There is no 100&percnt; solution at the moment.</p>
+    <p>Most models usually lean more way than the other as to it is narration or the character talking when it does this. So you can use the "<b>Text NOT inside of * or &quot; is</b>" function to decide what the TTS engine should do in situations like this. It's an either/or situation. It will either use the Character voice or the narrator voice when text is not inside asterisks or double quotes.</p>
+
+    <div style="text-align: center;">
+        <img src="/static/textnotinside.jpg" alt="When the AI doesnt use an asterisk or a quote">
+    </div>
+
+    <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="local-model-temperature-and-repetition-settings"><strong>Local Model Temperature and Repetition Settings</strong></h3>
     <p><strong>Caution:</strong> It is recommended not to modify these settings unless you fully comprehend their effects. A general overview is provided below for reference.</p>
