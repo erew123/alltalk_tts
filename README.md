@@ -12,7 +12,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Standalone/3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
 
 #### Updates
-The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
+The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
 
 Should you want the older version of the narrator engine+text filtering, I will leave this older copy [here](https://github.com/erew123/alltalk_tts/releases/tag/v1-old-narrator)
 
