@@ -16,6 +16,9 @@ The latest build (13 Dec 2023) has had the entire text filtering engine and narr
 
 Should you want the older version of the narrator engine+text filtering, I will leave this older copy [here](https://github.com/erew123/alltalk_tts/releases/tag/v1-old-narrator)
 
+#### The one thing I cant easily work around
+With a RP chat with your AI, on your character card `parameters menu` > `character tab` > `greeting` make sure that anything in there that is the narrator is in asterisks and anything spoken is in double quotes, then hit the `save` (disk) button. There is something about starting a sentence, on the greeting with asterisks, but then text never having another delimiter. I could force one in at this stage, but I know it would affect things further down the line in the chat. This only affects the greeting card. I do have thoughts how to resolve this in future, but I have to account for all the other logic further down the chain and re-test everything, so the simple fix is just make sure your character greeting card has double quotes around text and asterisks around narrator. Besides, thats good practise as it should educate your AI to carry forward with the conversation in that format. You can see the behaviour I detail occuring on the "example" assistant that comes with text-generation-webui.
+
 ## Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, instructions [here](https://github.com/oobabooga/text-generation-webui#getting-updates)
 
