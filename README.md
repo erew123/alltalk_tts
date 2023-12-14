@@ -4,7 +4,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18fYWVxiQpk1)
 - **Low VRAM mode:** Improve generation performance if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed v11.2 Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-112-for-windows--python-311)
+- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed v11.2 Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-112-for-windows--python-311) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
