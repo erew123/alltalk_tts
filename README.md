@@ -84,6 +84,8 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 #### Pre-Compiled Wheel (for Windows and Python 3.11)
 [@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled wheel file, which you can download and use [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar.zip](https://github.com/oobabooga/text-generation-webui/files/13593455/deepspeed-0.11.1%2Be9503fe-cp311-cp311-win_amd64.rar.zip). To use this, you will need to:
 
+**Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
+
 1) Download the file and put it inside your **text-generation-webui** folder.
    
 3) Extract out the zip file [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar.zip](https://github.com/oobabooga/text-generation-webui/files/13593455/deepspeed-0.11.1%2Be9503fe-cp311-cp311-win_amd64.rar.zip), which will give you a RAR file *(this is because github wont allow rar files, only zip, so it had to be compressed twice)*.
