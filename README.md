@@ -72,9 +72,9 @@ Once the extension is loaded, please find all documentation and settings on the 
 To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
 
 ## Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/a4d983ab-f9e1-42dd-94ee-a85043f74ab2) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/3497d656-9729-4cb7-8d0d-6367078794ee) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4ca9b4c7-60ce-4ac6-82e5-fd1989b84644) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |
 |:---:|:---:|
-![DeepSpeed example](https://github.com/erew123/alltalk_tts/assets/35898566/8bb8521b-8dae-4335-ba81-70f25363465e)
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 
 ## DeepSpeed 11.2 (for Windows & Python 3.11)
 DeepSpeed v11.2 will work on the current text-generation-webui Python 3.11 environment! 
