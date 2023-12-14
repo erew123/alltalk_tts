@@ -80,6 +80,7 @@ DeepSpeed v11.2 will work on the current text-generation-webui Python 3.11 envir
 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
 
+#### OPTION 1
 #### Pre-Compiled Wheel (for Windows and Python 3.11) - Quick and easy!
 [@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled wheel file, which you can download and use [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar.zip](https://github.com/oobabooga/text-generation-webui/files/13593455/deepspeed-0.11.1%2Be9503fe-cp311-cp311-win_amd64.rar.zip). To use this, you will need to:
 
@@ -105,6 +106,7 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
     
 12) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
 
+#### OR OPTION 2
 #### Manual Build (for Windows and Python 3.11) - A bit more complicated!
 To perform a manual build of DeepSpeed 11.2, you would follow the instructions for creating DeepSpeed v8.3, but in its place, you would download DeepSpeed v11.2 **Source code (zip)** [here](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) **and** you would use the text-generation-webui's Python environment `cmd_windows.bat`. Extract the downloaded file and you would have to make some file edits to the files in that folder before you can compile DeepSpeed v11.2. As Follows:
 
