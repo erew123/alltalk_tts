@@ -95,9 +95,11 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 
 `cmd_windows.bat`
 
-6) Move into the folder where the `whl` file was extracted to and then `pip install "deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl"`
+6) Move into the folder where the `whl` file was extracted to and then
+
+`pip install "deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl"`
    
-8) This should install through cleanly and you should now have DeepSpeed 11.2 installed within the Python 3.11 environment of text-generation-webui.
+9) This should install through cleanly and you should now have DeepSpeed 11.2 installed within the Python 3.11 environment of text-generation-webui.
    
 10) When you start up text-generation-webui, you should note that AllTalk's startup says **[AllTalk Startup] DeepSpeed Detected**
     
