@@ -103,7 +103,7 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
    
 10) When you start up text-generation-webui, you should note that AllTalk's startup says **[AllTalk Startup] DeepSpeed Detected**
     
-12) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed" though remember you can only change 1x setting every 15 or so seconds, so dont try to activate DeepSpeed **and* LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the console, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
+12) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
 
 #### Manual Build (for Windows and Python 3.11) - A bit more complicated!
 To perform a manual build of DeepSpeed 11.2, you would follow the instructions for creating DeepSpeed v8.3, but in its place, you would download DeepSpeed v11.2 **Source code (zip)** [here](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) **and** you would use the text-generation-webui's Python environment `cmd_windows.bat`. Extract the downloaded file and you would have to make some file edits to the files in that folder before you can compile DeepSpeed v11.2. As Follows:
