@@ -78,6 +78,9 @@ To start AllTalk every Text generation webUI loads, edit the Text generation web
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 
+## DeepSpeed (for Linux)
+Covered in the online documentation, but a nice easy install.
+
 ## DeepSpeed 11.2 (for Windows & Python 3.11)
 DeepSpeed v11.2 will work on the current text-generation-webui Python 3.11 environment! 
 
