@@ -94,9 +94,9 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 
 **Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
 
-1) Download the file [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl](https://drive.google.com/file/d/1PFsf6uSPY5Cb4o9VxiZ7DLv-j35L7Y41/view?usp=sharing) by clicking the **download** icon at the top right of the screen and save the file it inside your **text-generation-webui** folder.
+1) Download the file [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl](https://drive.google.com/file/d/1PFsf6uSPY5Cb4o9VxiZ7DLv-j35L7Y41/view?usp=sharing) by going to the link and clicking the **download** icon at the top right of the screen and save the file it inside your **text-generation-webui** folder.
 
-2) At a command prompt window, move into your **text-generation-webui folder**, you can now start the Python environment for text-generation-webui:
+2) Open a command prompt window, move into your **text-generation-webui folder**, you can now start the Python environment for text-generation-webui:
 
 `cmd_windows.bat`
 
