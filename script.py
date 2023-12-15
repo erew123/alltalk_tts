@@ -271,7 +271,6 @@ else:
     # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
     sys.exit(1)
 
-
 #####################################
 #### MODEL LOADING AND UNLOADING ####
 #####################################
@@ -294,23 +293,25 @@ def send_reload_request(tts_method):
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_tts"] = True
                 params["deepspeed_activate"] = False
+                audio_path = this_dir / "templates" / "apitts.wav"
             elif tts_method == "API Local":
                 params["tts_method_api_tts"] = False
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_local"] = True
                 params["deepspeed_activate"] = False
+                audio_path = this_dir / "templates" / "apilocal.wav"
             elif tts_method == "XTTSv2 Local":
                 params["tts_method_api_tts"] = False
                 params["tts_method_api_local"] = False
                 params["tts_method_xtts_local"] = True
-        return json_response
+                audio_path = this_dir / "templates" / "xttslocal.wav"
+        return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
         print(
             f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}"
         )
         return {"status": "error", "message": str(e)}
-
 
 ##################
 #### LOW VRAM ####
@@ -319,6 +320,10 @@ def send_reload_request(tts_method):
 def send_lowvram_request(low_vram):
     try:
         params["model_loaded"] = False
+        if low_vram:
+            audio_path = this_dir / "templates" / "lowvramenabled.wav"
+        else:
+            audio_path = this_dir / "templates" / "lowvramdisabled.wav"
         url = f"{base_url}/api/lowvramsetting?new_low_vram_value={low_vram}"
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, headers=headers)
@@ -328,7 +333,7 @@ def send_lowvram_request(low_vram):
         if json_response.get("status") == "lowvram-success":
             # Update any relevant variables or perform other actions on success
             params["model_loaded"] = True
-        return json_response
+        return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
         print(
@@ -344,6 +349,11 @@ def send_lowvram_request(low_vram):
 def send_deepspeed_request(deepspeed_param):
     try:
         params["model_loaded"] = False
+        if deepspeed_param:
+            audio_path = this_dir / "templates" / "deepspeedenabled.wav"
+        else:
+            audio_path = this_dir / "templates" / "deepspeeddisabled.wav"
+        
         url = f"{base_url}/api/deepspeed?new_deepspeed_value={deepspeed_param}"
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, headers=headers)
@@ -353,7 +363,7 @@ def send_deepspeed_request(deepspeed_param):
         if json_response.get("status") == "deepspeed-success":
             # Update any relevant variables or perform other actions on success
             params["model_loaded"] = True
-        return json_response
+        return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
         print(
@@ -490,6 +500,7 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
+                # print(original_string)
                 # Do Some basic stripping and remove any double CR's
                 processed_string = (
                     original_string
@@ -510,8 +521,11 @@ def output_modifier(string, state):
                     .replace('"', '&quot;<')
                 )
                 #capturing another outlier in inital character paragraph
+                # print("processed string 1 is:", processed_string)
                 processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
                 processed_string = processed_string.replace('< *"', '< *')
+                processed_string = processed_string.replace('. *', '< *')
+                # print("processed string 2 is:", processed_string)
                 # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
                 # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
@@ -526,15 +540,17 @@ def output_modifier(string, state):
                     if '<' in part and '< *' not in part and '<*' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
                         cleaned_part = html.unescape(part.replace('<', ''))
                         voice_to_use = params["voice"]
-                    #Narrator will always be am * or < with an * a position or two after it.
+                    #Narrator will always be an * or < with an * a position or two after it.
                     elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
                         cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', ''))
                         voice_to_use = params["narrator_voice"]
                     #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
                     elif non_quoted_text_is:
+                        print("non quoted text")
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["voice"]
                     else:
+                        print("non quoted text")
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["narrator_voice"]
                     # Check if character name exists and if not, just call it TTSOUT_
@@ -651,7 +667,6 @@ def state_modifier(state):
     state["stream"] = False
     return state
 
-
 def update_narrator_enabled(value):
     if value == "Enabled":
         params["narrator_enabled"] = True
@@ -671,7 +686,6 @@ def input_modifier(string, state):
 
     shared.processing_message = "*Is recording a voice message...*"
     return string
-
 
 def custom_css():
     path_to_css = Path(f"{this_dir}/style.css")
@@ -761,11 +775,13 @@ def ui():
             low_vram = gr.Checkbox(
                 value=params["low_vram"], label="Low VRAM mode (Read NOTE)"
             )
+            low_vram_play = gr.HTML(visible=False)
             deepspeed_checkbox = gr.Checkbox(
                 value=params["deepspeed_activate"],
                 label="Activate DeepSpeed (Read NOTE)",
                 visible=deepspeed_installed,
             )
+            deepspeed_checkbox_play = gr.HTML(visible=False)
 
         with gr.Row():
             tts_radio_buttons = gr.Radio(
@@ -773,6 +789,7 @@ def ui():
                 label="Select TTS Generation Method (Read NOTE)",
                 value=gr_modelchoice,  # Set the default value
             )
+            tts_radio_buttons_play = gr.HTML(visible=False)
             explanation_text = gr.HTML(
                 f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>"
             )
@@ -845,9 +862,9 @@ def ui():
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
     low_vram.change(lambda x: params.update({"low_vram": x}), low_vram, None)
-    low_vram.change(lambda x: send_lowvram_request(x), low_vram, None)
-    tts_radio_buttons.change(send_reload_request, tts_radio_buttons, None)
-    deepspeed_checkbox.change(send_deepspeed_request, deepspeed_checkbox, None)
+    low_vram.change(lambda x: send_lowvram_request(x), low_vram, low_vram_play, None)
+    tts_radio_buttons.change(send_reload_request, tts_radio_buttons, tts_radio_buttons_play, None)
+    deepspeed_checkbox.change(send_deepspeed_request, deepspeed_checkbox, deepspeed_checkbox_play, None)
     remove_trailing_dots.change(
         lambda x: params.update({"remove_trailing_dots": x}), remove_trailing_dots, None
     )

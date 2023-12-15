@@ -17,7 +17,7 @@ from fastapi import (
     Response,
     Depends,
 )
-from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -186,9 +186,7 @@ async def api_manual_load_model():
         )
         model = TTS(
             model_path=modeldownload_base_path / modeldownload_model_path,
-            config_path=modeldownload_base_path
-            / modeldownload_model_path
-            / "config.json",
+            config_path=modeldownload_base_path / modeldownload_model_path / "config.json",
         ).to(device)
     return model
 
@@ -200,6 +198,7 @@ async def xtts_manual_load_model():
     # check to see if a custom path has been set in modeldownload.json and use that path to load the model if so
     if str(modeldownload_base_path) == "models":
         config_path = this_dir / "models" / modeldownload_model_path / "config.json"
+        vocab_path_dir = this_dir / "models" / modeldownload_model_path / "vocab.json"
         checkpoint_dir = this_dir / "models" / modeldownload_model_path
     else:
         print(
@@ -207,12 +206,14 @@ async def xtts_manual_load_model():
             modeldownload_base_path / modeldownload_model_path,
         )
         config_path = modeldownload_base_path / modeldownload_model_path / "config.json"
+        vocab_path_dir = modeldownload_base_path / modeldownload_model_path / "vocab.json"
         checkpoint_dir = modeldownload_base_path / modeldownload_model_path
     config.load_json(str(config_path))
     model = Xtts.init_from_config(config)
     model.load_checkpoint(
         config,
         checkpoint_dir=str(checkpoint_dir),
+        vocab_path=str(vocab_path_dir),
         use_deepspeed=params["deepspeed_activate"],
     )
     model.to(device)
@@ -538,6 +539,7 @@ async def get_settings(request: Request):
             "wav_files": wav_files,
         },
     )
+
 # Define an endpoint to serve static files
 app.mount("/static", StaticFiles(directory=str(this_dir / "templates")), name="static")
 
@@ -595,6 +597,25 @@ async def update_settings(
     # Redirect to the settings page to display the updated settings
     return RedirectResponse(url="/settings", status_code=303)
 
+
+##################################
+#### SETTINGS PAGE DEMO VOICE ####
+##################################
+# Submit demo post here
+@app.post("/tts-demo-request", response_class=JSONResponse)
+async def tts_demo_request(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
+    try:
+        output_file_path = this_dir / "outputs" / output_file
+        await generate_audio(text, voice, language, output_file_path)
+        return JSONResponse(content={"output_file_path": str(output_file)}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
+# Gives web access to the output files
+@app.get("/audio/{filename}")
+async def get_audio(filename: str):
+    audio_path = this_dir / "outputs" / filename
+    return FileResponse(audio_path)
 
 #############################################################
 #### DOCUMENTATION - README ETC - PRESENTED AS A WEBPAGE ####
@@ -699,13 +720,71 @@ simple_webpage = """
             font-weight: bold;
         }
 
+                /* New styles for TTS Request Page */
+        #container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 2px;
+        }
+
+        textarea, input, select, button {
+            padding: 4px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        p {
+            margin-top: 20px;
+        }
+
+        #outputFilePath {
+            font-weight: bold;
+        }
+
+        #audioSource {
+        display: block;
+        margin: auto;
+        }
+
+        #outputFilePath {
+        display: none;
+        }
+
     </style>
 </head>
 
 <body>
     <h1 id="toc">AllTalk TTS for Text generation webUI</h1>
-    <p>If you are looking for your <b>Text generation webUI</b> webpage, try visiting <a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a>.</p>
-    <p><b>Text generation webUI</b> documentation and wiki <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">https://github.com/oobabooga/text-generation-webui/wiki</a>.</p>
+    <p><b>Text generation webUI</b> webpage <a href="http://127.0.0.1:7860" target="_blank">here</a> and documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">here</a></p>
+    <p><b>AllTalk Github</b> <a href="https://github.com/erew123/alltalk_tts" target="_blank">here</a> 
 
     <iframe src="http://127.0.0.1:7851/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     
@@ -723,6 +802,7 @@ simple_webpage = """
         <li><a href="#other-features">Other Features of AllTalk_TTS Extension for Text generation webUI</a></li>
         <li><a href="#TTSmodels">TTS Models/Methods</a></li>
         <li><a href="#customTTSmodels">Custom TTS Models and Model path</a></li>
+        <li><a href="#demotesttts">Demo/Test TTS output</a></li>
         <li><a href="#curl-commands">CURL Commands</a></li>
         <li><a href="#configuration-details">Configuration Details</a></li>
         <li><a href="#debugging-and-tts-generation-information">Debugging and TTS Generation Information</a></li>
@@ -840,13 +920,20 @@ simple_webpage = """
 
     <h3 id="low-vram-option-overview"><strong>Low VRAM Overview:</strong></h3>
     <p>The Low VRAM option is a crucial feature designed to enhance performance under constrained Video Random Access Memory (VRAM) conditions, as the TTS models require 2GB-3GB of VRAM to run effectively. This feature strategically manages the relocation of the Text-to-Speech (TTS) model between your system's Random Access Memory (RAM) and VRAM, moving it between the two on the fly.</p>
+    <p>When you dont have enough VRAM free after loading your LLM model into your VRAM (Normal Mode example below), you can see that with so little working space, your GPU will have to swap in and out bits of the TTS model, which causes horrible slowdown.</p>
+    
     <p><b>Note: </b>An Nvidia Graphics card is required for LowVRAM, as you will be using system memory for the models otherwise.</p>
 
     <h4>How It Works:</h4>
-    <p>The Low VRAM option intelligently orchestrates the relocation of the entire TTS model. When the TTS engine requires VRAM for processing, the entire model seamlessly moves into VRAM, causing your LLM to unload/displace some layers, ensuring optimal performance of the TTS engine.</p>
+    <p>The Low VRAM mode intelligently orchestrates the relocation of the entire TTS model. When the TTS engine requires VRAM for processing, the entire model seamlessly moves into VRAM, causing your LLM to unload/displace some layers, ensuring optimal performance of the TTS engine.</p>
     <p>The TTS model is fully loaded into VRAM, facilitating uninterrupted and efficient TTS generation, creating contiguous space for the TTS model and significantly accelerating TTS processing, especially for long paragraphs. Post-TTS processing, the model promptly moves back to RAM, freeing up VRAM space for your Language Model (LLM) to load back in the missing layers. This adds about 1-2 seconds to both text generation by the LLM and the TTS engine.</p>
     <p>By transferring the entire model between RAM and VRAM, the Low VRAM option avoids fragmentation, ensuring the TTS model remains cohesive and accessible.</p>
     <p>This creates a TTS generation performance Boost for Low VRAM Users and is particularly beneficial for users with less than 2GB of free VRAM after loading their LLM, delivering a substantial 5-10x improvement in TTS generation speed.</p>
+
+    <div style="text-align: center;">
+        <img src="/static/lowvrammode.png" alt="How Low VRAM Works">
+    </div>
+
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="deepspeed-simplified"><strong>DeepSpeed Simplified:</strong></h3>
@@ -869,6 +956,10 @@ simple_webpage = """
         <li><strong>Smart Resource Use:</strong> Uses your computer's resources smartly, getting the most out of your hardware.</li>
     </ul>
     
+    <div style="text-align: center;">
+        <img src="/static/deepspeedexample.jpg" alt="DeepSpeed on vs off">
+    </div>
+
     <p><strong>Note:</strong> DeepSpeed only works with the XTTSv2 Local model.</p>
     <p><strong>Note:</strong> Requires Nvidia Cuda Toolkit installation and correct CUDA_HOME path configuration.</p>
 
@@ -877,7 +968,7 @@ simple_webpage = """
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="setup_deepspeed">Setup DeepSpeed</h3>
-      <p><strong>Note:</strong> DeepSpeed WILL throw up a load of errors if you have not installed it fully, correctly, or installed the Nvidia Cuda Toolkit and correctly set the CUDA_HOME environment variable or if load Text generation webUI via its start-up scripts.</p>
+      <p><strong>Note:</strong> DeepSpeed/AllTalk may warn if the Nvidia Cuda Toolkit and CUDA_HOME environment variables arent set. On Linux I believe you need these installed, on Windows, if you use the pre-built wheel it seems ok without.</p>
 
     <h4>Linux - DeepSpeed - Installation Instructions</h4>
     <ol>
@@ -894,63 +985,33 @@ simple_webpage = """
     </ol>
     <p><a href="#toc">Back to top of page</a></p>
 
-    <h4>Windows - DeepSpeed Version 8.3 & CUDA 11.8 or CUDA 12.1 - Installation Instructions</h4>
-    <p>Currently DeepSpeed 8.3 is the latest build that works on Windows and it has to run inside a Python 3.9.18 environment. As such, either you need to have your own, already set up Python 3.9.18 environment and have installed the correct Text generation webUI requirements file into it. Or you can create a new Python environment. DeepSpeed version 9.x, 10.x, 11.x, and 12.x will all fail to compile <strong>(on Windows)</strong> for a multitude of reasons. As such, DeepSpeed v8.3 is the most recent build for Windows.</p>
+    <h4>Windows - DeepSpeed v11.1 or v11.2 Installation Instructions</h4>
+    <p>Currently/Officially only DeepSpeed v8.3 is installing on Windows, due to the broken installation routine by Microsoft, however, between myself and <a href="https://github.com/S95Sedan" target="_blank">S95Sedan</a> its now possible to install DeepSpeed v11.1 or v11.2 on Windows.</p>
 
     <h4>DeepSpeed on Windows - <span class="option-a">Option A</span></h4>
-    <p><span class="option-a">Option A</span> is to fully go through the process of compiling DeepSpeed yourself. This takes a longer time to perform, but you can be sure it's set up for your system correctly.</p>
+    <p>This is to use the pre built DeepSpeed v11.1 wheel file. This is quite a quick process and should work for 99&percnt; of people.</p>
 
-    <h4>DeepSpeed on Windows - <span class="option-b">Option B</span></h4>
-    <p><span class="option-b">Option B</span> is to download someone else's precompiled wheels. If you can find someone's precompiled wheel file, you only need to follow <span class="option-b">Option B</span>.</p>
+    <p><strong>Note:</strong> In my tests, with this method you will <strong>not</strong> need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesn't see the CUDA Toolkit; however, it works fine for TTS purposes.</p>
 
     <ol>
-    <li>(<span class="option-a">OPTION A</span>) Download the 8.3 release of <a href="https://github.com/microsoft/DeepSpeed/releases/tag/v0.8.3">DeepSpeed</a> and extract it to a folder.</li>
-    <li>(<span class="option-a">OPTION A</span>) Install Visual C++ build tools, such as <a href="https://learn.microsoft.com/en-us/visualstudio/releases/2019/redistribution#vs2019-download">VS2019 C++ x64/x86</a> build tools.</li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Download and install the <a href="https://developer.nvidia.com/cuda-toolkit-archive">Nvidia Cuda Toolkit 11.8 OR 12.1</a> <b>(11.8 or 12.1)</b></li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Edit your Windows environment variables to ensure that CUDA_HOME and CUDA_PATH are set to your Nvidia Cuda Toolkit path. (The folder <strong>above</strong> the bin folder that <strong>nvcc.exe</strong> is installed in). Examples are:<br>
-        <br>CUDA 11.8<br><br>
-        <code>CUDA_HOME=C:&#92;Program Files&#92;NVIDIA GPU Computing Toolkit&#92;CUDA&#92;v11.8</code><br>
-        <code>CUDA_PATH=C:&#92;Program Files&#92;NVIDIA GPU Computing Toolkit&#92;CUDA&#92;v11.8</code><br>
-        <br>
-        CUDA 12.1<br><br>
-        <code>CUDA_HOME=C:&#92;Program Files&#92;NVIDIA GPU Computing Toolkit&#92;CUDA&#92;v12.1</code><br>
-        <code>CUDA_PATH=C:&#92;Program Files&#92;NVIDIA GPU Computing Toolkit&#92;CUDA&#92;v12.1</code><br><br>
+    <li>Download the file <a href="https://drive.google.com/file/d/1PFsf6uSPY5Cb4o9VxiZ7DLv-j35L7Y41/view?usp=sharing" target="_blank">deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl</a> by clicking the <strong>download</strong> icon at the top right of the screen and save the file it inside your <strong>text-generation-webui</strong> folder.</li>
 
-        It is possible to permanently set these or use the <code>set</code> command at the command prompt when inside your python environment e.g. <b>set CUDA_HOME=C:&#92;Program Files&#92;NVIDIA GPU Computing Toolkit&#92;CUDA&#92;v12.1'</b>. You can then just type <code>set</code> again, and it will show you the list of all currently set environment variables so that you can confirm you have them set correctly.
-    </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) <strong>Currently Python versions 3.9.x are supported</strong>. If you do not have a Python environment already created, you can install <a href="https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html">Miniconda</a>, then at a command prompt, create and activate your environment with:
-        <br><br><code>conda create -n pythonenv python=3.9.18</code>
-        <br><br><code>activate pythonenv</code>
-    </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Launch the Command Prompt <strong>cmd</strong> with <strong>Administrator privilege</strong> as it requires admin to allow creating symlink folders.</li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Install <a href="https://pytorch.org/get-started/previous-versions/#v210">PyTorch</a>, 2.1.0 with CUDA 11.8 or CUDA 12.1 into your Python 3.9.x environment e.g.<br><br>
-        CUDA 11.8<br>
-        <br><code>activate pythonenv</code> (activate your python environment)<br>
-        <br><code>conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia</code><br>
-        <br>CUDA 12.1<br>
-        <br><code>activate pythonenv</code> (activate your python environment)<br>
-        <br><code>conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia</code>
-    </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) In your python environment double-check that your <b>CUDA_HOME</b> and <b>CUDA_PATH</b> are still pointing to the correct location.
-        <br>Type <code>set</code> to list and check the Windows environment variables. Refer to step 4 if not.
-    </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Navigate to your deepspeed folder in the Command Prompt:<code>cd c:\deepspeed</code> (wherever you extracted it to)
-    </li>
-    <li>(<span class="option-a">OPTIONAL A</span>) You can try using the <strong>build_win.bat</strong> however you may need to set options to not install certain features e.g. <strong>set DS_BUILD_AIO=0</strong> <a href="https://www.deepspeed.ai/tutorials/advanced-install/#pre-install-deepspeed-ops">https://www.deepspeed.ai/tutorials/advanced-install/#pre-install-deepspeed-ops</a>. Type the following into the command prompt:
-        <br><br><code>set DS_BUILD_AIO=0</code>
-        <br><br><code>set DS_BUILD_SPARSE_ATTN=0</code>
-        <br><br><code>set DS_BUILD_EVOFORMER_ATTN=0</code>
-        <br><br><code>build_win.bat</code> (This will start building your wheel file and may take a while)
-    </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Now <strong>cd dist</strong> to go into your <strong>dist</strong> folder or wherever you have put your downloaded wheel file and you can now <strong>pip install deepspeed-_YOURFILENAME_.whl</strong> (or whatever your WHL file is called).
-        <br><strong><br>Note:</strong> You can run <code>ds_report</code> when you have installed DeepSpeed on your system to see if it is working correctly
-    </li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Move into your Text generation webUI folder e.g. <code>cd Text generation webUI</code></li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Don't forget to have <code>pip install -r requirements.txt</code> or whichever requirements file you want to use for your system, within the Text generation webUI folder.</li>
-    <li>(<span class="option-a">OPTION A</span> <span class="option-b">and B</span>) Start the text-generation=web-ui with Python e.g. <code>python server.py</code> ensuring to activate your extensions.
-        <br><strong><br>Note:</strong> you can't use <strong>start_windows.bat</strong> or <strong>cmd_windows.bat</strong> because it will use a different environment, incorrect version of Python and it will overwrite the CUDA_HOME path.
-    </li>
+    <li>At a command prompt window, move into your <strong>text-generation-webui folder</strong>, you can now start the Python environment for text-generation-webui:
+        <br><code>cmd_windows.bat</code></li>
+
+    <li>With the file that you saved in the <strong>text-generation-webui folder</strong>, you now type the following:
+        <br><code>pip install "deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl"</code></li>
+
+    <li>This should install through cleanly and you should now have DeepSpeed v11.1 installed within the Python 3.11 environment of text-generation-webui.</li>
+
+    <li>When you start up text-generation-webui, and AllTalk starts, you should see <strong>[AllTalk Startup] DeepSpeed Detected</strong></li>
+
+    <li>Within AllTalk, you will now have a checkbox for <strong>Activate DeepSpeed</strong> though remember you can only change <strong>1x setting every 15 or so seconds</strong>, so don't try to activate DeepSpeed <strong>and</strong> LowVRAM/Change your model simultaneously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.</li>
     </ol>
+
+    <h4>DeepSpeed on Windows - <span class="option-b">Option B</span></h4>
+    <p>Due to the complexity of this, Im not keeping the instructions within this document as it would be too complex to format.</p>
+    <p>As such, the instuctions can be found on this <a href="https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-option-2---a-bit-more-complicated" target="_blank">link</a>
 
     <p><a href="#toc">Back to top of page</a></p>
 
@@ -969,6 +1030,75 @@ simple_webpage = """
         <li><strong>API Local:</strong> Utilizes the <b>2.0.2</b> local model stored at <b>/alltalk_tts/models/xttsv2_2.0.2</b>.</li>
         <li><strong>XTTSv2 Local:</strong> Employs the <b>2.0.2</b> local model <b>/alltalk_tts/models/xttsv2_2.0.2</b> and utilizes a distinct TTS generation method. <b>Supports DeepSpeed acceleration</b>.</li>
     </ul>
+    <p><a href="#toc">Back to top of page</a></p>
+
+    <h3 id="demotesttts">Demo/Test TTS</h3>
+
+    <div id="container">
+        <form method="post" action="/tts-demo-request" id="ttsForm">
+            <label for="text">Text:</label>
+            <textarea id="text" name="text" rows="4" required></textarea>
+
+            <label for="voice">Voice:</label>
+            <input type="text" id="voice" name="voice" value="female_01.wav" required>
+
+            <label for="language">Language:</label>
+            <select id="language" name="language" value="English" required>
+                <option value="en" selected>English</option>
+                <option value="ar">Arabic</option>
+                <option value="zh-cn">Chinese</option>
+                <option value="cs">Czech</option>
+                <option value="nl">Dutch</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="hu">Hungarian</option>
+                <option value="it">Italian</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="pl">Polish</option>
+                <option value="pt">Portuguese</option>
+                <option value="ru">Russian</option>
+                <option value="es">Spanish</option>
+                <option value="tr">Turkish</option>
+            </select>
+
+            <label for="outputFile">Output File:</label>
+            <input type="text" id="outputFile" name="output_file" value="demo_output.wav" required>
+
+            <!-- Audio player with autoplay -->
+            <audio controls autoplay id="audioSource">
+                <source type="audio/wav" />
+                Your browser does not support the audio element.
+            </audio>
+            <span id="outputFilePath" style="height: 0px;">{{ output_file_path }}</span>
+            <button type="submit">Generate TTS</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('ttsForm');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const response = await fetch('/tts-demo-request', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            // Update the generated audio file path
+            const outputFilePath = document.getElementById('outputFilePath');
+            outputFilePath.textContent = result.output_file_path;
+
+            // Update the audio player source
+            const audioPlayer = document.getElementById('audioSource');
+            audioPlayer.src = `/audio/${result.output_file_path}`;
+            audioPlayer.load(); // Reload the audio player
+            audioPlayer.play(); // Play the audio;
+        });
+    </script>
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="customTTSmodels">Custom TTS Models and Model path</h3>
@@ -1099,10 +1229,12 @@ simple_webpage = """
     <h3>Thanks to</h3>
     <ul>
         <li><a href="https://github.com/daswer123" target="_blank">daswer123 GitHub Profile</a> (Assistance with cuda to cpu moving)</li>
+        <li><a href="https://github.com/S95Sedan" target="_blank">S95Sedan GitHub Profile</a> (Editing the Microsoft DeepSpeed v11.x installation files so they work)</li>
         <li><a href="https://github.com/kanttouchthis" target="_blank">kanttouchthis GitHub Profile</a> (Portions of orginal Coquii_TTS extension)</li>
         <li><a href="https://github.com/kanttouchthis" target="_blank">Wuzzooy GitHub Profile</a> (Trying out the code while in development)</li>
     </ul>
     <p><a href="#toc">Back to top of page</a></p>
+
 </body>
 
 </html>
@@ -1120,7 +1252,6 @@ async def ready():
 @app.get("/")
 async def read_root():
     return HTMLResponse(content=simple_webpage, status_code=200)
-
 
 # Start Uvicorn Webserver
 host_parameter = {params["ip_address"]}
