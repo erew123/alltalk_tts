@@ -81,7 +81,7 @@ To start AllTalk every Text generation webUI loads, edit the Text generation web
 ## DeepSpeed Installation Options
 
 ### 🔵 For Linux
-Covered in the online documentation, but a nice easy install.
+Covered in the online/buit-in documentation, but a nice easy install.
 
 ### 🟢🟡 For Windows & Python 3.11
 DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
