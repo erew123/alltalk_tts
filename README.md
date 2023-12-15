@@ -4,7 +4,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18fYWVxiQpk1)
 - **Low VRAM mode:** Improve generation performance if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed v11.2 Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
+- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
@@ -80,45 +80,39 @@ To start AllTalk every Text generation webUI loads, edit the Text generation web
 
 ## DeepSpeed Installation Options
 
-### 🟨 For Linux
+### 🔵 For Linux
 Covered in the online documentation, but a nice easy install.
 
-### 🟦 For Windows & Python 3.11
-DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 3.11 environment! 
+### 🟢🟡 For Windows & Python 3.11
+DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
 
-#### 🟦 OPTION 1 - Quick and easy!
-#### Pre-Compiled Wheel (for Windows and Python 3.11)
-[@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled wheel file, which you can download and use [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar.zip](https://github.com/oobabooga/text-generation-webui/files/13593455/deepspeed-0.11.1%2Be9503fe-cp311-cp311-win_amd64.rar.zip). To use this, you will need to:
+#### 🟢 OPTION 1 - Quick and easy!
+#### Pre-Compiled Wheel Deepspeed v11.1 (for Windows and Python 3.11)
+[@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled DeepSpeed v11.1 wheel file, which you can download and use. To use this, you will need to:
 
 **Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
 
-1) Download the file and put it inside your **text-generation-webui** folder.
-   
-3) Extract out the zip file [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar.zip](https://github.com/oobabooga/text-generation-webui/files/13593455/deepspeed-0.11.1%2Be9503fe-cp311-cp311-win_amd64.rar.zip), which will give you a RAR file *(this is because github wont allow rar files, only zip, so it had to be compressed twice)*.
-   
-5) Extract out the rar file `deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar`.
-   
-7) That should now have extracted a file called `deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl` **note the .whl extension on it**.
-   
-9) Still in the **text-generation-webui folder**, you can now start the Python environment for text-generation-webui:
+1) Download the file [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl](https://drive.google.com/file/d/1PFsf6uSPY5Cb4o9VxiZ7DLv-j35L7Y41/view?usp=sharing) by clicking the **download** icon at the top right of the screen and save the file it inside your **text-generation-webui** folder.
+
+2) At a command prompt window, move into your **text-generation-webui folder**, you can now start the Python environment for text-generation-webui:
 
 `cmd_windows.bat`
 
-6) Move into the folder where the `whl` file was extracted to and then
+3) With the file that you saved in the **text-generation-webui folder** you now type the following:
 
 `pip install "deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl"`
    
-9) This should install through cleanly and you should now have DeepSpeed 11.2 installed within the Python 3.11 environment of text-generation-webui.
+4) This should install through cleanly and you should now have DeepSpeed v11.1 installed within the Python 3.11 environment of text-generation-webui.
    
-10) When you start up text-generation-webui, you should note that AllTalk's startup says **[AllTalk Startup] DeepSpeed Detected**
+5) When you start up text-generation-webui, and AllTalk starts, you should see **[AllTalk Startup] DeepSpeed Detected**
     
-12) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
+6) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
 
-#### 🟦 OPTION 2 - A bit more complicated!
+#### 🟡 OPTION 2 - A bit more complicated!
 
-#### Manual Build (for Windows and Python 3.11)
+#### Manual Build DeepSpeed v11.2 (for Windows and Python 3.11)
 DeepSpeed Version 11.2 with CUDA 12.1 - Installation Instructions:
 
 1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
@@ -144,9 +138,10 @@ DeepSpeed Version 11.2 with CUDA 12.1 - Installation Instructions:
 ```cd c:\deepspeed``` (wherever you extracted it to)
 
 10. Modify the following files:<br>
-(These modified files are included in the git-pull of AllTalk, but if you want to modify them yourself, please follow the below)
 
- deepspeed-0.11.2/build_win.bat - at the top of the file, add:<br>
+**(These modified files are included in the git-pull of AllTalk, but if you want to modify them yourself, please follow the below)**
+
+deepspeed-0.11.2/build_win.bat** - at the top of the file, add:<br>
  ```set DS_BUILD_EVOFORMER_ATTN=0```
 
 deepspeed-0.11.2/csrc/quantization/pt_binding.cpp - lines 244-250 - change to:
