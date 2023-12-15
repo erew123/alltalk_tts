@@ -546,7 +546,7 @@ def output_modifier(string, state):
                         voice_to_use = params["narrator_voice"]
                     #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
                     elif non_quoted_text_is:
-                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
+                        cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["voice"]
                     else:
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
