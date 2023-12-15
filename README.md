@@ -4,7 +4,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18fYWVxiQpk1)
 - **Low VRAM mode:** Improve generation performance if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed v11.2 Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-112-for-windows--python-311) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
+- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed v11.2 Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
@@ -25,7 +25,7 @@ I could force a delimeter in at this stage, but I know it would/may affect thing
 
 `"`Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers. I'm sure you have a wealth of knowledge that I can learn from.`"`
 
-## Installation on Text generation web UI
+## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, instructions [here](https://github.com/oobabooga/text-generation-webui#getting-updates)
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:
@@ -66,7 +66,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 **Where to find voices** https://aiartes.com/voiceai or https://commons.wikimedia.org/ or interviews on youtube etc. Instructions on how to cut down and prepare a voice sample are within the built in documentation.
 
-### Other installation notes
+### 🟩 Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface (details in documentation).
 
 Once the extension is loaded, please find all documentation and settings on the link provided in the interface (as shown in the screenshot below).
@@ -78,15 +78,17 @@ To start AllTalk every Text generation webUI loads, edit the Text generation web
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 
-## DeepSpeed (for Linux)
+## DeepSpeed Installation Options
+
+### 🟨 For Linux
 Covered in the online documentation, but a nice easy install.
 
-## DeepSpeed 11.2 (for Windows & Python 3.11)
-DeepSpeed v11.2 will work on the current text-generation-webui Python 3.11 environment! 
+### 🟦 For Windows & Python 3.11
+DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 3.11 environment! 
 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
 
-#### OPTION 1 - Quick and easy!
+#### 🟦 OPTION 1 - Quick and easy!
 #### Pre-Compiled Wheel (for Windows and Python 3.11)
 [@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled wheel file, which you can download and use [deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.rar.zip](https://github.com/oobabooga/text-generation-webui/files/13593455/deepspeed-0.11.1%2Be9503fe-cp311-cp311-win_amd64.rar.zip). To use this, you will need to:
 
@@ -114,16 +116,40 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
     
 12) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
 
-#### OR OPTION 2 - A bit more complicated!
+#### 🟦 OPTION 2 - A bit more complicated!
+
 #### Manual Build (for Windows and Python 3.11)
-To perform a manual build of DeepSpeed 11.2, you would follow the instructions for creating DeepSpeed v8.3, but in its place, you would download DeepSpeed v11.2 **Source code (zip)** [here](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) **and** you would use the text-generation-webui's Python environment `cmd_windows.bat`. Extract the downloaded file and you would have to make some file edits to the files in that folder before you can compile DeepSpeed v11.2. As Follows:
+DeepSpeed Version 11.2 with CUDA 12.1 - Installation Instructions:
 
-**DeepSpeed-0.11.2\build_win.bat** At the top of the file, add:
+1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
+2. Install Visual C++ build tools, such as [VS2019 C++ x64/x86](https://learn.microsoft.com/en-us/visualstudio/releases/2019/redistribution#vs2019-download) build tools.
+3. Download and install the [Nvidia Cuda Toolkit 12.1](https://developer.nvidia.com/cuda-12-1-0-download-archive)
+4. Edit your Windows environment variables to ensure that CUDA_HOME and CUDA_PATH are set to your Nvidia Cuda Toolkit path. (The folder above the bin folder that nvcc.exe is installed in). Examples are:<br>
+```set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
+```set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
 
-`set DS_BUILD_EVOFORMER_ATTN=0`
+5. OPTIONAL If you do not have an python environment already created, you can install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html), then at a command prompt, create and activate your environment with:<br>
+```conda create -n pythonenv python=3.11```<br>
+```activate pythonenv```<br>
 
-**DeepSpeed-0.11.2\csrc\quantization\pt_binding.cpp - lines 244-250** change to:
+6. Launch the Command Prompt cmd with Administrator privilege as it requires admin to allow creating symlink folders.
+7. Install PyTorch, 2.1.0 with CUDA 12.1 into your Python 3.11 environment e.g:<br>
+```activate pythonenv``` (activate your python environment)<br>
+```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia```
 
+8. In your python environment check that your CUDA_HOME and CUDA_PATH are still pointing to the correct location.<br>
+```set``` (to list and check the windows environment variables. Refer to step 4 if not)
+
+9. Navigate to your deepspeed folder in the Command Prompt:<br>
+```cd c:\deepspeed``` (wherever you extracted it to)
+
+10. Modify the following files:<br>
+(These modified files are included in the git-pull of AllTalk, but if you want to modify them yourself, please follow the below)
+
+ deepspeed-0.11.2/build_win.bat - at the top of the file, add:<br>
+ ```set DS_BUILD_EVOFORMER_ATTN=0```
+
+deepspeed-0.11.2/csrc/quantization/pt_binding.cpp - lines 244-250 - change to:
 ```
     std::vector<int64_t> sz_vector(input_vals.sizes().begin(), input_vals.sizes().end());
     sz_vector[sz_vector.size() - 1] = sz_vector.back() / devices_per_node;  // num of GPU per nodes
@@ -135,33 +161,29 @@ To perform a manual build of DeepSpeed 11.2, you would follow the instructions f
     const int elems_per_out_group = elems_per_in_tensor / out_groups;
 ```
 
-**DeepSpeed-0.11.2\csrc\transformer\inference\csrc\pt_binding.cpp - lines 541-542** change to:
-
+deepspeed-0.11.2/csrc/transformer/inference/csrc/pt_binding.cpp
+lines 541-542 - change to:
 ```
 									 {static_cast<unsigned>(hidden_dim * InferenceContext::Instance().GetMaxTokenLength()),
 									  static_cast<unsigned>(k * InferenceContext::Instance().GetMaxTokenLength()),
 ```
 
-**DeepSpeed-0.11.2\csrc\transformer\inference\csrc\pt_binding.cpp - lines 550-551** change to:
-
+lines 550-551 - change to:
 ```
 						 {static_cast<unsigned>(hidden_dim * InferenceContext::Instance().GetMaxTokenLength()),
 						  static_cast<unsigned>(k * InferenceContext::Instance().GetMaxTokenLength()),
 ```
-**DeepSpeed-0.11.2\csrc\transformer\inference\csrc\pt_binding.cpp - line 1581** change to:
-
+line 1581 - change to:
 ```
 		at::from_blob(intermediate_ptr, {input.size(0), input.size(1), static_cast<int64_t>(mlp_1_out_neurons)}, options);
 ```
 
-**DeepSpeed-0.11.2\deepspeed\env_report.py - line 10** add:
-
+deepspeed-0.11.2/deepspeed/env_report.py
+line 10 - add:
 ```
 import psutil
 ```
-
-**DeepSpeed-0.11.2\deepspeed\env_report.py - line 83 - 100** change to:
-
+line 83 - 100 - change to:
 ```
 def get_shm_size():
     try:
@@ -180,5 +202,7 @@ def get_shm_size():
         return "UNKNOWN", [f"Error getting shared memory size: {e}"]
 ```
 
-You can now compile DeepSpeed and build your whl (wheel) file.
+11. While still in your command line with python environment enabled run:<br>
+```build_win.bat```
 
+12. Now cd dist to go into your dist folder and you can now pip install deepspeed-YOURFILENAME.whl (or whatever your WHL file is called).
