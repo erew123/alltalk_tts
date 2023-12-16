@@ -172,7 +172,7 @@ DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
 
 #### 🟢 OPTION 1 - Quick and easy!
-#### Pre-Compiled Wheel Deepspeed v11.1 (for Windows and Python 3.11)
+#### Pre-Compiled Wheel Deepspeed v11.1 (for Windows and Python 3.11) ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 [@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled DeepSpeed v11.1 wheel file, which you can download and use. To use this, you will need to:
 
 **Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
@@ -194,8 +194,7 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 6) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
 
 #### 🟡 OPTION 2 - A bit more complicated!
-
-#### Manual Build DeepSpeed v11.2 (for Windows and Python 3.11)
+#### Manual Build DeepSpeed v11.2 (for Windows and Python 3.11) ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 DeepSpeed Version 11.2 with CUDA 12.1 - Installation Instructions:
 
 1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
