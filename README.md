@@ -17,7 +17,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟪 [Updating](https://github.com/erew123/alltalk_tts?#-updating)
 - 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
-- 🔵🟢🟡 [DeepSpeed](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
 
 #### Updates
 The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
