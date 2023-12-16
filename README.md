@@ -11,6 +11,13 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Console output** Clear command line output for any warnings or issues.
 - **Standalone/3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
 
+## Index
+
+- 🟩 [Installation](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-installation-on-text-generation-web-ui)
+- 🟪 [Updating](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#updating)
+- 🟫 [Screenshots](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#screenshots)
+- 🔵🟢🟡 [DeepSpeed](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options)
+
 #### Updates
 The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
 
@@ -73,7 +80,42 @@ Once the extension is loaded, please find all documentation and settings on the 
 
 To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
 
-## Screenshots
+### 🟪 Updating
+This is pretty much a repeat of the installation process. 
+
+1) In a command prompt/terminal window you need to move into your Text generation webUI folder:
+
+`cd text-generation-webui`
+
+2) Move into your extensions folder:
+
+`cd extensions`
+
+3) At the command prompt/terminal, type:
+
+`git pull https://github.com/erew123/alltalk_tts`
+
+This should now download any updates/changes.
+
+### 🟪 Problems Updating
+
+If you do experience any problems, the simplest method to resolve this will be:
+
+1) re-name the existing `alltalk_tts` folder to something like `alltalk_tts.old`
+
+2) In the extensions folder, same as if you were doing a fresh installation:
+
+`git clone https://github.com/erew123/alltalk_tts`
+
+This will download a fresh installation. 
+
+3) Before starting it up, copy/merge the `models`, `voices` and `outputs` folders over from the `alltalk_tts.old` folder to the newly created `alltalk_tts` folder. This will keep your voices history and also stop it re-downloading the model again.
+
+You can now start text-generation-webui or AllTalk (standalone) and it should start up fine. You will need to re-set any saved configuration changes on the configuration page. 
+
+Assuming its all working fine and you are happy, you can delete the old alltalk_tts.old folder.
+
+## 🟫 Screenshots
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/4ca9b4c7-60ce-4ac6-82e5-fd1989b84644) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
