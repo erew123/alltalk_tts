@@ -299,9 +299,10 @@ def get_shm_size():
 
 12. Now cd dist to go into your dist folder and you can now pip install deepspeed-YOURFILENAME.whl (or whatever your WHL file is called).
 
-## 🔴 Future to-do list
-- Complete & document the new/full standalone API.
-- Correct an issue on incorrect output folder path with standalone.
+### 🔴 Future to-do list
+- Complete & document the new/full standalone mode API.
+- Voice output within the command prompt/terminal (TBD).
+- Correct an issue on incorrect output folder path when running as a standalone app.
 - Correct a few spelling mistakes in the documnentation.
 - Possibly add some additional TTS engines (TBD).
 - Have a break!
