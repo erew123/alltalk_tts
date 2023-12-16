@@ -34,7 +34,7 @@ I could force a delimeter in at this stage, but I know it would/may affect thing
 `"`Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers. I'm sure you have a wealth of knowledge that I can learn from.`"`
 
 ## 🟩 Installation on Text generation web UI
-This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, instructions [here](https://github.com/oobabooga/text-generation-webui#getting-updates)
+This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:
 
@@ -137,13 +137,13 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 
 #### 🟨 I activated DeepSpeed in the settings page, but I didnt install DeepSpeed yet and now I have issues starting up
 
-You can either follow the [Problems Updating}(https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `config.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.
+You can either follow the [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `config.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.
 
 If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options).
 
 #### 🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.
 
-I would suggest following [Problems Updating}(https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
+I would suggest following [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
 
 #### 🟨 I see some red "asyncio" messages
 
@@ -151,7 +151,9 @@ As far as I am aware, these are to do with the chrome browser the gradio text-ge
 
 #### 🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug
 
-Please see [Problems Updating}(https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers.
+Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers.
+
+Also, is your text-generation-webui up to date? [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
 
