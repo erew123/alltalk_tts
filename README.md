@@ -162,7 +162,7 @@ Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-
 Also, is your text-generation-webui up to date? [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
-
+**Note:** ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 ### 🔵 For Linux
 Covered in the online/buit-in documentation, but a nice easy install.
 
