@@ -16,6 +16,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟩 [Installation](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-installation-on-text-generation-web-ui)
 - 🟪 [Updating](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-updating)
 - 🟫 [Screenshots](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#screenshots)
+- 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#help-with-problems)
 - 🔵🟢🟡 [DeepSpeed](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options)
 
 #### Updates
@@ -109,7 +110,17 @@ If you do experience any problems, the simplest method to resolve this will be:
 
 This will download a fresh installation. 
 
-3) Before starting it up, copy/merge the `models`, `voices` and `outputs` folders over from the `alltalk_tts.old` folder to the newly created `alltalk_tts` folder. This will keep your voices history and also stop it re-downloading the model again.
+3) Move into the **alltalk_tts** folder:
+
+`cd alltalk_tts`
+
+4) Install the requirements:
+
+*Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`
+
+*Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
+
+5) Before starting it up, copy/merge the `models`, `voices` and `outputs` folders over from the `alltalk_tts.old` folder to the newly created `alltalk_tts` folder. This will keep your voices history and also stop it re-downloading the model again.
 
 You can now start text-generation-webui or AllTalk (standalone) and it should start up fine. You will need to re-set any saved configuration changes on the configuration page. 
 
@@ -120,7 +131,27 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 
-## DeepSpeed Installation Options
+## 🟨 Help with problems
+
+#### 🟨 I activated DeepSpeed in the settings page, but I didnt install DeepSpeed yet and now I have issues starting up
+
+You can either follow the [Problems Updating}(https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `config.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.
+
+If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options).
+
+#### 🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.
+
+I would suggest following [Problems Updating}(https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
+
+#### 🟨 I see some red "asyncio" messages
+
+As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
+
+#### 🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug
+
+Please see [Problems Updating}(https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers.
+
+## 🔵🟢🟡 DeepSpeed Installation Options
 
 ### 🔵 For Linux
 Covered in the online/buit-in documentation, but a nice easy install.
