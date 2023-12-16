@@ -90,13 +90,13 @@ This is pretty much a repeat of the installation process.
 
 `cd text-generation-webui`
 
-2) Move into your extensions folder:
+2) Move into your extensions and alltalk_tts folder:
 
-`cd extensions`
+`cd extensions` then `cd alltalk_tts`
 
 3) At the command prompt/terminal, type:
 
-`git pull https://github.com/erew123/alltalk_tts`
+`git pull`
 
 This should now download any updates/changes.
 
