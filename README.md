@@ -18,6 +18,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 #### Updates
 The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
@@ -297,3 +298,10 @@ def get_shm_size():
 ```build_win.bat```
 
 12. Now cd dist to go into your dist folder and you can now pip install deepspeed-YOURFILENAME.whl (or whatever your WHL file is called).
+
+## 🔴 Future to-do list
+- Complete & document the new/full standalone API.
+- Correct an issue on incorrect output folder path with standalone.
+- Correct a few spelling mistakes in the documnentation.
+- Possibly add some additional TTS engines (TBD).
+- Have a break!
