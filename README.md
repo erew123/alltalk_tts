@@ -13,11 +13,11 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 
 ## Index
 
-- 🟩 [Installation](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-installation-on-text-generation-web-ui)
-- 🟪 [Updating](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-updating)
-- 🟫 [Screenshots](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#screenshots)
-- 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#help-with-problems)
-- 🔵🟢🟡 [DeepSpeed](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options)
+- 🟩 [Installation](https://github.com/erew123/alltalk_tts?#-installation-on-text-generation-web-ui)
+- 🟪 [Updating](https://github.com/erew123/alltalk_tts?#-updating)
+- 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
+- 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
+- 🔵🟢🟡 [DeepSpeed](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
 
 #### Updates
 The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
@@ -62,11 +62,13 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 *Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
 
-7) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.
-   
-8) Please read the note below about start-up times and also the note above about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
+7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). Though you may wish to check things are generally working with the below steps before installing DeepSpeed.
 
-9) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
+8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.
+   
+9) Please read the note below about start-up times and also the note above about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
+
+10) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
 
 **Note: It can take a while to start up.** Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
 
