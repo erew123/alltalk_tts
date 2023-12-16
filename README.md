@@ -14,7 +14,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 ## Index
 
 - 🟩 [Installation](https://github.com/erew123/alltalk_tts?#-installation-on-text-generation-web-ui)
-- 🟪 [Updating](https://github.com/erew123/alltalk_tts?#-updating)
+- 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
 - 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
