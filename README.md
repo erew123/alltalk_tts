@@ -100,6 +100,15 @@ This is pretty much a repeat of the installation process.
 
 This should now download any updates/changes.
 
+#### 🟪 **git pull error** 
+I did leave a mistake in the `/extensions/alltalk_tts/.gitignore` file at one point. If your `git pull` doesnt work, you can either follow the Problems Updating section below, or edit the `.gitignore` file and **replace its entire contents** with the below, save the file, then re-try the `git pull`
+```
+voices/*.*
+models/*.*
+outputs/*.*
+config.json
+models.json
+```
 ### 🟪 Problems Updating
 
 If you do experience any problems, the simplest method to resolve this will be:
