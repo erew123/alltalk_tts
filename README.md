@@ -106,7 +106,13 @@ If you do experience any problems, the simplest method to resolve this will be:
 
 1) re-name the existing `alltalk_tts` folder to something like `alltalk_tts.old`
 
-2) In the extensions folder, same as if you were doing a fresh installation:
+2) Start a console/terminal then:
+
+`cd text-generation-webui` and start your python environment `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`
+
+3) Move into the extensions folder, same as if you were doing a fresh installation:
+
+`cd extensions` then 
 
 `git clone https://github.com/erew123/alltalk_tts`
 
