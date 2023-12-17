@@ -190,8 +190,6 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 #### Pre-Compiled Wheel Deepspeed v11.1 (for Windows and Python 3.11) 
 ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 
-[@S95Sedan](https://github.com/S95Sedan) has kindly provided a pre-compiled DeepSpeed v11.1 wheel file, which you can download and use. To use this, you will need to:
-
 **Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
 
 1) Download the correct wheel version for your Python/Cuda from [here](https://github.com/erew123/alltalk_tts/releases/tag/deepspeed) and save the file it inside your **text-generation-webui** folder.
