@@ -143,14 +143,6 @@ You can either follow the [Problems Updating](https://github.com/erew123/alltalk
 
 If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options)
 
-#### 🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.
-
-I would suggest following [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
-
-#### 🟨 I see some red "asyncio" messages
-
-As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
-
 #### 🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug
 
 Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an ticket [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers.
@@ -189,6 +181,14 @@ Possibilities for this issue are (in no particular order):
 11) Unlikely but you possibly have a corrupted voice model file. You can delete the `xttsv2_2.0.2` folder inside your `\alltalk_tts\models` folder and it will download an updated model on next startup.
 
 12) You have built yourself a custom Python environment and something is funky with it. This is very hard to diagnose as its not a standard environment. You may want to updating text-generation-webui and re installing its requirements file (whichever one you use that comes down with text-generation-webui).
+
+#### 🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.
+
+I would suggest following [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
+
+#### 🟨 I see some red "asyncio" messages
+
+As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
 ### 🔵 For Linux
