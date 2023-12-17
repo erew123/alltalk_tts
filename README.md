@@ -181,7 +181,7 @@ Also, is your text-generation-webui up to date? [instructions here](https://gith
 
 Covered in the online/buit-in documentation, but a nice easy install.
 
-### 🟢🟡 For Windows & Python 3.11
+### 🟢🟡 For Windows & Python 3.11.x or 3.10.x
 DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
