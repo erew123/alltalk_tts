@@ -99,11 +99,7 @@ This is pretty much a repeat of the installation process.
 
 `git pull`
 
-4) Move into the **alltalk_tts** folder:
-
-`cd alltalk_tts`
-
-5) Install the requirements:
+4) Install the requirements:
 
 *Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`
 
