@@ -217,7 +217,22 @@ DeepSpeed Version 11.2 with CUDA 12.1 - Installation Instructions:
 1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
 2. Install Visual C++ build tools, such as [VS2019 C++ x64/x86](https://learn.microsoft.com/en-us/visualstudio/releases/2019/redistribution#vs2019-download) build tools.
 3. Download and install the [Nvidia Cuda Toolkit 11.8 or 12.1](https://developer.nvidia.com/cuda-toolkit-archive)
-4. Edit your Windows environment variables to ensure that CUDA_HOME and CUDA_PATH are set to your Nvidia Cuda Toolkit path. (The folder above the bin folder that nvcc.exe is installed in). Examples are:<br>
+4. OPTIONAL If you do not have an python environment already created, you can install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html), then at a command prompt, create and activate your environment with:<br>
+```conda create -n pythonenv python=3.11```<br>
+```activate pythonenv```<br>
+
+If you are using the **text-generation-webui** python environment, then in the `text-generation-webui` folder you will run `cmd_windows.bat` to start the python evnironment.
+
+5. Launch the Command Prompt cmd with Administrator privilege as it requires admin to allow creating symlink folders.
+6. Install PyTorch, 2.1.0 with CUDA 12.1 into your Python 3.11 environment e.g:<br>
+```activate pythonenv``` (activate your python environment)<br>
+```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia```
+
+or
+
+```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia```
+
+7. Edit your Windows environment variables to ensure that CUDA_HOME and CUDA_PATH are set to your Nvidia Cuda Toolkit path. (The folder above the bin folder that nvcc.exe is installed in). Examples are:<br>
 
 ```set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
 ```set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
@@ -227,26 +242,10 @@ Or
 ```set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8```<br>
 ```set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8```<br>
 
-5. OPTIONAL If you do not have an python environment already created, you can install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html), then at a command prompt, create and activate your environment with:<br>
-```conda create -n pythonenv python=3.11```<br>
-```activate pythonenv```<br>
-
-6. Launch the Command Prompt cmd with Administrator privilege as it requires admin to allow creating symlink folders.
-7. Install PyTorch, 2.1.0 with CUDA 12.1 into your Python 3.11 environment e.g:<br>
-```activate pythonenv``` (activate your python environment)<br>
-```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia```
-
-or
-
-```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia```
-
-9. In your python environment check that your CUDA_HOME and CUDA_PATH are still pointing to the correct location.<br>
-```set``` (to list and check the windows environment variables. Refer to step 4 if not)
-
-10. Navigate to your deepspeed folder in the Command Prompt:<br>
+8. Navigate to your deepspeed folder in the Command Prompt:<br>
 ```cd c:\deepspeed``` (wherever you extracted it to)
 
-11. Modify the following files:<br>
+9. Modify the following files:<br>
 
 **(These modified files are included in the git-pull of AllTalk, in the DeepSpeed Windows folder but if you want to modify them yourself, please follow the below)**
 
@@ -306,10 +305,10 @@ def get_shm_size():
         return "UNKNOWN", [f"Error getting shared memory size: {e}"]
 ```
 
-11. While still in your command line with python environment enabled run:<br>
+10. While still in your command line with python environment enabled run:<br>
 ```build_win.bat``` and wait 10-20 minutes.
 
-12. Now `cd dist` to go into your dist folder and you can now `pip install deepspeed-YOURFILENAME.whl` (or whatever your WHL file is called).
+11. Now `cd dist` to go into your dist folder and you can now `pip install deepspeed-YOURFILENAME.whl` (or whatever your WHL file is called).
 
 ### 🔴 Future to-do list
 - Complete & document the new/full standalone mode API.
