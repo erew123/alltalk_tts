@@ -1,7 +1,7 @@
 numpy>=1.22.0
 soundfile>=0.12.1
 uvicorn>=0.24.0.post1
-TTS>=0.21.3
+TTS>=0.22.0
 torch>=2.1.0+cu118
 torchaudio>=2.1.0+cu118
 fastapi>=0.104.1

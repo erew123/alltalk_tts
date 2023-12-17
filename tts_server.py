@@ -35,9 +35,9 @@ with open(this_dir / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
 
 
-##############################################################
-#### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
-##############################################################
+#################################################################
+#### LOAD PARAMS FROM confignew.json - REQUIRED FOR BRANDING ####
+#################################################################
 # Load config file and get settings
 def load_config(file_path):
     with open(file_path, "r") as configfile_path:
@@ -45,10 +45,10 @@ def load_config(file_path):
     return configfile_data
 
 
-# Define the path to the config.json file
-configfile_path = this_dir / "config.json"
+# Define the path to the confignew.json file
+configfile_path = this_dir / "confignew.json"
 
-# Load config.json and assign it to a different variable (config_data)
+# Load confignew.json and assign it to a different variable (config_data)
 params = load_config(configfile_path)
 # check someone hasnt enabled lowvram on a system thats not cuda enabled
 params["low_vram"] = "false" if not torch.cuda.is_available() else params["low_vram"]
@@ -131,7 +131,7 @@ async def setup():
     # Start loading the correct model as set by "tts_method_api_tts", "tts_method_api_local" or "tts_method_xtts_local" being True/False
     if params["tts_method_api_tts"]:
         print(
-            f"[{params['branding']}Model] \033[94mAPI TTS Loading\033[0m {params['model_name']} \033[94minto\033[93m",
+            f"[{params['branding']}Model] \033[94mAPI TTS Loading\033[0m {params['tts_model_name']} \033[94minto\033[93m",
             device,
             "\033[0m",
         )
@@ -158,8 +158,8 @@ async def setup():
     print(
         f"[{params['branding']}Model] \033[94mModel Loaded in \033[93m{generate_elapsed_time:.2f} seconds.\033[0m"
     )
-    # Set "model_loaded" to true
-    params["model_loaded"] = True
+    # Set "tts_model_loaded" to true
+    params["tts_model_loaded"] = True
     # Set the output path for wav files
     Path(f'{params["output_folder_wav"]}').mkdir(parents=True, exist_ok=True)
 
@@ -167,7 +167,7 @@ async def setup():
 # MODEL LOADER For "API TTS"
 async def api_load_model():
     global model
-    model = TTS(params["model_name"]).to(device)
+    model = TTS(params["tts_model_name"]).to(device)
     return model
 
 
@@ -227,7 +227,7 @@ async def unload_model(model):
     del model
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-    params["model_loaded"] = False
+    params["tts_model_loaded"] = False
     return None
 
 
@@ -520,7 +520,7 @@ templates = Jinja2Templates(directory=this_dir / "templates")
 
 # Create a dependency to get the current JSON data
 def get_json_data():
-    with open(this_dir / "config.json", "r") as json_file:
+    with open(this_dir / "confignew.json", "r") as json_file:
         data = json.load(json_file)
     return data
 
@@ -555,8 +555,8 @@ async def update_settings(
     local_temperature: str = Form(...),
     local_repetition_penalty: str = Form(...),
     low_vram: bool = Form(...),
-    model_loaded: bool = Form(...),
-    model_name: str = Form(...),
+    tts_model_loaded: bool = Form(...),
+    tts_model_name: str = Form(...),
     narrator_enabled: bool = Form(...),
     narrator_voice: str = Form(...),
     output_folder_wav: str = Form(...),
@@ -577,8 +577,8 @@ async def update_settings(
     data["local_temperature"] = local_temperature
     data["local_repetition_penalty"] = local_repetition_penalty
     data["low_vram"] = low_vram
-    data["model_loaded"] = model_loaded
-    data["model_name"] = model_name
+    data["tts_model_loaded"] = tts_model_loaded
+    data["tts_model_name"] = tts_model_name
     data["narrator_enabled"] = narrator_enabled
     data["narrator_voice"] = narrator_voice
     data["output_folder_wav"] = output_folder_wav
@@ -591,7 +591,7 @@ async def update_settings(
     data["voice"] = voice
 
     # Save the updated settings back to the JSON file
-    with open(this_dir / "config.json", "w") as json_file:
+    with open(this_dir / "confignew.json", "w") as json_file:
         json.dump(data, json_file)
 
     # Redirect to the settings page to display the updated settings
@@ -914,7 +914,7 @@ simple_webpage = """
 
     <p>The temperature has been set at 0.70 here though, as it often produces a slightly better result (in my estimation).</p>
 
-    <p>The default settings for any model are usually provided in the config.json file that comes wtih the model and this file can be found within the folder where the model is stored.</p>
+    <p>The default settings for any model are usually provided in the confignew.json file that comes wtih the model and this file can be found within the folder where the model is stored.</p>
     <p>These default values are carefully chosen to offer a reasonable starting point for users, and adjustments can be made based on individual preferences and use cases. However, it's important to note that changing these settings or setting them to extremes may result in unexpected outcomes. Setting extremely high or low values, especially without a good understanding of their effects, may lead to flat-sounding output or very strange-sounding output. It's advisable to experiment with adjustments incrementally and observe the impact on the generated speech to find a balance that suits your desired outcome.</p>
     <p><a href="#toc">Back to top of page</a></p>
 
@@ -989,20 +989,20 @@ simple_webpage = """
     <p>Currently/Officially only DeepSpeed v8.3 is installing on Windows, due to the broken installation routine by Microsoft, however, between myself and <a href="https://github.com/S95Sedan" target="_blank">S95Sedan</a> its now possible to install DeepSpeed v11.1 or v11.2 on Windows.</p>
 
     <h4>DeepSpeed on Windows - <span class="option-a">Option A</span></h4>
-    <p>This is to use the pre built DeepSpeed v11.1 wheel file. This is quite a quick process and should work for 99&percnt; of people.</p>
+    <p>This is to use the pre built DeepSpeed v11.2 wheel file. This is quite a quick process and should work for 99&percnt; of people.</p>
 
     <p><strong>Note:</strong> In my tests, with this method you will <strong>not</strong> need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesn't see the CUDA Toolkit; however, it works fine for TTS purposes.</p>
 
     <ol>
-    <li>Download the file <a href="https://drive.google.com/file/d/1PFsf6uSPY5Cb4o9VxiZ7DLv-j35L7Y41/view?usp=sharing" target="_blank">deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl</a> by clicking the <strong>download</strong> icon at the top right of the screen and save the file it inside your <strong>text-generation-webui</strong> folder.</li>
+    <li>Download the correct wheel version for your CUDA and Python version file <a href="https://github.com/erew123/alltalk_tts/releases/tag/deepspeed" target="_blank">from here</a> and save the file it inside your <strong>text-generation-webui</strong> folder.</li>
 
-    <li>At a command prompt window, move into your <strong>text-generation-webui folder</strong>, you can now start the Python environment for text-generation-webui:
-        <br><code>cmd_windows.bat</code></li>
+    <li>At a command prompt window, move into your <strong>text-generation-webui folder</strong>, you can now start the Python environment for text-generation-webui:<br>
+        <br><code>cmd_windows.bat</code></li><br>
 
-    <li>With the file that you saved in the <strong>text-generation-webui folder</strong>, you now type the following:
-        <br><code>pip install "deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl"</code></li>
+    <li>With the file that you saved in the <strong>text-generation-webui folder</strong>, you now type the following:<br>
+        <br><code>pip install "deepspeed-0.11.2+<b>yourversionhere</b>-win_amd64.whl"</code></li><br>
 
-    <li>This should install through cleanly and you should now have DeepSpeed v11.1 installed within the Python 3.11 environment of text-generation-webui.</li>
+    <li>This should install through cleanly and you should now have DeepSpeed v11.2 installed within the Python 3.11 environment of text-generation-webui.</li>
 
     <li>When you start up text-generation-webui, and AllTalk starts, you should see <strong>[AllTalk Startup] DeepSpeed Detected</strong></li>
 
@@ -1138,7 +1138,7 @@ simple_webpage = """
     <p><a href="#toc">Back to top of page</a></p>
 
     <h3 id="configuration-details"><strong>Configuration Details</strong></h3>
-    <p>Explanation of the <b>config.json</b> file:</p>
+    <p>Explanation of the <b>confignew.json</b> file:</p>
 
     <code><span class="key">"activate:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
     <code><span class="key">"autoplay:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the TTS audio plays automatically within Text generation webUI.</span><br>
@@ -1150,8 +1150,8 @@ simple_webpage = """
     <code><span class="key">"low_vram:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the Low VRAM option is enabled or disabled.</span><br>
     <code><span class="key">"local_temperature:"</span> <span class="value">"0.70"</span>,</code><span class="key"> Sets the temperature to use with the API Local and XTTSv2 Local methods.</span><br>
     <code><span class="key">"local_repetition_penalty:"</span> <span class="value">"10.0"</span>,</code><span class="key"> Sets the repetition penalty to use with the API Local and XTTSv2 Local methods.</span><br>
-    <code><span class="key">"model_loaded:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
-    <code><span class="key">"model_name:"</span> <span class="value">"tts_models/multilingual/multi-dataset/xtts_v2"</span>,</code><span class="key"> Specifies the model that the "API TTS" method will use for TTS generation.</span><br>
+    <code><span class="key">"tts_model_loaded:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
+    <code><span class="key">"tts_model_name:"</span> <span class="value">"tts_models/multilingual/multi-dataset/xtts_v2"</span>,</code><span class="key"> Specifies the model that the "API TTS" method will use for TTS generation.</span><br>
     <code><span class="key">"narrator_enabled:"</span> <span class="value">"female_02.wav"</span>,</code><span class="key"> Specifies the default narrator voice to use for TTS.</span><br>
     <code><span class="key">"narrator_voice:"</span> <span class="value">"false"</span>,</code><span class="key"> Enables and disables the narrator function.</span><br>
     <code><span class="key">"port_number:"</span> <span class="value">"7851"</span>,</code><span class="key"> Specifies the default port number for the web server.</span><br>

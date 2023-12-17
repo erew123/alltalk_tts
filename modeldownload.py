@@ -6,9 +6,9 @@ import importlib.metadata as metadata
 import json
 from packaging import version
 
-##############################################################
-#### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
-##############################################################
+#################################################################
+#### LOAD PARAMS FROM confignew.json - REQUIRED FOR BRANDING ####
+#################################################################
 # STARTUP VARIABLE - Create "this_dir" variable as the current script directory
 this_dir = Path(__file__).parent.resolve()
 
@@ -20,7 +20,7 @@ def load_config(file_path):
     return config
 
 
-config_file_path = this_dir / "config.json"
+config_file_path = this_dir / "confignew.json"
 params = load_config(config_file_path)
 
 # Define the path to the modeldownload config file file

@@ -16,9 +16,9 @@ import numpy as np
 import soundfile as sf
 import uuid
 
-##############################################################
-#### LOAD PARAMS FROM CONFIG.JSON - REQUIRED FOR BRANDING ####
-##############################################################
+#################################################################
+#### LOAD PARAMS FROM confignew.json - REQUIRED FOR BRANDING ####
+#################################################################
 # STARTUP VARIABLE - Create "this_dir" variable as the current script directory
 this_dir = Path(__file__).parent.resolve()
 
@@ -28,8 +28,8 @@ def load_config(file_path):
         config = json.load(config_file)
     return config
 
-config_file_path = this_dir / "config.json"
-# Load the params dictionary from the config.json file
+config_file_path = this_dir / "confignew.json"
+# Load the params dictionary from the confignew.json file
 params = load_config(config_file_path)
 
 # Required for sentence splitting
@@ -143,9 +143,9 @@ def check_required_files():
 check_required_files()
 
 
-#################################################
-#### SET GRADIO BUTTONS BASED ON CONFIG.JSON ####
-#################################################
+####################################################
+#### SET GRADIO BUTTONS BASED ON confignew.json ####
+####################################################
 
 if params["tts_method_api_tts"] == True:
     gr_modelchoice = "API TTS"
@@ -277,7 +277,7 @@ else:
 # MODEL - Swap model based on Gradio selection API TTS, API Local, XTTSv2 Local
 def send_reload_request(tts_method):
     try:
-        params["model_loaded"] = False
+        params["tts_model_loaded"] = False
         url = f"{base_url}/api/reload"
         payload = {"tts_method": tts_method}
         response = requests.post(url, params=payload)
@@ -285,8 +285,8 @@ def send_reload_request(tts_method):
         json_response = response.json()
         # Check if the reload operation was successful
         if json_response.get("status") == "model-success":
-            # Update model_loaded to True if the reload was successful
-            params["model_loaded"] = True
+            # Update tts_tts_model_loaded to True if the reload was successful
+            params["tts_model_loaded"] = True
             # Update local script parameters based on the tts_method
             if tts_method == "API TTS":
                 params["tts_method_api_local"] = False
@@ -319,7 +319,7 @@ def send_reload_request(tts_method):
 # LOW VRAM - Gradio Checkbox handling
 def send_lowvram_request(low_vram):
     try:
-        params["model_loaded"] = False
+        params["tts_model_loaded"] = False
         if low_vram:
             audio_path = this_dir / "templates" / "lowvramenabled.wav"
         else:
@@ -332,7 +332,7 @@ def send_lowvram_request(low_vram):
         # Check if the low VRAM request was successful
         if json_response.get("status") == "lowvram-success":
             # Update any relevant variables or perform other actions on success
-            params["model_loaded"] = True
+            params["tts_model_loaded"] = True
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
@@ -348,7 +348,7 @@ def send_lowvram_request(low_vram):
 # DEEPSPEED - Reload the model when DeepSpeed checkbox is enabled/disabled
 def send_deepspeed_request(deepspeed_param):
     try:
-        params["model_loaded"] = False
+        params["tts_model_loaded"] = False
         if deepspeed_param:
             audio_path = this_dir / "templates" / "deepspeedenabled.wav"
         else:
@@ -362,7 +362,7 @@ def send_deepspeed_request(deepspeed_param):
         # Check if the deepspeed request was successful
         if json_response.get("status") == "deepspeed-success":
             # Update any relevant variables or perform other actions on success
-            params["model_loaded"] = True
+            params["tts_model_loaded"] = True
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
@@ -400,7 +400,7 @@ Synthesizer.split_into_sentences = new_split_into_sentences
 # Check model is loaded and string isnt empty, before sending a TTS request.
 def before_audio_generation(string, params):
     # Check Model is loaded into cuda or cpu and error if not
-    if not params["model_loaded"]:
+    if not params["tts_model_loaded"]:
         print(
             f"[{params['branding']}Model] \033[91mWarning\033[0m Model is still loading, please wait before trying to generate TTS"
         )
@@ -789,7 +789,7 @@ def ui():
             )
             tts_radio_buttons_play = gr.HTML(visible=False)
             explanation_text = gr.HTML(
-                f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>"
+                f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed, each takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>"
             )
 
         with gr.Row():
