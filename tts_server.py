@@ -784,7 +784,7 @@ simple_webpage = """
 <body>
     <h1 id="toc">AllTalk TTS for Text generation webUI</h1>
     <p><b>Text generation webUI</b> webpage <a href="http://{{ params["ip_address"] }}:7860" target="_blank">here</a> and documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">here</a></p>
-    <p><b>AllTalk Github</b> <a href="https://github.com/erew123/alltalk_tts" target="_blank">here</a> 
+    <p><b>AllTalk Github</b> <a href="https://github.com/erew123/alltalk_tts" target="_blank">here</a>  
 
     <iframe src="http://{{ params["ip_address"] }}:{{ params["port_number"] }}/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     
@@ -814,6 +814,9 @@ simple_webpage = """
     <p><b>Note:</b> When loading up a new character in Text generation webUI it may look like nothing is happening for 20-30 seconds. Its actually processing the introduction section of the text and once that is completed, it will appear. You can see the activity occuring in the console window. Refreshing the page multiple times will try force the TTS engine to keep re-generating the text, so please just wait and check the console if needed. </p>
     <p><b>IMPORTANT Note:</b> Ensure that your RP character card has asterisks around anything for the narration and double quotes around anything spoken. There is a complication ONLY with the greeting card so, ensuring it has the correct use of quotes and asterisks will help make sure that the greeting card sounds correct. I will aim to address this issue in a future update.</p>
     <p>Details on how to edit your greeting card, and where I'm at with solving this, can be found here <a href="https://github.com/erew123/alltalk_tts/tree/main#the-one-thing-i-cant-easily-work-around" target="_blank">erew123's Github</a> and you can look here at an example of how text should be formatted with quotes and asterisks <a href="#text-not-inside">Text Not inside function</a></p>
+
+    <p><b>AllTalk Updating instructions</b> <a href="https://github.com/erew123/alltalk_tts?#-updating" target="_blank">here</a>
+    <p><b>AllTalk Help and issues</b> <a href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank">here</a>
 
     <h3 id="server-information">Server Information</h3>
     <ul>
