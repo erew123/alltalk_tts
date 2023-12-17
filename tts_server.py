@@ -20,6 +20,7 @@ from fastapi import (
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from jinja2 import Template
 from contextlib import asynccontextmanager
 
 ###########################
@@ -517,7 +518,6 @@ def list_files(directory):
 # Create an instance of Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=this_dir / "templates")
 
-
 # Create a dependency to get the current JSON data
 def get_json_data():
     with open(this_dir / "config.json", "r") as json_file:
@@ -783,10 +783,10 @@ simple_webpage = """
 
 <body>
     <h1 id="toc">AllTalk TTS for Text generation webUI</h1>
-    <p><b>Text generation webUI</b> webpage <a href="http://127.0.0.1:7860" target="_blank">here</a> and documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">here</a></p>
+    <p><b>Text generation webUI</b> webpage <a href="http://{{ params["ip_address"] }}:7860" target="_blank">here</a> and documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">here</a></p>
     <p><b>AllTalk Github</b> <a href="https://github.com/erew123/alltalk_tts" target="_blank">here</a> 
 
-    <iframe src="http://127.0.0.1:7851/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
+    <iframe src="http://{{ params["ip_address"] }}:{{ params["port_number"] }}/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     
     <h3>Table of Contents</h3>
     <ul>
@@ -817,8 +817,8 @@ simple_webpage = """
 
     <h3 id="server-information">Server Information</h3>
     <ul>
-        <li>Base URL: <code>http://127.0.0.1:7851</code></li>
-        <li>Server Status: <code><a href="http://127.0.0.1:7851/ready">http://127.0.0.1:7851/ready</a></code></li>
+        <li>Base URL: <code>http://{{ params["ip_address"] }}:{{ params["port_number"] }}</code></li>
+        <li>Server Status: <code><a href="http://{{ params["ip_address"] }}:{{ params["port_number"] }}/ready">http://{{ params["ip_address"] }}:{{ params["port_number"] }}/ready</a></code></li>
     </ul>
     <p><a href="#toc">Back to top of page</a></p>
 
@@ -1103,7 +1103,7 @@ simple_webpage = """
 
     <h3 id="customTTSmodels">Custom TTS Models and Model path</h3>
 
-    <p>Its possible to set a custom model for the <strong>API Local</strong> and<strong> XTTSv2</strong> Local methods, or ideed point it at the same model that <strong>API TTS</strong> uses (wherever it is stored on your OS of choice). Many people did not like the sound quality of the Coqui <strong>2.0.<span style="color:#e74c3c">3</span></strong> model, and as such the AllTalk tts extension downloads the <strong>2.0.<span style="color:#2980b9">2</span></strong> model seperately to the <strong>2.0.<span style="color:#e74c3c">3</span></strong> model that TTS service downloads and manages. Typically the <strong>2.0.<span style="color:#2980b9">2</span></strong> model is stored in your <strong>/extensions/alltalk_tts/models</strong> folder and it is always downloaded on first start-up of the&nbsp;AllTalk_tts extension. However, you may either want to use a custom model version of your choosing, or point it to a different path on your system, or even point it so that&nbsp;API Local and XTTSv2 <strong>both</strong> use the same model that API TTS is using.</p>
+    <p>Its possible to set a custom model for the <strong>API Local</strong> and<strong> XTTSv2</strong> Local methods, or indeed point it at the same model that <strong>API TTS</strong> uses (wherever it is stored on your OS of choice). Many people did not like the sound quality of the Coqui <strong>2.0.<span style="color:#e74c3c">3</span></strong> model, and as such the AllTalk tts extension downloads the <strong>2.0.<span style="color:#2980b9">2</span></strong> model seperately to the <strong>2.0.<span style="color:#e74c3c">3</span></strong> model that TTS service downloads and manages. Typically the <strong>2.0.<span style="color:#2980b9">2</span></strong> model is stored in your <strong>/extensions/alltalk_tts/models</strong> folder and it is always downloaded on first start-up of the&nbsp;AllTalk_tts extension. However, you may either want to use a custom model version of your choosing, or point it to a different path on your system, or even point it so that&nbsp;API Local and XTTSv2 <strong>both</strong> use the same model that API TTS is using.</p>
     <p>If you do choose to change the location there are a couple of things to note.&nbsp;</p>
     <p>- The folder you place the model in, <strong><span style="color:#e74c3c">cannot</span></strong> be called &quot;<strong>models</strong>&quot;. This name is reserved solely for the system to identify you are or are not using a custom model.</p>
     <p>- On each startup, the&nbsp;AllTalk tts extension will check the custom location and if it does not exist, it will create it and download the files it needs. It will also re download any missing files in that location that are needed for the model to function.</p>
@@ -1240,18 +1240,22 @@ simple_webpage = """
 </html>
 """
 
-
 ###################################################
 #### Webserver Startup & Initial model Loading ####
 ###################################################
+# Create a Jinja2 template object
+template = Template(simple_webpage)
+
+# Render the template with the dynamic values
+rendered_html = template.render(params=params)
+
 @app.get("/ready")
 async def ready():
     return Response("Ready endpoint")
 
-
 @app.get("/")
 async def read_root():
-    return HTMLResponse(content=simple_webpage, status_code=200)
+    return HTMLResponse(content=rendered_html, status_code=200)
 
 # Start Uvicorn Webserver
 host_parameter = {params["ip_address"]}
