@@ -99,7 +99,15 @@ This is pretty much a repeat of the installation process.
 
 `git pull`
 
-This should now download any updates/changes.
+4) Move into the **alltalk_tts** folder:
+
+`cd alltalk_tts`
+
+5) Install the requirements:
+
+*Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`
+
+*Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
 
 #### 🟪 **git pull error** 
 I did leave a mistake in the `/extensions/alltalk_tts/.gitignore` file at one point. If your `git pull` doesnt work, you can either follow the Problems Updating section below, or edit the `.gitignore` file and **replace its entire contents** with the below, save the file, then re-try the `git pull`
