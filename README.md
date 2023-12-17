@@ -169,7 +169,7 @@ DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
 
 #### 🟢 OPTION 1 - Quick and easy!
-#### Pre-Compiled Wheel Deepspeed v11.1 (for Windows and Python 3.11) 
+#### Pre-Compiled Wheel Deepspeed v11.2 (for Windows and Python 3.11) 
 ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 
 **Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
@@ -180,9 +180,9 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 `cmd_windows.bat`
 
 3) With the file that you saved in the **text-generation-webui folder** you now type the following:<br><br>
-`pip install "deepspeed-0.11.1+**THE-VERSION-YOU-ARE-USING**-win_amd64.whl"` (The version you are using shouid match the file name you downloaded).
+`pip install "deepspeed-0.11.2+**THE-VERSION-YOU-ARE-USING**-win_amd64.whl"` (The version you are using shouid match the file name you downloaded).
    
-5) This should install through cleanly and you should now have DeepSpeed v11.1 installed within the Python 3.11 environment of text-generation-webui.
+5) This should install through cleanly and you should now have DeepSpeed v11.2 installed within the Python 3.11 environment of text-generation-webui.
    
 6) When you start up text-generation-webui, and AllTalk starts, you should see **[AllTalk Startup] DeepSpeed Detected**
     
