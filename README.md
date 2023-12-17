@@ -153,8 +153,8 @@ Also, is your text-generation-webui up to date? [instructions here](https://gith
 
 When the subprocess is starting 2x things are occurring:
 
-A) Its trying to load the voice model into your graphics card VRAM (assuming you have a Nvidia Graphics card, otherwise its your system RAM)
-B) Its trying to start up the mini-webserver and send the "ready" signal back to the main process.
+**A)** Its trying to load the voice model into your graphics card VRAM (assuming you have a Nvidia Graphics card, otherwise its your system RAM)<br>
+**B)** Its trying to start up the mini-webserver and send the "ready" signal back to the main process.
 
 Possibilities for this issue are (in no particular order):
 
