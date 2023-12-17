@@ -180,7 +180,7 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 `cmd_windows.bat`
 
 3) With the file that you saved in the **text-generation-webui folder** you now type the following:<br><br>
-`pip install "deepspeed-0.11.1+e9503fe-cp311-cp311-win_amd64.whl"`
+`pip install "deepspeed-0.11.1+**THE-VERSION-YOU-ARE-USING**-win_amd64.whl"` (The version you are using shouid match the file name you downloaded).
    
 5) This should install through cleanly and you should now have DeepSpeed v11.1 installed within the Python 3.11 environment of text-generation-webui.
    
@@ -221,7 +221,7 @@ or<br>
 9. Modify the following files:<br>
 **(These modified files are included in the git-pull of AllTalk, in the DeepSpeed Windows folder and so can just be copied over the top of the exsting folders/files, but if you want to modify them yourself, please follow the below)**<br>
 
-deepspeed-0.11.2/build_win.bat** - at the top of the file, add:<br><br>
+deepspeed-0.11.2/build_win.bat - at the top of the file, add:<br><br>
  ```set DS_BUILD_EVOFORMER_ATTN=0```
 
 deepspeed-0.11.2/csrc/quantization/pt_binding.cpp - lines 244-250 - change to:
