@@ -192,7 +192,7 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 #### Manual Build DeepSpeed v11.2 (for Windows and Python 3.11) 
 ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 
-DeepSpeed Version 11.2 with CUDA 12.1 - Installation Instructions:
+DeepSpeed Version 11.2 with CUDA 11.8 or 12.1 - Installation Instructions:
 
 1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
 2. Install Visual C++ build tools, such as [VS2019 C++ x64/x86](https://learn.microsoft.com/en-us/visualstudio/releases/2019/redistribution#vs2019-download) build tools.
