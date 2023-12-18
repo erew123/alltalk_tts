@@ -3,7 +3,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 
 - **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18fYWVxiQpk1)
-- **Low VRAM mode:** Improve generation performance if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
+- **Low VRAM mode:** Great for people with small GPU memory or if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
@@ -21,18 +21,9 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 #### Updates
-The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. Its a highly recommened update, for the improved quality it gives to the TTS output, if nothing else.
+The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. It does however mean you need to ensure your character card is set up correctly if using the narrator function. Details are below in the installation notes.
 
-Should you want the older version of the narrator engine+text filtering, I will leave this older copy [here](https://github.com/erew123/alltalk_tts/releases/tag/v1-old-narrator)
-
-DeepSpeed **v11.2** can be installed within the **default text-generation-webui Python 3.11 environment**. Instructions [here](https://github.com/erew123/alltalk_tts#deepspeed-112-for-windows--python-311) (or scroll down). Please note, this is **not** an official Microsoft method (currently) so they will not support you with this style installation. Officially, only DeepSpeed v8.3 is installing on Python 3.9.x.
-
-#### The one thing I cant easily work around
-With a RP chat with your AI, **on your character card** `parameters menu` > `character tab` > `greeting` make sure that anything in there that is the **narrator is in asterisks** and anything **spoken is in double quotes**, then hit the `save` (disk) button. Greeting paragraphs/sentences are handled differently from how the AI sends text and so its difficut to account for them both.
-
-I could force a delimeter in at this stage, but I know it would/may affect things further down the line in the chat and I need a good think about that before just making a change. This issue **only** affects the greeting card/start of conversation and the "example" card that comes with text-generation-webui suffers this issue (if you want to try it for yourself). So you would put double quotes around like this (from the example card):
-
-`"`Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers. I'm sure you have a wealth of knowledge that I can learn from.`"`
+DeepSpeed **v11.2** can be installed within the **default text-generation-webui Python 3.11 environment**. Installs in custom Python environments are possible, but can be more complicated. Instructions [here](https://github.com/erew123/alltalk_tts#deepspeed-112-for-windows--python-311) (or scroll down).
 
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
@@ -56,28 +47,29 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 *Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`<br><br>
 *Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
 
-7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). Though you may wish to check things are generally working with the below steps before installing DeepSpeed.
+7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). **However**, I would highly reccommend before you install DeepSpeed, you start text-generation-webui up, confirm AllTalk starts correctly and everything is working, as DeepSpeed can add another layer of complications troubleshooting any potential start-up issues. If necessary you can `pip uninstall deepspeed`.
 
 8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.
    
-9) Please read the note below about start-up times and also the note above about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
+9) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
 
 10) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
 
-**Note: It can take a while to start up.** Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
-
-**Documentation:** Click on the link when inside Text generation webUI as shown in the screenshot [here](https://github.com/erew123/alltalk_tts#screenshots)
-
-**Where to find voices** https://aiartes.com/voiceai or https://commons.wikimedia.org/ or interviews on youtube etc. Instructions on how to cut down and prepare a voice sample are within the built in documentation.
-
-### 🟩 Other installation notes
-On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). You can customse your model or use the TTS latest model within the interface (details in documentation).
+#### 🟩 Other installation notes
+On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
 
 Once the extension is loaded, please find all documentation and settings on the link provided in the interface (as shown in the screenshot below).
 
-To start AllTalk every Text generation webUI loads, edit the Text generation webUI `CMD_FLAGS.txt` file in the main `text-generation-webui` folder and add `--extensions alltalk_tts`.
+**Where to find voices** https://aiartes.com/voiceai or https://commons.wikimedia.org/ or interviews on youtube etc. Instructions on how to cut down and prepare a voice sample are within the built in documentation.
 
-### 🟪 Updating
+#### 🟩 The one thing I cant easily work around
+Narrator function specific - With a RP chat with your AI, **on your character card** `parameters menu` > `character tab` > `greeting` make sure that anything in there that is the **narrator is in asterisks** and anything **spoken is in double quotes**, then hit the `save` (💾) button. Greeting paragraphs/sentences are handled differently from how the AI sends text and so its difficut to account for them both.
+
+I could force a delimeter in at this stage, but I know it would/may affect things further down the line in the chat and I need a good think about that before just making a change. This issue **only** affects the greeting card/start of conversation and the "example" card that comes with text-generation-webui suffers this issue (if you want to try it for yourself). So you would put double quotes around like this (from the example card):
+
+`"`*Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers. I'm sure you have a wealth of knowledge that I can learn from.*`"`
+
+## 🟪 Updating
 This is pretty much a repeat of the installation process. 
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
@@ -103,7 +95,7 @@ config.json
 confignew.json
 models.json
 ```
-### 🟪 Problems Updating
+#### 🟪 Problems Updating
 
 If you do experience any problems, the simplest method to resolve this will be:
 
@@ -163,15 +155,15 @@ Possibilities for this issue are (in no particular order):
 
 2) You have antivirus/firewalling that is blocking that port from being accessed. If you had to do something to allow text-generation-webui through your antivirus/firewall, you will have to do that for this too.
 
-3) You have an old version of text-generation-webui (pre Dec 2023) I have not tested on older versions of text-generation-webui, so cannot confirm viability on older versions. For instructions on updating the text-generation-webui, please look [here](https://github.com/oobabooga/text-generation-webui#how-to-install) `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+3) You have an old version of text-generation-webui (pre Dec 2023) I have not tested on older versions of text-generation-webui, so cannot confirm viability on older versions. For instructions on updating the text-generation-webui, please look [here](https://github.com/oobabooga/text-generation-webui#how-to-install) (`update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`).
 
-4) You are not starting text-generation-webui with its normal Python environment. Please start it with start_{your OS version} as detailed [here](https://github.com/oobabooga/text-generation-webui#how-to-install) `start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat` OR `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then `python server.py`. 
+4) You are not starting text-generation-webui with its normal Python environment. Please start it with start_{your OS version} as detailed [here](https://github.com/oobabooga/text-generation-webui#how-to-install) (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`) OR (`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then `python server.py`). 
 
 5) You have quite old graphics drivers and may need to update them.
 
-6) You have installed the wrong version of DeepSpeed on your system, for the wrong version of Python/Text-generation-webui. You can go to your text-generation-webui folder in a terminal/command prompt and run the correct cmd version for your OS e.g. `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then you can type `pip uninstall deepspeed` then try loading it again. If that works, please see here for the correct instructions for installing DeepSpeed [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options).
+6) You have installed the wrong version of DeepSpeed on your system, for the wrong version of Python/Text-generation-webui. You can go to your text-generation-webui folder in a terminal/command prompt and run the correct cmd version for your OS e.g. (`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`) and then you can type `pip uninstall deepspeed` then try loading it again. If that works, please see here for the correct instructions for installing DeepSpeed [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options).
 
-7) Something within text-generation-webui is not playing nicely for some reason. You can go to your text-generation-webui folder in a terminal/command prompt and run the correct cmd version for your OS e.g. `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then you can type `python extensions\alltalk_tts\script.py` and see if AllTalk starts up correctly. If it does then something else is interfering. 
+7) Something within text-generation-webui is not playing nicely for some reason. You can go to your text-generation-webui folder in a terminal/command prompt and run the correct cmd version for your OS e.g. (`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`) and then you can type `python extensions\alltalk_tts\script.py` and see if AllTalk starts up correctly. If it does then something else is interfering. 
 
 8) You have not installed the requirements file. Please check the installation instructions.
 
@@ -192,57 +184,71 @@ I would suggest following [Problems Updating](https://github.com/erew123/alltalk
 As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
-### 🔵 For Linux
+#### 🔵 Linux Installation
+<details>
+	<summary>Click to expand: Linux DeepSpeed installation</summary>
+
 ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 
-Covered in the online/buit-in documentation, but a nice easy install.
-
-### 🟢🟡 For Windows & Python 3.11.x or 3.10.x
-DeepSpeed v11.1 and v11.2 will work on the current text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
+1) Preferably use your built in package manager to install CUDA tools. Alternatively download and install the Nvidia Cuda Toolkit for Linux [Nvidia Cuda Toolkit 11.8 or 12.1](https://developer.nvidia.com/cuda-toolkit-archive)<br><br>
+2) Open a terminal console.<br><br>
+3) Install libaio-dev (however your Linux version installs things) e.g. `sudo apt install libaio-dev`<br><br>
+4) Move into your Text generation webUI folder e.g. `cd text-generation-webui`<br><br>
+5) Start the Text generation webUI Python environment `./cmd_linux.sh`<br><br>
+6) Text generation webUI **overwrites** the CUDA_HOME variable on each `./cmd_linux.sh` or `./start_linux.sh` startup, so you will need to either force this to be changed within the python environment OR change it each time you `./cmd_linux.sh`<br> <br>
+[Conda manual - Environment variables](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars)<br><br>
+7) You can set the CUDA_HOME environment with `export CUDA_HOME=/usr/local/cuda` or `export CUDA_HOME=/etc/alternatives/cuda`. These are the standard paths on Ubuntu, but could vary on other Linux flavours.<br> <br>
+If you try to start DeepSpeed without the path set incorrectly, expect an error similar to `[Errno 2] No such file or directory: /home/yourname/text-generation-webui/installer_files/env/bin/nvcc`<br> <br>
+8) Now install deepspeed with pip install deepspeed<br><br>
+9) You can now start Text generation webUI `python server.py` ensuring to activate your extensions.
+<br><br></details>
+	
+#### 🟢🟡 Windows Installation
+DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
 
 #### 🟢 OPTION 1 - Quick and easy!
-#### Pre-Compiled Wheel Deepspeed v11.2 (for Windows and Python 3.11 and 3.10) 
-➡️DeepSpeed requires an Nvidia Graphics card!⬅️
-
-**Note:** In my tests, with this method you will **not** need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesnt see the CUDA Toolkit, however, it works fine for TTS purposes.
+<details>
+	<summary>Click to expand: Pre-Compiled Wheel Deepspeed v11.2 (Python 3.11 and 3.10)</summary>
+➡️DeepSpeed requires an Nvidia Graphics card!⬅️<br>
 
 1) Download the correct wheel version for your Python/Cuda from [here](https://github.com/erew123/alltalk_tts/releases/tag/deepspeed) and save the file it inside your **text-generation-webui** folder.
 
 2) Open a command prompt window, move into your **text-generation-webui folder**, you can now start the Python environment for text-generation-webui:<br><br>
 `cmd_windows.bat`
 
-3) With the file that you saved in the **text-generation-webui folder** you now type the following:<br><br>
-`pip install "deepspeed-0.11.2+**THE-VERSION-YOU-ARE-USING**-win_amd64.whl"` (The version you are using shouid match the file name you downloaded).
+3) With the file that you saved in the **text-generation-webui folder** you now type the following, replacing YOUR-VERSION with the name of the file you have:<br><br>
+`pip install "deepspeed-0.11.2+YOUR-VERSION-win_amd64.whl"`
    
 5) This should install through cleanly and you should now have DeepSpeed v11.2 installed within the Python 3.11/3.10 environment of text-generation-webui.
    
 6) When you start up text-generation-webui, and AllTalk starts, you should see **[AllTalk Startup] DeepSpeed Detected**
     
 7) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
+<br><br></details>
 
 #### 🟡 OPTION 2 - A bit more complicated!
-#### Manual Build DeepSpeed v11.2 (for Windows and Python 3.11 and 3.10) 
-➡️DeepSpeed requires an Nvidia Graphics card!⬅️
+<details>
+	<summary>Click to expand: Manual Build DeepSpeed v11.2 (Python 3.11 and 3.10)</summary>
+➡️DeepSpeed requires an Nvidia Graphics card!⬅️<br><br>
 
-DeepSpeed Version 11.2 with CUDA 11.8 or 12.1 - Installation Instructions:
+This will take about 1 hour to complete and about 6GB of disk space.<br>
 
 1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
 2. Install Visual C++ build tools, such as [VS2019 C++ x64/x86](https://learn.microsoft.com/en-us/visualstudio/releases/2019/redistribution#vs2019-download) build tools.
 3. Download and install the [Nvidia Cuda Toolkit 11.8 or 12.1](https://developer.nvidia.com/cuda-toolkit-archive)
-4. **OPTIONAL** If you do not have an python environment already created, you can install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html), then at a command prompt, create and activate your environment with:<br><br>
+4. **OPTIONAL** If you do not have an python environment already created and you are **not** going to use Text-generation-webui's environment, you can install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html), then at a command prompt, create and activate your environment with:<br><br>
 ```conda create -n pythonenv python=3.11```<br>
 ```activate pythonenv```<br>
 
 5. Launch the Command Prompt cmd with Administrator privilege as it requires admin to allow creating symlink folders.
-6. If you are using the **text-generation-webui** python environment, then in the `text-generation-webui` folder you will run `cmd_windows.bat` to start the python evnironment.<br><br>
+6. If you are using the **Text-generation-webui** python environment, then in the `text-generation-webui` folder you will run `cmd_windows.bat` to start the python evnironment.<br><br>
 Otherwise Install PyTorch, 2.1.0 with CUDA 11.8 or 12.1 into your Python 3.1x.x environment e.g:<br><br>
 ```activate pythonenv``` (activate your python environment)<br>
 ```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia```<br>
 or<br>
 ```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia```<br>
-
 
 9. Set your CUDA Windows environment variables in the command prompt to ensure that CUDA_HOME and CUDA_PATH are set to your Nvidia Cuda Toolkit path. (The folder above the bin folder that nvcc.exe is installed in). Examples are:<br><br>
 ```set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
@@ -317,6 +323,7 @@ def get_shm_size():
 ```build_win.bat``` and wait 10-20 minutes.
 
 11. Now `cd dist` to go into your dist folder and you can now `pip install deepspeed-YOURFILENAME.whl` (or whatever your WHL file is called).
+<br><br></details>
 
 ### 🔴 Future to-do list
 - Complete & document the new/full standalone mode API.
