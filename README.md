@@ -197,13 +197,18 @@ As far as I am aware, these are to do with the chrome browser the gradio text-ge
 3) Install libaio-dev (however your Linux version installs things) e.g. `sudo apt install libaio-dev`<br><br>
 4) Move into your Text generation webUI folder e.g. `cd text-generation-webui`<br><br>
 5) Start the Text generation webUI Python environment `./cmd_linux.sh`<br><br>
-6) Text generation webUI **overwrites** the CUDA_HOME variable on each `./cmd_linux.sh` or `./start_linux.sh` startup, so you will need to either force this to be changed within the python environment OR change it each time you `./cmd_linux.sh`<br> <br>
+6) Text generation webUI **overwrites** the **CUDA_HOME** environment variable each time you `./cmd_linux.sh` or `./start_linux.sh`, so you will need to either permanently change within the python environment OR set CUDA_HOME it each time you `./cmd_linux.sh`. Details to change it each time are on the next step. Below is a link to Conda's manual and changing environment variables permanently though its possible changing it permanently could affect other extensions, you would have to test.<br> <br>
 [Conda manual - Environment variables](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars)<br><br>
-7) You can set the CUDA_HOME environment with `export CUDA_HOME=/usr/local/cuda` or `export CUDA_HOME=/etc/alternatives/cuda`. These are the standard paths on Ubuntu, but could vary on other Linux flavours.<br> <br>
-If you try to start DeepSpeed without the path set incorrectly, expect an error similar to `[Errno 2] No such file or directory: /home/yourname/text-generation-webui/installer_files/env/bin/nvcc`<br> <br>
-8) Now install deepspeed with pip install deepspeed<br><br>
-9) You can now start Text generation webUI `python server.py` ensuring to activate your extensions.
-<br><br></details>
+7) You can temporarily set the **CUDA_HOME** environment with (Standard paths on Ubuntu, but could vary on other Linux flavours):<br><br>
+`export CUDA_HOME=/etc/alternatives/cuda`<br><br>
+**every** time you run `./cmd_linux.sh`.<br> <br>
+If you try to start DeepSpeed with the CUDA_HOME path set incorrectly, expect an error similar to `[Errno 2] No such file or directory: /home/yourname/text-generation-webui/installer_files/env/bin/nvcc`<br> <br>
+9) Now install deepspeed with pip install deepspeed<br><br>
+10) You can now start Text generation webUI `python server.py` ensuring to activate your extensions.<br><br>
+Just to reiterate, starting Text-generation-webUI with `./start_linux.sh` will overwrite the CUDA_HOME variable unless you have permanently changed it, hence always starting it with `./cmd_linux.sh` **then** setting the environment variable manually (step 7) and **then** `python server.py`, which is how you would need to run it each time, unless you permanently set the environment variable for CUDA_HOME within Text-generation-webUI's standard Python environment.
+<br><br>
+**Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `./cmd_linux.sh` and then `pip uninstall deepspeed`<br><br>
+</details>
 	
 #### 🟢🟡 Windows Installation
 DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
@@ -228,7 +233,9 @@ Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpe
 6) When you start up text-generation-webui, and AllTalk starts, you should see **[AllTalk Startup] DeepSpeed Detected**
     
 7) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
-<br><br></details>
+<br><br>
+**Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
+</details>
 
 #### 🟡 OPTION 2 - A bit more complicated!
 <details>
@@ -325,7 +332,9 @@ def get_shm_size():
 ```build_win.bat``` and wait 10-20 minutes.
 
 11. Now `cd dist` to go into your dist folder and you can now `pip install deepspeed-YOURFILENAME.whl` (or whatever your WHL file is called).
-<br><br></details>
+<br><br>
+**Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
+</details>
 
 ### 🔴 Future to-do list
 - Complete & document the new/full standalone mode API.
