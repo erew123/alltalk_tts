@@ -100,6 +100,7 @@ voices/*.*
 models/*.*
 outputs/*.*
 config.json
+confignew.json
 models.json
 ```
 ### 🟪 Problems Updating
