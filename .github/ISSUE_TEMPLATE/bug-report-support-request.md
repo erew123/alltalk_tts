@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Please run the diagnostics and upload the diagnostics.log file start Text-generation-webui's Python environment with "cmd_windows.bat" OR "./cmd_linux.sh" OR "cmd_macos.sh" OR "cmd_wsl.bat" and then go into the \extensions\alltalk_tts\ folder and run:
+Please run the diagnostics and upload the diagnostics.log file. To do this, start Text-generation-webui's Python environment with "cmd_windows.bat" OR "./cmd_linux.sh" OR "cmd_macos.sh" OR "cmd_wsl.bat" and then go into the \extensions\alltalk_tts\ folder and run:
 
 python diagnostics.py
 
