@@ -641,27 +641,25 @@ simple_webpage = """
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        h1, h2, h3, h4, h5 {
-            color: #333;
+        h1, h2 {
+            color: black;
+            text-decoration: underline;
         }
 
-        h1, h2, h3 {
-        text-decoration: underline;
-        }
-
-        p, span {
-            color: #555;
-            font-size: 16px; /* Increased font size for better readability */
-            line-height: 1.5; /* Adjusted line-height for better spacing */
-        }
+    p, span {
+        color: #555;
+        font-size: 16px; /* Increased font size for better readability */
+        margin-top: 0; /* Remove top margin for paragraphs */
+    }
 
         code {
             background-color: #f8f8f8;
-            border: 1px solid #ddd;
+            border: 2px solid #ddd;
             border-radius: 4px;
-            padding: 2px 2px;
-            font-size: 14px; /* Adjusted font size for better visibility */
-            margin-bottom: 0px;
+            padding: 0px 0px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #3366ff;
         }
 
         pre {
@@ -671,13 +669,11 @@ simple_webpage = """
             padding: 10px;
             overflow-x: auto;
             font-size: 14px; /* Adjusted font size for better visibility */
-            line-height: 1.5; /* Adjusted line-height for better spacing */
         }
 
         ul {
             color: #555;
             list-style-type: square; /* Set the bullet style */
-            line-height: 1.5; /* Adjusted line-height for better spacing */
             margin-left: 2px; /* Adjust the left margin to create an indent */
         } 
 
@@ -778,265 +774,82 @@ simple_webpage = """
         display: none;
         }
 
+       
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        /* Style for the first table */
+        #configuration-details table {
+            font-size: 16px;
+        }
+
+        /* Style for the nested table */
+        #modeldownload-table table {
+            font-size: 16px;
+        }
+
+        #modeldownload-table table td {
+            padding: 4px; /* Adjust padding as needed for the nested table */
+        }
+
+
+
+
     </style>
 </head>
 
 <body>
-    <h1 id="toc">AllTalk TTS for Text generation webUI</h1>
-    <p><b>Text generation webUI</b> webpage <a href="http://{{ params["ip_address"] }}:7860" target="_blank">here</a> and documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank">here</a></p>
-    <p><b>AllTalk Github</b> <a href="https://github.com/erew123/alltalk_tts" target="_blank">here</a>  
+<h1 id="toc">AllTalk TTS for Text generation webUI</h1>
+<iframe src="http://{{ params["ip_address"] }}:{{ params["port_number"] }}/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
+<h2>Table of Contents</h2>
+<ul>
+<li><a href="#getting-started">Getting Started</a></li>
+<li><a href="#server-information">Server Information</a></li>
+<li><a href="#demotesttts">Demo/Test TTS output</a></li>
+<li><a href="#using-voice-samples">Using Voice Samples</a></li>
+<li><a href="#text-not-inside">Text Not inside</a></li>
+<li><a href="#low-vram">Low VRAM</a></li>
+<li><a href="#deepspeed">DeepSpeed</a>
+<ul>
+<li><a href="#deepspeed-linux">DeepSpeed Setup Linux</a></li>
+<li><a href="#deepspeed-windows">DeepSpeed Setup Windows</a></li>
+</ul>
+</li>
+<li><a href="#TTSmodels">TTS Models/Methods</a></li>
+<li><a href="#temperature-and-repetition-settings">Model temperature and repetition settings</a></li>
+<li><a href="#start--up-checks">Start-up checks</a></li>
+<li><a href="#customTTSmodels">Custom TTS Models and Model path</a></li>
+<li><a href="#configuration-details">Configuration file settings</a></li>
+<li><a href="#curl-commands">JSON calls and CURL Commands</a></li>
+<li><a href="#debugging-and-tts-generation-information">Debugging and TTS Generation Information</a></li>
+<li><a href="#references">Thanks &amp; References</a></li>
+</ul>
 
-    <iframe src="http://{{ params["ip_address"] }}:{{ params["port_number"] }}/settings" width="100%" height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
-    
-    <h3>Table of Contents</h3>
-    <ul>
-        <li><a href="#getting-started">Getting Started with AllTalk TTS</a></li>
-        <li><a href="#server-information">Server Information</a></li>
-        <li><a href="#using-voice-samples">Using Voice Samples</a></li>
-        <li><a href="#text-not-inside">Text Not inside function</a></li>
-        <li><a href="#local-model-temperature-and-repetition-settings">Local Model temperature and repetition settings</a></li>
-        <li><a href="#where-are-the-outputs-stored">Automatic output wav file deletion</a></li>
-        <li><a href="#low-vram-option-overview">Low VRAM Overview</a></li>
-        <li><a href="#deepspeed-simplified">DeepSpeed Simplified</a></li>
-        <li><a href="#setup_deepspeed">Setup DeepSpeed</a></li>
-        <li><a href="#other-features">Other Features of AllTalk_TTS Extension for Text generation webUI</a></li>
-        <li><a href="#TTSmodels">TTS Models/Methods</a></li>
-        <li><a href="#customTTSmodels">Custom TTS Models and Model path</a></li>
-        <li><a href="#demotesttts">Demo/Test TTS output</a></li>
-        <li><a href="#curl-commands">CURL Commands</a></li>
-        <li><a href="#configuration-details">Configuration Details</a></li>
-        <li><a href="#debugging-and-tts-generation-information">Debugging and TTS Generation Information</a></li>
-        <li><a href="#references">Thanks & References</a></li>
-    </ul>
+<h2 id="getting-started">Getting Started</h2>
+<p style="padding-left: 30px; text-align: justify;">AllTalk is a web interface, based around the Coqui TTS voice cloning/speech generation system. To generate TTS, you can use the provided gradio interface or interact with the server using JSON/CURL commands.&nbsp;</p>
+<p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span> When loading up a new character in Text generation webUI it may look like nothing is happening for 20-30 seconds. Its actually processing the introduction section (greeting message) of the text and once that is completed, it will appear. You can see the activity occuring in the console window. Refreshing the page multiple times will try force the TTS engine to keep re-generating the text, so please just wait and check the console if needed.</p>
+<p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note: </span>Ensure that your RP character card has asterisks around anything for the narration and double quotes around anything spoken. There is a complication ONLY with the greeting card so, ensuring it has the correct use of quotes and asterisks will help make sure that the greeting card sounds correct. I will aim to address this issue in a future update. In Text-generation-webUI <span style="color: #3366ff;">parameters menu</span> &gt; <span style="color: #3366ff;">character tab</span> &gt; <span style="color: #3366ff;">greeting</span>&nbsp;make sure that anything in there that is the narrator is in asterisks and anything spoken is in double quotes, then hit the <span style="color: #3366ff;">save</span> (💾) button.</p>
+<p style="padding-left: 30px;"><span style="text-decoration: underline;"><strong>AllTalk</strong></span> <br />Github <a href="https://github.com/erew123/alltalk_tts" target="_blank" rel="noopener">link here</a><br />Update instructions <a href="https://github.com/erew123/alltalk_tts?#-updating" target="_blank" rel="noopener">link here</a><br />Help and issues <a href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank" rel="noopener">link here<br /><br /></a><span style="text-decoration: underline;"><strong>Text generation webUI</strong></span> <br />Web interface&nbsp;<a href="http://{{ params["ip_address"] }}:7860" target="_blank" rel="noopener">link here</a> <br />Documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank" rel="noopener">link here</a></p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+<h2 id="server-information">Server Information</h2>
+<ul>
 
-    <h2 id="getting-started">Getting Started</h2>
-    <p>AllTalk is a web interface, based around the Coqui TTS speech generation system. To generate TTS, you can use the provided interface or interact with the server using CURL commands. Below are some details and examples:</p>
-    <p><b>Note:</b> When loading up a new character in Text generation webUI it may look like nothing is happening for 20-30 seconds. Its actually processing the introduction section of the text and once that is completed, it will appear. You can see the activity occuring in the console window. Refreshing the page multiple times will try force the TTS engine to keep re-generating the text, so please just wait and check the console if needed. </p>
-    <p><b>IMPORTANT Note:</b> Ensure that your RP character card has asterisks around anything for the narration and double quotes around anything spoken. There is a complication ONLY with the greeting card so, ensuring it has the correct use of quotes and asterisks will help make sure that the greeting card sounds correct. I will aim to address this issue in a future update.</p>
-    <p>Details on how to edit your greeting card, and where I'm at with solving this, can be found here <a href="https://github.com/erew123/alltalk_tts/tree/main#the-one-thing-i-cant-easily-work-around" target="_blank">erew123's Github</a> and you can look here at an example of how text should be formatted with quotes and asterisks <a href="#text-not-inside">Text Not inside function</a></p>
-
-    <p><b>AllTalk Updating instructions</b> <a href="https://github.com/erew123/alltalk_tts?#-updating" target="_blank">here</a>
-    <p><b>AllTalk Help and issues</b> <a href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank">here</a>
-
-    <h3 id="server-information">Server Information</h3>
-    <ul>
         <li>Base URL: <code>http://{{ params["ip_address"] }}:{{ params["port_number"] }}</code></li>
         <li>Server Status: <code><a href="http://{{ params["ip_address"] }}:{{ params["port_number"] }}/ready">http://{{ params["ip_address"] }}:{{ params["port_number"] }}/ready</a></code></li>
-    </ul>
-    <p><a href="#toc">Back to top of page</a></p>
 
-    <h3 id="using-voice-samples"><strong>Using Voice Samples</strong></h3>
-    <h4 id="where-are-the-sample-voices-stored">Where are the sample voices stored?</h4>
-    <p>Voice samples are stored in <b>/extensions/alltalk_tts/voices/</b> and should be named using the following format <b>name.wav</b></p>
-    <h4 id="where-are-the-outputs-stored">Where are the outputs stored & Automatic output wav file deletion.</h4>
-    <p>Voice samples are stored in <b>/extensions/alltalk_tts/outputs/</b></p>
-    <p>You can configure automatic maintenence deletion of old wav files by setting <b>"Del WAV's older than"</b> in the settings above. When <b>"Disabled"</b> your output wav files will be left untouched. When set to a setting <b>"1 Day"</b> or greater, your output wav files older than that time period will be automatically deleted on startup.</p>
-    <h4>Where are the models stored?</h4>
-    <p>This extension will download the 2.0.2 model to <b>/extensions/alltalk_tts/models/</b></p>
-    <p>This TTS engine will also download the latest available model and store it wherever it normally stores it for your OS (Windows/Linux/Mac).</p>
-    <h4>How do I create a new voice sample?</h4>
-    <p>To create a new voice sample you need to make a <b>wav</b> file that is <b>22050Hz</b>, <b>Mono</b>, <b>16 bit</b> and between <b>6 to 30 seconds long</b>, though 8 to 10 seconds is usually good enough. The model <b>can handle up to a 30 second sample</b>, however Ive not noticed any improvemnt in voice output from a much shorter clip.</p>
-    <p>You want to find a nice clear selection of audio, so lets say you wanted to clone your favourite celebrity. You may go looking for an interview where they are talking. Pay close attention to the audio you are listening to and trying to sample, are there noises in the backgroud, hiss on the soundtrack, a low humm, some quiet music playing or something? The better quality the audio the better the result. Dont forget, the AI that processes the sounds can hear everything, all those liitle noises, and it will use them in the voice its trying to recreate. </p>
-    <p>Try make your clip one of nice flowing speech, like the included example files. No big pauses, gaps or other sounds. Preferably one that the person you are trying to copy will show a little vocal range and emotion in their voice. Also, try to avoid a clip starting or ending with breathy sounds (breathing in/out etc).</p>
-    <h4>Generating the sample!</h4>
-    <p>So youve downloaded your favoutie celebrity interview off Youtube or wherever. From here you need to chop it down to 6 to 12 seconds in length and resample it. If you need to clean it up, do audio processing, volume level changes etc, do it before the steps I am about to describe.</p>
-    <p>Using the latest version of <b>Audacity</b>, select your clip and <b>Tracks > Resample to 22050Hz</b>, then <b>Tracks > Mix > Stereo to Mono</b>. and then <b>File > Export Audio</b>, saving it as a WAV of 22050Hz.</p>
-    <p>Save your generated wav file in <b>/extensions/alltalk_tts/voices/</b></p>
-    <p><b>Note:</b> Using AI generated audio clips <b>may</b> introduce unwanted sounds as its already a copy/simulation of a voice.</p>
-    <h4>Why doesnt it sound like XXX Person?</h4>
-    <p>The reasons can be that you:</p>
-    <ul>
-    <li>Didn't downsample it as above.</li>
-    <li>Have a bad quality voice sample.</li>
-    <li>Try using the 3x different generation methods: <b>API TTS</b>, <b>API Local</b>, and <b>XTTSv2 Local</b> within the web interface, as they generate output in different ways and sound different.</li>
-    </ul>
-    <p><a href="#toc">Back to top of page</a></p>
+</ul>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <h3 id="text-not-inside"><strong>Text Not inside function</strong></h3>
-    <p>When using the Narrator function, most AI models should be using asterisks or double quotes to differentiate between the Narrator or the Character, however, many models sometimes switch between using asterisks and double quotes or nothing at all. This leaves a bit of a mess because sometimes that text is narration and sometimes its the character talking and there's no clear way to know where to split sentences. There is no 100&percnt; solution at the moment.</p>
-    <p>Most models usually lean more way than the other as to it is narration or the character talking when it does this. So you can use the "<b>Text NOT inside of * or &quot; is</b>" function to decide what the TTS engine should do in situations like this. It's an either/or situation. It will either use the Character voice or the narrator voice when text is not inside asterisks or double quotes.</p>
-
-    <div style="text-align: center;">
-        <img src="/static/textnotinside.jpg" alt="When the AI doesnt use an asterisk or a quote">
-    </div>
-
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h3 id="local-model-temperature-and-repetition-settings"><strong>Local Model Temperature and Repetition Settings</strong></h3>
-    <p><strong>Caution:</strong> It is recommended not to modify these settings unless you fully comprehend their effects. A general overview is provided below for reference.</p>
-    <p><strong>Note:</strong> Any changes to these two settings won't take effect until you restart AllTalk/Text generation webUI.</p>
-
-    <p>These settings only affect <b>API Local</b> and <b>XTTSv2 Local</b> methods.</p>
-
-    <h4>Repetition Penalty:</h4>
-    <p>In the context of text-to-speech (TTS), the <strong>Repetition Penalty</strong> (e.g., "local_repetition_penalty") influences how the model handles the repetition of sounds, phonemes, or intonation patterns. Here's how it works:</p>
-    <ul>
-        <li><strong>Higher Repetition Penalty (e.g. 10.0):</strong> The model is less likely to repeat sounds or patterns. It promotes diversity and reduces redundancy in the generated speech. This can result in a more varied and expressive output, introducing elements of unpredictability and creativity.</li>
-        <li><strong>Lower Repetition Penalty (e.g. 2.0):</strong> The model is more tolerant of repeating sounds or patterns. This might lead to more repetition in the generated speech, potentially making it sound more structured or rhythmically consistent. Lower values can still introduce expressive variations, but to a lesser extent. This tendency means that the generated speech may remain closer to the original sample.</li>
-    </ul>
-
-    <h4>Temperature:</h4>
-    <p>In the context of text-to-speech (TTS), the <strong>Temperature</strong> (e.g., "local_temperature") influences the randomness of the generated speech. Here's how it affects the output:</p>
-    <ul>
-        <li><strong>Higher Temperature (e.g. 0.75):</strong> Increases randomness in how the model selects and pronounces phonemes or intonation patterns. This can result in more creative, but potentially less controlled or "stable," speech that may deviate from the input sample. It adds an element of unpredictability and variety, contributing to expressiveness in the voice output created.</li>
-        <li><strong>Lower Temperature (e.g. 0.20):</strong> Reduces randomness, making the model more likely to closely mimic the input sample's voice, intonation, and overall style. This tends to produce more "coherent" speech that aligns closely with the characteristics of the training data or input voice sample. It adds a level of predictability and consistency, potentially reducing expressive variations.</li>
-    </ul>
-
-    <h4><strong>Temperature and Repetition Settings Examples:</strong></h4>
-
-    <ul>
-        <li>
-            <strong>Temp High (e.g. 0.90) and Repetition High (e.g. 10.0):</strong><br>
-            Result: Speech may sound highly creative and diverse, with reduced repetition. It could be more expressive and unpredictable.
-        </li>
-
-        <li>
-            <strong>Temp Low (e.g. 0.20) and Repetition High (e.g. 10.0):</strong><br>
-            Result: Output tends to be focused and deterministic, but with reduced repetition. It may sound structured and less expressive.
-        </li>
-
-        <li>
-            <strong>Temp High (e.g. 0.90) and Repetition Low (e.g. 2.0):</strong><br>
-            Result: Speech may be more creative and diverse, with tolerance for repeating sounds. It could have expressive variations but with some structured patterns.
-        </li>
-
-        <li>
-            <strong>Temp Low (e.g. 0.20) and Repetition Low (e.g. 2.0):</strong><br>
-            Result: Output is focused and deterministic, with tolerance for repeating sounds. It may sound more structured and less expressive.
-        </li>
-    </ul>
-
-    <h4>Default Values for XTTSv2 version 2.0.2:</h4>
-
-    <p>In the XTTSv2 version 2.0.2 model, the default factory values are:</p>
-
-    <ul>
-        <li><strong>Default Temperature:</strong> "temperature": 0.75 - A balanced value that provides a good trade-off between creativity and stability.</li>
-        <li><strong>Default Repetition Penalty:</strong> "repetition_penalty": 10.0 - A higher value that encourages diversity and reduces repetition of sounds, contributing to a more expressive output.</li>
-    </ul>
-
-    <p>The temperature has been set at 0.70 here though, as it often produces a slightly better result (in my estimation).</p>
-
-    <p>The default settings for any model are usually provided in the confignew.json file that comes wtih the model and this file can be found within the folder where the model is stored.</p>
-    <p>These default values are carefully chosen to offer a reasonable starting point for users, and adjustments can be made based on individual preferences and use cases. However, it's important to note that changing these settings or setting them to extremes may result in unexpected outcomes. Setting extremely high or low values, especially without a good understanding of their effects, may lead to flat-sounding output or very strange-sounding output. It's advisable to experiment with adjustments incrementally and observe the impact on the generated speech to find a balance that suits your desired outcome.</p>
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h3 id="low-vram-option-overview"><strong>Low VRAM Overview:</strong></h3>
-    <p>The Low VRAM option is a crucial feature designed to enhance performance under constrained Video Random Access Memory (VRAM) conditions, as the TTS models require 2GB-3GB of VRAM to run effectively. This feature strategically manages the relocation of the Text-to-Speech (TTS) model between your system's Random Access Memory (RAM) and VRAM, moving it between the two on the fly.</p>
-    <p>When you dont have enough VRAM free after loading your LLM model into your VRAM (Normal Mode example below), you can see that with so little working space, your GPU will have to swap in and out bits of the TTS model, which causes horrible slowdown.</p>
-    
-    <p><b>Note: </b>An Nvidia Graphics card is required for LowVRAM, as you will be using system memory for the models otherwise.</p>
-
-    <h4>How It Works:</h4>
-    <p>The Low VRAM mode intelligently orchestrates the relocation of the entire TTS model. When the TTS engine requires VRAM for processing, the entire model seamlessly moves into VRAM, causing your LLM to unload/displace some layers, ensuring optimal performance of the TTS engine.</p>
-    <p>The TTS model is fully loaded into VRAM, facilitating uninterrupted and efficient TTS generation, creating contiguous space for the TTS model and significantly accelerating TTS processing, especially for long paragraphs. Post-TTS processing, the model promptly moves back to RAM, freeing up VRAM space for your Language Model (LLM) to load back in the missing layers. This adds about 1-2 seconds to both text generation by the LLM and the TTS engine.</p>
-    <p>By transferring the entire model between RAM and VRAM, the Low VRAM option avoids fragmentation, ensuring the TTS model remains cohesive and accessible.</p>
-    <p>This creates a TTS generation performance Boost for Low VRAM Users and is particularly beneficial for users with less than 2GB of free VRAM after loading their LLM, delivering a substantial 5-10x improvement in TTS generation speed.</p>
-
-    <div style="text-align: center;">
-        <img src="/static/lowvrammode.png" alt="How Low VRAM Works">
-    </div>
-
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h3 id="deepspeed-simplified"><strong>DeepSpeed Simplified:</strong></h3>
-
-    <h4>What's DeepSpeed?</h4>
-    <p>DeepSpeed, developed by Microsoft, is like a speed boost for Text-to-Speech (TTS) tasks. It's all about making TTS happen faster and more efficiently.</p>
-    <p><b>Note: </b>An Nvidia Graphics card is required for DeepSpeed</p>
-
-    <h4>How Does It Speed Things Up?</h5>
-    <ul>
-        <li><strong>Model Parallelism:</strong> Spreads the work across multiple GPUs, making TTS models handle tasks more efficiently.</li>
-        <li><strong>Memory Magic:</strong> Optimizes how memory is used, reducing the memory needed for large TTS models.</li>
-        <li><strong>Efficient Everything:</strong> DeepSpeed streamlines both training and generating speech from text, making the whole process quicker.</li>
-    </ul>
-
-    <h4>Why Use DeepSpeed for TTS?</h4>
-    <ul>
-        <li><strong>2x-3x Speed Boost:</strong> Generates speech much faster than usual.</li>
-        <li><strong>Handles More Load:</strong> Scales up to handle larger workloads with improved performance.</li>
-        <li><strong>Smart Resource Use:</strong> Uses your computer's resources smartly, getting the most out of your hardware.</li>
-    </ul>
-    
-    <div style="text-align: center;">
-        <img src="/static/deepspeedexample.jpg" alt="DeepSpeed on vs off">
-    </div>
-
-    <p><strong>Note:</strong> DeepSpeed only works with the XTTSv2 Local model.</p>
-    <p><strong>Note:</strong> Requires Nvidia Cuda Toolkit installation and correct CUDA_HOME path configuration.</p>
-
-    <h4>How to Use It:</h4>
-    <p>In AllTalkTTS, the DeepSpeed checkbox will only be available if DeepSpeed is detected on your system. Check the checkbox, wait 10 to 30 seconds and off you go!</p>
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h3 id="setup_deepspeed">Setup DeepSpeed</h3>
-      <p><strong>Note:</strong> DeepSpeed/AllTalk may warn if the Nvidia Cuda Toolkit and CUDA_HOME environment variables arent set. On Linux I believe you need these installed, on Windows, if you use the pre-built wheel it seems ok without.</p>
-
-    <h4>Linux - DeepSpeed - Installation Instructions</h4>
-    <ol>
-        <li>Download and install the <a href="https://developer.nvidia.com/cuda-toolkit-archive">Nvidia Cuda Toolkit for Linux</a>.</li>
-        <li>Load up a terminal console.</li>
-        <li>Install libaio-dev (however your Linux version installs things) e.g. <code>sudo apt install libaio-dev</code></li>
-        <li>Move into your Text generation webUI folder e.g. <code>cd text-generation-webui</code></li>
-        <li>Start the Text generation webUI Python environment e.g. <code>./start_linux.sh</code></li>
-        <li>Text generation webUI overwrites the CUDA_HOME variable on each startup, so you will need to either force this to be changed within the environment OR change it each time you <code>./start_linux.sh</code></li>
-        <li>You can set the CUDA_HOME environment with <code>export CUDA_HOME=/usr/local/cuda</code> or <code>export CUDA_HOME=/etc/alternatives/cuda</code>. On some systems only one of those two commands may be the correct command, so you may need to try one, see if it works, if not try the other. IF you do not set it, expect a big messy output to the log when you try to activate DeepSpeed.</li>
-        <li>Now install deepspeed with <code>pip install deepspeed</code></li>
-        <p><strong>Note:</strong> You can run <code>ds_report</code> when you have installed DeepSpeed on your system to see if it is working correctly</p>
-        <li>You can now start Text generation webUI <code>python server.py</code> ensuring to activate your extensions.</li>
-    </ol>
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h4>Windows - DeepSpeed v11.1 or v11.2 Installation Instructions</h4>
-    <p>Currently/Officially only DeepSpeed v8.3 is installing on Windows, due to the broken installation routine by Microsoft, however, between myself and <a href="https://github.com/S95Sedan" target="_blank">S95Sedan</a> its now possible to install DeepSpeed v11.1 or v11.2 on Windows.</p>
-
-    <h4>DeepSpeed on Windows - <span class="option-a">Option A</span></h4>
-    <p>This is to use the pre built DeepSpeed v11.2 wheel file. This is quite a quick process and should work for 99&percnt; of people.</p>
-
-    <p><strong>Note:</strong> In my tests, with this method you will <strong>not</strong> need to install the Nvidia CUDA toolkit to make this work, but AllTalk may warn you when starting DeepSpeed that it doesn't see the CUDA Toolkit; however, it works fine for TTS purposes.</p>
-
-    <ol>
-    <li>Download the correct wheel version for your CUDA and Python version file <a href="https://github.com/erew123/alltalk_tts/releases/tag/deepspeed" target="_blank">from here</a> and save the file it inside your <strong>text-generation-webui</strong> folder.</li>
-
-    <li>At a command prompt window, move into your <strong>text-generation-webui folder</strong>, you can now start the Python environment for text-generation-webui:<br>
-        <br><code>cmd_windows.bat</code></li><br>
-
-    <li>With the file that you saved in the <strong>text-generation-webui folder</strong>, you now type the following:<br>
-        <br><code>pip install "deepspeed-0.11.2+<b>yourversionhere</b>-win_amd64.whl"</code></li><br>
-
-    <li>This should install through cleanly and you should now have DeepSpeed v11.2 installed within the Python 3.11 environment of text-generation-webui.</li>
-
-    <li>When you start up text-generation-webui, and AllTalk starts, you should see <strong>[AllTalk Startup] DeepSpeed Detected</strong></li>
-
-    <li>Within AllTalk, you will now have a checkbox for <strong>Activate DeepSpeed</strong> though remember you can only change <strong>1x setting every 15 or so seconds</strong>, so don't try to activate DeepSpeed <strong>and</strong> LowVRAM/Change your model simultaneously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.</li>
-    </ol>
-
-    <h4>DeepSpeed on Windows - <span class="option-b">Option B</span></h4>
-    <p>Due to the complexity of this, Im not keeping the instructions within this document as it would be too complex to format.</p>
-    <p>As such, the instuctions can be found on this <a href="https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-option-2---a-bit-more-complicated" target="_blank">link</a>
-
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h2 id="other-features"><strong>Other Features of AllTalk TTS Extension for Text generation webUI</strong></h2>
-
-    <h3>Start-up Checks</h3>
-    <p>Ensures a minimum TTS version (0.21.3) is installed and provides an error/instructions if not.</p>
-    <p>Performs a basic environment check to ensure everything should work e.g. is the model already downloaded, are the configuration files set correctly etc.</p>
-    <p>Downloads the Xtts model (version 2.0.2) to improve generation speech quality as the 2.0.3 model sounded terrible. The API TTS version uses the latest model (2.0.3 at the time of writing) so you have the best of both worlds.</p>
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h3 id="TTSmodels">TTS Models/Methods</h3>
-    <p>It's worth noting that all models and methods can and do sound different from one another. Many people complained about the quality of audio produced by the 2.0.<b>3</b> model, so this extension will download the 2.0.<b>2</b> model to your models folder and give you the choice to use 2.0.<b>2</b> <b>(API Local and XTTSv2 Local)</b> or use the most current model 2.0.<b>3</b> <b>(API TTS)</b>. As/When a new model is released by AllTalk it will be downloaded by the TTS service on startup and stored wherever the TTS service keeps new models on your operating system of choice.</p>
-    <ul>
-        <li><strong>API TTS:</strong> Uses the current TTS model available that's downloaded by the TTS API process (e.g. version 2.0.3 at the time of writing). This model is not stored in your "models" folder, but elsewhere on your system and managed by the TTS software.</li>
-        <li><strong>API Local:</strong> Utilizes the <b>2.0.2</b> local model stored at <b>/alltalk_tts/models/xttsv2_2.0.2</b>.</li>
-        <li><strong>XTTSv2 Local:</strong> Employs the <b>2.0.2</b> local model <b>/alltalk_tts/models/xttsv2_2.0.2</b> and utilizes a distinct TTS generation method. <b>Supports DeepSpeed acceleration</b>.</li>
-    </ul>
-    <p><a href="#toc">Back to top of page</a></p>
-
-    <h3 id="demotesttts">Demo/Test TTS</h3>
-
+<h2 id="demotesttts">Demo/Test TTS</h2>
     <div id="container">
         <form method="post" action="/tts-demo-request" id="ttsForm">
             <label for="text">Text:</label>
@@ -1102,141 +915,398 @@ simple_webpage = """
             audioPlayer.play(); // Play the audio;
         });
     </script>
-    <p><a href="#toc">Back to top of page</a></p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <h3 id="customTTSmodels">Custom TTS Models and Model path</h3>
+<h2 id="using-voice-samples"><strong>Using Voice Samples</strong></h2>
+<h4 id="where-are-the-sample-voices-stored">Where are the sample voices stored?</h4>
+<p style="padding-left: 30px;">Voice samples are stored in <span style="color: #3366ff;">/alltalk_tts/voices/</span> and should be named using the following format <span style="color: #3366ff;">name.wav</span></p>
+<h4 id="where-are-the-outputs-stored">Where are the outputs stored &amp; Automatic output wav file deletion.</h4>
+<p style="padding-left: 30px; text-align: justify;">Voice outputs are stored in&nbsp;<span style="color: #3366ff;">/alltalk_tts/outputs/</span></p>
+<p style="padding-left: 30px; text-align: justify;">You can configure automatic maintenence deletion of old wav files by setting <span style="color: #3366ff;">Del WAV's older than</span> in the settings above.</p>
+<p style="padding-left: 30px; text-align: justify;">When <span style="color: #3366ff;">Disabled</span> your output wav files will be left untouched. When set to a setting <span style="color: #3366ff;">1 Day</span> or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.</p>
+<h4>Where are the models stored?</h4>
+<p style="padding-left: 30px; text-align: justify;">This extension will download the 2.0.2 model to <span style="color: #3366ff;">/alltalk_tts/models/</span></p>
+<p style="padding-left: 30px; text-align: justify;">This TTS engine will also download the latest available model and store it wherever your OS normally stores it (Windows/Linux/Mac).</p>
+<h4>How do I create a new voice sample?</h4>
+<p style="padding-left: 30px; text-align: justify;">To create a new voice sample you need to make a wav file that is <span style="color: #3366ff;">22050Hz</span>, <span style="color: #3366ff;">Mono</span>, <span style="color: #3366ff;">16 bit</span> and between 6 to 30 seconds long, though 8 to 10 seconds is usually good enough. The model can handle up to a 30 second samples, however Ive not noticed any improvement in voice output from a much longer clips.</p>
+<p style="padding-left: 30px; text-align: justify;">You want to find a nice clear selection of audio, so lets say you wanted to clone your favourite celebrity. You may go looking for an interview where they are talking. Pay close attention to the audio you are listening to and trying to sample. Are there noises in the backgroud, hiss on the soundtrack, a low humm, some quiet music playing or something? The better quality the audio the better the final TTS result. Dont forget, the AI that processes the sounds can hear everything in your sample and it will use them in the voice its trying to recreate.</p>
+<p style="padding-left: 30px; text-align: justify;">Try make your clip one of nice flowing speech, like the included example files. No big pauses, gaps or other sounds. Preferably a sample that the person you are trying to copy will show a little vocal range and emotion in their voice. Also, try to avoid a clip starting or ending with breathy sounds (breathing in/out etc).</p>
+<h4>Editing your sample!</h4>
+<p style="padding-left: 30px; text-align: justify;">So youve downloaded your favoutie celebrity interview off Youtube, from here you need to chop it down to 6 to 30 seconds in length and resample it.</p>
+<p style="text-align: justify; padding-left: 30px;">If you need to clean it up, do audio processing, volume level changes etc, do this before downsampling.<br /><br />Using the latest version of Audacity <span style="color: #3366ff;">select/highlight</span> your 6 to 30 second clip and:<br /><br /><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Tracks</span> &gt;<span style="color: #3366ff;"> Resample to 22050Hz</span>&nbsp;then<br /><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Tracks</span> &gt; <span style="color: #3366ff;">Mix</span> &gt; <span style="color: #3366ff;">Stereo to Mono&nbsp;</span>then<br /><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; File</span> &gt; <span style="color: #3366ff;">Export Audio</span>&nbsp;saving it as a <span style="color: #3366ff;">WAV</span> of <span style="color: #3366ff;">22050Hz</span>.</p>
+<p style="padding-left: 30px; text-align: justify;">Save your generated wav file in the&nbsp;<span style="color: #3366ff;">/alltalk_tts/voices/ <span style="color: #808080;">folder.</span></span></p>
+<p style="padding-left: 30px; text-align: justify;">Its worth mentioning that using AI generated audio clips may introduce unwanted sounds as its already a copy/simulation of a voice.</p>
+<h4>Why doesnt it sound like XXX Person?</h4>
+<p style="padding-left: 30px; text-align: justify;">The reasons can be that you:</p>
+<ul style="text-align: justify;">
+<li>Didn't downsample it as above.</li>
+<li>Have a bad quality voice sample.</li>
+<li>Try using the 3x different generation methods: <span style="color: #3366ff;">API TTS</span>, <span style="color: #3366ff;">API Local</span>, and <span style="color: #3366ff;">XTTSv2 Local</span> within the web interface, as they generate output in different ways and sound different.</li>
+</ul>
+<p style="padding-left: 30px; text-align: justify;">Some samples just never seem to work correctly, so maybe try a different sample. Always remember though, this is an AI model attempting to re-create a voice, so you will never get a 100% match.</p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <p>Its possible to set a custom model for the <strong>API Local</strong> and<strong> XTTSv2</strong> Local methods, or indeed point it at the same model that <strong>API TTS</strong> uses (wherever it is stored on your OS of choice). Many people did not like the sound quality of the Coqui <strong>2.0.<span style="color:#e74c3c">3</span></strong> model, and as such the AllTalk tts extension downloads the <strong>2.0.<span style="color:#2980b9">2</span></strong> model seperately to the <strong>2.0.<span style="color:#e74c3c">3</span></strong> model that TTS service downloads and manages. Typically the <strong>2.0.<span style="color:#2980b9">2</span></strong> model is stored in your <strong>/extensions/alltalk_tts/models</strong> folder and it is always downloaded on first start-up of the&nbsp;AllTalk_tts extension. However, you may either want to use a custom model version of your choosing, or point it to a different path on your system, or even point it so that&nbsp;API Local and XTTSv2 <strong>both</strong> use the same model that API TTS is using.</p>
-    <p>If you do choose to change the location there are a couple of things to note.&nbsp;</p>
-    <p>- The folder you place the model in, <strong><span style="color:#e74c3c">cannot</span></strong> be called &quot;<strong>models</strong>&quot;. This name is reserved solely for the system to identify you are or are not using a custom model.</p>
-    <p>- On each startup, the&nbsp;AllTalk tts extension will check the custom location and if it does not exist, it will create it and download the files it needs. It will also re download any missing files in that location that are needed for the model to function.</p>
-    <p>- There will be extra output at the console to inform you that you are using a custom model and each time you load up the AllTalk_tts extension or switch between models.</p>
-    <p>To change the model path, there are at minimum 2x settings you need to alter in the <strong>modeldownload.json</strong> file, <strong>base_path</strong> and <strong>model_path</strong>. These two settings are further detailed in the section below called <strong>Explanation of the modeldownload.json file</strong></p>
-    <p>You would edit the settings in the <strong>modeldownload.json</strong> file as follows (make a backup of your current file in case):&nbsp;</p>
-    <p><strong>Windows example:</strong>&nbsp;<span style="color:#2980b9">c:\mystuff\mydownloads\myTTSmodel\</span><em>{files in here}</em></p>
 
-    <ul>
-	    <li>&nbsp; &nbsp; &nbsp; &nbsp;<strong>base_path </strong>would be &quot;<span style="color:#2980b9">c:&#92;&#92;mystuff&#92;&#92;mydownloads&quot;</span></li>
-	    <li>&nbsp; &nbsp; &nbsp; &nbsp;<strong>model_path</strong> would be:<span style="color:#2980b9">&nbsp;&quot;myTTSmodel&quot;</span></li>
-    </ul>
+<h2 id="text-not-inside"><strong>Text Not inside</strong></h2>
+<p style="padding-left: 30px; text-align: justify;">This only affects the Narrator function. Most AI models should be using asterisks or double quotes to differentiate between the Narrator or the Character, however, many models sometimes switch between using asterisks and double quotes or sometimes nothing at all for the text it outputs. <br /><br />This leaves a bit of a mess because sometimes un-marked text is narration and sometimes its the character talking, leaving no clear way to know where to split sentences and what voice to use. Whilst there is no 100% solution at the moment many models lean more one way or the other as to what that unmarked text will be (character or narrator).</p>
+<p style="padding-left: 30px; text-align: justify;">As such, the "Text not inside" function at least gives you the choice to set how you want the TTS engine to handle situations of un-marked text.</p>
+<div style="text-align: center;"><img src="/static/textnotinside.jpg" alt="When the AI doesnt use an asterisk or a quote" /></div>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <p><strong>Note:</strong> On Windows systems, you have to specify a<strong> <span style="color:#e74c3c">double backslash &#92;&#92;</span></strong> for each folder level in the path (as above).</p>
-    <p><strong>Linux example:</strong>&nbsp;<span style="color:#2980b9">/home/myaccount/myTTSmodel/</span><em>{files in here}</em></p>
 
-    <ul>
-	    <li>&nbsp; &nbsp; &nbsp; &nbsp;<strong>base_path </strong>would be &quot;<span style="color:#2980b9">/home/myaccount&quot;</span></li>
-	    <li>&nbsp; &nbsp; &nbsp; &nbsp;<strong>model_path</strong> would be:<span style="color:#2980b9">&nbsp;&quot;TTSmodel&quot;</span></li>
-    </ul>
+<h2 id="low-vram"><strong>Low VRAM</strong></h2>
+<p style="padding-left: 30px; text-align: justify;">The Low VRAM option is a crucial feature designed to enhance performance under constrained (VRAM) conditions, as the TTS models require 2GB-3GB of VRAM to run effectively. This feature strategically manages the relocation of the Text-to-Speech (TTS) model between your system's Random Access Memory (RAM) and VRAM, moving it between the two on the fly. Obviously, this is very useful for people who have smaller graphics cards and will use all their VRAM to load in their LLM.</p>
+<p style="padding-left: 30px; text-align: justify;">When you dont have enough VRAM free after loading your LLM model into your VRAM (Normal Mode example below), you can see that with so little working space, your GPU will have to swap in and out bits of the TTS model, which causes horrible slowdown.</p>
+<p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span> An Nvidia Graphics card is required for the LowVRAM option to work, as you will just be using system RAM otherwise.&nbsp;</p>
+<h4>How It Works:</h4>
+<p style="padding-left: 30px; text-align: justify;">The Low VRAM mode intelligently orchestrates the relocation of the entire TTS model and stores the TTS model in your system RAM. When the TTS engine requires VRAM for processing, the entire model seamlessly moves into VRAM, causing your LLM to unload/displace some layers, ensuring optimal performance of the TTS engine.</p>
+<p style="padding-left: 30px; text-align: justify;">Post-TTS processing, the model moves back to system RAM, freeing up VRAM space for your Language Model (LLM) to load back in the missing layers. This adds about 1-2 seconds to both text generation by the LLM and the TTS engine.</p>
+<p style="padding-left: 30px; text-align: justify;">By transferring the entire model between RAM and VRAM, the Low VRAM option avoids fragmentation, ensuring the TTS model remains cohesive and has all the working space it needs in your GPU, without having to just work on small bits of the TTS model at a time (which causes terrible slow down).</p>
+<p style="padding-left: 30px; text-align: justify;">This creates a TTS generation performance Boost for Low VRAM Users and is particularly beneficial for users with less than 2GB of free VRAM after loading their LLM, delivering a substantial 5-10x improvement in TTS generation speed.</p>
+<div style="text-align: center;"><img src="/static/lowvrammode.png" alt="How Low VRAM Works" /></div>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <p>Once you restart the&nbsp;AllTalk_tts extension, it will check this path for the files and output any details at the console.</p>
-    <p>When you are happy it's' working correctly, you are welcome to go delete the models folder stored at&nbsp;<strong>/extensions/alltalk_tts/models.</strong></p>
-    <p>If you wish to change the files that the modeldownloader is pulling at startup, you can futher edit the <strong>modeldownload.json</strong> and change the http addresses within this files&nbsp;<strong>files_to_download</strong> section &nbsp;e.g.</p>
-    <p>&nbsp; &nbsp; &quot;files_to_download&quot;: {<br />
-    &nbsp; &nbsp; &nbsp; &nbsp; &quot;LICENSE.txt&quot;: &quot;https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true&quot;,<br />
-    &nbsp; &nbsp; &nbsp; &nbsp; &quot;README.md&quot;: &quot;https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true&quot;,<br />
-    &nbsp; &nbsp; &nbsp; &nbsp; &quot;config.json&quot;: &quot;https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true&quot;,<br />
-    &nbsp; &nbsp; &nbsp; &nbsp; &quot;model.pth&quot;: &quot;https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true&quot;,<br />
-    &nbsp; &nbsp; &nbsp; &nbsp; &quot;vocab.json&quot;: &quot;https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true&quot;<br />
-    &nbsp; &nbsp; }</p>
-    <p><a href="#toc">Back to top of page</a></p>
 
-    <h3 id="configuration-details"><strong>Configuration Details</strong></h3>
-    <p>Explanation of the <b>confignew.json</b> file:</p>
+<h2 id="deepspeed"><strong>DeepSpeed</strong></h2>
+<p style="padding-left: 30px; text-align: justify;">DeepSpeed provides a 2x-3x speed boost for Text-to-Speech and AI tasks. It's all about making AI and TTS happen faster and more efficiently.</p>
+<ul>
+<li><strong>Model Parallelism:</strong> Spreads work across multiple GPUs, making AI/TTS models handle tasks more efficiently.</li>
+<li><strong>Memory Magic:</strong> Optimizes how memory is used, reducing the memory needed for large AI/TTS models.</li>
+<li><strong>Handles More Load:</strong> Scales up to handle larger workloads with improved performance.</li>
+<li><strong>Smart Resource Use:</strong> Uses your computer's resources smartly, getting the most out of your hardware.</li>
+</ul>
+<div style="text-align: center;"><img src="/static/deepspeedexample.jpg" alt="DeepSpeed on vs off" /></div>
+<p style="padding-left: 30px; text-align: justify;">DeepSpeed only works with the <span style="color: #3366ff;">XTTSv2 Local</span> model and will deactivate when other models are selected, even if the checkbox still shows as being selected.</p>
+<p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span> DeepSpeed/AllTalk may warn if the Nvidia Cuda Toolkit and CUDA_HOME environment variable isnt set correctly. On Linux you need CUDA_HOME configured correctly; on Windows, if you use the pre-built wheel its ok without.</p>
+<p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span><strong>&nbsp;</strong>You do <strong>not</strong> need to set Text-generation-webUi's --deepspeed setting for AllTalk to be able to use DeepSpeed.</p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <code><span class="key">"activate:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
-    <code><span class="key">"autoplay:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the TTS audio plays automatically within Text generation webUI.</span><br>
-    <code><span class="key">"branding:"</span> <span class="value">"AllTalk "</span>,</code><span class="key"> Used to change the default name shown on the command line. The name needs a space after it e.g. "Mybrand ".</span><br>
-    <code><span class="key">"deepspeed_activate:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the DeepSpeed option is activated or disabled in the Gradio interface.</span><br>
-    <code><span class="key">"delete_output_wavs:"</span> <span class="value">""Disabled""</span>,</code><span class="key"> If set this will delete your old output wav files, older than the date set, when the system starts up.</span><br>
-    <code><span class="key">"ip_address:"</span> <span class="value">"127.0.0.1"</span>,</code><span class="key"> Specifies the default IP address for the web server.</span><br>
-    <code><span class="key">"language:"</span> <span class="value">"English"</span>,</code><span class="key"> Specifies the default language to use for TTS.</span><br>
-    <code><span class="key">"low_vram:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the Low VRAM option is enabled or disabled.</span><br>
-    <code><span class="key">"local_temperature:"</span> <span class="value">"0.70"</span>,</code><span class="key"> Sets the temperature to use with the API Local and XTTSv2 Local methods.</span><br>
-    <code><span class="key">"local_repetition_penalty:"</span> <span class="value">"10.0"</span>,</code><span class="key"> Sets the repetition penalty to use with the API Local and XTTSv2 Local methods.</span><br>
-    <code><span class="key">"tts_model_loaded:"</span> <span class="value">true</span>,</code><span class="key"> Used within the code, do not change.</span><br>
-    <code><span class="key">"tts_model_name:"</span> <span class="value">"tts_models/multilingual/multi-dataset/xtts_v2"</span>,</code><span class="key"> Specifies the model that the "API TTS" method will use for TTS generation.</span><br>
-    <code><span class="key">"narrator_enabled:"</span> <span class="value">"female_02.wav"</span>,</code><span class="key"> Specifies the default narrator voice to use for TTS.</span><br>
-    <code><span class="key">"narrator_voice:"</span> <span class="value">"false"</span>,</code><span class="key"> Enables and disables the narrator function.</span><br>
-    <code><span class="key">"port_number:"</span> <span class="value">"7851"</span>,</code><span class="key"> Specifies the default port number for the web server.</span><br>
-    <code><span class="key">"output_folder_wav:"</span> <span class="value">"extensions/alltalk_tts/outputs/"</span>,</code><span class="key"> Sets the output folder to send files to on generating TTS.</span><br>
-    <code><span class="key">"remove_trailing_dots:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether trailing dots are removed from text segments before generation.</span><br>
-    <code><span class="key">"show_text:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether message text is shown under the audio player.</span><br>
-    <code><span class="key">"tts_method_api_local:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the "API Local" model/method is turned on or off.</span><br>
-    <code><span class="key">"tts_method_api_tts:"</span> <span class="value">false</span>,</code><span class="key"> Controls whether the "API TTS" model/method is turned on or off.</span><br>
-    <code><span class="key">"tts_method_xtts_local:"</span> <span class="value">true</span>,</code><span class="key"> Controls whether the "XTTSv2 Local" model/method is turned on or off.</span><br>
-    <code><span class="key">"voice:"</span> <span class="value">"female_01.wav"</span></code><span class="key"> Specifies the default voice to use for TTS.</span><br>
-    <p><a href="#toc">Back to top of page</a></p>
 
-    <p>Explanation of the <b>modeldownload.json</b> file:</p>
+<h3 id="deepspeed-linux">DeepSpeed Setup - Linux</h3>
+<p style="padding-left: 30px;">➡️DeepSpeed requires an Nvidia Graphics card!⬅️</p>
+<ol>
+<li>Preferably use your built in package manager to install the CUDA toolkit. Alternatively download and install the Nvidia Cuda Toolkit for Linux <a href="https://developer.nvidia.com/cuda-toolkit-archive">Nvidia Cuda Toolkit 11.8 or 12.1</a></li>
+<li>Open a terminal console.</li>
+<li>Install <span style="color: #3366ff;">libaio-dev</span> (however your Linux version installs things) e.g. <span style="color: #3366ff;">sudo apt install libaio-dev</span></li>
+<li>Move into your Text generation webUI folder e.g. <span style="color: #0000ff;"><span style="color: #3366ff;">cd text-generation-webui</span><br /></span></li>
+<li>Start the Text generation webUI Python environment <span style="color: #0000ff;"><span style="color: #3366ff;">./cmd_linux.sh</span><br /></span></li>
+<li style="text-align: left;">Text generation webUI <strong>overwrites</strong> the <strong>CUDA_HOME</strong> environment variable each time you <span style="color: #3366ff;">./cmd_linux.sh</span> or <span style="color: #3366ff;">./start_linux.sh&nbsp;</span>so you will need to either permanently change within the python environment OR set CUDA_HOME it each time you <span style="color: #3366ff;">./cmd_linux.sh</span>. Details to change it each time are on the next step. Below is a link to Conda's manual and changing environment variables permanently though its possible changing it permanently could affect other extensions, you would have to test.<a href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars"> Conda manual - Environment variables<br /></a></li>
+<li>You can temporarily set the <span style="color: #3366ff;">CUDA_HOME</span> environment with (Standard Ubuntu path below, but it could vary on other Linux flavours):<br /><br /><span style="color: #0000ff;"><span style="color: #3366ff;">export CUDA_HOME=/etc/alternatives/cuda</span>&nbsp;</span><strong>every</strong> time you run <span style="color: #0000ff;"><span style="color: #808080;">.<span style="color: #3366ff;">/cmd_linux.sh</span></span><br /><br /></span>If you try to start DeepSpeed with the CUDA_HOME path set incorrectly, expect an error similar to:<br /><br /><span style="color: #ffcc00;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;[Errno 2] No such file or directory: /home/yourname/text-generation-webui/installer_files/env/bin/nvcc<br /><br /></span></li>
+<li>Now install deepspeed with <span style="color: #0000ff;"><span style="color: #3366ff;">pip install deepspeed</span><br /></span></li>
+<li>You can now start Text generation webUI <span style="color: #3366ff;">python server.py</span> ensuring to activate your extensions.<br /><br />Just to reiterate, starting Text-generation-webUI with <span style="color: #3366ff;">./start_linux.sh</span> will overwrite the CUDA_HOME variable unless you have permanently changed it, hence always starting it with <span style="color: #3366ff;">./cmd_linux.sh</span>&nbsp;<strong>then</strong> setting the environment variable manually <span style="color: #3366ff;">export CUDA_HOME=/etc/alternatives/cuda</span> and <strong>then</strong> <span style="color: #3366ff;">python server.py</span>&nbsp;which is how you would need to run it each time, unless you permanently set the environment variable for CUDA_HOME within Text-generation-webUI's standard Python environment.<br /><br /><span style="color: #ff0000;">Removal</span><strong> -</strong> If it became necessary to uninstall DeepSpeed, you can do so with <span style="color: #3366ff;">./cmd_linux.sh</span> and then <span style="color: #3366ff;">pip uninstall deepspeed</span></li>
+</ol>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <code><span class="key">"base_path:"</span> <span class="value">"models"</span>,</code><span class="key"> Specifies the base directory for the TTS models. If this is changed from the word "models" then the new custom path will be used e.g. <b>C:&bsol;&bsol;mymodels</b></span><br>
-    <p><b>(Please note the use of a double backslash &bsol;&bsol; between folders on Windows systems. Linux systems will use "/mymodels" style)</b></p>
-    <code><span class="key">"model_path:"</span> <span class="value">"xttsv2_2.0.2"</span>,</code><span class="key"> Specifies the directory path for the XTTSv2 model underneath the base_path.</span><br>
-    <p><b>So if base_path is C:&bsol;&bsol;mymodels and model_path is xttsv2_2.0.2, then your path would become c:&bsol;&bsol;mymodels&bsol;&bsol;xttsv2_2.0.2</b></p>
-    <code><span class="key">"files_to_download:"</span></code><span class="key"> Dictionary containing files to download with their respective URLs.</span><br>
-    <code><span class="key">    "LICENSE.txt":</span> <span class="value">"https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true"</span>,</code><span class="key"> License file URL.</span><br>
-    <code><span class="key">    "README.md":</span> <span class="value">"https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true"</span>,</code><span class="key"> README file URL.</span><br>
-    <code><span class="key">    "config.json":</span> <span class="value">"https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true"</span>,</code><span class="key"> Config file URL.</span><br>
-    <code><span class="key">    "model.pth":</span> <span class="value">"https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true"</span>,</code><span class="key"> Model file URL.</span><br>
-    <code><span class="key">    "vocab.json":</span> <span class="value">"https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true"</span>,</code><span class="key"> Vocabulary file URL.</span><br>
-    <p>If you wish to set your own path</p>
 
-    <h3 id="curl-commands"><strong>CURL Commands</strong></h3>
-    <p><b>Generating TTS - Linux</b></p>
-    <code><span class="key">curl -X POST -H "Content-Type: application/json" -d '{"text": "This is text to generate as TTS","voice": "female_01.wav", "language": "en", "output_file": "outputfile.wav"}' "http://127.0.0.1:7851/api/generate"</code></span>
-    <p><b>Generating TTS - Windows</b></p>
-    <code><span class="key">curl -X POST -H "Content-Type: application/json" -d "{&#92;&quot;text&#92;&quot;: &#92;&quot;This is text to generate as TTS&#92;&quot;, &#92;&quot;voice&#92;&quot;: &#92;&quot;female_01.wav&#92;&quot;, &#92;&quot;language&#92;&quot;: &#92;&quot;en&#92;&quot;, &#92;&quot;output_file&#92;&quot;: &#92;&quot;outputfile.wav&#92;&quot;}" http://127.0.0.1:7851/api/generate</span></code>
-    <p><b>Generating TTS - Notes</b></p>
-    <p>Replace <code>This is text to generate as TTS</code> with whatever you want it to say. <code>female_01.wav</code> with the voice sample you want to use. <code>output_file.wav</code> with the file name you want it to create.</p>
-    <p>JSON return <code>{"status":"generate-success","data":{"audio_path":"outputfile.wav"}}</code></p>
-    
-    <p><b>Switch Model</b></p>
-    <code><span class="key">curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20Local"</code></span><br>
-    <code><span class="key">curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20TTS"</code></span><br>
-    <code><span class="key">curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20Local"</code></span>
-    <p>Switch between the 3 models respectively.</p>
-    <p>JSON return <code>{"status": "model-success"}</code></p>
+<h3 id="deepspeed-windows">DeepSpeed Setup - Windows</h3>
+<p style="padding-left: 30px;">➡️DeepSpeed requires an Nvidia Graphics card!⬅️</p>
+<p style="padding-left: 30px;">DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way <span style="color: #339966;"><strong>Option 1</strong></span>&nbsp;and a long way <span style="color: #ff9900;"><strong>Option 2</strong></span>.</p>
+<p style="padding-left: 30px;">Thanks to <a href="https://github.com/S95Sedan">@S95Sedan</a> They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is <a href="https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142">here</a>.<br /><br /></p>
+<p style="padding-left: 30px;"><strong><span style="text-decoration: underline;"><span style="color: #339966; text-decoration: underline;">OPTION 1 - <span style="color: #000000; text-decoration: underline;">Pre-Compiled Wheel Deepspeed v11.2 (Python 3.11 and 3.10)</span></span></span></strong></p>
+<ol>
+<li>Download the correct wheel version for your Python/Cuda from <a href="https://github.com/erew123/alltalk_tts/releases/tag/deepspeed" target="_blank">here</a> and save the file it inside your <span style="color: #3366ff;">text-generation-webui folder</span>.</li>
+<li>Open a command prompt window, move into your <span style="color: #3366ff;">text-generation-webui folder</span> you can now start the Python environment for text-generation-webui <span style="color: #3366ff;">cmd_windows.bat<br /></span></li>
+<li>With the file that you saved in the <span style="color: #3366ff;">text-generation-webui folder</span> you now type the following, replacing <span style="color: #99cc00;">your-version</span> with the name of the file you have:<br /><br /><span style="color: #3366ff;">pip install "deepspeed-0.11.2+<span style="color: #99cc00;">your-version</span>-win_amd64.whl"<br /><br /></span></li>
+<li>This should install through cleanly and you should now have DeepSpeed v11.2 installed within the Python 3.11/3.10 environment of text-generation-webui.</li>
+<li>When you start up text-generation-webui, and AllTalk starts, you should see:<br /><br /><span style="background-color: #999999;"><span style="background-color: #ffffff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; [AllTalk Startup] DeepSpeed</span></span><strong><span style="background-color: #999999;"><span style="color: #ffff00; background-color: #ffffff;"> Detected<br /></span></span></strong><strong><span style="background-color: #999999;"><span style="color: #ffff00; background-color: #ffffff;"><br /></span></span></strong></li>
+<li>Within AllTalk, you will now have a checkbox for <span style="color: #3366ff;">Activate DeepSpeed</span> though remember you can only change 1x setting every 15 or so seconds, so dont try to activate DeepSpeed and LowVRAM simultaneously. When you are happy it works, you can set the default start-up settings in the settings page.<br /><br /><span style="color: #ff0000;">Removal</span> - If it became necessary to uninstall DeepSpeed, you can do so with <span style="color: #3366ff;">cmd_windows.bat</span> and then <span style="color: #3366ff;">pip uninstall deepspeed<br /></span><span style="color: #3366ff;"><br /><br /></span><span style="color: #3366ff;"><span style="text-decoration: underline;"><span style="color: #ff9900; text-decoration: underline;"><strong>OPTION 2 - <span style="color: #000000; text-decoration: underline;">Manual build of DeepSpeed&nbsp;v11.2 (Python 3.11 and 3.10)</span></strong></span></span><br /><br /></span>Due to the complexity of this, and the complicated formatting, instructions can be found on this <a href="https://github.com/erew123/alltalk_tts?tab=readme-ov-file#-option-2---a-bit-more-complicated" target="_blank">link</a></li>
+</ol>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <p><b>Switch DeepSpeed on/off</b></p>
-    <code><span class="key">curl -X POST -H "Content-Type: application/json" "http://127.0.0.1:7851/api/deepspeed?new_deepspeed_value=True"</code></span>
-    <p>Replace <code>True</code> with <code>False</code> to disable DeepSpeed mode.</p>
-    <p>JSON return <code>{"status": "deepspeed-success"}</code></p>
-    <p><b>Note:</b> Enabling DeepSpeed on systems that dont have DeepSpeed installed, may cause errors.</p>
 
-    <p><b>Switch Low VRAM on/off</b></p>
-    <code><span class="key">curl -X POST -H "Content-Type: application/json" "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"</code></span>
-    <p>Replace <code>True</code> with <code>False</code> to disable Low VRAM mode.</p>
-    <p>JSON return <code>{"status": "lowvram-success"}</code></p>
-    <p><a href="#toc">Back to top of page</a></p>
 
-    <h3 id="debugging-and-tts-generation-information"><strong>Debugging and TTS Generation Information:</strong></h3>
-    <p>Command line outputs are more verbose to assist in understanding backend processes and debugging.</p>
-    <p>Its possible during startup you can get a warning message such as <b>[AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum</b> This is normal behavior if the subprocess is taking a while to start, however, if there is an issue starting the subprocess, you may see multiples of this message and an it will time out after 60 seconds, resulting in the TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
-    <p>Typically the command line console will output any warning or error messages. If you need to reset your default configuation, the settings are all listed above in the configuration details.</p>
-    <p><a href="#toc">Back to top of page</a></p>
+<h2 id="TTSmodels">TTS Models/Methods</h2>
+<p style="padding-left: 30px; text-align: justify;">It's worth noting that all models and methods can and do sound different from one another. Many people complained about the quality of audio produced by the 2.0.3 model, so this extension will download the 2.0.2 model to your models folder and give you the choice to use 2.0.2 (<span style="color: #3366ff;">API Local</span> and <span style="color: #3366ff;">XTTSv2 Local</span>) or use the most current model 2.0.3 (<span style="color: #3366ff;">API TTS</span>). As/When a new model is released by Coqui it will be downloaded by the TTS service on startup and stored wherever the TTS service keeps new models for your operating system.</p>
+<ul>
+<li><span style="color: #3366ff;">API TTS:</span> Uses the current TTS model available that's downloaded by the TTS API process ( version 2.0.3 at the time of writing). This model is not stored in your "models" folder, but elsewhere on your system and managed by the TTS software.<br /></li>
+<li><span style="color: #3366ff;">API Local:</span> Utilizes the 2.0.2 local model stored at <span style="color: #3366ff;">/alltalk_tts/models/xttsv2_2.0.2<br /></span></li>
+<li><span style="color: #3366ff;">XTTSv2 Local: </span>Utilizes the 2.0.2 local model <span style="color: #3366ff;">/alltalk_tts/models/xttsv2_2.0.2</span> and utilizes a distinct TTS generation method. <span style="color: #99cc00;">Supports DeepSpeed acceleration</span>.</li>
+</ul>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
-    <h2 id="references"><strong>Thanks & References</strong></h2>
-    <h3>Coqui TTS Engine</h3>
-    <ul>
-        <li><a href="https://coqui.ai/cpml.txt" target="_blank">Coqui License</a></li>
-        <li><a href="https://github.com/coqui-ai/TTS" target="_blank">Coqui TTS GitHub Repository</a></li>
-    </ul>
-        <h3>Extension coded by</h3>
-    <ul>
-        <li><a href="https://github.com/erew123" target="_blank">Erew123 GitHub Profile</a></li>
-    </ul>    
-    <h3>Thanks to & Text generation webUI</h3>
-    <ul>
-        <li><a href="https://github.com/oobabooga/text-generation-webui" target="_blank">Ooobabooga GitHub Repository</a> (Portions of orginal Coquii_TTS extension)</li>
-    </ul>    
-    <h3>Thanks to</h3>
-    <ul>
-        <li><a href="https://github.com/daswer123" target="_blank">daswer123 GitHub Profile</a> (Assistance with cuda to cpu moving)</li>
-        <li><a href="https://github.com/S95Sedan" target="_blank">S95Sedan GitHub Profile</a> (Editing the Microsoft DeepSpeed v11.x installation files so they work)</li>
-        <li><a href="https://github.com/kanttouchthis" target="_blank">kanttouchthis GitHub Profile</a> (Portions of orginal Coquii_TTS extension)</li>
-        <li><a href="https://github.com/kanttouchthis" target="_blank">Wuzzooy GitHub Profile</a> (Trying out the code while in development)</li>
-    </ul>
-    <p><a href="#toc">Back to top of page</a></p>
+
+<h2 id="temperature-and-repetition-settings"><strong>Model Temperature and Repetition Settings</strong></h3>
+<p style="padding-left: 30px; text-align: justify;">It is recommended not to modify these settings unless you fully comprehend their effects. A general overview is provided below for reference.</p>
+<p style="padding-left: 30px; text-align: justify;">Changes to these settings won't take effect until you restart AllTalk/Text generation webUI.</p>
+<p style="padding-left: 30px; text-align: justify;">These settings only affect API Local and XTTSv2 Local methods.</p>
+<h4 style="text-align: justify;">Repetition Penalty:</h4>
+<p style="padding-left: 30px; text-align: justify;">In the context of text-to-speech (TTS), the Repetition Penalty<strong>&nbsp;</strong>influences how the model handles the repetition of sounds, phonemes, or intonation patterns. Here's how it works:</p>
+<ul style="text-align: justify;">
+<li><strong>Higher Repetition Penalty (e.g. 16.0):</strong> The model is less likely to repeat sounds or patterns. It promotes diversity in the generated speech. This can result in a more varied and expressive output, though introduce elements of unpredictability in the TTS output.<br /></li>
+<li><strong>Lower Repetition Penalty (e.g. 2.0):</strong> The model is more tolerant of repeating sounds or patterns. This might lead to more repetition in the generated speech, potentially making it sound more structured or rhythmically consistent. Lower values can still introduce expressive variations, but to a lesser extent. This tendency means that the generated speech may remain closer to the original sample.</li>
+</ul>
+<p style="padding-left: 30px; text-align: justify;">The factory setting for repetition penalty is 10.0</p>
+<h4>Temperature:</h4>
+<p style="padding-left: 30px; text-align: justify;">Temperature&nbsp;influences the randomness of the generated speech. Here's how it affects the output:</p>
+<ul style="text-align: justify;">
+<li><strong>Higher Temperature (e.g. 0.95):</strong> Increases randomness in how the model selects and pronounces phonemes or intonation patterns. This can result in more creative, but potentially less controlled or "stable," speech that may deviate from the input sample. It adds an element of unpredictability and variety, contributing to expressiveness in the voice output created.<br /></li>
+<li><strong>Lower Temperature (e.g. 0.20):</strong> Reduces randomness, making the model more likely to closely mimic the input sample's voice, intonation, and overall style. This tends to produce more "coherent" speech that aligns closely with the characteristics of the training data or input voice sample. It adds a level of predictability and consistency, potentially reducing expressive variations. So it could end up sounging too monotone.</li>
+</ul>
+<p style="padding-left: 30px; text-align: justify;">The factory setting for temperature is 0.70</p>
+
+
+<h4><strong>Temperature and Repetition Settings Examples:</strong></h4>
+<ul style="text-align: justify;">
+<li><strong>Temp High (0.90) and Repetition High (16.0):</strong><br /> Result: Speech may sound highly creative and diverse, with reduced repetition. It could be more expressive and unpredictable.<br /></li>
+<li><strong>Temp Low (0.20) and Repetition High (16.0):</strong><br /> Result: Output tends to be focused and deterministic, but with reduced repetition. It may sound structured and less expressive.<br /></li>
+<li><strong>Temp High (0.90) and Repetition Low (2.0):</strong><br /> Result: Speech may be more creative and diverse, with tolerance for repeating sounds. It could have expressive variations but with some structured patterns.<br /></li>
+<li><strong>Temp Low (0.20) and Repetition Low (2.0):</strong><br /> Result: Output is focused and deterministic, with tolerance for repeating sounds. It may sound more structured and less expressive.</li>
+</ul>
+<p style="text-align: justify;">Factory settings should be fine for most people, however if you choose to experiment, setting extremely high or low values, especially without a good understanding of their effects, may lead to flat-sounding output or very strange-sounding output. It's advisable to experiment with adjustments incrementally and observe the impact on the generated speech to find a balance that suits your desired outcome.</p>
+<p style="text-align: justify;"><a href="#toc">Back to top of page</a><br /></p>
+
+
+<h2 id="start-up-checks">Start-up Checks</h2>
+<p style="padding-left: 30px; text-align: justify;">AllTalk performs a variety of checks on startup and will warn out messages at the console should you need to do something such as update your TTS version.&nbsp;</p>
+<p style="padding-left: 30px; text-align: justify;">A basic environment check to ensure everything should work e.g. is the model already downloaded, are the configuration files set correctly etc.</p>
+<p style="padding-left: 30px; text-align: justify;">AllTalk will download the Xtts model (version 2.0.2) into your models folder. Many people didnt like the quality of the 2.0.3 model, however the latest model will be accessable on the API TTS setting (2.0.3 at the time of writing) so you have the best of both worlds.</p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+
+<h2 id="customTTSmodels">Custom TTS Models and Model path</h2>
+<p style="padding-left: 30px; text-align: justify;">Its possible to set a custom model for the <span style="color: #3366ff;">API Local</span> and <span style="color: #3366ff;">XTTSv2 Local</span> methods, or indeed point it at the same model that <span style="color: #3366ff;">API TTS</span> uses (wherever it is stored on your OS of choice).</p>
+<p style="padding-left: 30px; text-align: justify;">Many people did not like the sound quality of the Coqui <span style="color: #000000;">2.0.3</span> model, and as such the AllTalk downloads the <span style="color: #000000;">2.0.2</span> model seperately from the <span style="color: #000000;">2.0.3</span> model that TTS service downloads and manages.</p>
+<p style="padding-left: 30px; text-align: justify;">Typically the <span style="color: #000000;">2.0.2</span> model is stored in your <span style="color: #3366ff;">/alltalk_tts/models</span> folder and it is downloaded on first start-up of the&nbsp;AllTalk_tts extension. However, you may either want to use a custom model version of your choosing, or re-point AllTalk to a different path on your system, or even point it so that&nbsp;<span style="color: #3366ff;">API Local</span> and <span style="color: #3366ff;">XTTSv2 Local</span> both use the same model that <span style="color: #3366ff;">API TTS</span> is using.</p>
+<p style="padding-left: 30px; text-align: justify;">If you do choose to change the location there are a couple of things to note.&nbsp;</p>
+<ul style="text-align: justify;">
+<li>The folder you place the model in, <span style="color: #3366ff;">cannot </span>be called "<span style="color: #3366ff;">models</span>". This name is reserved solely for the system to identify you are or are not using a custom model.</li>
+<li>On each startup, the&nbsp;AllTalk tts extension will check the custom location and if it does not exist, it will create it and download the files it needs. It will also re download any missing files in that location that are needed for the model to function.</li>
+<li>There will be extra output at the console to inform you that you are using a custom model and each time you load up AllTalk extension or switch between models.</li>
+</ul>
+<p style="padding-left: 30px; text-align: justify;">To change the model path, there are at minimum 2x settings you need to alter in the <span style="color: #3366ff;">modeldownload.json</span> file, <span style="color: #3366ff;">base_path </span>and <span style="color: #3366ff;">model_path</span>.</p>
+<p style="padding-left: 30px; text-align: justify;">You would edit the settings in the <span style="color: #3366ff;">modeldownload.json</span> file as follows (make a backup of your current file in case):<br /><br />&nbsp; &nbsp; &nbsp; &nbsp; Windows path example:&nbsp;<span style="color: #2980b9;">c:&bsol;&bsol;mystuff&bsol;&bsol;mydownloads&bsol;&bsol;myTTSmodel&bsol;&bsol;</span><span style="color: #00ccff;"><em>{files in here}<br /></em></span><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; base_path</span> would be "<span style="color: #2980b9;">c:&bsol;&bsol;mystuff&bsol;&bsol;mydownloads"<br /></span><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; model_path</span> would be:<span style="color: #2980b9;">&nbsp;"myTTSmodel"</span></p>
+<p style="padding-left: 30px;"><span style="color: #ff0000;">Note: </span>On Windows systems, you have to specify a <span style="color: #e74c3c;"></span><span style="color: #e74c3c;">double backslash &bsol;&bsol;</span> for each folder level in the path (as above)</p>
+<p style="padding-left: 30px;">&nbsp; &nbsp; &nbsp; &nbsp; Linux path example:&nbsp;<span style="color: #2980b9;">/home/myaccount/myTTSmodel/</span><span style="color: #00ccff;"><em>{files in here}<br /></em></span><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; base_path</span> would be "<span style="color: #2980b9;">/home/myaccount"<br /></span><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; model_path</span> would be:<span style="color: #2980b9;">&nbsp;"TTSmodel"<br /><br /></span>Once you restart Alltalk, it will check this path for the files and output any details at the console.</p>
+<p style="padding-left: 30px;">When you are happy it's' working correctly, you are welcome to go delete the models folder stored at&nbsp;<span style="color: #3366ff;">/alltalk_tts/models</span><strong>.</strong></p>
+<p style="padding-left: 30px;">If you wish to change the files that the modeldownloader is pulling at startup, you can futher edit the <span style="color: #3366ff;">modeldownload.json</span> and change the https addresses within this files&nbsp;<span style="color: #3366ff;">files_to_download</span> section &nbsp;e.g.</p>
+<p style="padding-left: 30px;">"files_to_download": {<br /> &nbsp; &nbsp; &nbsp; &nbsp; "LICENSE.txt": "<span style="color: #00ccff;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true</span>",<br /> &nbsp; &nbsp; &nbsp; &nbsp; "README.md": "<span style="color: #00ccff;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true</span>",<br /> &nbsp; &nbsp; &nbsp; &nbsp; "config.json": "<span style="color: #00ccff;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true</span>",<br /> &nbsp; &nbsp; &nbsp; &nbsp; "model.pth": "<span style="color: #00ccff;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true</span>",<br /> &nbsp; &nbsp; &nbsp; &nbsp; "vocab.json": "<span style="color: #00ccff;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true</span>"<br />&nbsp;}</p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page<br /></a></p>
+
+<h2 id="configuration-details"><strong>Configuration file settings</strong></h2>
+<p><span style="color: #3366ff;">confignew.json</span> file:</p>
+<table>
+    <tr>
+        <th>Key</th>
+        <th>Default Value</th>
+        <th>Explanation</th>
+    </tr>
+    <tr>
+        <td>"activate"</td>
+        <td>true</td>
+        <td>Sets activation state within Text-generation-webUI.</td>
+    </tr>
+    <tr>
+        <td>"autoplay"</td>
+        <td>true</td>
+        <td>Sets autoplay within Text generation webUI.</td>
+    </tr>
+    <tr>
+        <td>"branding"</td>
+        <td>"AllTalk"</td>
+        <td>Used to change the default name. Requires a space e.g. "Mybrand ".</td>
+    </tr>
+    <tr>
+        <td>"deepspeed_activate"</td>
+        <td>false</td>
+        <td>Sets DeepSpeed activation on startup.</td>
+    </tr>
+    <tr>
+        <td>"delete_output_wavs"</td>
+        <td>"Disabled"</td>
+        <td>Sets duration of outputs to delete.</td>
+    </tr>
+    <tr>
+        <td>"ip_address"</td>
+        <td>"127.0.0.1"</td>
+        <td>Sets default IP address.</td>
+    </tr>
+    <tr>
+        <td>"language"</td>
+        <td>"English"</td>
+        <td>Sets default language for Text-generation-webUI TTS.</td>
+    </tr>
+    <tr>
+        <td>"low_vram"</td>
+        <td>false</td>
+        <td>Sets default setting for LowVRAM mode.</td>
+    </tr>
+    <tr>
+        <td>"local_temperature"</td>
+        <td>"0.70"</td>
+        <td>Sets default model temp for API Local and XTTSv2 Local.</td>
+    </tr>
+    <tr>
+        <td>"local_repetition_penalty"</td>
+        <td>"10.0"</td>
+        <td>Sets default model repetition for API Local and XTTSv2 Local.</td>
+    </tr>
+    <tr>
+        <td>"tts_model_loaded"</td>
+        <td>true</td>
+        <td>AllTalk internal use only. Do not change.</td>
+    </tr>
+    <tr>
+        <td>"tts_model_name"</td>
+        <td>"tts_models/multilingual/multi-dataset/xtts_v2"</td>
+        <td>Sets default model that API TTS is looking for through the TTS service (separate to API Local and XTTSv2 Local).</td>
+    </tr>
+    <tr>
+        <td>"narrator_enabled"</td>
+        <td>true</td>
+        <td>Sets default narrator on/off in Text-generation-webUI TTS.</td>
+    </tr>
+    <tr>
+        <td>"narrator_voice"</td>
+        <td>"female_02.wav"</td>
+        <td>Sets default wav to use for narrator in Text-generation-webUI TTS.</td>
+    </tr>
+    <tr>
+        <td>"port_number"</td>
+        <td>"7851"</td>
+        <td>Sets default port number for AllTalk.</td>
+    </tr>
+    <tr>
+        <td>"output_folder_wav"</td>
+        <td>"extensions/alltalk_tts/outputs/"</td>
+        <td>Sets default output path Text-generation-webUI should use for finding outputs.</td>
+    </tr>
+    <tr>
+        <td>"output_folder_wav_standalone"</td>
+        <td>"outputs/"</td>
+        <td>Sets default output path in standalone mode.</td>
+    </tr>
+    <tr>
+        <td>"remove_trailing_dots"</td>
+        <td>false</td>
+        <td>Sets trailing dot removal pre-generating TTS.</td>
+    </tr>
+    <tr>
+        <td>"show_text"</td>
+        <td>true</td>
+        <td>Sets if text should be displayed below audio in Text-generation-webUI.</td>
+    </tr>
+    <tr>
+        <td>"tts_method_api_local"</td>
+        <td>false</td>
+        <td>Sets API Local as the default model/method for TTS.</td>
+    </tr>
+    <tr>
+        <td>"tts_method_api_tts"</td>
+        <td>false</td>
+        <td>Sets API TTS as the default model/method for TTS.</td>
+    </tr>
+    <tr>
+        <td>"tts_method_xtts_local"</td>
+        <td>true</td>
+        <td>Sets XTTSv2 Local as the default model/method for TTS.</td>
+    </tr>
+    <tr>
+        <td>"voice"</td>
+        <td>"female_01.wav"</td>
+        <td>Sets default voice for TTS.</td>
+    </tr>
+</table>
+
+<p><span style="color: #3366ff;">modeldownload.json</span> file:</p>
+<table id="modeldownload-table">
+    <tr>
+        <th>Key</th>
+        <th>Value</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><span class="key">"base_path"</span></td>
+        <td>"models"</td>
+        <td>Sets local model base path for API Local and XTTSv2 Local.</td>
+    </tr>
+    <tr>
+        <td><span class="key">"model_path"</span></td>
+        <td>"xttsv2_2.0.2"</td>
+        <td>Sets local model folder for API Local and XTTSv2 Local below the base path.</td>
+    </tr>
+    <tr>
+        <td><span class="key">"files_to_download"</span></td>
+        <td>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Download URL</th>
+                </tr>
+                <tr>
+                    <td>"LICENSE.txt"</td>
+                    <td><span style="color: #333399;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true</span></td>
+                </tr>
+                <tr>
+                    <td>"README.md"</td>
+                    <td><span style="color: #333399;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true</span></td>
+                </tr>
+                <tr>
+                    <td>"config.json"</td>
+                    <td><span style="color: #333399;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true</span></td>
+                </tr>
+                <tr>
+                    <td>"model.pth"</td>
+                    <td><span style="color: #333399;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true</span></td>
+                </tr>
+                <tr>
+                    <td>"vocab.json"</td>
+                    <td><span style="color: #333399;">https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true</span></td>
+                </tr>
+            </table>
+        </td>
+        <td>Sets the model files required to be downloaded into &bsol;base_path&bsol;model_path&bsol; and where to download them from.</td>
+    </tr>
+</table>
+
+<h2 id="curl-commands"><strong>JSON calls &amp; CURL Commands</strong></h2>
+<h4>Generating TTS - Linux</h4>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST -H "Content-Type: application/json" -d '{"text": "<span style="color: #ff9900;">This is text to generate as TTS</span>","voice": "<span style="color: #ff9900;">female_01.wav</span>", "language": "<span style="color: #ff9900;">en</span>", "output_file": "<span style="color: #ff9900;">outputfile.wav</span>"}' "http://127.0.0.1:7851/api/generate"</span></p>
+<h4>Generating TTS - Windows</h4>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST -H "Content-Type: application/json" -d "{\"text\": \"<span style="color: #ff9900;">This is text to generate as TTS</span>\", \"voice\": \"<span style="color: #ff9900;">female_01.wav</span>\", \"language\": \"<span style="color: #ff9900;">en</span>\", \"output_file\": \"<span style="color: #ff9900;">outputfile.wav</span>\"}" http://127.0.0.1:7851/api/generate</span></p>
+<h4>Generating TTS - Notes</h4>
+<p style="padding-left: 30px;">Replace <span style="color: #ff9900;">This is text to generate as TTS</span> with whatever you want it to say. <span style="color: #ff9900;">female_01.wav</span> with the voice sample you want to use. <span style="color: #ff9900;">output_file.wav</span> with the file name you want it to create.</p>
+<p style="padding-left: 30px;">JSON return <span style="color: #339966;">{"status":"generate-success","data":{"audio_path":"outputfile.wav"}}</span></p>
+
+<h4>Switching Model</h4>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20Local"</span><br /><span style="color: #3366ff;"> curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20TTS"</span><br /><span style="color: #3366ff;"> curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20Local"</span></p>
+<p style="padding-left: 30px;">Switch between the 3 models respectively.</p>
+<p style="padding-left: 30px;">JSON return <span style="color: #339966;">{"status": "model-success"}</span></p>
+<h4>Switch DeepSpeed</h4>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST -H "Content-Type: application/json" "http://127.0.0.1:7851/api/deepspeed?new_deepspeed_value=True"</span></p>
+<p style="padding-left: 30px;">Replace True with False to disable DeepSpeed mode.</p>
+<p style="padding-left: 30px;">JSON return <span style="color: #339966;">{"status": "deepspeed-success"}</span></p>
+<h4>Switching Low VRAM</h4>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST -H "Content-Type: application/json" "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"</span></p>
+<p style="padding-left: 30px;">Replace True with False to disable Low VRAM mode.</p>
+<p style="padding-left: 30px;">JSON return <span style="color: #339966;">{"status": "lowvram-success"}</span></p>
+<p><a href="#toc">Back to top of page<br /></a></p>
+
+<h2 id="debugging-and-tts-generation-information"><strong>Debugging and TTS Generation Information</strong></h2>
+<p style="padding-left: 30px; text-align: justify;">Command line outputs are more verbose to assist in understanding backend processes and debugging.</p>
+<p style="padding-left: 30px; text-align: justify;">Its possible during startup you can get a warning message such as: <br /><br /><span style="color: black;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[AllTalk Startup]</span> <span style="color: #ff0000;">Warning</span> <span style="color: black;">TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum</span> <br /><br />This is normal behavior if the subprocess is taking a while to start, however, if there is an issue starting the subprocess, you may see multiples of this message and an it will time out after 60 seconds, resulting in the TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
+<p style="padding-left: 30px; text-align: justify;">Typically the command line console will output any warning or error messages. If you need to reset your default configuation, the settings are all listed above in the configuration details.</p>
+<p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+<h2 id="references"><strong>Thanks &amp; References</strong></h2>
+<h4>Coqui TTS Engine</h4>
+<ul>
+<li><a href="https://coqui.ai/cpml.txt" target="_blank" rel="noopener">Coqui License</a></li>
+<li><a href="https://github.com/coqui-ai/TTS" target="_blank" rel="noopener">Coqui TTS GitHub Repository</a></li>
+</ul>
+<h4>Extension coded by</h4>
+<ul>
+<li><a href="https://github.com/erew123" target="_blank" rel="noopener">Erew123 GitHub Profile</a></li>
+</ul>
+<h4>Thanks to &amp; Text generation webUI</h4>
+<ul>
+<li><a href="https://github.com/oobabooga/text-generation-webui" target="_blank" rel="noopener">Ooobabooga GitHub Repository</a> (Portions of orginal Coquii_TTS extension)</li>
+</ul>
+<h4>Thanks to</h4>
+<ul>
+<li><a href="https://github.com/daswer123" target="_blank" rel="noopener">daswer123 GitHub Profile</a> (Assistance with cuda to cpu moving)</li>
+<li><a href="https://github.com/S95Sedan" target="_blank" rel="noopener">S95Sedan GitHub Profile</a> (Editing the Microsoft DeepSpeed v11.x installation files so they work)</li>
+<li><a href="https://github.com/kanttouchthis" target="_blank" rel="noopener">kanttouchthis GitHub Profile</a> (Portions of orginal Coquii_TTS extension)</li>
+<li><a href="https://github.com/Wuzzooy" target="_blank" rel="noopener">Wuzzooy GitHub Profile</a> (Trying out the code while in development)</li>
+</ul>
+<p><a href="#toc">Back to top of page</a></p>
 
 </body>
 
