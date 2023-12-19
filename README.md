@@ -94,6 +94,7 @@ outputs/*.*
 config.json
 confignew.json
 models.json
+diagnostics.log
 ```
 #### 🟪 Problems Updating
 
