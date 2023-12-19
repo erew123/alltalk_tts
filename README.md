@@ -138,7 +138,7 @@ If you want to use DeepSpeed, you need an Nvidia Graphics card and to install De
 
 #### 🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug
 
-Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an ticket [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers. On new builds of AllTalk, you can start Text-generation-webui's Python environment with `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then go into the AllTalk folder and run `python diagnostics.py` which will both output to the screen and create a `diagnostics.log` file, which will assist in any troublshooting.
+Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an ticket [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers. On new builds of AllTalk, you can start Text-generation-webui's Python environment with `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then go into the `\extensions\alltalk_tts\` folder and run `python diagnostics.py` which will both output to the screen and create a `diagnostics.log` file, which will assist in any troubleshooting.
 
 Also, is your text-generation-webui up to date? [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
@@ -149,7 +149,7 @@ When the subprocess is starting 2x things are occurring:
 **A)** Its trying to load the voice model into your graphics card VRAM (assuming you have a Nvidia Graphics card, otherwise its your system RAM)<br>
 **B)** Its trying to start up the mini-webserver and send the "ready" signal back to the main process.
 
-**Note:** On new builds of AllTalk, you can start Text-generation-webui's Python environment with `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then go into the AllTalk folder and run `python diagnostics.py` which will both output to the screen and create a `diagnostics.log` file, which will assist in any troublshooting.
+**Note:** On new builds of AllTalk, you can start Text-generation-webui's Python environment with `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat` and then go into the `\extensions\alltalk_tts\` folder and run `python diagnostics.py` which will both output to the screen and create a `diagnostics.log` file, which will assist in any troubleshooting.
 
 Possibilities for this issue are (in no particular order):
 
