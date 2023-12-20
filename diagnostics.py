@@ -10,6 +10,9 @@ try:
     import textwrap
     import packaging.version
     import packaging.specifiers
+    from packaging.specifiers import SpecifierSet
+    from packaging.specifiers import SpecifierSet
+    from packaging.version import parse as parse_version
 except ImportError as e:
     print(f"\033[91mError importing module: {e}\033[0m\n")
     print("\033[94mPlease ensure you started the Text-generation-webUI Python environment with either\033[0m")
@@ -57,6 +60,16 @@ def is_port_in_use(port):
     for conn in psutil.net_connections():
         if conn.laddr.port == port:
             return True
+    return False
+
+def satisfies_wildcard(installed_version, required_version):
+    if '*' in required_version:
+        required_parts = required_version.split('.')
+        installed_parts = installed_version.split('.')
+        for req, inst in zip(required_parts, installed_parts):
+            if req != '*' and req != inst:
+                return False
+        return True
     return False
 
 # Function to log and print system information
@@ -149,16 +162,21 @@ def log_system_info():
     if required_packages:  # Check if the dictionary is not empty
         print("\033[94m\nRequirements file package comparison:\033[0m")
         max_package_length = max(len(package) for package in required_packages.keys())
-        
+
         for package_name, (operator, required_version) in required_packages.items():
             installed_version = installed_packages.get(package_name, 'Not installed')
-            
-            # Compare versions using packaging.version
-            required = packaging.version.parse(required_version)
-            installed = packaging.version.parse(installed_version)
 
-            # Set color based on version comparison
-            condition_met = eval(f"installed {operator} required")
+            # Exclude build information (e.g., +cu118) before creating the SpecifierSet
+            required_version_no_build = required_version.split("+")[0]
+
+            if '*' in required_version:
+                condition_met = satisfies_wildcard(installed_version, required_version)
+            else:
+                # Compare versions using packaging.version
+                required_specifier = SpecifierSet(f"{operator}{required_version_no_build}")
+                installed_version = parse_version(installed_version)
+                condition_met = installed_version in required_specifier
+
             color_required = "\033[92m" if condition_met else "\033[91m"
             color_installed = "\033[92m" if condition_met else "\033[91m"
 
