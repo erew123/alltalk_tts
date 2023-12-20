@@ -7,11 +7,9 @@ assignees: ''
 
 ---
 
-Please run the diagnostics and upload the diagnostics.log file. To do this, start Text-generation-webui's Python environment with "cmd_windows.bat" OR "./cmd_linux.sh" OR "cmd_macos.sh" OR "cmd_wsl.bat" and then go into the \extensions\alltalk_tts\ folder and run:
+Please generate a diagnostics report and upload the "diagnostics.log".
 
-python diagnostics.py
-
-Which will both output to the screen and create a "diagnostics.log" file.
+https://github.com/erew123/alltalk_tts/tree/main?#-how-to-make-a-diagnostics-report-file
 
 **Describe the bug**
 A clear and concise description of what the bug is.
