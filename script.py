@@ -39,8 +39,8 @@ try:
 except ModuleNotFoundError:
     logger.error(
         f"[{params['branding']}]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the {params['branding']} extension."
-        f"[{params['branding']}]\033[91mWarning\033[0m Linux / Mac:\npip install -r extensions/alltalk_tts/requirements.txt\n"
-        f"[{params['branding']}]\033[91mWarning\033[0m Windows:\npip install -r extensions\\alltalk_tts\\requirements.txt\n"
+        f"[{params['branding']}]\033[91mWarning\033[0m Linux / Mac:\npip install -r /alltalk_tts/requirements.txt\n"
+        f"[{params['branding']}]\033[91mWarning\033[0m Windows:\npip install -r \\alltalk_tts\\requirements.txt\n"
         f"[{params['branding']}]\033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the cmd_ script. On Windows, that's cmd_windows.bat."
     )
     raise
@@ -62,7 +62,9 @@ try:
     from modules.utils import gradio
     # This is set to check if the script is being run within text generation webui or as a standalone script. False is running as part of text gen web ui or a gradio interface
     running_in_standalone = False
+    output_folder_wav = params["output_folder_wav"]
 except ModuleNotFoundError:
+    output_folder_wav = params["output_folder_wav_standalone"]
     print(f"[{params['branding']}Startup] Running script.py in standalone mode")
     # This is set to check if the script is being run within text generation webui or as a standalone script. true means standalone
     running_in_standalone = True
@@ -108,7 +110,6 @@ def delete_old_files(folder_path, days_to_keep):
 
 # Extract settings using params dictionary
 delete_output_wavs_setting = params["delete_output_wavs"]
-output_folder_wav = params["output_folder_wav"]
 output_folder_wav = os.path.normpath(output_folder_wav)
 
 # Check and perform file deletion

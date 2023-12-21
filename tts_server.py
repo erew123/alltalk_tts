@@ -162,7 +162,9 @@ async def setup():
     # Set "tts_model_loaded" to true
     params["tts_model_loaded"] = True
     # Set the output path for wav files
-    Path(f'{params["output_folder_wav"]}').mkdir(parents=True, exist_ok=True)
+    output_directory = this_dir / params["output_folder_wav_standalone"]
+    output_directory.mkdir(parents=True, exist_ok=True)
+    #Path(f'this_folder/outputs/').mkdir(parents=True, exist_ok=True)
 
 
 # MODEL LOADER For "API TTS"
@@ -1593,7 +1595,7 @@ simple_webpage = """
 
 <h2 id="debugging-and-tts-generation-information"><strong>Debugging and TTS Generation Information</strong></h2>
 <p style="padding-left: 30px; text-align: justify;">Command line outputs are more verbose to assist in understanding backend processes and debugging.</p>
-<p style="padding-left: 30px; text-align: justify;">Its possible during startup you can get a warning message such as: <br /><br /><span style="color: black;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[AllTalk Startup]</span> <span style="color: #ff0000;">Warning</span> <span style="color: black;">TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum</span> <br /><br />This is normal behavior if the subprocess is taking a while to start, however, if there is an issue starting the subprocess, you may see multiples of this message and an it will time out after 60 seconds, resulting in the TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
+<p style="padding-left: 30px; text-align: justify;">Its possible during startup you can get a warning message such as: <br /><br /><span style="color: black;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[AllTalk Startup]</span> <span style="color: #ff0000;">Warning</span> <span style="color: black;">TTS Subprocess has NOT started up yet, Will keep trying for 80 seconds maximum</span> <br /><br />This is normal behavior if the subprocess is taking a while to start, however, if there is an issue starting the subprocess, you may see multiples of this message and an it will time out after 80 seconds, resulting in the TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
 <p style="padding-left: 30px; text-align: justify;">Typically the command line console will output any warning or error messages. If you need to reset your default configuation, the settings are all listed above in the configuration details.</p>
 <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 <h2 id="references"><strong>Thanks &amp; References</strong></h2>
