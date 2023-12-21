@@ -160,7 +160,7 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 <br><br></details>
 
 
-#### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum. Please wait. It times out after 60 seconds.
+#### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 80 seconds maximum. Please wait. It times out after 80 seconds.
 
 <details>
 	<summary>Click to expand</summary><br>
