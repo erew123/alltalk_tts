@@ -248,7 +248,7 @@ else:
     # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
     sys.exit(1)
 
-timeout = 60  # Adjust the timeout as needed
+timeout = 120  # Adjust the timeout as needed
 
 # Introduce a delay before starting the check loop
 time.sleep(25)  # Wait 25 secs before checking if the tts_server.py has started up.
@@ -261,7 +261,7 @@ while time.time() - start_time < timeout:
     except requests.RequestException as e:
         # Print the exception for debugging purposes
         print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum. Please wait."
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait."
         )
     time.sleep(1)
 else:
