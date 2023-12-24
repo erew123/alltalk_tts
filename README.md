@@ -10,7 +10,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Finetuning** Train the model specifically on a voice of your choosing for better reproduction.
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Console output** Clear command line output for any warnings or issues.
-- **Standalone/3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
+- **API Suite and 3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
 
 ## Index
 
@@ -20,6 +20,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 #### Updates
@@ -286,7 +287,6 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 9) Follow the on-screen instructions when the web interface starts up.
 10) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
-
 ## 🔵🟢🟡 DeepSpeed Installation Options
 #### 🔵 Linux Installation
 <details>
@@ -437,6 +437,140 @@ def get_shm_size():
 <br><br>
 **Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
 </details>
+
+## 🟠 API Suite and JSON-CURL
+### 🟠Overview
+The Text-to-Speech (TTS) Generation API allows you to generate speech from text input using various configuration options. This API supports both character and narrator voices, providing flexibility for creating dynamic and engaging audio content.
+
+- URL: `http://127.0.0.1:7851/api/tts-generate`<br>
+- Method: `POST`<br>
+- Content-Type: `application/x-www-form-urlencoded`<br>
+
+### 🟠 Example command lines
+Standard TTS speech Example (standard text) generating a time-stamped file<br>
+
+`curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest" -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=false" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`<br>
+
+Narrator Example (standard text) generating a time-stamped file
+
+`curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=*This is text spoken by the narrator* \"This is text spoken by the character\". This is text not inside quotes." -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=true" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`<br>
+
+Note that if your text that needs to be generated contains double quotes you will need to escape them with `\"` (Please see the narrator example).
+
+### 🟠 Request Parameters
+🟠 **text_input**: The text you want the TTS engine to produce. Use escaped double quotes for character speech and asterisks for narrator speech if using the narrator function. Example:
+
+`-d "text_input=*This is text spoken by the narrator* \"This is text spoken by the character\". This is text not inside quotes."`
+
+🟠 **text_filtering**: Filter for text. Options:
+
+- **none** No filtering. Whatever is sent will go over to the TTS engine as raw text, which may result in some odd sounds with some special characters.<br>
+- **standard** Human-readable text and a basic level of filtering, just to clean up some special characters.<br>
+- **html** HTML content. Where you are using HTML entity's like &quot;<br>
+
+`-d "text_filtering=none"`<br>
+`-d "text_filtering=standard"`<br>
+`-d "text_filtering=html"`<br>
+
+Example:
+
+- **Standard Example**: `*This is text spoken by the narrator* "This is text spoken by the character" This is text not inside quotes.`<br>
+- **HTML Example**: `&ast;This is text spoken by the narrator&ast; &quot;This is text spoken by the character&quot; This is text not inside quotes.`<br>
+- **None**: `Will just pass whatever characters/text you send at it.`<br>
+
+🟠 **character_voice_gen**: The WAV file name for the character's voice.<br>
+
+`-d "character_voice_gen=female_01.wav"`
+
+🟠 **narrator_enabled**: Enable or disable the narrator function. If true, minimum text filtering is set to standard. Anything between double quotes is considered the character's speech, and anything between asterisks is considered the narrator's speech.
+
+`-d "narrator_enabled=true"`<br>
+`-d "narrator_enabled=false"` 
+
+🟠 **narrator_voice_gen**: The WAV file name for the narrator's voice.
+
+`-d "narrator_voice_gen=male_01.wav"`
+
+🟠 **text_not_inside**: Specify the handling of lines not inside double quotes or asterisks, for the narrator feature. Options:
+
+- **character**: Treat as character speech.<br>
+- **narrator**: Treat as narrator speech.<br>
+
+`-d "text_not_inside=character"`<br>
+`-d "text_not_inside=narrator"`
+
+🟠 **language**: Choose the language for TTS. Options:
+
+`ar Arabic`<br>
+`zh-cn Chinese (Simplified)`<br>
+`cs Czech`<br>
+`nl Dutch`<br>
+`en English`<br>
+`fr French`<br>
+`de German`<br>
+`hu Hungarian`<br>
+`it Italian`<br>
+`ja Japanese`<br>
+`ko Korean`<br>
+`pl Polish`<br>
+`pt Portuguese`<br>
+`ru Russian`<br>
+`es Spanish`<br>
+`tr Turkish`<br>
+
+`-d "language=en"`<br>
+
+🟠 **output_file_name**: The name of the output file (excluding the .wav extension).
+
+`-d "output_file_name=myoutputfile"`<br>
+
+🟠 **output_file_timestamp**: Add a timestamp to the output file name. If true, each file will have a unique timestamp; otherwise, the same file name will be overwritten each time you generate TTS.
+
+`-d "output_file_timestamp=true"`<br>
+`-d "output_file_timestamp=false"`
+
+🟠 **autoplay**: Feature not yet available. Enable or disable autoplay. Still needs to be specified in the JSON request.
+
+`-d "autoplay=true"`<br>
+`-d "autoplay=false"`
+
+🟠 **autoplay_volume**: Feature not yet available. Set the autoplay volume. Should be between 0.1 and 1.0. Still needs to be specified in the JSON request.
+
+`-d "autoplay_volume=0.8"`
+
+### 🟠 TTS Generation Response
+The API returns a JSON object with the following properties:
+
+- **status** Indicates whether the generation was successful (generate-success) or failed (generate-failure).<br>
+- **output_file_path** The on-disk location of the generated WAV file.<br>
+- **output_file_url** The HTTP location for accessing the generated WAV file.<br>
+
+Example JSON TTS Generation Response:
+
+`{"status": "generate-success", "output_file_path": "C:\text-generation-webui\extensions\alltalk_tts\outputs\myoutputfile_1703149973.wav", "output_file_url": "http://127.0.0.1:7851/audio/myoutputfile_1703149973.wav"}`
+
+🟠 **Switching Model**<br><br>
+`curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20Local"`<br>
+`curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20TTS"`<br>
+`curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20Local"`<br>
+
+Switch between the 3 models respectively.
+
+JSON return `{"status": "model-success"}`
+
+🟠 **Switch DeepSpeed**<br><br>
+`curl -X POST "http://127.0.0.1:7851/api/deepspeed?new_deepspeed_value=True"`
+
+Replace True with False to disable DeepSpeed mode.
+
+JSON return `{"status": "deepspeed-success"}`
+
+🟠 **Switching Low VRAM**<br><br>
+`curl -X POST "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"`
+
+Replace True with False to disable Low VRAM mode.
+
+JSON return `{"status": "lowvram-success"}`
 
 ### 🔴 Future to-do list
 - Voice output within the command prompt/terminal (TBD).
