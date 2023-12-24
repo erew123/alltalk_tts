@@ -253,8 +253,8 @@ I would suggest that if its in an interview format, you cut out the interviewer 
 #### ⚫ Important requirements CUDA 11.8
 As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. To keep the download+install as small as possible, you will need to:
 - Download the **xxx (network)** install of the Nvidia Cuda Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
-- When you run the installation, select **Custom Advanced** as your installation type. Uncheck `CUDA` at the top then expand `Development` > `Compiler` > and select `nvcc` then expand `Libraries` and select `CUBLAS`
-- Back at the top of the selection list expand `Runtime` and select `CUBLAS`. You can now next through the install.
+- When you run the installation, select **Custom Advanced** as your installation type. Uncheck `CUDA`, `Other Components` and `Driver Components` at the top then expand `CUDA` > `Development` > `Compiler` > and select `nvcc` then expand `Libraries` and select `CUBLAS`
+- Back at the top of `CUDA` expand `Runtime` > `Libraries` and select `CUBLAS`. You can now next through the install.
 - When that has installed, open a terminal/command prompt and type `nvcc --version`. If it reports back `Cuda compilation tools, release 11.8.` you are good to go. **Specifically, 11.8**. If not continue to the next step.
 - For both Windows an Linux, you will need to ensure that `nvcc` and the 11.8 cuda library files are in your environments search path. You can undo the changes below after finetuning if you prefer.<br><br>
   **Windows** - Edit the Windows PATH environment variable and add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin`<br><br>
