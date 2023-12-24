@@ -267,6 +267,8 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 - If it doesnt report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
 
 #### ⚫ Starting Finetuning
+**NOTE:** Please make sure you have started AllTalk at least once after updating, so that it downloads the additional files needed for finetuning. 
+
 1) Close all other applications that are using your GPU/VRAM and copy your audio samples into:<br><br>
    `/alltalk_tts/finetune/put-voice-samples-in-here/`
 3) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
