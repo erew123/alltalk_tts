@@ -59,7 +59,7 @@ def create_temporary_file(folder, suffix=".wav"):
     return os.path.join(folder, unique_filename)
 
 def format_audio_list(target_language, whisper_model, out_path, gradio_progress=progress):
-    audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith('.wav')]
+    audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith(('.mp3', '.flac', '.wav'))]
     buffer=0.2
     eval_percentage=0.15
     speaker_name="coqui"
