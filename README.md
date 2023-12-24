@@ -266,26 +266,28 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 - If it doesnt report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
 
 #### ⚫ Starting Finetuning
-1) Close all other applications that are using your GPU/VRAM and copy your audio samples into `/alltalk_tts/finetune/put-voice-samples-in-here/`
-2) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
+1) Close all other applications that are using your GPU/VRAM and copy your audio samples into:<br><br>
+   `/alltalk_tts/finetune/put-voice-samples-in-here/`
+3) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
 
-3) Start the Text generation webUI Python environment for your OS:<br><br>
+4) Start the Text generation webUI Python environment for your OS:<br><br>
 `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`
 
-4) You can double check your search path environment still works correctly with `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.`
+5) You can double check your search path environment still works correctly with `nvcc --version`. It should report back 11.8:<br><br>
+   `Cuda compilation tools, release 11.8.`
 
-5) Move into your extensions folder:<br><br>
+7) Move into your extensions folder:<br><br>
 `cd extensions`
 
-6) Move into the **alltalk_tts** folder:<br><br>
+8) Move into the **alltalk_tts** folder:<br><br>
 `cd alltalk_tts`
 
-7) Install the finetune requirements file: `pip install -r requirements_finetune.txt`
+9) Install the finetune requirements file: `pip install -r requirements_finetune.txt`
 
-8) Type `python finetune.py` and it should start up.
-9) Follow the on-screen instructions when the web interface starts up.
-10) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
+10) Type `python finetune.py` and it should start up.
+11) Follow the on-screen instructions when the web interface starts up.
+12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
 #### 🔵 Linux Installation
