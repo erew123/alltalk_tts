@@ -293,6 +293,8 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
+**NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
+
 #### 🔵 Linux Installation
 <details>
 	<summary>Click to expand: Linux DeepSpeed installation</summary>
