@@ -440,6 +440,6 @@ def get_shm_size():
 
 ### 🔴 Future to-do list
 - Voice output within the command prompt/terminal (TBD).
-- Correct a few spelling mistakes in the documnentation.
+- Correct a few spelling mistakes in the documentation.
 - Possibly add some additional TTS engines (TBD).
 - Have a break!
