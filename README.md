@@ -11,6 +11,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Console output** Clear command line output for any warnings or issues.
 - **API Suite and 3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
+- **Can be run as a standalone app** Not just inside of text-generation-webui.
 
 ## Index
 
