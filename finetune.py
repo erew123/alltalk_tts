@@ -28,6 +28,7 @@ out_path = this_dir / "finetune" / "tmp-trn"
 progress = 0
 theme = gr.themes.Default()
 refresh_symbol = '🔄'
+os.environ['TRAINER_TELEMETRY'] = '0'
 
 # Define the path to the modeldownload config file file
 modeldownload_config_file_path = this_dir / "modeldownload.json"
@@ -470,10 +471,10 @@ def run_tts(lang, tts_text, speaker_audio_file):
     return "Speech generated !", out_path, speaker_audio_file
 
 
-def get_available_voices(minimum_size_kb=1300):
+def get_available_voices(minimum_size_kb=1200):
     voice_files = [
         voice for voice in Path(f"{this_dir}/finetune/tmp-trn/wavs").glob("*.wav")
-        if voice.stat().st_size > minimum_size_kb * 1300  # Convert KB to bytes
+        if voice.stat().st_size > minimum_size_kb * 1200  # Convert KB to bytes
     ]
     return sorted([str(file) for file in voice_files])  # Return full path as string
 
@@ -620,7 +621,7 @@ if __name__ == "__main__":
                 ## <u>Finetuning Information</u><br>
                 ### 🟥 <u>Important Note</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 <span style="color: #3366ff;">finetune.py</span> needs to be run from the <span style="color: #3366ff;">/alltalk_tts/</span> folder. Don't move the location of this script.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 Have you run AllTalk at least once? It needs to have downloaded the voice model, before we can finetune it.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 Have you run AllTalk at least once? It needs to have downloaded+updated the voice model, before we can finetune it.
                 ### 🟦 <u>What you need to run finetuning</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 An Nvidia GPU. Tested on Windows with extended shared VRAM and training used about 16GB's total (which worked on a 12GB card).
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 I have not been able to test this on a GPU with less than 12GB of VRAM, so cannot say if it will work or how that would affect performance.
@@ -839,6 +840,7 @@ if __name__ == "__main__":
                 ## <u>STEP 3 -  Inference/Testing</u><br>
                 ### 🟥 <u>Important Note</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 This step will error if you are using TTS version 0.22.0. Please re-run  <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span> if it errors loading the model.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 If you dont see multiple speaker reference files and you used more than 3 minutes of speech, try refreshing the page as it may not have loaded them correctly.
                 ### 🟦 <u>What you need to do</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.
@@ -941,7 +943,7 @@ if __name__ == "__main__":
                 ### 🟦 <u>What you need to do</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 The wav(s) you liked from <span style="color: #3366ff;">Speaker Reference Audios</span> are in <span style="color: #3366ff;">/finetune/tmp-trn/wavs/</span> so copy the one(s) you selected to your <span style="color: #3366ff;">/alltalk_tts/voices/</span> samples folder.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You can delete your original samples from inside of the <span style="color: #3366ff;">/finetune/put-voice-samples-in-here/</span> folder.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 In the folder <span style="color: #3366ff;">/finetune/tmp-trn/training/XTTS_FT(date here)/</span> you will find your <span style="color: #3366ff;">best_model.pth</span>, <span style="color: #3366ff;">config.json</span> and <span style="color: #3366ff;">voice.json</span> (also the last epoch training best_model_xxx.pth)
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 In the folder <span style="color: #3366ff;">/finetune/tmp-trn/training/XTTS_FT(date here)/</span> you will find your <span style="color: #3366ff;">best_model.pth</span>, <span style="color: #3366ff;">config.json</span> and <span style="color: #3366ff;">vocab.json</span> (also the last epoch training best_model_xxx.pth)
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You can delete the last epoch training model file <span style="color: #3366ff;">best_model_xxx.pth</span> (the one with the numbers).
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You will need to rename <span style="color: #3366ff;">best_model.pth</span> to <span style="color: #3366ff;">model.pth</span>.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You will close the Finetuning application and copy your 3 files listed above over the top of the existing model files inside your <span style="color: #3366ff;">/alltalk_tts/models/xttsv2_2.0.2/</span> folder. 
