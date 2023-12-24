@@ -39,8 +39,8 @@ try:
 except ModuleNotFoundError:
     logger.error(
         f"[{params['branding']}]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the {params['branding']} extension."
-        f"[{params['branding']}]\033[91mWarning\033[0m Linux / Mac:\npip install -r extensions/alltalk_tts/requirements.txt\n"
-        f"[{params['branding']}]\033[91mWarning\033[0m Windows:\npip install -r extensions\\alltalk_tts\\requirements.txt\n"
+        f"[{params['branding']}]\033[91mWarning\033[0m Linux / Mac:\npip install -r /alltalk_tts/requirements.txt\n"
+        f"[{params['branding']}]\033[91mWarning\033[0m Windows:\npip install -r \\alltalk_tts\\requirements.txt\n"
         f"[{params['branding']}]\033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the cmd_ script. On Windows, that's cmd_windows.bat."
     )
     raise
@@ -62,7 +62,9 @@ try:
     from modules.utils import gradio
     # This is set to check if the script is being run within text generation webui or as a standalone script. False is running as part of text gen web ui or a gradio interface
     running_in_standalone = False
+    output_folder_wav = params["output_folder_wav"]
 except ModuleNotFoundError:
+    output_folder_wav = params["output_folder_wav_standalone"]
     print(f"[{params['branding']}Startup] Running script.py in standalone mode")
     # This is set to check if the script is being run within text generation webui or as a standalone script. true means standalone
     running_in_standalone = True
@@ -108,7 +110,6 @@ def delete_old_files(folder_path, days_to_keep):
 
 # Extract settings using params dictionary
 delete_output_wavs_setting = params["delete_output_wavs"]
-output_folder_wav = params["output_folder_wav"]
 output_folder_wav = os.path.normpath(output_folder_wav)
 
 # Check and perform file deletion
@@ -551,15 +552,10 @@ def output_modifier(string, state):
                     else:
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["narrator_voice"]
-                    # Check if character name exists and if not, just call it TTSOUT_
-                    if "character_menu" in state:
-                        output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}_{i}.wav')
-                    else:
-                        output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}_{i}.wav')
                     # Generate that TTS and output to a file
-                    output_file_str = output_file.as_posix()
+                    output_filename = get_output_filename(state)
                     generate_response = send_generate_request(
-                        cleaned_part, voice_to_use, language_code, output_file_str
+                        cleaned_part, voice_to_use, language_code, output_filename
                     )
                     audio_path = generate_response.get("data", {}).get("audio_path")
                     audio_files_paragraph.append(audio_path)
@@ -580,14 +576,9 @@ def output_modifier(string, state):
                 )
                 cleaned_part = html.unescape(processed_string)                
                 # Process the part and give it a non-character name if being used vai API or standalone.
-                if "character_menu" in state:
-                    output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')
-                else:
-                    output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav')
-                output_file_str = output_file.as_posix()
-                output_file = get_output_filename(state)
+                output_filename = get_output_filename(state)
                 generate_response = send_generate_request(
-                    cleaned_part, params["voice"], language_code, output_file_str
+                    cleaned_part, params["voice"], language_code, output_filename
                 )
                 audio_path = generate_response.get("data", {}).get("audio_path")
                 final_output_file = audio_path
@@ -627,9 +618,11 @@ def output_modifier(string, state):
 
 
 def get_output_filename(state):
-    return Path(
-        f'{params["output_folder_wav"]}/{state["character_menu"]}_{str(uuid.uuid4())[:8]}.wav'
-    ).as_posix()
+     # Check if character name exists and if not, just call it TTSOUT_
+    if "character_menu" in state:
+        return Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav').as_posix()
+    else:
+        return Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav').as_posix()
 
 
 ###############################################
