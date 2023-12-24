@@ -7,6 +7,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
+- **Finetuning** Train the model specifically on a voice of your choosing for better reproduction.
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Console output** Clear command line output for any warnings or issues.
 - **Standalone/3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
@@ -17,6 +18,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
 - 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
+- ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
@@ -43,9 +45,9 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 5) Move into the **alltalk_tts** folder:<br><br>
 `cd alltalk_tts`
 
-6) Install the requirements:<br><br>
-*Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`<br><br>
-*Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
+6) Install the requirements that are correct for your machine:<br><br>
+**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
 
 7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). **However**, I would highly reccommend before you install DeepSpeed, you start text-generation-webui up, confirm AllTalk starts correctly and everything is working, as DeepSpeed can add another layer of complications troubleshooting any potential start-up issues. If necessary you can `pip uninstall deepspeed`.
 
@@ -81,9 +83,9 @@ This is pretty much a repeat of the installation process.
 3) At the command prompt/terminal, type:<br><br>
 `git pull`
 
-4) Install the requirements:<br><br>
-*Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`<br><br>
-*Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
+4) Install the correct requirements for your machine:<br><br>
+**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
 
 #### 🟪 Updating "git pull" error
 
@@ -123,9 +125,9 @@ This will download a fresh installation.
 3) Move into the **alltalk_tts** folder:<br><br>
 `cd alltalk_tts`
 
-4) Install the requirements:<br><br>
-*Nvidia graphics card machines* - `pip install -r requirements_nvidia.txt`<br><br>
-*Other machines (mac, amd etc)* - `pip install -r requirements_other.txt`
+4) Install the correct requirements for your machine:<br><br>
+**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
 
 5) Before starting it up, copy/merge the `models`, `voices` and `outputs` folders over from the `alltalk_tts.old` folder to the newly created `alltalk_tts` folder. This will keep your voices history and also stop it re-downloading the model again.
 
@@ -135,9 +137,10 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 </details>
 
 ## 🟫 Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4ca9b4c7-60ce-4ac6-82e5-fd1989b84644) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4ca9b4c7-60ce-4ac6-82e5-fd1989b84644) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) |
 |:---:|:---:|
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |  ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/68edc968-bdd2-4f98-9d56-b9ca40decf26) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/eb5e617b-2345-418d-8267-a9d30f705a10) |
 
 ## 🟨 Help with problems
 
@@ -160,7 +163,7 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 <br><br></details>
 
 
-#### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 80 seconds maximum. Please wait. It times out after 80 seconds.
+#### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.
 
 <details>
 	<summary>Click to expand</summary><br>
@@ -171,7 +174,9 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 
 **Note:** If you need to create a support ticket, please create a `diagnostics.log` report file to submit with a support request. Details on doing this are above.
 
-Possibilities for this issue are:
+Before giving other possibilities, some people with **old machines** are finding their startup times are **very** slow 2-3 minutes. Ive extended the allowed time within the script from 1 minute to 2 minutes. **If you have an older machine** and wish to try extending this further, you can do so by editing `script.py` and changing line 251 `timeout = 120` changing the timeout to a larger value e.g `timeout = 240` (4 minutes).
+
+Other possibilities for this issue are:
 
 1) You are starting AllTalk in both your `CMD FLAG.txt` and `settings.yaml` file. The `CMD FLAG.txt` you would have manually edited and the `settings.yaml` is the one you change and save in the `session` tab of text-generation-webui and you can `Save UI defaults to settings.yaml`. Please only have one of those two starting up AllTalk.
 
@@ -229,6 +234,58 @@ I would suggest following [Problems Updating](https://github.com/erew123/alltalk
 	
 As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 </details>
+
+## ⚫ Finetuning a model
+If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
+
+- An Nvidia graphics card
+- To install a few portions of the Nvidia CUDA 11.8 Toolkit (this will not impact text-generation-webui's cuda setup.
+- 18GB of disk space free (most of this is used temporarily)
+- At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
+
+#### ⚫ How will this work/How complicated is it?
+Everything has been done to make this as simple as possible. At its simplest, you can literally just download a large chunk of audio from an interview, and tell the finetuning to strip through it, find spoken parts and build your dataset. You can literally click 4 buttons, then copy a few files and you are done. At it's more complicated end you will clean up the audio a little beforehand, but its still only 4x buttons and copying a few files.
+
+#### ⚫ The audio you will use
+I would suggest that if its in an interview format, you cut out the interviewer speaking in audacity or your chosen audio editing package. You dont have to worry about being perfect with your cuts, the finetuning Step 1 will go and find spoken audio and cut it out for you. Is there is music over the spoken parts, for best quality you would cut out those parts, though its not 100% necessary. As always, try to avoid bad quality audio with noises in it (humming sounds, hiss etc). You can try something like [Audioenhancer](https://audioenhancer.ai/) to try clean up noisier audio. There is no need to down-sample any of the audio, all of that is handled for you. Just give the finetuning some good quality audio to work with. 
+
+#### ⚫ Important requirements CUDA 11.8
+As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. To keep the download+install as small as possible, you will need to:
+- Download the **xxx (network)** install of the Nvidia Cuda Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
+- When you run the installation, select **Custom Advanced** as your installation type. Uncheck `CUDA` at the top then expand `Development` > `Compiler` > and select `nvcc` then expand `Libraries` and select `CUBLAS`
+- Back at the top of the selection list expand `Runtime` and select `CUBLAS`. You can now next through the install.
+- When that has installed, open a terminal/command prompt and type `nvcc --version`. If it reports back `Cuda compilation tools, release 11.8.` you are good to go. **Specifically, 11.8**. If not continue to the next step.
+- For both Windows an Linux, you will need to ensure that `nvcc` and the 11.8 cuda library files are in your environments search path. You can undo the changes below after finetuning if you prefer.<br><br>
+  **Windows** - Edit the Windows PATH environment variable and add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin`<br><br>
+  **Linux** - The path may be different depending on what flavour of Linux you are running, so you may need to seek out specific instructions on the internet. Generic paths **may** be:<br>
+  `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}` and<br>
+  `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin`<br>
+  Add these to your '~/.bashrc' if you want this to be permanent and not something you have to set each time you open a new terminal.<br><br>
+- When you have made the changes, open a new terminal/command prompt and `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.` at which point, you are good to go.
+- If it doesnt report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
+
+#### ⚫ Starting Finetuning
+1) Copy your audio samples into `/alltalk_tts/finetune/put-voice-samples-in-here/`
+2) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
+`cd text-generation-webui`
+
+3) Start the Text generation webUI Python environment for your OS:<br><br>
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`
+
+4) You can double check your search path environment still works correctly with `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.`
+
+5) Move into your extensions folder:<br><br>
+`cd extensions`
+
+6) Move into the **alltalk_tts** folder:<br><br>
+`cd alltalk_tts`
+
+7) Install the finetune requirements file: `pip install -r requirements_finetune.txt`
+
+8) Type `python finetune.py` and it should start up.
+9) Follow the on-screen instructions when the web interface starts up.
+10) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
+
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
 #### 🔵 Linux Installation
@@ -382,9 +439,7 @@ def get_shm_size():
 </details>
 
 ### 🔴 Future to-do list
-- Complete & document the new/full standalone mode API.
 - Voice output within the command prompt/terminal (TBD).
-- Correct an issue on incorrect output folder path when running as a standalone app.
 - Correct a few spelling mistakes in the documnentation.
 - Possibly add some additional TTS engines (TBD).
 - Have a break!
