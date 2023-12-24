@@ -665,7 +665,7 @@ if __name__ == "__main__":
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for finetuning the model on Step 2.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.
                 ### 🟩 <u>How long will this take?</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟩 First time, it needs to download the Whisper model which is 3GB. After that a few minutes on average 3-4 year old system.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟩 First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.
                 """
             )
                  
