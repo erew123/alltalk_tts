@@ -174,9 +174,9 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 **A)** Its trying to load the voice model into your graphics card VRAM (assuming you have a Nvidia Graphics card, otherwise its your system RAM)<br>
 **B)** Its trying to start up the mini-webserver and send the "ready" signal back to the main process.
 
-**Note:** If you need to create a support ticket, please create a `diagnostics.log` report file to submit with a support request. Details on doing this are above.
+Before giving other possibilities a go, some people with **old machines** are finding their startup times are **very** slow 2-3 minutes. Ive extended the allowed time within the script from 1 minute to 2 minutes. **If you have an older machine** and wish to try extending this further, you can do so by editing `script.py` and changing line 251 `timeout = 120` changing the timeout to a larger value e.g `timeout = 240` (4 minutes).
 
-Before giving other possibilities, some people with **old machines** are finding their startup times are **very** slow 2-3 minutes. Ive extended the allowed time within the script from 1 minute to 2 minutes. **If you have an older machine** and wish to try extending this further, you can do so by editing `script.py` and changing line 251 `timeout = 120` changing the timeout to a larger value e.g `timeout = 240` (4 minutes).
+**Note:** If you need to create a support ticket, please create a `diagnostics.log` report file to submit with a support request. Details on doing this are above.
 
 Other possibilities for this issue are:
 
