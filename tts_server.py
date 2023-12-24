@@ -1033,6 +1033,7 @@ simple_webpage = """
 <li><a href="#using-voice-samples">Using Voice Samples</a></li>
 <li><a href="#text-not-inside">Text Not inside</a></li>
 <li><a href="#low-vram">Low VRAM</a></li>
+<li><a href="#finetune">Finetuning (Training the model)</a></li>
 <li><a href="#deepspeed">DeepSpeed</a>
 <ul>
 <li><a href="#deepspeed-linux">DeepSpeed Setup Linux</a></li>
@@ -1180,6 +1181,82 @@ simple_webpage = """
 <p style="padding-left: 30px; text-align: justify;">This creates a TTS generation performance Boost for Low VRAM Users and is particularly beneficial for users with less than 2GB of free VRAM after loading their LLM, delivering a substantial 5-10x improvement in TTS generation speed.</p>
 <div style="text-align: center;"><img src="/static/lowvrammode.png" alt="How Low VRAM Works" /></div>
 <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+
+
+<h2 id="finetune"><strong>Finetuning (Training the model)</strong></h2>
+
+<p style="margin-left:40px; text-align:justify">If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your &quot;XTTSv2 local&quot; model <span style="color:#3366ff">(stored in /alltalk_tts/models/xxxxx/)</span> on a specific voice. For this you will need:</p>
+
+<ul style="margin-left:40px">
+	<li>An Nvidia graphics card To install a few portions of the Nvidia CUDA <strong>11.8</strong> Toolkit (this will not impact text-generation-webui&#39;s cuda setup.</li>
+	<li>18GB of disk space free (most of this is used temporarily)</li>
+	<li>At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).</li>
+</ul>
+
+<h4>How will this work/How complicated is it?</h4>
+
+<p style="margin-left:40px; text-align:justify">Everything has been done to make this as simple as possible. At its simplest, you can literally just download a large chunk of audio from an interview, and tell the finetuning to strip through it, find spoken parts and build your dataset. You can literally click 4 buttons, then copy a few files and you are done. At it&#39;s more complicated end you will clean up the audio a little beforehand, but its still only 4x buttons and copying a few files.</p>
+
+<h4>The audio you will use:</h4>
+
+<p style="margin-left:40px; text-align:justify">I would suggest that if its in an interview format, you cut out the interviewer speaking in audacity or your chosen audio editing package. You dont have to worry about being perfect with your cuts, the finetuning Step 1 will go and find spoken audio and cut it out for you. Is there is music over the spoken parts, for best quality you would cut out those parts, though its not 100% necessary. As always, try to avoid bad quality audio with noises in it (humming sounds, hiss etc). You can try something like Audioenhancer to try clean up noisier audio. There is no need to down-sample any of the audio, all of that is handled for you. Just give the finetuning some good quality audio to work with.</p>
+
+<h4>Important requirements CUDA 11.8:</h4>
+
+<p style="margin-left:40px; text-align:justify">As mentioned you must have a small portion of the <span style="color:#3366ff">Nvidia CUDA Toolkit&nbsp;<strong>11.8</strong></span>&nbsp;installed. Not higher or lower versions. Specifically&nbsp;<strong>11.8</strong>. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. There are instructions within the finetuning interface on doing this or you can also find them on this link&nbsp;<a href="https://github.com/erew123/alltalk_tts#-important-requirements-cuda-118">here</a></p>
+
+<h4>Starting Finetuning:</h4>
+
+<p style="margin-left:40px"><strong>Ensure</strong> you have followed the instructions on setting up the Nvidia CUDA Toolkit 11.8 <a href="https://github.com/erew123/alltalk_tts#-important-requirements-cuda-118">here</a>&nbsp;or the below procedure will fail.</p>
+
+<p style="margin-left:40px">The below instructions are also available online&nbsp;<a href="https://github.com/erew123/alltalk_tts#-finetuning-a-model">here</a></p>
+
+<ol>
+	<li>
+	<p>Close all other applications that are using your GPU/VRAM and copy your audio samples into:<br />
+	<br />
+	<span style="color:#3366ff">/alltalk_tts/finetune/put-voice-samples-in-here/</span></p>
+	</li>
+	<li>
+	<p>In a command prompt/terminal window you need to move into your Text generation webUI folder:<br />
+	<br />
+	<span style="color:#3366ff">cd text-generation-webui</span></p>
+	</li>
+	<li>
+	<p>Start the Text generation webUI Python environment for your OS:<br />
+	<br />
+	<span style="color:#3366ff">cmd_windows.bat,&nbsp;./cmd_linux.sh,&nbsp;cmd_macos.sh&nbsp;or&nbsp;cmd_wsl.bat</span></p>
+	</li>
+	<li>
+	<p>You can double check your search path environment still works correctly with&nbsp;<span style="color:#3366ff">nvcc --version</span>. It should report back <span style="color:#3366ff">11.8</span>:<br />
+	<br />
+	<span style="color:#3366ff">Cuda compilation tools, release 11.8.</span></p>
+	</li>
+	<li>
+	<p>Move into your extensions folder:<br />
+	<br />
+	<span style="color:#3366ff">cd extensions</span></p>
+	</li>
+	<li>
+	<p>Move into the&nbsp;<span style="color:#3366ff">alltalk_tts</span>&nbsp;folder:<br />
+	<br />
+	<span style="color:#3366ff">cd alltalk_tts</span></p>
+	</li>
+	<li>
+	<p>Install the finetune requirements file:&nbsp;<span style="color:#3366ff">pip install -r requirements_finetune.txt</span></p>
+	</li>
+	<li>
+	<p>Type<span style="color:#3366ff">&nbsp;python finetune.py</span>&nbsp;and it should start up.</p>
+	</li>
+	<li>
+	<p>Follow the on-screen instructions when the web interface starts up.</p>
+	</li>
+	<li>
+	<p>When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.</p>
+	</li>
+</ol>
+
+<p><a href="#toc">Back to top of page</a></p>
 
 
 <h2 id="deepspeed"><strong>DeepSpeed</strong></h2>

@@ -1,7 +1,7 @@
 gradio>=3.50.2
 torch>=2.1.0+cu118
 torchaudio>=2.1.0+cu118
-TTS>=0.22.0
+TTS==0.21.3
 faster-whisper>=0.10.0
 tqdm>=4.66.0
 pandas>=1.5.0
