@@ -501,7 +501,7 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                # print(original_string)
+                #print(original_string)
                 # Do Some basic stripping and remove any double CR's
                 processed_string = (
                     original_string
@@ -522,11 +522,11 @@ def output_modifier(string, state):
                     .replace('"', '&quot;<')
                 )
                 #capturing another outlier in inital character paragraph
-                # print("processed string 1 is:", processed_string)
+                #print("processed string 1 is:", processed_string)
                 processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
                 processed_string = processed_string.replace('< *"', '< *')
                 processed_string = processed_string.replace('. *', '< *')
-                # print("processed string 2 is:", processed_string)
+                #print("processed string 2 is:", processed_string)
                 # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
                 # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
@@ -541,11 +541,11 @@ def output_modifier(string, state):
                     if '<' in part and '< *' not in part and '<*' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
                         cleaned_part = html.unescape(part.replace('<', ''))
                         voice_to_use = params["voice"]
-                    #Narrator will always be an * or < with an * a position or two after it.
+                        #Narrator will always be an * or < with an * a position or two after it.
                     elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
                         cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', ''))
                         voice_to_use = params["narrator_voice"]
-                    #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
+                        #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
                     elif non_quoted_text_is:
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["voice"]
@@ -576,9 +576,14 @@ def output_modifier(string, state):
                 )
                 cleaned_part = html.unescape(processed_string)                
                 # Process the part and give it a non-character name if being used vai API or standalone.
-                output_filename = get_output_filename(state)
+                if "character_menu" in state:
+                    output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')
+                else:
+                    output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav')
+                output_file_str = output_file.as_posix()
+                output_file = get_output_filename(state)
                 generate_response = send_generate_request(
-                    cleaned_part, params["voice"], language_code, output_filename
+                    cleaned_part, params["voice"], language_code, output_file_str
                 )
                 audio_path = generate_response.get("data", {}).get("audio_path")
                 final_output_file = audio_path
