@@ -618,11 +618,10 @@ def output_modifier(string, state):
 
 
 def get_output_filename(state):
-     # Check if character name exists and if not, just call it TTSOUT_
     if "character_menu" in state:
-        return Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav').as_posix()
+        return Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{str(uuid.uuid4())[:8]}.wav').as_posix()
     else:
-        return Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav').as_posix()
+        return Path(f'{params["output_folder_wav"]}/TTSOUT_{str(uuid.uuid4())[:8]}.wav').as_posix()
 
 
 ###############################################
