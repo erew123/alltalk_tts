@@ -203,6 +203,19 @@ Other possibilities for this issue are:
 11) You have built yourself a custom Python environment and something is funky with it. This is very hard to diagnose as its not a standard environment. You may want to updating text-generation-webui and re installing its requirements file (whichever one you use that comes down with text-generation-webui).
 </details>
 
+#### 🟨 I think AllTalks requirements file has installed something another extension doesn't like
+<details>
+	<summary>Click to expand</summary><br>
+	
+Ive paid very close attention to not impact the what Text-generation-webui is requesting on a factory install, nor over-write other extensions requirements (As best as I can account for). This is one of the requirements of submitting an extension to text-generation-webui. If you want to look at a comparison of a base text-generation-webui install (with cuda 12.1, though I based my requirements on cuda 11.8) you can find that comparison [here](https://github.com/erew123/alltalk_tts/issues/23) where you can see AllTalk is requesting the same as text-generation-webui or even lower version numbers (meaning AllTalk will not update them to a later version.
+
+The only one thing I cannot counter for is that the TTS engine downgrades Pandas data validator to 1.5.3 though its unlikely to cause any issues. You can upgrade it back to text-generation-webui default (december 2023) with `pip install pandas==2.1.4` when inside of the python environment. I have noticed no ill effects from it being a lower or higher version, as far as AllTalk goes.
+
+Other people are reporting issues with extensions not starting with errors about Pydantic e.g. `pydantic.errors.PydanticImportError: `BaseSettings` has been moved to the `pydantic-settings` package. See https://docs.pydantic.dev/2.5/migration/#basesettings-has-moved-to-pydantic-settings for more details.`
+
+Im not sure if the Pydantic version has been recently updated by the Text-generation-webui installer, but this is nothing to do with AllTalk. The other extension you are having an issue with needs to be updated to work with Pydantic 2.5.x. AllTalk was updated in mid december to work with 2.5.x
+</details>
+
 #### 🟨 I activated DeepSpeed in the settings page, but I didnt install DeepSpeed yet and now I have issues starting up
 <details>
 	<summary>Click to expand</summary><br>
