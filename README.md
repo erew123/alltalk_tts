@@ -25,7 +25,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 #### Updates
-Dec 25th - Applied a small update to avoid a possible race condition on file naming with small sentences when generating narrator/character speech. Please update if you are experiencing this.
+Dec 25th - Applied a small update to avoid a possible race condition on file naming with small sentences when generating narrator/character speech. Please update if you are experiencing missing small bits of missing audio on narrator/character.
 
 The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. It does however mean you need to ensure your character card is set up correctly if using the narrator function. Details are below in the installation notes.
 
