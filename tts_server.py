@@ -22,7 +22,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Template
 from contextlib import asynccontextmanager
-from pydantic import field_validator
 
 ###########################
 #### STARTUP VARIABLES ####
@@ -647,11 +646,10 @@ class JSONInput(BaseModel):
     autoplay: bool = Field(..., description="autoplay needs to be a true or false value.")
     autoplay_volume: float = Field(..., ge=0.1, le=1.0, description="autoplay_volume needs to be from 0.1 to 1.0")
 
-    @field_validator("autoplay_volume")
     @classmethod
     def validate_autoplay_volume(cls, value):
         if not (0.1 <= value <= 1.0):
-            raise ValidationError("Autoplay volume must be between 0.1 and 1.0")
+            raise ValueError("Autoplay volume must be between 0.1 and 1.0")
         return value
 
 

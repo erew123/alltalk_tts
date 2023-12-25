@@ -10,4 +10,4 @@ requests>=2.31.0
 tqdm>=4.66.1
 importlib-metadata>=4.8.1
 packaging>=23.2
-pydantic>=2.5.0
+pydantic>=1.10.13
