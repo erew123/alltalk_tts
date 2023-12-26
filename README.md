@@ -27,6 +27,8 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 #### Updates
 Dec 25th - Applied a small update to avoid a possible race condition on file naming with small sentences when generating narrator/character speech. Please update if you are experiencing missing small bits of missing audio on narrator/character.
 
+#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
+
 The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. It does however mean you need to ensure your character card is set up correctly if using the narrator function. Details are below in the installation notes.
 
 DeepSpeed **v11.2** can be installed within the **default text-generation-webui Python 3.11 environment**. Installs in custom Python environments are possible, but can be more complicated. Instructions [here](https://github.com/erew123/alltalk_tts##deepspeed-installation-options) (or scroll down).
@@ -147,6 +149,7 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/68edc968-bdd2-4f98-9d56-b9ca40decf26) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/eb5e617b-2345-418d-8267-a9d30f705a10) |
 
 ## 🟨 Help with problems
+#### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 #### 🟨 How to make a diagnostics report file
 <details>
