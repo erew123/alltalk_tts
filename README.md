@@ -36,6 +36,8 @@ DeepSpeed **v11.2** can be installed within the **default text-generation-webui 
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
+If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)
+
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
 
