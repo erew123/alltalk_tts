@@ -40,7 +40,8 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 `cd text-generation-webui`
 
 2) Start the Text generation webUI Python environment for your OS:<br><br>
-`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br><br>
+[Click here to see what your command line should look like when you load the Text-generation-webui Python environment](https://github.com/erew123/alltalk_tts/issues/25#issuecomment-1869344442)
 
 3) Move into your extensions folder:<br><br>
 `cd extensions`
