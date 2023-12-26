@@ -53,7 +53,7 @@ If you want to watch a video of how to do the below [link here](https://youtu.be
 5) Move into the **alltalk_tts** folder:<br><br>
 `cd alltalk_tts`
 
-6) Install the requirements that are correct for your machine:<br><br>
+6) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
 **Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
 
