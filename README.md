@@ -36,14 +36,13 @@ DeepSpeed **v11.2** can be installed within the **default text-generation-webui 
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
-If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)
+If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w) 
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
 
-2) Start the Text generation webUI Python environment for your OS **(VERY IMPORTANT)**:<br><br>
-`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br><br>
-[Click here to see what your command line should look like when you load the Text-generation-webui Python environment](https://github.com/erew123/alltalk_tts/issues/25#issuecomment-1869344442)
+2) Start the Text generation webUI Python environment for your OS:<br><br>
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br><br> Loading Text-generation-webui's Python Environment is $\textcolor{red}{\textsf{VERY IMPORTANT}}$. If you are uncertain what a loaded Python environment looks like, image [here](https://github.com/erew123/alltalk_tts/issues/25#issuecomment-1869344442) and video [here](https://www.youtube.com/watch?v=9BPKuwaav5w)
 
 3) Move into your extensions folder:<br><br>
 `cd extensions`
@@ -60,11 +59,11 @@ If you want to watch a video of how to do the below [link here](https://youtu.be
 
 7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). **However**, I would highly reccommend before you install DeepSpeed, you start text-generation-webui up, confirm AllTalk starts correctly and everything is working, as DeepSpeed can add another layer of complications troubleshooting any potential start-up issues. If necessary you can `pip uninstall deepspeed`.
 
-8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI **(VERY IMPORTANT)** (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.
+8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.<br><br> Starting Text-generation-webui with its correct start-up script is $\textcolor{red}{\textsf{VERY IMPORTANT}}$.
    
-9) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
+10) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
 
-10) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
+11) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
 
 #### 🟩 Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
