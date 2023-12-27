@@ -624,6 +624,7 @@ async def get_audio(filename: str):
 ########################
 import html
 import re
+import uuid
 import numpy as np
 import soundfile as sf
 from typing import Union, Dict
@@ -802,7 +803,7 @@ async def tts_generate(
                     print("ELSE - NARRATOR\n")
                     cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                     voice_to_use = narrator_voice_gen
-                output_file = this_dir / "outputs" / f"{output_file_name}_{int(time.time())}_{i}.wav"
+                output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}_{i}.wav"
                 output_file_str = output_file.as_posix()
                 await generate_audio(cleaned_part, voice_to_use, language, output_file_str)
                 audio_path = output_file_str
