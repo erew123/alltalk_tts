@@ -142,7 +142,7 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 </details>
 
 ## 🟫 Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4ca9b4c7-60ce-4ac6-82e5-fd1989b84644) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/15c6ba0b-e6b0-4570-8253-b920dd76174d) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) |
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |  ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/68edc968-bdd2-4f98-9d56-b9ca40decf26) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/eb5e617b-2345-418d-8267-a9d30f705a10) |
