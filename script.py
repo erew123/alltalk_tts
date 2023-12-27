@@ -786,7 +786,7 @@ def ui():
             )
             tts_radio_buttons_play = gr.HTML(visible=False)
             explanation_text = gr.HTML(
-                f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed, each takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>"
+                f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Click here for the Settings page, help & instructions</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>NOTE: Switching Model Type, Low VRAM & DeepSpeed, each takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is installed on your system."
             )
 
         with gr.Row():
