@@ -21,6 +21,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🟦 [Running AllTalk as a standalone app](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
@@ -464,6 +465,29 @@ def get_shm_size():
 <br><br>
 **Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
 </details>
+
+## 🟦 Running AllTalk as a standalone app
+AllTalk will run as a standalone app, as long as you install its requirements files into whatever Python environment you are using. You can follow the steps to install the AllTalk's requirements into whatever Python environment you wish. Because I dont know what Python environment you are wanting to use, I can only give you a loose set of installation instructions. 
+
+#### 🟦 (Option 1) I already have AllTalk installed as an extension of Text-generation-webui
+If you already have AllTalk as a extension of Text-generation-webui, and wish to run it as standalone, load Text-generation-webui's Python environment `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`, move into the AllTalk folder `cd extensions` > `cd alltalk_tts` and start AllTalk with `python script.py`. There is nothing beyond this you would need to do.
+
+#### 🟦 (Option 2) I wish to do a custom install of AllTalk
+1) In your chosen disk location git clone this repository:<br><br>
+`git clone https://github.com/erew123/alltalk_tts`
+
+2) Move into the **alltalk_tts** folder:<br><br>
+`cd alltalk_tts`
+
+3) If you have a custom Python environment, now is the time to load it!
+
+4) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
+**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
+
+5) Start AllTalk with `python script.py`
+
+Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.
 
 ## 🟠 API Suite and JSON-CURL
 ### 🟠Overview
