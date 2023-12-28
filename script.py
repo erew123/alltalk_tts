@@ -494,7 +494,7 @@ def output_modifier(string, state):
     if not params["activate"]:
         return string
     original_string = string
-    print("ORGINAL STRING: ", original_string)
+    #print("ORGINAL STRING: ", original_string)
     cleaned_string = before_audio_generation(string, params)
     if cleaned_string is None:
         return
