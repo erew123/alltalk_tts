@@ -483,6 +483,9 @@ def voice_preview(string):
         return f"[{params['branding']}Server] Audio generation failed. Status: {generate_response.get('status')}"
 
 
+def replace_asterisk(match):
+    return match.group(0) + '&quot;<*'
+
 #################################
 #### TTS STANDARD GENERATION ####
 #################################
@@ -491,6 +494,7 @@ def output_modifier(string, state):
     if not params["activate"]:
         return string
     original_string = string
+    print("ORGINAL STRING: ", original_string)
     cleaned_string = before_audio_generation(string, params)
     if cleaned_string is None:
         return
@@ -508,25 +512,28 @@ def output_modifier(string, state):
                     .replace("***", "*")
                     .replace("**", "*")
                     .replace("\n\n", "\n")
+                    .replace("\n", "")
                 )
-                # Clean up two asterisks (narrators) being made between a newline, making it one sentence.
                 processed_string = re.sub(r'\.\*\n\*', '. ', processed_string)
-                # Clean up a few other bits.
-                processed_string = (
-                    processed_string
-                    .replace("&#x27;", "'")
-                    .replace("\n", " ")
-                    # Add special characters to the quote so that we can use it to identify things later after its been split
-                    .replace('&quot;', '&quot;<')
-                    # Capture new conversations which wont have things like &quote in them
-                    .replace('"', '&quot;<')
-                )
-                #capturing another outlier in inital character paragraph
-                #print("processed string 1 is:", processed_string)
+                processed_string = (processed_string .replace('&quot;\n\n*', '&quot;<*'))
+                processed_string = (processed_string .replace('&quot;\n', '< '))
+                processed_string = (processed_string .replace("&#x27;", "'"))
+                processed_string = (processed_string .replace("\n", " "))
+                processed_string = (processed_string .replace('&quot;', '&quot;<'))
+                processed_string = (processed_string .replace('"', '&quot;<'))
+                #pattern = re.compile(r'(?<=[a-zA-Z!])&quot;<(?=[a-zA-Z])')
+                pattern = re.compile(r'(?<=[a-zA-Z!?\.])&quot;<(?=[a-zA-Z])')
+                processed_string = pattern.sub('&quot; ', processed_string)
+                pattern = re.compile(r'(?<=[a-zA-Z])\*(?=[a-zA-Z])')
+                processed_string = pattern.sub('*&quot;', processed_string)
                 processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
                 processed_string = processed_string.replace('< *"', '< *')
                 processed_string = processed_string.replace('. *', '< *')
-                #print("processed string 2 is:", processed_string)
+                processed_string = processed_string.replace('! *', '&quot;< *')
+                processed_string = processed_string.replace('? *', '< *')
+                processed_string = processed_string.replace('* ', '* &quot;<')
+                processed_string = processed_string.replace('*. ', '* &quot;<')
+                processed_string = re.sub(r'\*(?=[a-zA-Z])', replace_asterisk, processed_string)
                 # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
                 # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
@@ -534,7 +541,7 @@ def output_modifier(string, state):
                 audio_files_paragraph = []
                 for i, part in enumerate(parts):
                     # Skip parts that are too short
-                    if len(part.strip()) <= 1:
+                    if len(part.strip()) <= 3:
                         continue
                     # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
                     # Character will always be a < with a letter immediately after it
