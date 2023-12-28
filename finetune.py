@@ -14,6 +14,7 @@ import gc
 import time
 import shutil
 import pandas
+import glob
 import json
 from pathlib import Path
 from tqdm import tqdm
@@ -40,6 +41,7 @@ if modeldownload_config_file_path.exists():
     # Extract settings from the loaded JSON
     base_path = Path(settings.get("base_path", ""))
     model_path = Path(settings.get("model_path", ""))
+    base_model_path = Path(settings.get("model_path", ""))
     files_to_download = settings.get("files_to_download", {})
 else:
     # Default settings if the JSON file doesn't exist or is empty
@@ -495,7 +497,114 @@ xtts_config_files = find_jsons(main_directory, "config.json")
 # XTTS vocab files (vocab.json)
 xtts_vocab_files = find_jsons(main_directory, "vocab.json")
 
+##########################
+#### STEP 4 AND OTHER ####
+##########################
 
+def find_latest_best_model(folder_path):
+    search_path = folder_path / "XTTS_FT-*" / "best_model.pth"
+    files = glob.glob(str(search_path), recursive=True)
+    latest_file = max(files, key=os.path.getctime, default=None)
+    return latest_file
+
+def compact_model():
+    this_dir = Path(__file__).parent.resolve()
+
+    best_model_path_str = find_latest_best_model(this_dir / "finetune" / "tmp-trn" / "training")
+
+    # Check if the best model file exists
+    if best_model_path_str is None:
+        print("No trained model was found.")
+        return "No trained model was found."
+
+    # Convert model_path_str to Path
+    best_model_path = Path(best_model_path_str)
+
+    # Attempt to load the model
+    try:
+        checkpoint = torch.load(best_model_path, map_location=torch.device("cpu"))
+    except Exception as e:
+        print("Error loading checkpoint:", e)
+        raise
+
+    del checkpoint["optimizer"]
+
+    for key in list(checkpoint["model"].keys()):
+        if "dvae" in key:
+            del checkpoint["model"][key]
+
+    # Define the target directory
+    target_dir = this_dir / "models" / "trainedmodel"
+
+    # Create the target directory if it doesn't exist
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save the modified checkpoint in the target directory
+    torch.save(checkpoint, target_dir / "model.pth")
+
+    # Specify the files you want to copy
+    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth"]
+
+    for file_name in files_to_copy:
+        src_path = this_dir / base_path / base_model_path / file_name
+        dest_path = target_dir / file_name
+        shutil.copy(str(src_path), str(dest_path))
+
+    source_wavs_dir = this_dir / "finetune" / "tmp-trn" / "wavs"
+    target_wavs_dir = target_dir / "wavs"
+    target_wavs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Iterate through files in the source directory
+    for file_path in source_wavs_dir.iterdir():
+        # Check if it's a file and larger than 1000 KB
+        if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:
+            # Copy the file to the target directory
+            shutil.copy(str(file_path), str(target_wavs_dir / file_path.name))
+    
+    print("[FINETUNE] Model copied to '/models/trainedmodel/'")
+    return "Model copied to '/models/trainedmodel/'"
+
+
+def delete_training_data():
+    # Define the folder to be deleted
+    folder_to_delete = Path(this_dir / "finetune" / "tmp-trn")
+
+    # Check if the folder exists before deleting
+    if folder_to_delete.exists():
+        # Delete the folder and its contents
+        shutil.rmtree(folder_to_delete)
+        print(f"[FINETUNE] Folder {folder_to_delete} and its contents deleted successfully.")
+        return "Folder '/finetune/tmp-trn/' and its contents deleted successfully."
+    else:
+        print(f"[FINETUNE] Folder {folder_to_delete} does not exist.")
+        return "Folder '/finetune/tmp-trn/' does not exist."
+
+def delete_voice_sample_contents():
+    # Define the folder to be cleared
+    folder_to_clear = Path(this_dir / "finetune" / "put-voice-samples-in-here")
+
+    # Check if the folder exists before clearing its contents
+    if folder_to_clear.exists() and folder_to_clear.is_dir():
+        # List all files and subdirectories in the folder
+        for item in os.listdir(folder_to_clear):
+            item_path = folder_to_clear / item
+            if item_path.is_file():
+                # If it's a file, remove it
+                os.remove(item_path)
+            elif item_path.is_dir():
+                # If it's a subdirectory, remove it recursively
+                shutil.rmtree(item_path)
+
+        print(f"[FINETUNE] Contents of {folder_to_clear} deleted successfully.")
+        return f"Contents of 'put-voice-samples-in-here deleted' successfully."
+    else:
+        print(f"[FINETUNE] Folder {folder_to_clear} does not exist.")
+        return f"Folder 'put-voice-samples-in-here' does not exist."
+
+
+#######################
+#### OTHER Generic ####
+#######################
 # define a logger to redirect 
 class Logger:
     def __init__(self, filename="finetune.log"):
@@ -744,6 +853,7 @@ if __name__ == "__main__":
 
                 print("[FINETUNE] Dataset Generated. Move to Step 2")
                 return "Dataset Generated. Move to Step 2", train_meta, eval_meta
+            
 #######################
 #### GRADIO STEP 2 ####
 #######################
@@ -941,22 +1051,25 @@ if __name__ == "__main__":
                 f"""
                 ## <u>What to do next</u><br>
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 The wav(s) you liked from <span style="color: #3366ff;">Speaker Reference Audios</span> are in <span style="color: #3366ff;">/finetune/tmp-trn/wavs/</span> so copy the one(s) you selected to your <span style="color: #3366ff;">/alltalk_tts/voices/</span> samples folder.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You can delete your original samples from inside of the <span style="color: #3366ff;">/finetune/put-voice-samples-in-here/</span> folder.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 In the folder <span style="color: #3366ff;">/finetune/tmp-trn/training/XTTS_FT(date here)/</span> you will find your <span style="color: #3366ff;">best_model.pth</span>, <span style="color: #3366ff;">config.json</span> and <span style="color: #3366ff;">vocab.json</span> (also the last epoch training best_model_xxx.pth)
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You can delete the last epoch training model file <span style="color: #3366ff;">best_model_xxx.pth</span> (the one with the numbers).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You will need to rename <span style="color: #3366ff;">best_model.pth</span> to <span style="color: #3366ff;">model.pth</span>.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You will close the Finetuning application and copy your 3 files listed above over the top of the existing model files inside your <span style="color: #3366ff;">/alltalk_tts/models/xttsv2_2.0.2/</span> folder. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Start up Alltalk and you should be off and running. Preferably use the <span style="color: #3366ff;">XTTS Local</span> method for best results. 
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 There are 3x buttons below:
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compact &amp; move model. This will compress the trained model and move it, along with any large enough wav files created to <span style="color: #3366ff;">/models/trainedmodel/</span>. You can use the wav files as sample voices..
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete Generated Training data. This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete original voice samples. This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 I will at some point add an option within AllTalk to load a finetuned model as a seperate model. However, for now, you will have to copy it over the model in the <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> model, if you wish to use it.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 If you wish to further train this model, you will also need to copy it over the model in the <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> model folder.. 
                 ### 🟨 <u>Clearing up disk space</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 When you are happy with everything, you can delete the <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/</span> folder. This will delete all training data that was generated.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) 
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Linux <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span>
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Windows <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.
                 """
             )
-
+            final_progress_data = gr.Label(
+                label="Progress:"
+            )
+            compact_btn = gr.Button(value="Compact and move model to '/models/trainedmodel/' (THIS WILL OVER-WRITE ANY MODEL IN THAT LOCATION)")
+            delete_training_btn = gr.Button(value="Delete generated training data")
+            delete_voicesamples_btn = gr.Button(value="Delete original voice samples")
 
             prompt_compute_btn.click(
                 fn=preprocess_dataset,
@@ -1006,6 +1119,19 @@ if __name__ == "__main__":
                     speaker_reference_audio,
                 ],
                 outputs=[progress_gen, tts_output_audio, reference_audio],
+            )
+            
+            compact_btn.click(
+                fn=compact_model,
+                outputs=[final_progress_data],
+            )
+            delete_training_btn.click(
+                fn=delete_training_data,
+                outputs=[final_progress_data],
+            )
+            delete_voicesamples_btn.click(
+                fn=delete_voice_sample_contents,
+                outputs=[final_progress_data],
             )
 
     demo.queue().launch(
