@@ -271,17 +271,23 @@ I would suggest that if its in an interview format, you cut out the interviewer 
 #### ⚫ Important requirements CUDA 11.8
 As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. To keep the download+install as small as possible, you will need to:
 - Download the **xxx (network)** install of the Nvidia Cuda Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
-- When you run the installation, select **Custom Advanced** as your installation type. Uncheck `CUDA`, `Other Components` and `Driver Components` at the top then expand `CUDA` > `Development` > `Compiler` > and select `nvcc` then expand `Libraries` and select `CUBLAS`
-- Back at the top of `CUDA` expand `Runtime` > `Libraries` and select `CUBLAS`. You can now next through the install.
+- Run the installer. At minimum, you need to [minimally] install the `nvcc` compiler and the `CUBLAS` development and runtime libraries:
+  - Select **Custom Advanced** as your installation type.
+  - Uncheck all the checkboxes in the list.
+  - Now check the following elements:
+    - `CUDA` > `Development` > `Compiler` > `nvcc`
+    - `CUDA` > `Development` > `Compiler` > `Libraries` > `CUBLAS`
+    - `CUDA` > `Runtime` > `Libraries` > `CUBLAS`
+  - You can now proceed through the install.
 - When that has installed, open a terminal/command prompt and type `nvcc --version`. If it reports back `Cuda compilation tools, release 11.8.` you are good to go. **Specifically, 11.8**. If not continue to the next step.
-- For both Windows an Linux, you will need to ensure that `nvcc` and the 11.8 cuda library files are in your environments search path. You can undo the changes below after finetuning if you prefer.<br><br>
-  **Windows** - Edit the Windows PATH environment variable and add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin`<br><br>
-  **Linux** - The path may be different depending on what flavour of Linux you are running, so you may need to seek out specific instructions on the internet. Generic paths **may** be:<br>
-  `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}` and<br>
-  `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin`<br>
-  Add these to your '~/.bashrc' if you want this to be permanent and not something you have to set each time you open a new terminal.<br><br>
-- When you have made the changes, open a new terminal/command prompt and `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.` at which point, you are good to go.
-- If it doesnt report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
+- For both Windows and Linux, you need to ensure that `nvcc` and the 11.8 cuda library files are in your environments search path. You can undo the changes below after finetuning if you prefer:
+  - **Windows**: Edit the Windows `Path` environment variable and add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin`
+  - **Linux**: The path may be different depending on what flavour of Linux you are running, so you may need to seek out specific instructions on the internet. Generic paths **may** be:
+    - `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}` and
+    - `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin`
+    - Add these to your '~/.bashrc' if you want this to be permanent and not something you have to set each time you open a new terminal.
+- When you have made the changes, open a **new** terminal/command prompt (in order to load the new search paths) and `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.` at which point, you are good to go.
+- If it doesn't report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
 
 #### ⚫ Starting Finetuning
 **NOTE:** Please make sure you have started AllTalk at least once after updating, so that it downloads the additional files needed for finetuning. 
