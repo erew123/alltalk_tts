@@ -25,12 +25,12 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
-#### Updates
+### Updates
 **Dec 28th**- Finetuning has been updated to compact models and make the final steps easier (buttons basically). Narrator has been updated. If you wish to compact existing finetuned models, pre the update please see [here](https://github.com/erew123/alltalk_tts/issues/28)
 
 **Dec 25th** - Applied a small update to avoid a possible race condition on file naming with small sentences when generating narrator/character speech. Please update if you are experiencing missing small bits of missing audio on narrator/character.
 
-#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
+#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
