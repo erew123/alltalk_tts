@@ -557,9 +557,7 @@ Generate a preview of a specified voice with hardcoded settings.
 
 ### 🟠 TTS Generation Endpoint
 
-- URL: `http://127.0.0.1:7851/api/tts-generate`<br>
-- Method: `POST`<br>
-- Content-Type: `application/x-www-form-urlencoded`<br>
+- URL: `http://127.0.0.1:7851/api/tts-generate`<br> - Method: `POST`<br> - Content-Type: `application/x-www-form-urlencoded`<br>
 
 ### 🟠 Example command lines
 Standard TTS speech Example (standard text) generating a time-stamped file<br>
