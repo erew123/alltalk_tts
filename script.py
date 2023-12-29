@@ -252,7 +252,7 @@ else:
 timeout = 120  # Adjust the timeout as needed
 
 # Introduce a delay before starting the check loop
-time.sleep(25)  # Wait 25 secs before checking if the tts_server.py has started up.
+time.sleep(26)  # Wait 26 secs before checking if the tts_server.py has started up.
 start_time = time.time()
 while time.time() - start_time < timeout:
     try:
@@ -264,7 +264,7 @@ while time.time() - start_time < timeout:
         print(
             f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait."
         )
-    time.sleep(1)
+    time.sleep(4)
 else:
     print(
         f"[{params['branding']}Startup] Startup timed out. Check the server logs for more information."

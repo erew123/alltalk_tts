@@ -619,6 +619,53 @@ async def get_audio(filename: str):
     audio_path = this_dir / "outputs" / filename
     return FileResponse(audio_path)
 
+
+#########################
+#### VOICES LIST API ####
+#########################
+# Define the new endpoint
+@app.get("/api/voices")
+async def get_voices():
+    wav_files = list_files(this_dir / "voices")
+    return {"voices": wav_files}
+
+###########################
+#### PREVIEW VOICE API ####
+###########################
+@app.post("/api/previewvoice/", response_class=JSONResponse)
+async def preview_voice(request: Request, voice: str = Form(...)):
+    try:
+        # Hardcoded settings
+        language = "en"
+        output_file_name = "api_preview_voice"
+
+        # Clean the voice filename for inclusion in the text
+        clean_voice_filename = re.sub(r'\.wav$', '', voice.replace(' ', '_'))
+        clean_voice_filename = re.sub(r'[^a-zA-Z0-9]', ' ', clean_voice_filename)
+        
+        # Generate the audio
+        text = f"Hello, this is a preview of voice {clean_voice_filename}."
+
+        # Generate the audio
+        output_file_path = this_dir / "outputs" / f"{output_file_name}.wav"
+        await generate_audio(text, voice, language, output_file_path)
+
+        # Generate the URL
+        output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
+
+        # Return the response with both local file path and URL
+        return JSONResponse(
+            content={
+                "status": "generate-success",
+                "output_file_path": str(output_file_path),
+                "output_file_url": str(output_file_url),
+            },
+            status_code=200,
+        )
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
 ########################
 #### GENERATION API ####
 ########################
@@ -627,8 +674,28 @@ import re
 import uuid
 import numpy as np
 import soundfile as sf
+import sys
+
+# Check for PortAudio library on Linux
+try:
+    import sounddevice as sd
+    sounddevice_installed=True
+except OSError:
+    print(f"[{params['branding']}Startup] \033[91mInfo\033[0m PortAudio library not found. If you wish to play TTS in standalone mode through the API suite")
+    print(f"[{params['branding']}Startup] \033[91mInfo\033[0m please install PortAudio. This will not affect any other features or use of Alltalk.")
+    print(f"[{params['branding']}Startup] \033[91mInfo\033[0m If you don't know what the API suite is, then this message is nothing to worry about.")
+    sounddevice_installed=False
+    if sys.platform.startswith('linux'):
+        print(f"[{params['branding']}Startup] \033[91mInfo\033[0m On Linux, you can use the following command to install PortAudio:")
+        print(f"[{params['branding']}Startup] \033[91mInfo\033[0m sudo apt-get install portaudio19-dev")
+
 from typing import Union, Dict
 from pydantic import BaseModel, ValidationError, Field
+
+def play_audio(file_path, volume):
+    data, fs = sf.read(file_path)
+    sd.play(volume * data, fs)
+    sd.wait()
 
 class Request(BaseModel):
     # Define the structure of the 'Request' class if needed
@@ -827,6 +894,10 @@ async def tts_generate(
             else:
                 cleaned_string = text_input
             await generate_audio(cleaned_string, character_voice_gen, language, output_file_path)
+        if sounddevice_installed == False:
+            autoplay = False
+        if autoplay:
+            play_audio(output_file_path, autoplay_volume)
         return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url)}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"status": "generate-failure", "error": "An error occurred"}, status_code=500)
@@ -1673,6 +1744,33 @@ simple_webpage = """
 <p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"</span></p>
 <p style="padding-left: 30px;">Replace True with False to disable Low VRAM mode.</p>
 <p style="padding-left: 30px;">JSON return <span style="color: #339966;">{"status": "lowvram-success"}</span></p>
+<h4>Ready Endpoint</strong></h4>
+<p>Check if the Text-to-Speech (TTS) service is ready to accept requests.</p>
+<ul>
+  <li>URL: <span style="color: #3366ff;">http://127.0.0.1:7851/api/ready</span></li>
+  <li>Method: <span style="color: #3366ff;">GET</span></li>
+  <li>Response: <span style="color: #339966;">Ready</span></li>
+</ul>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X GET "http://127.0.0.1:7851/api/ready"</span></p>
+<h4>Voices List Endpoint</strong></h4>
+<p>Retrieve a list of available voices for generating speech.</p>
+<ul>
+  <li>URL: <span style="color: #3366ff;">http://127.0.0.1:7851/api/voices</span></li>
+  <li>Method: <span style="color: #3366ff;">GET</span></li>
+</ul>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X GET "http://127.0.0.1:7851/api/voices"</span></p>
+<p style="padding-left: 30px;">JSON return: <span style="color: #339966;">{"voices": ["voice1.wav", "voice2.wav", "voice3.wav"]}</span></p>
+<h4><strong>Preview Voice Endpoint</strong></h4>
+<p>Generate a preview of a specified voice with hardcoded settings.</p>
+<ul>
+  <li>URL: <span style="color: #3366ff;">http://127.0.0.1:7851/api/previewvoice/</span></li>
+  <li>Method: <span style="color: #3366ff;">POST</span></li>
+  <li>Content-Type: <span style="color: #3366ff;">application/x-www-form-urlencoded</span></li>
+</ul>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST "http://127.0.0.1:7851/api/previewvoice/" -F "voice=female_01.wav"</span></p>
+<p style="padding-left: 30px;">Replace <span style="color: #3366ff;">female_01.wav</span> with the name of the voice sample you want to hear.</p>
+<p style="padding-left: 30px;">JSON return: <span style="color: #339966;">{"status": "generate-success", "output_file_path": "/path/to/outputs/api_preview_voice.wav", "output_file_url": "http://127.0.0.1:7851/audio/api_preview_voice.wav"}</span></p>
+
 <p><a href="#toc">Back to top of page<br /></a></p>
 
 <h2 id="debugging-and-tts-generation-information"><strong>Debugging and TTS Generation Information</strong></h2>
@@ -1717,9 +1815,19 @@ template = Template(simple_webpage)
 # Render the template with the dynamic values
 rendered_html = template.render(params=params)
 
+###############################
+#### Internal script ready ####
+###############################
 @app.get("/ready")
 async def ready():
     return Response("Ready endpoint")
+
+############################
+#### External API ready ####
+############################
+@app.get("/api/ready")
+async def ready():
+    return Response("Ready")
 
 @app.get("/")
 async def read_root():
