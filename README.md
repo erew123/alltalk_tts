@@ -642,12 +642,12 @@ Example:
 `-d "output_file_timestamp=true"`<br>
 `-d "output_file_timestamp=false"`
 
-🟠 **autoplay**: Feature not yet available. Enable or disable autoplay. Still needs to be specified in the JSON request.
+🟠 **autoplay**: Enable or disable playing the generated TTS to your standard sound output device at time of TTS generation.
 
 `-d "autoplay=true"`<br>
 `-d "autoplay=false"`
 
-🟠 **autoplay_volume**: Feature not yet available. Set the autoplay volume. Should be between 0.1 and 1.0. Still needs to be specified in the JSON request.
+🟠 **autoplay_volume**: Set the autoplay volume. Should be between 0.1 and 1.0. Needs to be specified in the JSON request even if autoplay is false.
 
 `-d "autoplay_volume=0.8"`
 
