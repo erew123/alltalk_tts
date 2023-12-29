@@ -21,22 +21,27 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🟦 [Running AllTalk as a standalone app](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 #### Updates
-The latest build (13 Dec 2023) has had the entire text filtering engine and narration engine rebuilt from scratch. It's highly complicated how its actually working, but the end result it a much clearer TTS output and much better control over the narrator option and how to handle text that isnt within quotes or asterisks. It does however mean you need to ensure your character card is set up correctly if using the narrator function. Details are below in the installation notes.
+**Dec 28th**- Finetuning has been updated to compact models and make the final steps easier (buttons basically). Narrator has been updated. If you wish to compact existing finetuned models, pre the update please see [here](https://github.com/erew123/alltalk_tts/issues/28)
 
-DeepSpeed **v11.2** can be installed within the **default text-generation-webui Python 3.11 environment**. Installs in custom Python environments are possible, but can be more complicated. Instructions [here](https://github.com/erew123/alltalk_tts##deepspeed-installation-options) (or scroll down).
+**Dec 25th** - Applied a small update to avoid a possible race condition on file naming with small sentences when generating narrator/character speech. Please update if you are experiencing missing small bits of missing audio on narrator/character.
+
+#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
+If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w) 
+
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
 
-2) Start the Text generation webUI Python environment for your OS:<br><br>
-`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`
+2) Start the Text generation webUI Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br><br> Loading Text-generation-webui's Python Environment is $\textcolor{red}{\textsf{VERY IMPORTANT}}$. If you are uncertain what a loaded Python environment looks like, image [here](https://github.com/erew123/alltalk_tts/issues/25#issuecomment-1869344442) and video [here](https://www.youtube.com/watch?v=9BPKuwaav5w)
 
 3) Move into your extensions folder:<br><br>
 `cd extensions`
@@ -47,17 +52,17 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 5) Move into the **alltalk_tts** folder:<br><br>
 `cd alltalk_tts`
 
-6) Install the requirements that are correct for your machine:<br><br>
+6) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
 **Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
 
 7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). **However**, I would highly reccommend before you install DeepSpeed, you start text-generation-webui up, confirm AllTalk starts correctly and everything is working, as DeepSpeed can add another layer of complications troubleshooting any potential start-up issues. If necessary you can `pip uninstall deepspeed`.
 
-8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.
+8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI with whichever **one** of the startup scripts is correct for your OS (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.<br><br> Starting Text-generation-webui with its correct start-up script is $\textcolor{red}{\textsf{VERY IMPORTANT}}$.
    
-9) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
+10) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
 
-10) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
+11) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
 
 #### 🟩 Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
@@ -139,12 +144,13 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 </details>
 
 ## 🟫 Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4ca9b4c7-60ce-4ac6-82e5-fd1989b84644) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/15c6ba0b-e6b0-4570-8253-b920dd76174d) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) |
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |  ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/68edc968-bdd2-4f98-9d56-b9ca40decf26) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/eb5e617b-2345-418d-8267-a9d30f705a10) |
 
 ## 🟨 Help with problems
+#### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 #### 🟨 How to make a diagnostics report file
 <details>
@@ -174,9 +180,9 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 **A)** Its trying to load the voice model into your graphics card VRAM (assuming you have a Nvidia Graphics card, otherwise its your system RAM)<br>
 **B)** Its trying to start up the mini-webserver and send the "ready" signal back to the main process.
 
-**Note:** If you need to create a support ticket, please create a `diagnostics.log` report file to submit with a support request. Details on doing this are above.
+Before giving other possibilities a go, some people with **old machines** are finding their startup times are **very** slow 2-3 minutes. Ive extended the allowed time within the script from 1 minute to 2 minutes. **If you have an older machine** and wish to try extending this further, you can do so by editing `script.py` and changing line 251 `timeout = 120` changing the timeout to a larger value e.g `timeout = 240` (4 minutes).
 
-Before giving other possibilities, some people with **old machines** are finding their startup times are **very** slow 2-3 minutes. Ive extended the allowed time within the script from 1 minute to 2 minutes. **If you have an older machine** and wish to try extending this further, you can do so by editing `script.py` and changing line 251 `timeout = 120` changing the timeout to a larger value e.g `timeout = 240` (4 minutes).
+**Note:** If you need to create a support ticket, please create a `diagnostics.log` report file to submit with a support request. Details on doing this are above.
 
 Other possibilities for this issue are:
 
@@ -201,6 +207,19 @@ Other possibilities for this issue are:
 10) You are running DeepSpeed on a Linux machine and although you are starting with `./start_linux.sh` AllTalk is failing there on starting. This is because text-generation-webui will overwrite some environment variables when it loads its python environment. To see if this is the problem, from a terminal go into your text-generation-webui folder and `./cmd_linux.sh` then set your environment variable again e.g. `export CUDA_HOME=/usr/local/cuda` (this may vary depending on your OS, but this is the standard one for Linux, and assuming you have installed the CUDA toolkit), then `python server.py` and see if it starts up. If you want to edit the environment permanently you can do so, I have not managed to write full instructions yet, but here is the conda guide [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars).
 
 11) You have built yourself a custom Python environment and something is funky with it. This is very hard to diagnose as its not a standard environment. You may want to updating text-generation-webui and re installing its requirements file (whichever one you use that comes down with text-generation-webui).
+</details>
+
+#### 🟨 I think AllTalks requirements file has installed something another extension doesn't like
+<details>
+	<summary>Click to expand</summary><br>
+	
+Ive paid very close attention to **not** impact what Text-generation-webui is requesting on a factory install. This is one of the requirements of submitting an extension to Text-generation-webui. If you want to look at a comparison of a factory fresh text-generation-webui installed packages (with cuda 12.1, though AllTalk's requirements were set on cuda 11.8) you can find that comparison [here](https://github.com/erew123/alltalk_tts/issues/23). This comparison shows that AllTalk is requesting the same package version numbers as Text-generation-webui or even lower version numbers (meaning AllTalk will not update them to a later version). What other extensions do, I cant really account for that.
+
+I will note that the TTS engine downgrades Pandas data validator to 1.5.3 though its unlikely to cause any issues. You can upgrade it back to text-generation-webui default (december 2023) with `pip install pandas==2.1.4` when inside of the python environment. I have noticed no ill effects from it being a lower or higher version, as far as AllTalk goes. This is also the same behaviour as the Coqui_tts extension that comes with Text-generation-webui.
+
+Other people are reporting issues with extensions not starting with errors about Pydantic e.g. ```pydantic.errors.PydanticImportError: BaseSettings` has been moved to the pydantic-settings package. See https://docs.pydantic.dev/2.5/migration/#basesettings-has-moved-to-pydantic-settings for more details.```
+
+Im not sure if the Pydantic version has been recently updated by the Text-generation-webui installer, but this is nothing to do with AllTalk. The other extension you are having an issue with, need to be updated to work with Pydantic 2.5.x. AllTalk was updated in mid december to work with 2.5.x. I am not specifically condoning doing this, as it may have other knock on effects, but within the text-gen Python environment, you can use `pip install pydantic==2.5.0` or `pip install pydantic==1.10.13` to change the version of Pydantic installed.
 </details>
 
 #### 🟨 I activated DeepSpeed in the settings page, but I didnt install DeepSpeed yet and now I have issues starting up
@@ -254,19 +273,27 @@ I would suggest that if its in an interview format, you cut out the interviewer 
 #### ⚫ Important requirements CUDA 11.8
 As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. To keep the download+install as small as possible, you will need to:
 - Download the **xxx (network)** install of the Nvidia Cuda Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
-- When you run the installation, select **Custom Advanced** as your installation type. Uncheck `CUDA`, `Other Components` and `Driver Components` at the top then expand `CUDA` > `Development` > `Compiler` > and select `nvcc` then expand `Libraries` and select `CUBLAS`
-- Back at the top of `CUDA` expand `Runtime` > `Libraries` and select `CUBLAS`. You can now next through the install.
+- Run the installer. At minimum, you need to [minimally] install the `nvcc` compiler and the `CUBLAS` development and runtime libraries:
+  - Select **Custom Advanced** as your installation type.
+  - Uncheck all the checkboxes in the list.
+  - Now check the following elements:
+    - `CUDA` > `Development` > `Compiler` > `nvcc`
+    - `CUDA` > `Development` > `Compiler` > `Libraries` > `CUBLAS`
+    - `CUDA` > `Runtime` > `Libraries` > `CUBLAS`
+  - You can now proceed through the install.
 - When that has installed, open a terminal/command prompt and type `nvcc --version`. If it reports back `Cuda compilation tools, release 11.8.` you are good to go. **Specifically, 11.8**. If not continue to the next step.
-- For both Windows an Linux, you will need to ensure that `nvcc` and the 11.8 cuda library files are in your environments search path. You can undo the changes below after finetuning if you prefer.<br><br>
-  **Windows** - Edit the Windows PATH environment variable and add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin`<br><br>
-  **Linux** - The path may be different depending on what flavour of Linux you are running, so you may need to seek out specific instructions on the internet. Generic paths **may** be:<br>
-  `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}` and<br>
-  `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin`<br>
-  Add these to your '~/.bashrc' if you want this to be permanent and not something you have to set each time you open a new terminal.<br><br>
-- When you have made the changes, open a new terminal/command prompt and `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.` at which point, you are good to go.
-- If it doesnt report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
+- For both Windows and Linux, you need to ensure that `nvcc` and the 11.8 cuda library files are in your environments search path. You can undo the changes below after finetuning if you prefer:
+  - **Windows**: Edit the Windows `Path` environment variable and add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin`
+  - **Linux**: The path may be different depending on what flavour of Linux you are running, so you may need to seek out specific instructions on the internet. Generic paths **may** be:
+    - `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}` and
+    - `export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin`
+    - Add these to your '~/.bashrc' if you want this to be permanent and not something you have to set each time you open a new terminal.
+- When you have made the changes, open a **new** terminal/command prompt (in order to load the new search paths) and `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.` at which point, you are good to go.
+- If it doesn't report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
 
 #### ⚫ Starting Finetuning
+**NOTE:** Please make sure you have started AllTalk at least once after updating, so that it downloads the additional files needed for finetuning. 
+
 1) Close all other applications that are using your GPU/VRAM and copy your audio samples into:<br><br>
    `/alltalk_tts/finetune/put-voice-samples-in-here/`
 3) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
@@ -291,6 +318,8 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
+**NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
+
 #### 🔵 Linux Installation
 <details>
 	<summary>Click to expand: Linux DeepSpeed installation</summary>
@@ -440,6 +469,31 @@ def get_shm_size():
 <br><br>
 **Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
 </details>
+
+## 🟦 Running AllTalk as a standalone app
+AllTalk will run as a standalone app, as long as you install its requirements files into whatever Python environment you are using. You can follow the steps to install the AllTalk's requirements into whatever Python environment you wish. Because I dont know what Python environment you are wanting to use, I can only give you a loose set of installation instructions. 
+
+Please note, at time of writing, the TTS engine requires Python **3.9.x** to **3.11.x** [TTS Engine details here](https://pypi.org/project/TTS/)
+
+#### 🟦 (Option 1) I already have AllTalk installed as an extension of Text-generation-webui
+If you already have AllTalk as a extension of Text-generation-webui, and wish to run it as standalone, load Text-generation-webui's Python environment `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`, move into the AllTalk folder `cd extensions` > `cd alltalk_tts` and start AllTalk with `python script.py`. There is nothing beyond this you would need to do.
+
+#### 🟦 (Option 2) I wish to do a custom install of AllTalk
+1) In your chosen disk location git clone this repository:<br><br>
+`git clone https://github.com/erew123/alltalk_tts`
+
+2) Move into the **alltalk_tts** folder:<br><br>
+`cd alltalk_tts`
+
+3) If you have a custom Python environment, now is the time to load it!
+
+4) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
+**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
+
+5) Start AllTalk with `python script.py`
+
+Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.
 
 ## 🟠 API Suite and JSON-CURL
 ### 🟠Overview

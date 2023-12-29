@@ -6,6 +6,7 @@ try:
     import torch
     import os  # Import the os module
     import re
+    import sys
     import glob
     import textwrap
     import packaging.version
@@ -17,7 +18,7 @@ except ImportError as e:
     print(f"\033[91mError importing module: {e}\033[0m\n")
     print("\033[94mPlease ensure you started the Text-generation-webUI Python environment with either\033[0m")
     print("\033[92mcmd_linux.sh\033[0m, \033[92mcmd_windows.bat\033[0m, \033[92mcmd_macos.sh\033[0m, or \033[92mcmd_wsl.bat\033[0m")
-    print("\033[94mand then try running the diagnostics again.\033[0m")
+    print("\033[94mfrom the text-generation-webui directory, and then try running the diagnostics again.\033[0m")
     exit(1)
 
 try:
@@ -110,6 +111,18 @@ def log_system_info():
     # Package versions using importlib_metadata
     package_versions = {d.metadata['Name']: d.version for d in distributions()}
 
+    # Python environment information
+    python_executable = sys.executable
+    python_version_info = sys.version_info
+    python_virtual_env = os.environ.get('VIRTUAL_ENV', 'N/A')
+
+    # Conda environment information
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV', 'N/A')
+
+    # Get Path environment information
+    search_path = sys.path
+    path_env = os.environ.get('PATH', 'N/A')
+
     # Compare with requirements file
     requirements_file = get_requirements_file()
     if requirements_file:
@@ -134,14 +147,24 @@ def log_system_info():
 
     # Log and print information
     logging.info(f"OS Version: {os_version}")
-    logging.info(f"Note: Windows 11 build is 10.x.22xxx")
-    logging.info(f"Python Version: {python_version}")
+    logging.info(f"Note: Windows 11 will list as build is 10.x.22xxx")
     logging.info(f"Torch Version: {torch_version}")
     logging.info(f"System RAM: {system_ram}")
     logging.info(f"CUDA_HOME: {cuda_home}")
     logging.info(f"Port Status: {port_status}")
+    logging.info(f"Python Version: {platform.python_version()}")
+    logging.info(f"Python Version Info: {python_version_info}")
+    logging.info(f"Python Executable: {python_executable}")
+    logging.info(f"Python Virtual Environment: {python_virtual_env} (Should be N/A when in Text-generation-webui Conda Python environment)")
+    logging.info(f"Conda Environment: {conda_env}")
+    logging.info("\nPython Search Path:")
+    for path in search_path:
+        logging.info(f"  {path}")
+    logging.info("\nOS PATH Environment Variable:")
+    for path in path_env.split(';'):
+        logging.info(f"  {path}")
     if required_packages:  # Check if the dictionary is not empty
-        logging.info("Package Versions:")
+        logging.info("\nPackage Versions:")
         max_package_length = max(len(package) for package in required_packages.keys())
         for package_name, (operator, required_version) in required_packages.items():
             installed_version = installed_packages.get(package_name, 'Not installed')
@@ -153,12 +176,22 @@ def log_system_info():
 
     # Print to screen
     print(f"\n\033[94mOS Version:\033[0m \033[92m{os_version}\033[0m")
-    print(f"\033[94mOS Ver note:\033[0m \033[92mWindows 11 build is 10.x.22xxx\033[0m")
+    print(f"\033[94mOS Ver note:\033[0m \033[92m(Windows 11 will say build is 10.x.22xxx)\033[0m")
     print(f"\033[94mCUDA_HOME:\033[0m \033[92m{cuda_home}\033[0m")
     print(f"\033[94mSystem RAM:\033[0m \033[92m{system_ram}\033[0m")
     print(f"\033[94mPort Status:\033[0m \033[92m{port_status}\033[0m")
     print(f"\033[94mTorch Version:\033[0m \033[92m{torch_version}\033[0m")
-    print(f"\033[94mPython Version:\033[0m \033[92m{python_version}\033[0m")
+    print(f"\033[94mPython Version:\033[0m \033[92m{platform.python_version()}\033[0m")
+    print(f"\033[94mPython Version Info:\033[0m \033[92m{python_version_info}\033[0m")
+    print(f"\033[94mPython Executable:\033[0m \033[92m{python_executable}\033[0m")
+    print(f"\033[94mPython Virtual Environment:\033[0m \033[92m{python_virtual_env}\033[0m (Should be N/A when in Text-generation-webui Conda Python environment)")
+    print(f"\033[94mConda Environment:\033[0m \033[92m{conda_env}\033[0m")
+    print(f"\n\033[94mPython Search Path:\033[0m")
+    for path in search_path:
+        print(f"  {path}")
+    print(f"\n\033[94mOS Search PATH Environment Variable:\033[0m")
+    for path in path_env.split(';'):
+        print(f"  {path}")
     if required_packages:  # Check if the dictionary is not empty
         print("\033[94m\nRequirements file package comparison:\033[0m")
         max_package_length = max(len(package) for package in required_packages.keys())

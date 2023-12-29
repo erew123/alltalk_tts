@@ -22,7 +22,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Template
 from contextlib import asynccontextmanager
-from pydantic import field_validator
 
 ###########################
 #### STARTUP VARIABLES ####
@@ -625,6 +624,7 @@ async def get_audio(filename: str):
 ########################
 import html
 import re
+import uuid
 import numpy as np
 import soundfile as sf
 from typing import Union, Dict
@@ -647,11 +647,10 @@ class JSONInput(BaseModel):
     autoplay: bool = Field(..., description="autoplay needs to be a true or false value.")
     autoplay_volume: float = Field(..., ge=0.1, le=1.0, description="autoplay_volume needs to be from 0.1 to 1.0")
 
-    @field_validator("autoplay_volume")
     @classmethod
     def validate_autoplay_volume(cls, value):
         if not (0.1 <= value <= 1.0):
-            raise ValidationError("Autoplay volume must be between 0.1 and 1.0")
+            raise ValueError("Autoplay volume must be between 0.1 and 1.0")
         return value
 
 
@@ -804,7 +803,7 @@ async def tts_generate(
                     print("ELSE - NARRATOR\n")
                     cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                     voice_to_use = narrator_voice_gen
-                output_file = this_dir / "outputs" / f"{output_file_name}_{int(time.time())}_{i}.wav"
+                output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}_{i}.wav"
                 output_file_str = output_file.as_posix()
                 await generate_audio(cleaned_part, voice_to_use, language, output_file_str)
                 audio_path = output_file_str
@@ -1054,6 +1053,12 @@ simple_webpage = """
 <p style="padding-left: 30px; text-align: justify;">AllTalk is a web interface, based around the Coqui TTS voice cloning/speech generation system. To generate TTS, you can use the provided gradio interface or interact with the server using JSON/CURL commands.&nbsp;</p>
 <p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span> When loading up a new character in Text generation webUI it may look like nothing is happening for 20-30 seconds. Its actually processing the introduction section (greeting message) of the text and once that is completed, it will appear. You can see the activity occuring in the console window. Refreshing the page multiple times will try force the TTS engine to keep re-generating the text, so please just wait and check the console if needed.</p>
 <p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note: </span>Ensure that your RP character card has asterisks around anything for the narration and double quotes around anything spoken. There is a complication ONLY with the greeting card so, ensuring it has the correct use of quotes and asterisks will help make sure that the greeting card sounds correct. I will aim to address this issue in a future update. In Text-generation-webUI <span style="color: #3366ff;">parameters menu</span> &gt; <span style="color: #3366ff;">character tab</span> &gt; <span style="color: #3366ff;">greeting</span>&nbsp;make sure that anything in there that is the narrator is in asterisks and anything spoken is in double quotes, then hit the <span style="color: #3366ff;">save</span> (💾) button.</p>
+<p style="padding-left: 30px;"><span style="text-decoration: underline;"><strong>AllTalk <span style="color: #ff0000; text-decoration: underline;">Minor Bug Fixes Changelog &amp; Known issues</span></strong></span></p>
+<p style="padding-left: 30px;">If I squash any minor bugs or find any issues, I will try to apply an update asap. If you think something isnt working correctly or you have a problem, check these two links below first.</p>
+<ul>
+<li>Minor bug fixes changelog&nbsp;<a href="https://github.com/erew123/alltalk_tts/issues/25" target="_blank" rel="noopener">link here</a>.</li>
+<li>Help and known issues <a href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank" rel="noopener">link here</a>.</li>
+</ul>
 <p style="padding-left: 30px;"><span style="text-decoration: underline;"><strong>AllTalk</strong></span> <br />Github <a href="https://github.com/erew123/alltalk_tts" target="_blank" rel="noopener">link here</a><br />Update instructions <a href="https://github.com/erew123/alltalk_tts?#-updating" target="_blank" rel="noopener">link here</a><br />Help and issues <a href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank" rel="noopener">link here<br /><br /></a><span style="text-decoration: underline;"><strong>Text generation webUI</strong></span> <br />Web interface&nbsp;<a href="http://{{ params["ip_address"] }}:7860" target="_blank" rel="noopener">link here</a> <br />Documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki" target="_blank" rel="noopener">link here</a></p>
 <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 <h2 id="server-information">Server Information</h2>
@@ -1153,7 +1158,7 @@ simple_webpage = """
 <p style="padding-left: 30px; text-align: justify;">Save your generated wav file in the&nbsp;<span style="color: #3366ff;">/alltalk_tts/voices/ <span style="color: #808080;">folder.</span></span></p>
 <p style="padding-left: 30px; text-align: justify;">Its worth mentioning that using AI generated audio clips may introduce unwanted sounds as its already a copy/simulation of a voice.</p>
 <h4>Why doesnt it sound like XXX Person?</h4>
-<p style="padding-left: 30px; text-align: justify;">The reasons can be that you:</p>
+<p style="padding-left: 30px; text-align: justify;">Maybe you might be interested in trying <a href="#finetune">Finetuning of the model</a>. Otherwise, the reasons can be that you:</p>
 <ul style="text-align: justify;">
 <li>Didn't downsample it as above.</li>
 <li>Have a bad quality voice sample.</li>

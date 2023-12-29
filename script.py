@@ -249,7 +249,7 @@ else:
     # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
     sys.exit(1)
 
-timeout = 60  # Adjust the timeout as needed
+timeout = 120  # Adjust the timeout as needed
 
 # Introduce a delay before starting the check loop
 time.sleep(25)  # Wait 25 secs before checking if the tts_server.py has started up.
@@ -262,7 +262,7 @@ while time.time() - start_time < timeout:
     except requests.RequestException as e:
         # Print the exception for debugging purposes
         print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 60 seconds maximum. Please wait."
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait."
         )
     time.sleep(1)
 else:
@@ -483,6 +483,9 @@ def voice_preview(string):
         return f"[{params['branding']}Server] Audio generation failed. Status: {generate_response.get('status')}"
 
 
+def replace_asterisk(match):
+    return match.group(0) + '&quot;<*'
+
 #################################
 #### TTS STANDARD GENERATION ####
 #################################
@@ -491,6 +494,7 @@ def output_modifier(string, state):
     if not params["activate"]:
         return string
     original_string = string
+    #print("ORGINAL STRING: ", original_string)
     cleaned_string = before_audio_generation(string, params)
     if cleaned_string is None:
         return
@@ -501,32 +505,35 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                # print(original_string)
+                #print(original_string)
                 # Do Some basic stripping and remove any double CR's
                 processed_string = (
                     original_string
                     .replace("***", "*")
                     .replace("**", "*")
                     .replace("\n\n", "\n")
+                    .replace("\n", "")
                 )
-                # Clean up two asterisks (narrators) being made between a newline, making it one sentence.
                 processed_string = re.sub(r'\.\*\n\*', '. ', processed_string)
-                # Clean up a few other bits.
-                processed_string = (
-                    processed_string
-                    .replace("&#x27;", "'")
-                    .replace("\n", " ")
-                    # Add special characters to the quote so that we can use it to identify things later after its been split
-                    .replace('&quot;', '&quot;<')
-                    # Capture new conversations which wont have things like &quote in them
-                    .replace('"', '&quot;<')
-                )
-                #capturing another outlier in inital character paragraph
-                # print("processed string 1 is:", processed_string)
+                processed_string = (processed_string .replace('&quot;\n\n*', '&quot;<*'))
+                processed_string = (processed_string .replace('&quot;\n', '< '))
+                processed_string = (processed_string .replace("&#x27;", "'"))
+                processed_string = (processed_string .replace("\n", " "))
+                processed_string = (processed_string .replace('&quot;', '&quot;<'))
+                processed_string = (processed_string .replace('"', '&quot;<'))
+                #pattern = re.compile(r'(?<=[a-zA-Z!])&quot;<(?=[a-zA-Z])')
+                pattern = re.compile(r'(?<=[a-zA-Z!?\.])&quot;<(?=[a-zA-Z])')
+                processed_string = pattern.sub('&quot; ', processed_string)
+                pattern = re.compile(r'(?<=[a-zA-Z])\*(?=[a-zA-Z])')
+                processed_string = pattern.sub('*&quot;', processed_string)
                 processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
                 processed_string = processed_string.replace('< *"', '< *')
                 processed_string = processed_string.replace('. *', '< *')
-                # print("processed string 2 is:", processed_string)
+                processed_string = processed_string.replace('! *', '&quot;< *')
+                processed_string = processed_string.replace('? *', '< *')
+                processed_string = processed_string.replace('* ', '* &quot;<')
+                processed_string = processed_string.replace('*. ', '* &quot;<')
+                processed_string = re.sub(r'\*(?=[a-zA-Z])', replace_asterisk, processed_string)
                 # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
                 # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
@@ -534,18 +541,18 @@ def output_modifier(string, state):
                 audio_files_paragraph = []
                 for i, part in enumerate(parts):
                     # Skip parts that are too short
-                    if len(part.strip()) <= 1:
+                    if len(part.strip()) <= 3:
                         continue
                     # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
                     # Character will always be a < with a letter immediately after it
                     if '<' in part and '< *' not in part and '<*' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
                         cleaned_part = html.unescape(part.replace('<', ''))
                         voice_to_use = params["voice"]
-                    #Narrator will always be an * or < with an * a position or two after it.
+                        #Narrator will always be an * or < with an * a position or two after it.
                     elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
                         cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', ''))
                         voice_to_use = params["narrator_voice"]
-                    #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
+                        #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
                     elif non_quoted_text_is:
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["voice"]
@@ -576,9 +583,14 @@ def output_modifier(string, state):
                 )
                 cleaned_part = html.unescape(processed_string)                
                 # Process the part and give it a non-character name if being used vai API or standalone.
-                output_filename = get_output_filename(state)
+                if "character_menu" in state:
+                    output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')
+                else:
+                    output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav')
+                output_file_str = output_file.as_posix()
+                output_file = get_output_filename(state)
                 generate_response = send_generate_request(
-                    cleaned_part, params["voice"], language_code, output_filename
+                    cleaned_part, params["voice"], language_code, output_file_str
                 )
                 audio_path = generate_response.get("data", {}).get("audio_path")
                 final_output_file = audio_path
@@ -618,11 +630,10 @@ def output_modifier(string, state):
 
 
 def get_output_filename(state):
-     # Check if character name exists and if not, just call it TTSOUT_
     if "character_menu" in state:
-        return Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav').as_posix()
+        return Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{str(uuid.uuid4())[:8]}.wav').as_posix()
     else:
-        return Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav').as_posix()
+        return Path(f'{params["output_folder_wav"]}/TTSOUT_{str(uuid.uuid4())[:8]}.wav').as_posix()
 
 
 ###############################################
@@ -782,7 +793,7 @@ def ui():
             )
             tts_radio_buttons_play = gr.HTML(visible=False)
             explanation_text = gr.HTML(
-                f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed, each takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>"
+                f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Click here for the Settings page, help & instructions</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>NOTE: Switching Model Type, Low VRAM & DeepSpeed, each takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is installed on your system."
             )
 
         with gr.Row():
