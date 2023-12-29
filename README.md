@@ -499,6 +499,64 @@ Deepspeed and other such things can be installed. Please read the relevant instr
 ### 🟠Overview
 The Text-to-Speech (TTS) Generation API allows you to generate speech from text input using various configuration options. This API supports both character and narrator voices, providing flexibility for creating dynamic and engaging audio content.
 
+#### 🟠 Ready Endpoint<br>
+Check if the Text-to-Speech (TTS) service is ready to accept requests.
+
+- URL: `http://127.0.0.1:7851/api/ready`<br> - Method: `GET`<br> - Response: `Ready`
+
+   `curl -X GET "http://127.0.0.1:7851/api/ready"`
+
+#### 🟠 Voices List Endpoint<br>
+Retrieve a list of available voices for generating speech.
+
+- URL: `http://127.0.0.1:7851/api/voices`<br> - Method: `GET`<br>
+
+   `curl -X GET "http://127.0.0.1:7851/api/voices"`
+
+   JSON return: `{"voices": ["voice1.wav", "voice2.wav", "voice3.wav"]}`
+
+#### 🟠 Preview Voice Endpoint
+Generate a preview of a specified voice with hardcoded settings.
+
+- URL: `http://127.0.0.1:7851/api/previewvoice/`<br> - Method: `POST`<br> - Content-Type: `application/x-www-form-urlencoded`<br>
+
+   `curl -X POST "http://127.0.0.1:7851/api/previewvoice/" -F "voice=female_01.wav"`
+
+   Replace `female_01.wav` with the name of the voice sample you want to hear.
+
+   JSON return: `{"status": "generate-success", "output_file_path": "/path/to/outputs/api_preview_voice.wav", "output_file_url": "http://127.0.0.1:7851/audio/api_preview_voice.wav"}`
+
+#### 🟠 Switching Model Endpoint<br>
+
+- URL: `http://127.0.0.1:7851/api/reload`<br> - Method: `POST`<br><br>
+   `curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20Local"`<br>
+   `curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20TTS"`<br>
+   `curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20Local"`<br>
+
+   Switch between the 3 models respectively.
+
+   JSON return `{"status": "model-success"}`
+
+#### 🟠 Switch DeepSpeed Endpoint<br>
+
+- URL: `http://127.0.0.1:7851/api/deepspeed`<br> - Method: `POST`<br><br>
+   `curl -X POST "http://127.0.0.1:7851/api/deepspeed?new_deepspeed_value=True"`
+
+   Replace True with False to disable DeepSpeed mode.
+
+   JSON return `{"status": "deepspeed-success"}`
+
+#### 🟠 Switching Low VRAM Endpoint<br>
+
+- URL: `http://127.0.0.1:7851/api/lowvramsetting`<br> - Method: `POST`<br><br>
+   `curl -X POST "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"`
+
+   Replace True with False to disable Low VRAM mode.
+
+   JSON return `{"status": "lowvram-success"}`
+
+### 🟠 TTS Generation Endpoint
+
 - URL: `http://127.0.0.1:7851/api/tts-generate`<br>
 - Method: `POST`<br>
 - Content-Type: `application/x-www-form-urlencoded`<br>
@@ -605,29 +663,6 @@ The API returns a JSON object with the following properties:
 Example JSON TTS Generation Response:
 
 `{"status": "generate-success", "output_file_path": "C:\text-generation-webui\extensions\alltalk_tts\outputs\myoutputfile_1703149973.wav", "output_file_url": "http://127.0.0.1:7851/audio/myoutputfile_1703149973.wav"}`
-
-🟠 **Switching Model**<br><br>
-`curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20Local"`<br>
-`curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=API%20TTS"`<br>
-`curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20Local"`<br>
-
-Switch between the 3 models respectively.
-
-JSON return `{"status": "model-success"}`
-
-🟠 **Switch DeepSpeed**<br><br>
-`curl -X POST "http://127.0.0.1:7851/api/deepspeed?new_deepspeed_value=True"`
-
-Replace True with False to disable DeepSpeed mode.
-
-JSON return `{"status": "deepspeed-success"}`
-
-🟠 **Switching Low VRAM**<br><br>
-`curl -X POST "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"`
-
-Replace True with False to disable Low VRAM mode.
-
-JSON return `{"status": "lowvram-success"}`
 
 ### 🔴 Future to-do list
 - Voice output within the command prompt/terminal (TBD).
