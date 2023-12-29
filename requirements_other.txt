@@ -12,3 +12,4 @@ importlib-metadata>=4.8.1
 packaging>=23.2
 pydantic>=1.10.13
 sounddevice>=0.4.6
+python-multipart>=0.0.6

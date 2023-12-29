@@ -674,7 +674,21 @@ import re
 import uuid
 import numpy as np
 import soundfile as sf
-import sounddevice as sd
+import sys
+
+# Check for PortAudio library on Linux
+try:
+    import sounddevice as sd
+    sounddevice_installed=True
+except OSError:
+    print(f"[{params['branding']}Startup] \033[91mInfo\033[0m PortAudio library not found. If you wish to play TTS in standalone mode through the API suite")
+    print(f"[{params['branding']}Startup] \033[91mInfo\033[0m please install PortAudio. This will not affect any other features or use of Alltalk.")
+    print(f"[{params['branding']}Startup] \033[91mInfo\033[0m If you don't know what the API suite is, then this message is nothing to worry about.")
+    sounddevice_installed=False
+    if sys.platform.startswith('linux'):
+        print(f"[{params['branding']}Startup] \033[91mInfo\033[0m On Linux, you can use the following command to install PortAudio:")
+        print(f"[{params['branding']}Startup] \033[91mInfo\033[0m sudo apt-get install portaudio19-dev")
+
 from typing import Union, Dict
 from pydantic import BaseModel, ValidationError, Field
 
@@ -880,6 +894,8 @@ async def tts_generate(
             else:
                 cleaned_string = text_input
             await generate_audio(cleaned_string, character_voice_gen, language, output_file_path)
+        if sounddevice_installed == False:
+            autoplay = False
         if autoplay:
             play_audio(output_file_path, autoplay_volume)
         return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url)}, status_code=200)
