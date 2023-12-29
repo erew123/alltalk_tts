@@ -502,9 +502,11 @@ The Text-to-Speech (TTS) Generation API allows you to generate speech from text 
 #### 🟠 Ready Endpoint<br>
 Check if the Text-to-Speech (TTS) service is ready to accept requests.
 
-- URL: `http://127.0.0.1:7851/api/ready`<br> - Method: `GET`<br> - Response: `Ready`
+- URL: `http://127.0.0.1:7851/api/ready`<br> - Method: `GET`<br> 
 
    `curl -X GET "http://127.0.0.1:7851/api/ready"`
+
+  Response: `Ready`
 
 #### 🟠 Voices List Endpoint<br>
 Retrieve a list of available voices for generating speech.
