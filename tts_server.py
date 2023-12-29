@@ -674,8 +674,14 @@ import re
 import uuid
 import numpy as np
 import soundfile as sf
+import sounddevice as sd
 from typing import Union, Dict
 from pydantic import BaseModel, ValidationError, Field
+
+def play_audio(file_path, volume):
+    data, fs = sf.read(file_path)
+    sd.play(volume * data, fs)
+    sd.wait()
 
 class Request(BaseModel):
     # Define the structure of the 'Request' class if needed
@@ -874,6 +880,8 @@ async def tts_generate(
             else:
                 cleaned_string = text_input
             await generate_audio(cleaned_string, character_voice_gen, language, output_file_path)
+        if autoplay:
+            play_audio(output_file_path, autoplay_volume)
         return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url)}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"status": "generate-failure", "error": "An error occurred"}, status_code=500)
