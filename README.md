@@ -616,22 +616,22 @@ Example:
 
 🟠 **language**: Choose the language for TTS. Options:
 
-`ar Arabic`<br>
-`zh-cn Chinese (Simplified)`<br>
-`cs Czech`<br>
-`nl Dutch`<br>
-`en English`<br>
-`fr French`<br>
-`de German`<br>
-`hu Hungarian`<br>
-`it Italian`<br>
-`ja Japanese`<br>
-`ko Korean`<br>
-`pl Polish`<br>
-`pt Portuguese`<br>
-`ru Russian`<br>
-`es Spanish`<br>
-`tr Turkish`<br>
+`ar` Arabic<br>
+`zh-cn` Chinese (Simplified)<br>
+`cs` Czech<br>
+`nl` Dutch<br>
+`en` English<br>
+`fr` French<br>
+`de` German<br>
+`hu` Hungarian<br>
+`it` Italian<br>
+`ja` Japanese<br>
+`ko` Korean<br>
+`pl` Polish<br>
+`pt` Portuguese<br>
+`ru` Russian<br>
+`es` Spanish<br>
+`tr` Turkish<br>
 
 `-d "language=en"`<br>
 
