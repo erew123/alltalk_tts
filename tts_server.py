@@ -1720,6 +1720,33 @@ simple_webpage = """
 <p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST "http://127.0.0.1:7851/api/lowvramsetting?new_low_vram_value=True"</span></p>
 <p style="padding-left: 30px;">Replace True with False to disable Low VRAM mode.</p>
 <p style="padding-left: 30px;">JSON return <span style="color: #339966;">{"status": "lowvram-success"}</span></p>
+<h4>Ready Endpoint</strong></h4>
+<p>Check if the Text-to-Speech (TTS) service is ready to accept requests.</p>
+<ul>
+  <li>URL: <span style="color: #3366ff;">http://127.0.0.1:7851/api/ready</span></li>
+  <li>Method: <span style="color: #3366ff;">GET</span></li>
+  <li>Response: <span style="color: #339966;">Ready</span></li>
+</ul>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X GET "http://127.0.0.1:7851/api/ready"</span></p>
+<h4>Voices List Endpoint</strong></h4>
+<p>Retrieve a list of available voices for generating speech.</p>
+<ul>
+  <li>URL: <span style="color: #3366ff;">http://127.0.0.1:7851/api/voices</span></li>
+  <li>Method: <span style="color: #3366ff;">GET</span></li>
+</ul>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X GET "http://127.0.0.1:7851/api/voices"</span></p>
+<p style="padding-left: 30px;">JSON return: <span style="color: #339966;">{"voices": ["voice1.wav", "voice2.wav", "voice3.wav"]}</span></p>
+<h4><strong>Preview Voice Endpoint</strong></h4>
+<p>Generate a preview of a specified voice with hardcoded settings.</p>
+<ul>
+  <li>URL: <span style="color: #3366ff;">http://127.0.0.1:7851/api/previewvoice/</span></li>
+  <li>Method: <span style="color: #3366ff;">POST</span></li>
+  <li>Content-Type: <span style="color: #3366ff;">application/x-www-form-urlencoded</span></li>
+</ul>
+<p style="padding-left: 30px;"><span style="color: #3366ff;">curl -X POST "http://127.0.0.1:7851/api/previewvoice/" -F "voice=female_01.wav"</span></p>
+<p style="padding-left: 30px;">Replace <span style="color: #3366ff;">female_01.wav</span> with the name of the voice sample you want to hear.</p>
+<p style="padding-left: 30px;">JSON return: <span style="color: #339966;">{"status": "generate-success", "output_file_path": "/path/to/outputs/api_preview_voice.wav", "output_file_url": "http://127.0.0.1:7851/audio/api_preview_voice.wav"}</span></p>
+
 <p><a href="#toc">Back to top of page<br /></a></p>
 
 <h2 id="debugging-and-tts-generation-information"><strong>Debugging and TTS Generation Information</strong></h2>
