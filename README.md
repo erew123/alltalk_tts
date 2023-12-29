@@ -534,6 +534,10 @@ Generate a preview of a specified voice with hardcoded settings.
 
    Switch between the 3 models respectively.
 
+   `curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20FT"`<br>
+
+   If you have a finetuned model in `/models/trainedmodel/` (will error otherwise)
+
    JSON return `{"status": "model-success"}`
 
 #### 🟠 Switch DeepSpeed Endpoint<br>
