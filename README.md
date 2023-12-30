@@ -253,6 +253,25 @@ I would suggest following [Problems Updating](https://github.com/erew123/alltalk
 As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 </details>
 
+#### 🟨 I have multiple GPU's and I have problems running Finetuning
+
+<details>
+	<summary>Click to expand</summary><br>
+	
+Finetuning pulls in various other scripts and some of those scripts can have issues with multiple Nvidia GPU's being present. Until the people that created those other scripts fix up their code, there is a workaround to temporarily tell your system to only use the 1x of your Nvidia GPU's. To do this:
+
+- **Windows** - You will start the script with `set CUDA_VISIBLE_DEVICES=0 && python finetune.py`<br>
+After you have completed training, you can reset back with `set CUDA_VISIBLE_DEVICES=`<br>
+   
+- **Linux** - You will start the script with `CUDA_VISIBLE_DEVICES=0 python finetune.py`<br>
+After you have completed training, you can reset back with `unset CUDA_VISIBLE_DEVICES`<br>
+
+Rebooting your system will also unset this. The setting is only applied temporarily.
+
+Depending on which of your Nvidia GPU's is the more powerful one, you can change the `0` to `1` or whichever of your GPU's is the most powerful.
+
+</details>
+
 ## ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
