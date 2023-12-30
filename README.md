@@ -334,6 +334,18 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 11) Follow the on-screen instructions when the web interface starts up.
 12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
+#### ⚫ Using a Finetuned model in Text-generation-webui
+
+At the end of the finetune process, you will have an option to `Compact and move model to /trainedmodel/` this will compact the raw training file and move it to `/model/trainedmodel/`. When AllTalk starts up within Text-generation-webui, if it finds a model in this location a new loader will appear in the interface for `XTTSv2 FT` and you can use this to load your finetuned model. <br><br>**Be careful** not to train a new model from the base model, then overwrite your current `/model/trainedmodel/` **if** you want a seperately trained model. This is why there is an `OPTION B` to move your just trained model to `/models/lastfinetuned/`.
+
+#### ⚫ Training one model with multiple voices
+
+At the end of the finetune process, you will have an option to `Compact and move model to /trainedmodel/` this will compact the raw training file and move it to `/model/trainedmodel/`. This model will become available when you start up finetuning. You will have a choice to train the Base Model or the `Existing finetuned model` (which is the one in `/model/trainedmodel/`). So you can use this to keep further training this model with additional voices, then copying it back to `/model/trainedmodel/` at the end of training.
+
+#### ⚫ Do I need to keep the raw training data/model?
+
+If you've compacted and moved your model, its highly unlikely you would want to keep that data, however the choice is there to keep it if you wish. It will be between 5-10GB in size, so most people will want to delete it.
+
 ## 🔵🟢🟡 DeepSpeed Installation Options
 **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
 
