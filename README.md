@@ -79,7 +79,8 @@ I could force a delimeter in at this stage, but I know it would/may affect thing
 This is pretty much a repeat of the installation process. 
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
-`cd text-generation-webui`
+`cd text-generation-webui` and start the Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br>
 
 2) Move into your extensions and alltalk_tts folder:<br><br>
 `cd extensions` then `cd alltalk_tts`
