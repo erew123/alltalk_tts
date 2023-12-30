@@ -879,6 +879,7 @@ if __name__ == "__main__":
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Have you run AllTalk at least once? It needs to have downloaded+updated the voice model, before we can finetune it.
                 ### 🟦 <u>What you need to run finetuning</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - An Nvidia GPU. Tested on Windows with extended shared VRAM and training used about 16GB's total (which worked on a 12GB card).
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you have multiple Nvidia GPU's in your system, please see this [important note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning).
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - I have not been able to test this on a GPU with less than 12GB of VRAM, so cannot say if it will work or how that would affect performance.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - <span style="color: red;">Version 11.8</span> of Nvidia cuBLAS and cuDNN (guide below). Only 11.8 of cuBLAS and cuDNN work for this process currently.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Minimum <span style="color: red;">18GB</span> free disk space (most of it is used temporarily).
