@@ -275,7 +275,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 ## ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
-- An Nvidia graphics card. Please see this [note](https://github.com/erew123/alltalk_tts#i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's.
+- An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
 - To install a few portions of the Nvidia CUDA 11.8 Toolkit (this will not impact text-generation-webui's cuda setup.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
