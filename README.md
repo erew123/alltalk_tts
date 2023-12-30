@@ -101,6 +101,7 @@ I did leave a mistake in the `/extensions/alltalk_tts/.gitignore` file at one po
 voices/*.*
 models/*.*
 outputs/*.*
+finetune/*.*
 config.json
 confignew.json
 models.json
