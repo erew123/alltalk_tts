@@ -48,6 +48,20 @@ else:
     print("[FINETUNE]  \033[91mWarning\033[0m modeldownload.json is missing. Please run this script in the /alltalk_tts/ folder")
     sys.exit(1)
 
+##################################################
+#### Check to see if a finetuned model exists ####
+##################################################
+# Set the path to the directory
+trained_model_directory = this_dir / "models" / "trainedmodel"
+# Check if the directory "trainedmodel" exists
+finetuned_model = trained_model_directory.exists()
+# If the directory exists, check for the existence of the required files
+# If true, this will add a extra option in the Gradio interface for loading Xttsv2 FT
+if finetuned_model:
+    required_files = ["model.pth", "config.json", "vocab.json", "mel_stats.pth", "dvae.pth"]
+    finetuned_model = all((trained_model_directory / file).exists() for file in required_files)
+basemodel_or_finetunedmodel = True
+
 #####################
 #### STEP 1 BITS ####
 #####################
@@ -272,6 +286,8 @@ def format_audio_list(target_language, whisper_model, out_path, gradio_progress=
     # deallocate VRAM and RAM
     del asr_model, final_eval_set, final_training_set, new_data_df, existing_metadata
     gc.collect()
+    existing_train_df = None
+    existing_eval_df = None
     print("[FINETUNE] Train CSV:", train_metadata_path)
     print("[FINETUNE] Eval CSV:", eval_metadata_path)
     print("[FINETUNE] Audio Total:", audio_total_size)
@@ -288,6 +304,13 @@ from TTS.tts.datasets import load_tts_samples
 from TTS.tts.layers.xtts.trainer.gpt_trainer import GPTArgs, GPTTrainer, GPTTrainerConfig, XttsAudioConfig
 from TTS.utils.manage import ModelManager
 
+
+def basemodel_or_finetunedmodel_choice(value):
+    global basemodel_or_finetunedmodel 
+    if value == "Base Model":
+        basemodel_or_finetunedmodel = True
+    elif value == "Existing finetuned model":
+        basemodel_or_finetunedmodel = False
 
 def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, output_path, max_audio_length=255995):
     #  Logging parameters
@@ -321,12 +344,22 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     # Add here the configs of the datasets
     DATASETS_CONFIG_LIST = [config_dataset]
 
-    # XTTS model checkpoints for fine-tuning.
-    TOKENIZER_FILE = str(this_dir / base_path / model_path / "vocab.json")  # vocab.json file
-    XTTS_CHECKPOINT = str(this_dir / base_path / model_path / "model.pth")  # model.pth file
-    XTTS_CONFIG_FILE = str(this_dir / base_path / model_path / "config.json")  # config.json file
-    DVAE_CHECKPOINT = str(this_dir / base_path / model_path / "dvae.pth")
-    MEL_NORM_FILE = str(this_dir / base_path / model_path / "mel_stats.pth")
+    if basemodel_or_finetunedmodel:
+        # BASE XTTS model checkpoints for fine-tuning.
+        print("[FINETUNE] Starting finetuning on Base Model")
+        TOKENIZER_FILE = str(this_dir / base_path / model_path / "vocab.json")
+        XTTS_CHECKPOINT = str(this_dir / base_path / model_path / "model.pth")
+        XTTS_CONFIG_FILE = str(this_dir / base_path / model_path / "config.json")
+        DVAE_CHECKPOINT = str(this_dir / base_path / model_path / "dvae.pth")
+        MEL_NORM_FILE = str(this_dir / base_path / model_path / "mel_stats.pth")
+    else:
+        # FINETUNED XTTS model checkpoints for fine-tuning.
+        print("[FINETUNE] Starting finetuning on Existing Finetuned Model")
+        TOKENIZER_FILE = str(this_dir / base_path / "trainedmodel" / "vocab.json")
+        XTTS_CHECKPOINT = str(this_dir / base_path / "trainedmodel" / "model.pth")
+        XTTS_CONFIG_FILE = str(this_dir / base_path / "trainedmodel" / "config.json")
+        DVAE_CHECKPOINT = str(this_dir / base_path / "trainedmodel" / "dvae.pth")
+        MEL_NORM_FILE = str(this_dir / base_path / "trainedmodel" / "mel_stats.pth")
 
     # init args and config
     model_args = GPTArgs(
@@ -417,9 +450,14 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     trainer_out_path = trainer.output_path
 
     # deallocate VRAM and RAM
-    del model, trainer, train_samples, eval_samples
+    del model, trainer, train_samples, eval_samples, config, model_args, config_dataset
     gc.collect()
-
+    train_samples = None
+    eval_samples = None
+    config_dataset = None
+    trainer = None
+    model = None
+    model_args = None
     return XTTS_CONFIG_FILE, XTTS_CHECKPOINT, TOKENIZER_FILE, trainer_out_path, speaker_ref
 
 ##########################
@@ -514,7 +552,7 @@ def compact_model():
 
     # Check if the best model file exists
     if best_model_path_str is None:
-        print("No trained model was found.")
+        print("[FINETUNE] No trained model was found.")
         return "No trained model was found."
 
     # Convert model_path_str to Path
@@ -524,7 +562,7 @@ def compact_model():
     try:
         checkpoint = torch.load(best_model_path, map_location=torch.device("cpu"))
     except Exception as e:
-        print("Error loading checkpoint:", e)
+        print("[FINETUNE] Error loading checkpoint:", e)
         raise
 
     del checkpoint["optimizer"]
@@ -565,19 +603,127 @@ def compact_model():
     return "Model copied to '/models/trainedmodel/'"
 
 
+def compact_lastfinetuned_model():
+    this_dir = Path(__file__).parent.resolve()
+
+    best_model_path_str = find_latest_best_model(this_dir / "finetune" / "tmp-trn" / "training")
+
+    # Check if the best model file exists
+    if best_model_path_str is None:
+        print("[FINETUNE] No trained model was found.")
+        return "No trained model was found."
+
+    # Convert model_path_str to Path
+    best_model_path = Path(best_model_path_str)
+
+    # Attempt to load the model
+    try:
+        checkpoint = torch.load(best_model_path, map_location=torch.device("cpu"))
+    except Exception as e:
+        print("[FINETUNE] Error loading checkpoint:", e)
+        raise
+
+    del checkpoint["optimizer"]
+
+    for key in list(checkpoint["model"].keys()):
+        if "dvae" in key:
+            del checkpoint["model"][key]
+
+    # Define the target directory
+    target_dir = this_dir / "models" / "lastfinetuned"
+
+    # Create the target directory if it doesn't exist
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save the modified checkpoint in the target directory
+    torch.save(checkpoint, target_dir / "model.pth")
+
+    # Specify the files you want to copy
+    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth"]
+
+    for file_name in files_to_copy:
+        src_path = this_dir / base_path / base_model_path / file_name
+        dest_path = target_dir / file_name
+        shutil.copy(str(src_path), str(dest_path))
+
+    source_wavs_dir = this_dir / "finetune" / "tmp-trn" / "wavs"
+    target_wavs_dir = target_dir / "wavs"
+    target_wavs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Iterate through files in the source directory
+    for file_path in source_wavs_dir.iterdir():
+        # Check if it's a file and larger than 1000 KB
+        if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:
+            # Copy the file to the target directory
+            shutil.copy(str(file_path), str(target_wavs_dir / file_path.name))
+    
+    print("[FINETUNE] Model copied to '/models/lastfinetuned/'")
+    return "Model copied to '/models/lastfinetuned/'"
+
+
+def compact_legacy_model():
+    this_dir = Path(__file__).parent.resolve()
+
+    best_model_path_str = os.path.join(this_dir, "finetune", "best_model.pth")
+
+    # Check if the best model file exists
+    if not os.path.exists(best_model_path_str):
+        print("[FINETUNE] No model called best_model.pth was found in /finetune/")
+        return "No model called best_model.pth was found in /finetune/"
+
+    # Convert model_path_str to Path
+    best_model_path = Path(best_model_path_str)
+
+    # Attempt to load the model
+    try:
+        checkpoint = torch.load(best_model_path, map_location=torch.device("cpu"))
+    except Exception as e:
+        print("[FINETUNE] Error loading checkpoint:", e)
+        raise
+
+    del checkpoint["optimizer"]
+
+    for key in list(checkpoint["model"].keys()):
+        if "dvae" in key:
+            del checkpoint["model"][key]
+
+    # Define the target directory
+    target_dir = this_dir / "finetune"
+
+    # Create the target directory if it doesn't exist
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save the modified checkpoint in the target directory
+    torch.save(checkpoint, target_dir / "model.pth")
+
+    print("[FINETUNE] model.pth created in '/finetune/'")
+    return "model.pth created in '/finetune/'"
+
+
 def delete_training_data():
     # Define the folder to be deleted
     folder_to_delete = Path(this_dir / "finetune" / "tmp-trn")
 
     # Check if the folder exists before deleting
     if folder_to_delete.exists():
-        # Delete the folder and its contents
-        shutil.rmtree(folder_to_delete)
-        print(f"[FINETUNE] Folder {folder_to_delete} and its contents deleted successfully.")
-        return "Folder '/finetune/tmp-trn/' and its contents deleted successfully."
+        # Iterate over all files and subdirectories
+        for item in folder_to_delete.iterdir():
+            # Exclude trainer_0_log.txt from deletion
+            if item.name != "trainer_0_log.txt":
+                try:
+                    if item.is_file():
+                        item.unlink()
+                    elif item.is_dir():
+                        shutil.rmtree(item)
+                except PermissionError:
+                    print(f"[FINETUNE] PermissionError: Could not delete {item}. Skipping.")
+
+        print(f"[FINETUNE] Folder {folder_to_delete} contents (excluding trainer_0_log.txt) deleted successfully.")
+        return "Folder '/finetune/tmp-trn/' contents (excluding trainer_0_log.txt) deleted successfully."
     else:
         print(f"[FINETUNE] Folder {folder_to_delete} does not exist.")
         return "Folder '/finetune/tmp-trn/' does not exist."
+
 
 def delete_voice_sample_contents():
     # Define the folder to be cleared
@@ -729,20 +875,20 @@ if __name__ == "__main__":
                 f"""
                 ## <u>Finetuning Information</u><br>
                 ### 🟥 <u>Important Note</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 <span style="color: #3366ff;">finetune.py</span> needs to be run from the <span style="color: #3366ff;">/alltalk_tts/</span> folder. Don't move the location of this script.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 Have you run AllTalk at least once? It needs to have downloaded+updated the voice model, before we can finetune it.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - <span style="color: #3366ff;">finetune.py</span> needs to be run from the <span style="color: #3366ff;">/alltalk_tts/</span> folder. Don't move the location of this script.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Have you run AllTalk at least once? It needs to have downloaded+updated the voice model, before we can finetune it.
                 ### 🟦 <u>What you need to run finetuning</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 An Nvidia GPU. Tested on Windows with extended shared VRAM and training used about 16GB's total (which worked on a 12GB card).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 I have not been able to test this on a GPU with less than 12GB of VRAM, so cannot say if it will work or how that would affect performance.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 <span style="color: red;">Version 11.8</span> of Nvidia cuBLAS and cuDNN (guide below). Only 11.8 of cuBLAS and cuDNN work for this process currently.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Minimum <span style="color: red;">18GB</span> free disk space (most of it is used temporarily).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Some decent quality audio, multiple files if you like. Minimum of 2 minutes and Ive tested up to 20 minutes of audio.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. Ive been testing with 5 minute long clips.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 This process will need access to all your GPU and VRAM, so close any other software that's using your GPU currently.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - An Nvidia GPU. Tested on Windows with extended shared VRAM and training used about 16GB's total (which worked on a 12GB card).
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - I have not been able to test this on a GPU with less than 12GB of VRAM, so cannot say if it will work or how that would affect performance.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - <span style="color: red;">Version 11.8</span> of Nvidia cuBLAS and cuDNN (guide below). Only 11.8 of cuBLAS and cuDNN work for this process currently.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Minimum <span style="color: red;">18GB</span> free disk space (most of it is used temporarily).
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Some decent quality audio, multiple files if you like. Minimum of 2 minutes and Ive tested up to 20 minutes of audio.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. Ive been testing with 5 minute long clips.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - This process will need access to all your GPU and VRAM, so close any other software that's using your GPU currently.
                 ### 🟨 <u>Setting up cuBLAS and cuDNN <span style="color: red;">Version 11.8</span></u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 If you have the <span style="color: #3366ff;;">Nvidia CUDA Toolkit Version 11.8</span> installed and can type <span style="color: #3366ff;;">nvcc --version</span> at the command prompt/terminal and it reports <span style="color: #00a000;">Cuda compilation tools, release 11.8</span> you should be good to go. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 You will need to download the Nvidia Cuda Toolkit 11.8<span style="color: #3366ff;"> network</span> install from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive) 
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you have the <span style="color: #3366ff;;">Nvidia CUDA Toolkit Version 11.8</span> installed and can type <span style="color: #3366ff;;">nvcc --version</span> at the command prompt/terminal and it reports <span style="color: #00a000;">Cuda compilation tools, release 11.8</span> you should be good to go. 
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need to download the Nvidia Cuda Toolkit 11.8<span style="color: #3366ff;"> network</span> install from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive) 
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1) Run the installer and select <span style="color: #3366ff;">Custom Advanced</span> Uncheck <span style="color: #3366ff;">everything</span> at the top then expand <span style="color: #3366ff;">CUDA</span>, <span style="color: #3366ff;">Development</span> > <span style="color: #3366ff;">Compiler</span> > and select <span style="color: #3366ff;;">nvcc</span> then expand <span style="color: #3366ff;;">Libraries</span> and select <span style="color: #3366ff;;">CUBLAS</span>.
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2) Back at the top of <span style="color: #3366ff;">CUDA</span>, expand <span style="color: #3366ff;">Runtime</span> > <span style="color: #3366ff;">Libraries</span> and select <span style="color: #3366ff;">CUBLAS</span>. Click <span style="color: #3366ff;;">Next</span>, accept the default path (taking a note of its location) and let the install run. 
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>. If it does you are good to go. If it doesn't > Step 4.
@@ -766,16 +912,16 @@ if __name__ == "__main__":
                 f"""
                 ## <u>STEP 1 - Preparing Audio/Generating the dataset</u><br>
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>                
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 When you have completed Steps 1, 2, and 3, you are welcome to delete your samples from "put-voice-samples-in-here".<br>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>                
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. Very small sample files cause errors, so I would suggest 30 seconds and longer samples. 
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - When you have completed Steps 1, 2, and 3, you are welcome to delete your samples from "put-voice-samples-in-here".<br>
                 ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for finetuning the model on Step 2.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for finetuning the model on Step 2.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.
                 ### 🟩 <u>How long will this take?</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟩 First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.
                 """
             )
                  
@@ -784,41 +930,41 @@ if __name__ == "__main__":
                 value=out_path,
                 visible=False,
             )
+            with gr.Row():
+                whisper_model = gr.Dropdown(
+                    label="Whisper Model",
+                    value="large-v3",
+                    choices=[
+                        "large-v3",
+                        "large-v2",
+                        "large",
+                        "medium",
+                        "small"
+                    ],
+                )
 
-            whisper_model = gr.Dropdown(
-                label="Whisper Model",
-                value="large-v3",
-                choices=[
-                    "large-v3",
-                    "large-v2",
-                    "large",
-                    "medium",
-                    "small"
-                ],
-            )
-
-            lang = gr.Dropdown(
-                label="Dataset Language",
-                value="en",
-                choices=[
-                    "en",
-                    "es",
-                    "fr",
-                    "de",
-                    "it",
-                    "pt",
-                    "pl",
-                    "tr",
-                    "ru",
-                    "nl",
-                    "cs",
-                    "ar",
-                    "zh",
-                    "hu",
-                    "ko",
-                    "ja"
-                ],
-            )
+                lang = gr.Dropdown(
+                    label="Dataset Language",
+                    value="en",
+                    choices=[
+                        "en",
+                        "es",
+                        "fr",
+                        "de",
+                        "it",
+                        "pt",
+                        "pl",
+                        "tr",
+                        "ru",
+                        "nl",
+                        "cs",
+                        "ar",
+                        "zh",
+                        "hu",
+                        "ko",
+                        "ja"
+                    ],
+                )
             progress_data = gr.Label(
                 label="Progress:"
             )
@@ -863,51 +1009,67 @@ if __name__ == "__main__":
                 f"""
                 ## <u>STEP 2 - Fine-tuning the XTTS Encoder</u><br>
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click the button again.             
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 If for any reason it crashed, close the app and re-start the finetuning and kick it off again, clicking through setp 1 (it doesnt need to regenerate the data)
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 The settings below are factory and should be ok.<br>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click the button again.             
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If for any reason it crashed, close the app and re-start the finetuning and kick it off again, clicking through setp 1 (it doesnt need to regenerate the data)
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - The settings below are factory and should be ok.<br>
                 ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice.
                 ### 🟩 <u>How long will this take?</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟩 On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟩 Look at your command prompt/terminal window if you want to see what it is doing.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Look at your command prompt/terminal window if you want to see what it is doing.
                 """
             )
+            with gr.Row():
+                train_csv = gr.Textbox(
+                    label="Train CSV:",
+                )
+                eval_csv = gr.Textbox(
+                    label="Eval CSV:",
+                )
+            with gr.Row():
+                num_epochs =  gr.Slider(
+                    label="Number of epochs:",
+                    minimum=1,
+                    maximum=100,
+                    step=1,
+                    value=args.num_epochs,
+                )
+                batch_size = gr.Slider(
+                    label="Batch size:",
+                    minimum=2,
+                    maximum=512,
+                    step=1,
+                    value=args.batch_size,
+                )
+                grad_acumm = gr.Slider(
+                    label="Grad accumulation steps:",
+                    minimum=2,
+                    maximum=128,
+                    step=1,
+                    value=args.grad_acumm,
+                )
+                max_audio_length = gr.Slider(
+                    label="Max permitted audio size in seconds:",
+                    minimum=2,
+                    maximum=20,
+                    step=1,
+                    value=args.max_audio_length,
+                )
+            with gr.Row():
+                model_to_train_choices = ["Base Model"]
+                if finetuned_model:
+                    model_to_train_choices.append("Existing finetuned model")
+                model_to_train = gr.Radio(
+                    choices=model_to_train_choices,
+                    label="Which model do you want to train?",
+                    value="Base Model"
+                )
+                gr.Markdown(
+                f"""
+                ##### If you have an existing finetuned model in <span style="color: #3366ff;">/models/trainedmodel/</span> you will have an option to select <span style="color: #3366ff;">Existing finetuned model</span>, allowing you to further train it. Otherwise, you will only have Base Model as an option.
+                """
+                )
 
-            train_csv = gr.Textbox(
-                label="Train CSV:",
-            )
-            eval_csv = gr.Textbox(
-                label="Eval CSV:",
-            )
-            num_epochs =  gr.Slider(
-                label="Number of epochs:",
-                minimum=1,
-                maximum=100,
-                step=1,
-                value=args.num_epochs,
-            )
-            batch_size = gr.Slider(
-                label="Batch size:",
-                minimum=2,
-                maximum=512,
-                step=1,
-                value=args.batch_size,
-            )
-            grad_acumm = gr.Slider(
-                label="Grad accumulation steps:",
-                minimum=2,
-                maximum=128,
-                step=1,
-                value=args.grad_acumm,
-            )
-            max_audio_length = gr.Slider(
-                label="Max permitted audio size in seconds:",
-                minimum=2,
-                maximum=20,
-                step=1,
-                value=args.max_audio_length,
-            )
             progress_train = gr.Label(
                 label="Progress:"
             )
@@ -949,16 +1111,16 @@ if __name__ == "__main__":
                 f"""
                 ## <u>STEP 3 -  Inference/Testing</u><br>
                 ### 🟥 <u>Important Note</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 This step will error if you are using TTS version 0.22.0. Please re-run  <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span> if it errors loading the model.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟥 If you dont see multiple speaker reference files and you used more than 3 minutes of speech, try refreshing the page as it may not have loaded them correctly.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - This step will error if you are using TTS version 0.22.0. Please re-run  <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span> if it errors loading the model.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont see multiple speaker reference files and you used more than 3 minutes of speech, try refreshing the page as it may not have loaded them correctly.
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 All the <span style="color: #3366ff;">Speaker Reference Audios</span> in the dropdown are ones that are <span style="color: #3366ff;">8 seconds</span> long or more. You can use one of these later for your voice sample in All Talk, so remember the one you like.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Some <span style="color: #3366ff;">Speaker Reference Audios</span> are a bit long and may cause issues generating the TTS, so try different ones.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 Once you are happy, move to the next tab for instruction on cleaning out the training data and how to copy your newly trained model over your current model.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - All the <span style="color: #3366ff;">Speaker Reference Audios</span> in the dropdown are ones that are <span style="color: #3366ff;">8 seconds</span> long or more. You can use one of these later for your voice sample in All Talk, so remember the one you like.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Some <span style="color: #3366ff;">Speaker Reference Audios</span> are a bit long and may cause issues generating the TTS, so try different ones.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Once you are happy, move to the next tab for instruction on cleaning out the training data and how to copy your newly trained model over your current model.
                 ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 Its loading the finetuned model into memory, loading a voice sample and generating TTS, so that you can test out how well fine tuning worked.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Its loading the finetuned model into memory, loading a voice sample and generating TTS, so that you can test out how well fine tuning worked.
                 """
             )
 
@@ -1051,25 +1213,57 @@ if __name__ == "__main__":
                 f"""
                 ## <u>What to do next</u><br>
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 There are 3x buttons below:
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compact &amp; move model. This will compress the trained model and move it, along with any large enough wav files created to <span style="color: #3366ff;">/models/trainedmodel/</span>. You can use the wav files as sample voices..
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - You have a few options below:
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compact &amp; move model. This will compress the raw finetuned model and move it, along with any large enough wav files created to one of two locations (please read text next to the button).<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You can use the wav files in that location as sample voices with your model. Models moved to <span style="color: #3366ff;">/models/trainedmodel/</span> will be loadable within Text-gen-webui on the <span style="color: #3366ff;">XTTSv2 FT</span> loader.
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete Generated Training data. This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete original voice samples. This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 I will at some point add an option within AllTalk to load a finetuned model as a seperate model. However, for now, you will have to copy it over the model in the <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> model, if you wish to use it.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟦 If you wish to further train this model, you will also need to copy it over the model in the <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> model folder.. 
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compress a legacy finetuned model. For any models that were generated pre the current version of finetuning, you can still compact them down.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Instructions on using the finetuned model in Text-generation-webui and also further tuning this model you just created are on <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>.
                 ### 🟨 <u>Clearing up disk space</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) 
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) 
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Linux <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span>
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Windows <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; 🟨 You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.
                 """
             )
             final_progress_data = gr.Label(
                 label="Progress:"
             )
-            compact_btn = gr.Button(value="Compact and move model to '/models/trainedmodel/' (THIS WILL OVER-WRITE ANY MODEL IN THAT LOCATION)")
-            delete_training_btn = gr.Button(value="Delete generated training data")
-            delete_voicesamples_btn = gr.Button(value="Delete original voice samples")
+            with gr.Row():
+                compact_btn = gr.Button(value="OPTION A - Compact and move model to '/trainedmodel/'")
+                gr.Markdown(
+                f"""
+                ##### This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/trainedmodel/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This model will become available to load in Text-gen-webui with the <span style="color: #3366ff;">XTTSv2 FT</span> loader. It will also be detected by Finetune as a model that can be further trained (Reload finetune.py).
+                """
+                )
+            with gr.Row():
+                compact_lastfinetuned_btn = gr.Button(value="OPTION B - Compact and move model to '/lastfinetuned/'")
+                gr.Markdown(
+                f"""
+                ##### This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/lastfinetuned/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This will just leave you a finetuned model that you can do with as you please. It will <span style="color: red;">NOT</span> be available in Text-gen-webui unless you copy it over one of the other model loader locations.
+                """
+                )
+            with gr.Row():
+                delete_training_btn = gr.Button(value="Delete generated training data")
+                gr.Markdown(
+                f"""
+                ##### This will <span style="color: red;">DELETE</span> your training data and the raw finetuned model from <span style="color: #3366ff;">/finetune/tmp-trn/</span>.
+                """
+                )
+            with gr.Row():
+                delete_voicesamples_btn = gr.Button(value="Delete original voice samples")
+                gr.Markdown(
+                f"""
+                ##### This will <span style="color: red;">DELETE</span> your original voice samples from <span style="color: #3366ff;">/finetune/put-voice-samples-in-here/</span>.
+                """
+                )
+            with gr.Row():
+                compact_legacy_btn = gr.Button(value="Compact a legacy finetuned model")
+                gr.Markdown(
+                f"""
+                ##### This will compact your old finetuned models from 5GB to 1.9GB. Place your 5GB <span style="color: #3366ff;">base_model.pth</span> file in <span style="color: #3366ff;">/finetune/</span> (rename your file to <span style="color: #3366ff;">base_model.pth</span> if necessary). This will generate you a <span style="color: #3366ff;">model.pth</span> file.
+                """
+                )
 
             prompt_compute_btn.click(
                 fn=preprocess_dataset,
@@ -1125,6 +1319,10 @@ if __name__ == "__main__":
                 fn=compact_model,
                 outputs=[final_progress_data],
             )
+            compact_lastfinetuned_btn.click(
+                fn=compact_lastfinetuned_model,
+                outputs=[final_progress_data],
+            )
             delete_training_btn.click(
                 fn=delete_training_data,
                 outputs=[final_progress_data],
@@ -1133,6 +1331,11 @@ if __name__ == "__main__":
                 fn=delete_voice_sample_contents,
                 outputs=[final_progress_data],
             )
+            compact_legacy_btn.click(
+                fn=compact_legacy_model,
+                outputs=[final_progress_data],
+            )
+            model_to_train.change(basemodel_or_finetunedmodel_choice, model_to_train, None)
 
     demo.queue().launch(
         show_api=False,

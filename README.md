@@ -101,6 +101,7 @@ I did leave a mistake in the `/extensions/alltalk_tts/.gitignore` file at one po
 voices/*.*
 models/*.*
 outputs/*.*
+finetune/*.*
 config.json
 confignew.json
 models.json
@@ -253,10 +254,29 @@ I would suggest following [Problems Updating](https://github.com/erew123/alltalk
 As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 </details>
 
+#### 🟨 I have multiple GPU's and I have problems running Finetuning
+
+<details>
+	<summary>Click to expand</summary><br>
+	
+Finetuning pulls in various other scripts and some of those scripts can have issues with multiple Nvidia GPU's being present. Until the people that created those other scripts fix up their code, there is a workaround to temporarily tell your system to only use the 1x of your Nvidia GPU's. To do this:
+
+- **Windows** - You will start the script with `set CUDA_VISIBLE_DEVICES=0 && python finetune.py`<br>
+After you have completed training, you can reset back with `set CUDA_VISIBLE_DEVICES=`<br>
+   
+- **Linux** - You will start the script with `CUDA_VISIBLE_DEVICES=0 python finetune.py`<br>
+After you have completed training, you can reset back with `unset CUDA_VISIBLE_DEVICES`<br>
+
+Rebooting your system will also unset this. The setting is only applied temporarily.
+
+Depending on which of your Nvidia GPU's is the more powerful one, you can change the `0` to `1` or whichever of your GPU's is the most powerful.
+
+</details>
+
 ## ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
-- An Nvidia graphics card
+- An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
 - To install a few portions of the Nvidia CUDA 11.8 Toolkit (this will not impact text-generation-webui's cuda setup.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
@@ -313,6 +333,18 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 10) Type `python finetune.py` and it should start up.
 11) Follow the on-screen instructions when the web interface starts up.
 12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
+
+#### ⚫ Using a Finetuned model in Text-generation-webui
+
+At the end of the finetune process, you will have an option to `Compact and move model to /trainedmodel/` this will compact the raw training file and move it to `/model/trainedmodel/`. When AllTalk starts up within Text-generation-webui, if it finds a model in this location a new loader will appear in the interface for `XTTSv2 FT` and you can use this to load your finetuned model. <br><br>**Be careful** not to train a new model from the base model, then overwrite your current `/model/trainedmodel/` **if** you want a seperately trained model. This is why there is an `OPTION B` to move your just trained model to `/models/lastfinetuned/`.
+
+#### ⚫ Training one model with multiple voices
+
+At the end of the finetune process, you will have an option to `Compact and move model to /trainedmodel/` this will compact the raw training file and move it to `/model/trainedmodel/`. This model will become available when you start up finetuning. You will have a choice to train the Base Model or the `Existing finetuned model` (which is the one in `/model/trainedmodel/`). So you can use this to keep further training this model with additional voices, then copying it back to `/model/trainedmodel/` at the end of training.
+
+#### ⚫ Do I need to keep the raw training data/model?
+
+If you've compacted and moved your model, its highly unlikely you would want to keep that data, however the choice is there to keep it if you wish. It will be between 5-10GB in size, so most people will want to delete it.
 
 ## 🔵🟢🟡 DeepSpeed Installation Options
 **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
