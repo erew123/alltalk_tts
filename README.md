@@ -25,12 +25,9 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
-#### Updates
-**Dec 28th**- Finetuning has been updated to compact models and make the final steps easier (buttons basically). Narrator has been updated. If you wish to compact existing finetuned models, pre the update please see [here](https://github.com/erew123/alltalk_tts/issues/28)
-
-**Dec 25th** - Applied a small update to avoid a possible race condition on file naming with small sentences when generating narrator/character speech. Please update if you are experiencing missing small bits of missing audio on narrator/character.
-
-#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
+## 🔄 Updates
+Please check the below link to find a list of all recent updates and changes.
+#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
@@ -473,7 +470,7 @@ def get_shm_size():
 ## 🟦 Running AllTalk as a standalone app
 AllTalk will run as a standalone app, as long as you install its requirements files into whatever Python environment you are using. You can follow the steps to install the AllTalk's requirements into whatever Python environment you wish. Because I dont know what Python environment you are wanting to use, I can only give you a loose set of installation instructions. 
 
-Please note, at time of writing, the TTS engine requires Python **3.9.x** to **3.11.x** [TTS Engine details here](https://pypi.org/project/TTS/)
+Please note, at time of writing, the TTS engine requires Python **3.9.x** to **3.11.x** [TTS Engine details here](https://pypi.org/project/TTS/). AllTalk and its requirements are tested on Python 3.11.x.
 
 #### 🟦 (Option 1) I already have AllTalk installed as an extension of Text-generation-webui
 If you already have AllTalk as a extension of Text-generation-webui, and wish to run it as standalone, load Text-generation-webui's Python environment `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`, move into the AllTalk folder `cd extensions` > `cd alltalk_tts` and start AllTalk with `python script.py`. There is nothing beyond this you would need to do.
@@ -536,6 +533,10 @@ Generate a preview of a specified voice with hardcoded settings.
    `curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20Local"`<br>
 
    Switch between the 3 models respectively.
+
+   `curl -X POST "http://127.0.0.1:7851/api/reload?tts_method=XTTSv2%20FT"`<br>
+
+   If you have a finetuned model in `/models/trainedmodel/` (will error otherwise)
 
    JSON return `{"status": "model-success"}`
 

@@ -77,6 +77,8 @@ with open(this_dir / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
 # Create a global lock
 process_lock = threading.Lock()
+# Base setting for a possible FineTuned model existing and the loader being available
+tts_method_xtts_ft = False
 
 # Gather the voice files
 def get_available_voices():
@@ -139,10 +141,23 @@ def check_required_files():
     subprocess.run(["python", str(download_script_path)])
     print(f"[{params['branding']}Startup] All required files are present.")
 
-
 # STARTUP Call Check routine
 check_required_files()
 
+##################################################
+#### Check to see if a finetuned model exists ####
+##################################################
+# Set the path to the directory
+trained_model_directory = this_dir / "models" / "trainedmodel"
+# Check if the directory "trainedmodel" exists
+finetuned_model = trained_model_directory.exists()
+# If the directory exists, check for the existence of the required files
+# If true, this will add a extra option in the Gradio interface for loading Xttsv2 FT
+if finetuned_model:
+    required_files = ["model.pth", "config.json", "vocab.json"]
+    finetuned_model = all((trained_model_directory / file).exists() for file in required_files)
+if finetuned_model:
+    print(f"[{params['branding']}Startup] Finetuned model \033[93mDetected\033[0m")
 
 ####################################################
 #### SET GRADIO BUTTONS BASED ON confignew.json ####
@@ -272,11 +287,13 @@ else:
     # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
     sys.exit(1)
 
+
 #####################################
 #### MODEL LOADING AND UNLOADING ####
 #####################################
 # MODEL - Swap model based on Gradio selection API TTS, API Local, XTTSv2 Local
 def send_reload_request(tts_method):
+    global tts_method_xtts_ft
     try:
         params["tts_model_loaded"] = False
         url = f"{base_url}/api/reload"
@@ -295,17 +312,26 @@ def send_reload_request(tts_method):
                 params["tts_method_api_tts"] = True
                 params["deepspeed_activate"] = False
                 audio_path = this_dir / "templates" / "apitts.wav"
+                tts_method_xtts_ft = False
             elif tts_method == "API Local":
                 params["tts_method_api_tts"] = False
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_local"] = True
                 params["deepspeed_activate"] = False
                 audio_path = this_dir / "templates" / "apilocal.wav"
+                tts_method_xtts_ft = False
             elif tts_method == "XTTSv2 Local":
                 params["tts_method_api_tts"] = False
                 params["tts_method_api_local"] = False
                 params["tts_method_xtts_local"] = True
                 audio_path = this_dir / "templates" / "xttslocal.wav"
+                tts_method_xtts_ft = False
+            elif tts_method == "XTTSv2 FT":
+                params["tts_method_api_tts"] = False
+                params["tts_method_api_local"] = False
+                params["tts_method_xtts_local"] = False
+                audio_path = this_dir / "templates" / "xttsfinetuned.wav"
+                tts_method_xtts_ft = True
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
@@ -494,7 +520,6 @@ def output_modifier(string, state):
     if not params["activate"]:
         return string
     original_string = string
-    #print("ORGINAL STRING: ", original_string)
     cleaned_string = before_audio_generation(string, params)
     if cleaned_string is None:
         return
@@ -505,7 +530,6 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                #print(original_string)
                 # Do Some basic stripping and remove any double CR's
                 processed_string = (
                     original_string
@@ -786,8 +810,11 @@ def ui():
             deepspeed_checkbox_play = gr.HTML(visible=False)
 
         with gr.Row():
+            model_loader_choices=["API TTS", "API Local", "XTTSv2 Local"]
+            if finetuned_model:
+                model_loader_choices.append("XTTSv2 FT")
             tts_radio_buttons = gr.Radio(
-                choices=["API TTS", "API Local", "XTTSv2 Local"],
+                choices=model_loader_choices,
                 label="Select TTS Generation Method (Read NOTE)",
                 value=gr_modelchoice,  # Set the default value
             )

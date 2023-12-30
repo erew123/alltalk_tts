@@ -33,7 +33,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # STARTUP VARIABLE - Import languges file for Gradio to be able to display them in the interface
 with open(this_dir / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
-
+# Base setting for a possible FineTuned model existing and the loader being available
+tts_method_xtts_ft = False
 
 #################################################################
 #### LOAD PARAMS FROM confignew.json - REQUIRED FOR BRANDING ####
@@ -123,7 +124,7 @@ app = FastAPI(lifespan=startup_shutdown)
 #####################################
 #### MODEL LOADING AND UNLOADING ####
 #####################################
-# MODEL LOADERS Picker For API TTS, API Local, XTTSv2 Local
+# MODEL LOADERS Picker For API TTS, API Local, XTTSv2 Local, XTTSv2 FT
 async def setup():
     global device
     # Set a timer to calculate load times
@@ -150,6 +151,13 @@ async def setup():
             "\033[0m",
         )
         model = await xtts_manual_load_model()
+    elif tts_method_xtts_ft:
+        print(
+            f"[{params['branding']}Model] \033[94mXTTSv2 FT Loading\033[0m /models/fintuned/model.pth \033[94minto\033[93m",
+            device,
+            "\033[0m",
+        )
+        model = await xtts_ft_manual_load_model()
     # Create an end timer for calculating load times
     generate_end_time = time.time()
     # Calculate start time minus end time
@@ -222,6 +230,23 @@ async def xtts_manual_load_model():
     model.to(device)
     return model
 
+# MODEL LOADER For "XTTSv2 FT"
+async def xtts_ft_manual_load_model():
+    global model
+    config = XttsConfig()
+    config_path = this_dir / "models" / "trainedmodel" / "config.json"
+    vocab_path_dir = this_dir / "models" / "trainedmodel" / "vocab.json"
+    checkpoint_dir = this_dir / "models" / "trainedmodel"
+    config.load_json(str(config_path))
+    model = Xtts.init_from_config(config)
+    model.load_checkpoint(
+        config,
+        checkpoint_dir=str(checkpoint_dir),
+        vocab_path=str(vocab_path_dir),
+        use_deepspeed=params["deepspeed_activate"],
+    )
+    model.to(device)
+    return model
 
 # MODEL UNLOADER
 async def unload_model(model):
@@ -236,6 +261,7 @@ async def unload_model(model):
 # MODEL - Swap model based on Gradio selection API TTS, API Local, XTTSv2 Local
 async def handle_tts_method_change(tts_method):
     global model
+    global tts_method_xtts_ft
     # Update the params dictionary based on the selected radio button
     print(
         f"[{params['branding']}Model] \033[94mChanging model \033[92m(Please wait 15 seconds)\033[0m"
@@ -246,15 +272,23 @@ async def handle_tts_method_change(tts_method):
         params["tts_method_xtts_local"] = False
         params["tts_method_api_tts"] = True
         params["deepspeed_activate"] = False
+        tts_method_xtts_ft = False
     elif tts_method == "API Local":
         params["tts_method_api_tts"] = False
         params["tts_method_xtts_local"] = False
         params["tts_method_api_local"] = True
         params["deepspeed_activate"] = False
+        tts_method_xtts_ft = False
     elif tts_method == "XTTSv2 Local":
         params["tts_method_api_tts"] = False
         params["tts_method_api_local"] = False
         params["tts_method_xtts_local"] = True
+        tts_method_xtts_ft = False
+    elif tts_method == "XTTSv2 FT":
+        tts_method_xtts_ft = True
+        params["tts_method_api_tts"] = False
+        params["tts_method_api_local"] = False
+        params["tts_method_xtts_local"] = False
 
     # Unload the current model
     model = await unload_model(model)
@@ -267,7 +301,7 @@ async def handle_tts_method_change(tts_method):
 @app.route("/api/reload", methods=["POST"])
 async def reload(request: Request):
     tts_method = request.query_params.get("tts_method")
-    if tts_method not in ["API TTS", "API Local", "XTTSv2 Local"]:
+    if tts_method not in ["API TTS", "API Local", "XTTSv2 Local", "XTTSv2 FT"]:
         return {"status": "error", "message": "Invalid TTS method specified"}
     await handle_tts_method_change(tts_method)
     return Response(
@@ -424,8 +458,8 @@ async def generate_audio(text, voice, language, output_file):
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
-    # XTTSv2 LOCAL Method
-    if params["tts_method_xtts_local"]:
+    # XTTSv2 LOCAL & Xttsv2 FT Method
+    if params["tts_method_xtts_local"] or tts_method_xtts_ft:
         print(f"[{params['branding']}TTSGen] {text}")
         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(
             audio_path=[f"{this_dir}/voices/{voice}"],
@@ -805,10 +839,6 @@ async def tts_generate(
     autoplay_volume: float = Form(...),
 ):
     try:
-        #print(f"text_filtering: {text_filtering}")
-        #print(f"narrator_enabled: {narrator_enabled}")
-        #print(f"text_not_inside: {text_not_inside}")
-        #print(f"output_file_timestamp: {output_file_timestamp}")
         json_input_data = {
             "text_input": text_input,
             "text_filtering": text_filtering,
@@ -828,46 +858,38 @@ async def tts_generate(
         else:
             return JSONResponse(content={"error": JSONresult}, status_code=400)
         if narrator_enabled:
-            print("ORIGINAL UNTOUCHED STRING IS:", text_input,"\n")
+            #print("ORIGINAL UNTOUCHED STRING IS:", text_input,"\n")
             if text_filtering in ["standard", "none"]:
                     cleaned_string = (
                         text_input
                         .replace('"', '"<')
                         .replace('*', '<*')
                     )
-                    print("STANDARD FILTERING IS NOW:", cleaned_string,"\n")
-                    #parts = re.split(r'\.(?<!<[*"])', cleaned_string)
                     parts = re.split(r'(?<=<\*\s)|(?<=\.\s)|(?<=\."\<)|(?<=\."<)', cleaned_string)
                     parts = list(filter(lambda x: x.strip(), parts))
             elif text_filtering == "html":
                 cleaned_string = standard_filtering(text_input)
                 cleaned_string = narrator_filtering(cleaned_string)
-                print("HTML FILTERING IS NOW:", cleaned_string,"\n")
                 parts = re.split(r'&quot;|\.\*', cleaned_string)
             audio_files_all_paragraphs = []
             audio_files_paragraph = []
             for i, part in enumerate(parts):
                 if len(part.strip()) <= 1:
                     continue
-                print("THIS IS A PART", part)
                 # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
                 # Character will always be a < with a letter immediately after it
                 if '<' in part and '<*' not in part and '< *' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
-                    print("IF - Character\n")
                     cleaned_part = html.unescape(part.replace('<', ''))
                     voice_to_use = character_voice_gen
                 #Narrator will always be an * or < with an * a position or two after it.
                 elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
-                    print("IF - Narrator\n")
                     cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', '').replace('<. ', '')) 
                     voice_to_use = narrator_voice_gen
                 #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
                 elif text_not_inside == "character":
-                    print("ELSE - CHARACTER\n")
                     cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                     voice_to_use = character_voice_gen
                 elif text_not_inside == "narrator":
-                    print("ELSE - NARRATOR\n")
                     cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                     voice_to_use = narrator_voice_gen
                 output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}_{i}.wav"
