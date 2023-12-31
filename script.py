@@ -509,8 +509,11 @@ def voice_preview(string):
         return f"[{params['branding']}Server] Audio generation failed. Status: {generate_response.get('status')}"
 
 
+#def replace_asterisk(match):
+#    return match.group(0) + '&quot;<*'
+
 def replace_asterisk(match):
-    return match.group(0) + '&quot;<*'
+    return '&quot;<*'
 
 #################################
 #### TTS STANDARD GENERATION ####
@@ -520,6 +523,7 @@ def output_modifier(string, state):
     if not params["activate"]:
         return string
     original_string = string
+    #print("ORIGINAL STRING IS:", original_string)
     cleaned_string = before_audio_generation(string, params)
     if cleaned_string is None:
         return
@@ -558,6 +562,7 @@ def output_modifier(string, state):
                 processed_string = processed_string.replace('* ', '* &quot;<')
                 processed_string = processed_string.replace('*. ', '* &quot;<')
                 processed_string = re.sub(r'\*(?=[a-zA-Z])', replace_asterisk, processed_string)
+                #print("PROCESSED STRING IS:", processed_string)
                 # Set up a tracking of the individual wav files.
                 audio_files_all_paragraphs = []
                 # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
@@ -569,6 +574,7 @@ def output_modifier(string, state):
                         continue
                     # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
                     # Character will always be a < with a letter immediately after it
+                    #print("PART IS:", part)
                     if '<' in part and '< *' not in part and '<*' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
                         cleaned_part = html.unescape(part.replace('<', ''))
                         voice_to_use = params["voice"]
@@ -578,9 +584,11 @@ def output_modifier(string, state):
                         voice_to_use = params["narrator_voice"]
                         #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
                     elif non_quoted_text_is:
+                        #print("HIT ELIF CHAR VOICE")
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["voice"]
                     else:
+                        #print("HIT ELIF NARRATOR VOICE")
                         cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
                         voice_to_use = params["narrator_voice"]
                     # Generate that TTS and output to a file
