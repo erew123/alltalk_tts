@@ -694,11 +694,12 @@ The API returns a JSON object with the following properties:
 
 - **status** Indicates whether the generation was successful (generate-success) or failed (generate-failure).<br>
 - **output_file_path** The on-disk location of the generated WAV file.<br>
-- **output_file_url** The HTTP location for accessing the generated WAV file.<br>
+- **output_file_url** The HTTP location for accessing the generated WAV file for browser playback.<br>
+- **output_cache_url** The HTTP location for accessing the generated WAV file as a pushed download.<br>
 
 Example JSON TTS Generation Response:
 
-`{"status": "generate-success", "output_file_path": "C:\text-generation-webui\extensions\alltalk_tts\outputs\myoutputfile_1703149973.wav", "output_file_url": "http://127.0.0.1:7851/audio/myoutputfile_1703149973.wav"}`
+`{"status":"generate-success","output_file_path":"C:\\text-generation-webui\\extensions\\alltalk_tts\\outputs\\myoutputfile_1704141936.wav","output_file_url":"http://127.0.0.1:7851/audio/myoutputfile_1704141936.wav","output_cache_url":"http://127.0.0.1:7851/audiocache/myoutputfile_1704141936.wav"}`
 
 ### 🔴 Future to-do list
 - Voice output within the command prompt/terminal (TBD).
