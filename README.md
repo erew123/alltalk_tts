@@ -69,11 +69,13 @@ Once the extension is loaded, please find all documentation and settings on the 
 **Where to find voices** https://aiartes.com/voiceai or https://commons.wikimedia.org/ or interviews on youtube etc. Instructions on how to cut down and prepare a voice sample are within the built in documentation.
 
 #### 🟩 The one thing I cant easily work around
-Narrator function specific - With a RP chat with your AI, **on your character card** `parameters menu` > `character tab` > `greeting` make sure that anything in there that is the **narrator is in asterisks** and anything **spoken is in double quotes**, then hit the `save` (💾) button. Greeting paragraphs/sentences are handled differently from how the AI sends text and so its difficut to account for them both.
+Messages intended for the Narrator should be enclosed in asterisks `*` and those for the character inside quotation marks `"`. However, AI systems often deviate from these rules, resulting in text that is neither in quotes nor asterisks. Sometimes, text may appear with only a single asterisk, and AI models may vary their formatting mid-conversation. For example, they might use asterisks initially and then switch to unmarked text. A properly formatted line should look like this:
 
-I could force a delimeter in at this stage, but I know it would/may affect things further down the line in the chat and I need a good think about that before just making a change. This issue **only** affects the greeting card/start of conversation and the "example" card that comes with text-generation-webui suffers this issue (if you want to try it for yourself). So you would put double quotes around like this (from the example card):
+`"`Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers.`"` `*`She walked across the room and picked up her cup of coffee`*`
 
-`"`*Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers. I'm sure you have a wealth of knowledge that I can learn from.*`"`
+Most narrator/character systems switch voices upon encountering an asterisk or quotation marks, which is somewhat effective. AllTalk has undergone several revisions in its sentence splitting and identification methods. While some irregularities and AI deviations in message formatting are inevitable, any line beginning or ending with an asterisk should now be recognized as Narrator dialogue. Lines enclosed in double quotes are identified as Character dialogue. For any other text, you can choose how AllTalk handles it: whether it should be interpreted as Character or Narrator dialogue (most AI systems tend to lean more towards one format when generating text not enclosed in quotes or asterisks).
+
+With improvements to the splitter/processor, I'm confident it's functioning well. You can monitor what AllTalk identifies as Narrator lines on the command line and adjust its behavior if needed (Text Not Inside - Function).
 
 ## 🟪 Updating
 This is pretty much a repeat of the installation process. 
