@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <link rel="shortcut icon" href="#">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AllTalk TTS for Text generation webUI</title>
@@ -103,6 +104,12 @@
     }
 
     form {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    #outputFileContainer {
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -257,41 +264,95 @@
                 <option value="tr">Turkish</option>
             </select>
 
-            <label for="outputFile">Output File:</label>
-            <input type="text" id="outputFile" name="output_file" value="demo_output.wav" required>
+            <div id="outputFileContainer">
+                <label for="outputFile">Output File:</label>
+                <input type="text" id="outputFile" name="output_file" value="demo_output.wav" required>
+            </div>
 
+            <label for="streaming">Streaming:</label>
+            <select id="streaming" name="streaming" value="false" required>
+                <option value="false" selected>No</option>
+                <option value="true">Yes</option>
+            </select>
+            
             <!-- Audio player with autoplay -->
             <audio controls autoplay id="audioSource">
                 <source type="audio/wav" />
                 Your browser does not support the audio element.
             </audio>
+
             <span id="outputFilePath" style="height: 0px;">{{ output_file_path }}</span>
-            <button type="submit">Generate TTS</button>
+            <button id="submit" type="submit">
+                Generate TTS
+            </button>
         </form>
     </div>
 
     <script>
+        // Audio player
+        const audioPlayer = document.getElementById('audioSource');
+        function enableLoader(enable) {
+            // Change the submit button text and disable it while loading
+            const submit = document.getElementById('submit');
+            submit.disabled = enable ? true : false;
+            submit.style.opacity = enable ? 0.7 : 1.0;
+            submit.innerText = enable ? 'Generating...' : 'Generate TTS';
+            // Disable the audio player while loading
+            audioPlayer.disabled = enable ? true : false;
+            audioPlayer.style.opacity = enable ? 0.7 : 1.0;
+            audioPlayer.style.pointerEvents = enable ? 'none' : 'auto';
+        }
+        audioPlayer.addEventListener('canplay', () => {
+            enableLoader(false);
+            audioPlayer.play();
+        });
+        audioPlayer.addEventListener('abort', () => {
+            enableLoader(false);
+        });
+        audioPlayer.addEventListener('error', (e) => {
+            enableLoader(false);
+        });
+
+        // Streaming selector
+        const streaming = document.getElementById('streaming');
+        streaming.addEventListener('change', (event) => {
+            const outputFileContainer = document.getElementById('outputFileContainer');
+            if (event.target.value === 'true') {
+                outputFileContainer.style.display = 'none';
+            } else {
+                outputFileContainer.style.display = 'flex';
+            }
+        });
+        // Form submit
         const form = document.getElementById('ttsForm');
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
+            enableLoader(true);
+            audioPlayer.pause();
+            
             const formData = new FormData(form);
-            const response = await fetch('/tts-demo-request', {
-                method: 'POST',
-                body: formData
-            });
+            if (formData.get('streaming') === 'true') {
+                const searchParams = new URLSearchParams(formData).toString();
+                audioPlayer.src = "/tts-demo-request?" + searchParams;
+                audioPlayer.load(); // Reload the audio player
+            } else {
+                const response = await fetch('/tts-demo-request', {
+                    method: 'POST',
+                    body: formData,
+                    cache: "no-store"
+                });
+            
+                // If not streaming, we just get the output file path
+                const result = await response.json();
 
-            const result = await response.json();
-
-            // Update the generated audio file path
-            const outputFilePath = document.getElementById('outputFilePath');
-            outputFilePath.textContent = result.output_file_path;
-
-            // Update the audio player source
-            const audioPlayer = document.getElementById('audioSource');
-            audioPlayer.src = `/audio/${result.output_file_path}`;
-            audioPlayer.load(); // Reload the audio player
-            audioPlayer.play(); // Play the audio;
+                // Update the generated audio file path
+                const outputFilePath = document.getElementById('outputFilePath');
+                outputFilePath.textContent = result.output_file_path;
+                // Update the audio player source
+                audioPlayer.src = `/audio/${result.output_file_path}`;
+                audioPlayer.load(); // Reload the audio player
+            }
         });
     </script>
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
