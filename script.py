@@ -509,11 +509,53 @@ def voice_preview(string):
         return f"[{params['branding']}Server] Audio generation failed. Status: {generate_response.get('status')}"
 
 
-#def replace_asterisk(match):
-#    return match.group(0) + '&quot;<*'
+def process_text(text):
+    # Normalize HTML encoded quotes
+    text = html.unescape(text)
 
-def replace_asterisk(match):
-    return '&quot;<*'
+    # Replace ellipsis with a single dot
+    text = re.sub(r'\.{3,}', '.', text)
+
+    # Pattern to identify combined narrator and character speech
+    combined_pattern = r'(\*[^*"]+\*|"[^"*]+")'
+
+    # List to hold parts of speech along with their type
+    ordered_parts = []
+
+    # Track the start of the next segment
+    start = 0
+
+    # Find all matches
+    for match in re.finditer(combined_pattern, text):
+        # Add the text before the match, if any, as ambiguous
+        if start < match.start():
+            ambiguous_text = text[start:match.start()].strip()
+            if ambiguous_text:
+                ordered_parts.append(('ambiguous', ambiguous_text))
+
+        # Add the matched part as either narrator or character
+        matched_text = match.group(0)
+        if matched_text.startswith('*') and matched_text.endswith('*'):
+            ordered_parts.append(('narrator', matched_text.strip('*').strip()))
+        elif matched_text.startswith('"') and matched_text.endswith('"'):
+            ordered_parts.append(('character', matched_text.strip('"').strip()))
+        else:
+            # In case of mixed or improperly formatted parts
+            if '*' in matched_text:
+                ordered_parts.append(('narrator', matched_text.strip('*').strip('"')))
+            else:
+                ordered_parts.append(('character', matched_text.strip('"').strip('*')))
+
+        # Update the start of the next segment
+        start = match.end()
+
+    # Add any remaining text after the last match as ambiguous
+    if start < len(text):
+        ambiguous_text = text[start:].strip()
+        if ambiguous_text:
+            ordered_parts.append(('ambiguous', ambiguous_text))
+
+    return ordered_parts
 
 #################################
 #### TTS STANDARD GENERATION ####
@@ -534,86 +576,55 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                # Do Some basic stripping and remove any double CR's
-                processed_string = (
-                    original_string
-                    .replace("***", "*")
-                    .replace("**", "*")
-                    .replace("\n\n", "\n")
-                    .replace("\n", "")
-                )
-                processed_string = re.sub(r'\.\*\n\*', '. ', processed_string)
-                processed_string = (processed_string .replace('&quot;\n\n*', '&quot;<*'))
-                processed_string = (processed_string .replace('&quot;\n', '< '))
-                processed_string = (processed_string .replace("&#x27;", "'"))
-                processed_string = (processed_string .replace("\n", " "))
-                processed_string = (processed_string .replace('&quot;', '&quot;<'))
-                processed_string = (processed_string .replace('"', '&quot;<'))
-                #pattern = re.compile(r'(?<=[a-zA-Z!])&quot;<(?=[a-zA-Z])')
-                pattern = re.compile(r'(?<=[a-zA-Z!?\.])&quot;<(?=[a-zA-Z])')
-                processed_string = pattern.sub('&quot; ', processed_string)
-                pattern = re.compile(r'(?<=[a-zA-Z])\*(?=[a-zA-Z])')
-                processed_string = pattern.sub('*&quot;', processed_string)
-                processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
-                processed_string = processed_string.replace('< *"', '< *')
-                processed_string = processed_string.replace('. *', '< *')
-                processed_string = processed_string.replace('! *', '&quot;< *')
-                processed_string = processed_string.replace('? *', '< *')
-                processed_string = processed_string.replace('* ', '* &quot;<')
-                processed_string = processed_string.replace('*. ', '* &quot;<')
-                processed_string = re.sub(r'\*(?=[a-zA-Z])', replace_asterisk, processed_string)
-                #print("PROCESSED STRING IS:", processed_string)
-                # Set up a tracking of the individual wav files.
+                processed_parts = process_text(original_string)
+
                 audio_files_all_paragraphs = []
-                # Split the line using &quot; and ".* " (so end of sentences, leaving special characters added to the start of all OTHER sentences, bar possibly the first one if its starting with a *
-                parts = re.split(r'&quot;|\.\*', processed_string)
-                audio_files_paragraph = []
-                for i, part in enumerate(parts):
+                for part_type, part in processed_parts:
                     # Skip parts that are too short
                     if len(part.strip()) <= 3:
                         continue
-                    # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
-                    # Character will always be a < with a letter immediately after it
-                    #print("PART IS:", part)
-                    if '<' in part and '< *' not in part and '<*' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
-                        cleaned_part = html.unescape(part.replace('<', ''))
-                        voice_to_use = params["voice"]
-                        #Narrator will always be an * or < with an * a position or two after it.
-                    elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
-                        cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', ''))
+
+                    # Determine the voice to use based on the part type
+                    if part_type == 'narrator':
                         voice_to_use = params["narrator_voice"]
-                        #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
-                    elif non_quoted_text_is:
-                        #print("HIT ELIF CHAR VOICE")
-                        cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
+                        print(f"[{params['branding']}TTSGen] \033[92mNarrator\033[0m")  # Green
+                    elif part_type == 'character':
                         voice_to_use = params["voice"]
+                        print(f"[{params['branding']}TTSGen] \033[36mCharacter\033[0m")  # Yellow
                     else:
-                        #print("HIT ELIF NARRATOR VOICE")
-                        cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
-                        voice_to_use = params["narrator_voice"]
-                    # Generate that TTS and output to a file
+                        # Handle ambiguous parts based on user preference
+                        voice_to_use = params["voice"] if non_quoted_text_is else params["narrator_voice"]
+                        voice_description = "\033[36mCharacter (Text-not-inside)\033[0m" if non_quoted_text_is else "\033[92mNarrator (Text-not-inside)\033[0m"
+                        print(f"[{params['branding']}TTSGen] {voice_description}")
+
+                    # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
+                    cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
+                    # Further clean to remove any other unwanted characters
+                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_part)
+                    # Remove all newline characters (single or multiple)
+                    cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
+
+                    # Generate TTS and output to a file
                     output_filename = get_output_filename(state)
                     generate_response = send_generate_request(
                         cleaned_part, voice_to_use, language_code, output_filename
                     )
                     audio_path = generate_response.get("data", {}).get("audio_path")
-                    audio_files_paragraph.append(audio_path)
-                # Accumulate audio files within the paragraph
-                audio_files_all_paragraphs.extend(audio_files_paragraph)
+                    audio_files_all_paragraphs.append(audio_path)
+
                 # Combine audio files across paragraphs
                 final_output_file = combine(
                     audio_files_all_paragraphs, params["output_folder_wav"], state
                 )
             else:
-                processed_string = (
-                    original_string
-                    .replace("***", "")
-                    .replace("**", "")
-                    .replace("*", "")
-                    .replace("\n\n", "\n")
-                    .replace("&#x27;", "'")
-                )
-                cleaned_part = html.unescape(processed_string)                
+                # Decode HTML entities first
+                cleaned_part = html.unescape(original_string)
+                # Replace multiple instances of certain punctuation marks with a single instance
+                cleaned_part = re.sub(r'([!?.])\1+', r'\1', cleaned_part)
+                # Further clean to remove any other unwanted characters
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_part)
+                # Remove all newline characters (single or multiple)
+                cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
                 # Process the part and give it a non-character name if being used vai API or standalone.
                 if "character_menu" in state:
                     output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')

@@ -18,8 +18,10 @@ from fastapi import (
     Request,
     Response,
     Depends,
+    HTTPException,
 )
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -120,7 +122,14 @@ async def startup_shutdown(no_actual_value_it_demanded_something_be_here):
 
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=startup_shutdown)
-
+# Allow all origins, and set other CORS options
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Set this to the specific origins you want to allow
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #####################################
 #### MODEL LOADING AND UNLOADING ####
@@ -480,29 +489,32 @@ async def generate_audio_internal(text, voice, language, output_file, streaming)
             sound_norm_refs=model.config.sound_norm_refs,
         )
 
-        # If the user has requested streaming, then use the TTS.inference_stream function,
-        # otherwise use TTS.inference
-        inference_func = model.inference_stream if streaming else model.inference
-        output = inference_func(
-            text,
-            language,
-            gpt_cond_latent=gpt_cond_latent,
-            speaker_embedding=speaker_embedding,
-            stream_chunk_size=20 if streaming else None,
-            temperature=float(params["local_temperature"]),
-            length_penalty=float(model.config.length_penalty),
-            repetition_penalty=float(params["local_repetition_penalty"]),
-            top_k=int(model.config.top_k),  # Convert to int if necessary
-            top_p=float(model.config.top_p),
-            enable_text_splitting=True,
-        )
+        # Common arguments for both functions
+        common_args = {
+            "text": text,
+            "language": language,
+            "gpt_cond_latent": gpt_cond_latent,
+            "speaker_embedding": speaker_embedding,
+            "temperature": float(params["local_temperature"]),
+            "length_penalty": float(model.config.length_penalty),
+            "repetition_penalty": float(params["local_repetition_penalty"]),
+            "top_k": int(model.config.top_k),
+            "top_p": float(model.config.top_p),
+            "enable_text_splitting": True
+        }
 
+        # Determine the correct inference function and add streaming specific argument if needed
+        inference_func = model.inference_stream if streaming else model.inference
         if streaming:
-            # If streaming, then yield each chunk of audio as it is generated. We also collect each
-            # chunk in a list so that we can save the full audio to a file once the stream is finished.
+            common_args["stream_chunk_size"] = 20
+
+        # Call the appropriate function
+        output = inference_func(**common_args)
+
+        # Process the output based on streaming or non-streaming
+        if streaming:
+            # Streaming-specific operations
             file_chunks = []
-            
-            # Create and yield a wav file with no data to start the stream
             wav_buf = io.BytesIO()
             with wave.open(wav_buf, "wb") as vfout:
                 vfout.setnchannels(1)
@@ -512,23 +524,19 @@ async def generate_audio_internal(text, voice, language, output_file, streaming)
             wav_buf.seek(0)
             yield wav_buf.read()
 
-            # Yield each chunk of audio as it is generated
             for i, chunk in enumerate(output):
-                # Append the chunk to later save to a file
                 file_chunks.append(chunk)
-                # Process the wav data
                 if isinstance(chunk, list):
                     chunk = torch.cat(chunk, dim=0)
                 chunk = chunk.clone().detach().cpu().numpy()
                 chunk = chunk[None, : int(chunk.shape[0])]
                 chunk = np.clip(chunk, -1, 1)
                 chunk = (chunk * 32767).astype(np.int16)
-                # Then yield the chunk to be sent to the client
                 yield chunk.tobytes()
-
         else:
-            # If not streaming, then save to the file on disk
+            # Non-streaming-specific operation
             torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
+
     
     # API LOCAL Methods
     elif params["tts_method_api_local"]:
@@ -586,7 +594,7 @@ async def generate(request: Request):
         voice = data["voice"]
         language = data["language"]
         output_file = data["output_file"]
-        streaming = data["streaming"] or False
+        streaming = False
         # Generation logic
         response = await generate_audio(text, voice, language, output_file, streaming)
         if streaming:
@@ -727,6 +735,22 @@ async def get_audio(filename: str):
     audio_path = this_dir / "outputs" / filename
     return FileResponse(audio_path)
 
+@app.get("/audiocache/{filename}")
+async def get_audio(filename: str):
+    audio_path = Path("outputs") / filename
+    if not audio_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    response = FileResponse(
+        path=audio_path,
+        media_type='audio/wav',
+        filename=filename
+    )
+    # Set caching headers
+    response.headers["Cache-Control"] = "public, max-age=604800"  # Cache for one week
+    response.headers["ETag"] = str(audio_path.stat().st_mtime)  # Use the file's last modified time as a simple ETag
+
+    return response
 
 #########################
 #### VOICES LIST API ####
@@ -840,6 +864,45 @@ class TTSGenerator:
         except ValidationError as e:
             return str(e)
 
+def process_text(text):
+    # Normalize HTML encoded quotes
+    text = html.unescape(text)
+    # Replace ellipsis with a single dot
+    text = re.sub(r'\.{3,}', '.', text)
+    # Pattern to identify combined narrator and character speech
+    combined_pattern = r'(\*[^*"]+\*|"[^"*]+")'
+    # List to hold parts of speech along with their type
+    ordered_parts = []
+    # Track the start of the next segment
+    start = 0
+    # Find all matches
+    for match in re.finditer(combined_pattern, text):
+        # Add the text before the match, if any, as ambiguous
+        if start < match.start():
+            ambiguous_text = text[start:match.start()].strip()
+            if ambiguous_text:
+                ordered_parts.append(('ambiguous', ambiguous_text))
+        # Add the matched part as either narrator or character
+        matched_text = match.group(0)
+        if matched_text.startswith('*') and matched_text.endswith('*'):
+            ordered_parts.append(('narrator', matched_text.strip('*').strip()))
+        elif matched_text.startswith('"') and matched_text.endswith('"'):
+            ordered_parts.append(('character', matched_text.strip('"').strip()))
+        else:
+            # In case of mixed or improperly formatted parts
+            if '*' in matched_text:
+                ordered_parts.append(('narrator', matched_text.strip('*').strip('"')))
+            else:
+                ordered_parts.append(('character', matched_text.strip('"').strip('*')))
+        # Update the start of the next segment
+        start = match.end()
+    # Add any remaining text after the last match as ambiguous
+    if start < len(text):
+        ambiguous_text = text[start:].strip()
+        if ambiguous_text:
+            ordered_parts.append(('ambiguous', ambiguous_text))
+    return ordered_parts
+
 def standard_filtering(text_input):
     text_output = (text_input
                         .replace("***", "")
@@ -848,20 +911,6 @@ def standard_filtering(text_input):
                         .replace("\n\n", "\n")
                         .replace("&#x27;", "'")
                         )
-    return text_output
-
-def narrator_filtering(narrator_text_input):
-    processed_string = re.sub(r'\.\*\n\*', '. ', narrator_text_input)
-    processed_string = (
-        processed_string
-        .replace("\n", " ")
-        .replace('&quot;', '&quot;<')
-        .replace('"', '&quot;<')
-    )
-    processed_string = processed_string.replace('&quot;<. *', '&quot;< *"')
-    processed_string = processed_string.replace('< *"', '< *')
-    processed_string = processed_string.replace('. *', '< *')
-    text_output = html.unescape(processed_string)
     return text_output
 
 def combine(output_file_timestamp, output_file_name, audio_files):
@@ -884,9 +933,11 @@ def combine(output_file_timestamp, output_file_name, audio_files):
         timestamp = int(time.time())
         output_file_path = os.path.join(this_dir / "outputs" / f'{output_file_name}_{timestamp}_combined.wav')
         output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_{timestamp}_combined.wav'
+        output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}_combined.wav'
     else:
         output_file_path = os.path.join(this_dir / "outputs" / f'{output_file_name}_combined.wav')
         output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
+        output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}.wav'
     try:
         sf.write(output_file_path, audio, samplerate=sample_rate)
         # Clean up unnecessary files
@@ -895,7 +946,7 @@ def combine(output_file_timestamp, output_file_name, audio_files):
     except Exception as e:
         # Handle exceptions (e.g., failed to write output file)
         return None, None
-    return output_file_path, output_file_url
+    return output_file_path, output_file_url, output_cache_url
 
 # Generation API (separate from text-generation-webui)
 @app.post("/api/tts-generate", response_class=JSONResponse)
@@ -934,71 +985,70 @@ async def tts_generate(
         else:
             return JSONResponse(content={"error": JSONresult}, status_code=400)
         if narrator_enabled:
-            #print("ORIGINAL UNTOUCHED STRING IS:", text_input,"\n")
-            if text_filtering in ["standard", "none"]:
-                    cleaned_string = (
-                        text_input
-                        .replace('"', '"<')
-                        .replace('*', '<*')
-                    )
-                    parts = re.split(r'(?<=<\*\s)|(?<=\.\s)|(?<=\."\<)|(?<=\."<)', cleaned_string)
-                    parts = list(filter(lambda x: x.strip(), parts))
-            elif text_filtering == "html":
-                cleaned_string = standard_filtering(text_input)
-                cleaned_string = narrator_filtering(cleaned_string)
-                parts = re.split(r'&quot;|\.\*', cleaned_string)
+            processed_parts = process_text(text_input)
             audio_files_all_paragraphs = []
-            audio_files_paragraph = []
-            for i, part in enumerate(parts):
-                if len(part.strip()) <= 1:
+            for part_type, part in processed_parts:
+                # Skip parts that are too short
+                if len(part.strip()) <= 3:
                     continue
-                # Figure out which type of line it is, then replace characters as necessary to avoid TTS trying to pronunce them, htmlunescape after. 
-                # Character will always be a < with a letter immediately after it
-                if '<' in part and '<*' not in part and '< *' not in part and '<  *' not in part and '< ' not in part and '<  ' not in part:
-                    cleaned_part = html.unescape(part.replace('<', ''))
-                    voice_to_use = character_voice_gen
-                #Narrator will always be an * or < with an * a position or two after it.
-                elif '<*' in part or '< *' in part or '<  *' in part or '*' in part:
-                    cleaned_part = html.unescape(part.replace('<*', '').replace('< *', '').replace('<  *', '').replace('*', '').replace('<. ', '')) 
+                # Determine the voice to use based on the part type
+                if part_type == 'narrator':
                     voice_to_use = narrator_voice_gen
-                #If the other two dont capture it, aka, the AI gave no * or &quot; on the line, use non_quoted_text_is aka user interface, user can choose Char or Narrator
-                elif text_not_inside == "character":
-                    cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
+                    print(f"[{params['branding']}TTSGen] \033[92mNarrator\033[0m")  # Green
+                elif part_type == 'character':
                     voice_to_use = character_voice_gen
-                elif text_not_inside == "narrator":
-                    cleaned_part = html.unescape(part.replace('< ', '').replace('<  ', '').replace('<  ', ''))
-                    voice_to_use = narrator_voice_gen
-                output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}_{i}.wav"
+                    print(f"[{params['branding']}TTSGen] \033[36mCharacter\033[0m")  # Yellow
+                else:
+                    # Handle ambiguous parts based on user preference
+                    voice_to_use = character_voice_gen if text_not_inside == "character" else narrator_voice_gen
+                    voice_description = "\033[36mCharacter (Text-not-inside)\033[0m" if text_not_inside == "character" else "\033[92mNarrator (Text-not-inside)\033[0m"
+                    print(f"[{params['branding']}TTSGen] {voice_description}")
+                # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
+                cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
+                # Further clean to remove any other unwanted characters
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_part)
+                # Remove all newline characters (single or multiple)
+                cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
+                output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}.wav"
                 output_file_str = output_file.as_posix()
                 response = await generate_audio(cleaned_part, voice_to_use, language, output_file_str, streaming)
                 audio_path = output_file_str
-                audio_files_paragraph.append(audio_path)
-            # Accumulate audio files within the paragraph
-            audio_files_all_paragraphs.extend(audio_files_paragraph)
+                audio_files_all_paragraphs.append(audio_path)
             # Combine audio files across paragraphs
-            output_file_path, output_file_url = combine(output_file_timestamp, output_file_name, audio_files_all_paragraphs)
+            output_file_path, output_file_url, output_cache_url = combine(output_file_timestamp, output_file_name, audio_files_all_paragraphs)
         else:
             if output_file_timestamp:
                 timestamp = int(time.time())
                 output_file_path = this_dir / "outputs" / f"{output_file_name}_{timestamp}.wav"
                 output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_{timestamp}.wav'
+                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}.wav'
             else:
                 output_file_path = this_dir / "outputs" / f"{output_file_name}.wav"
                 output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
+                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}.wav'
             if text_filtering == "html":
                 cleaned_string = html.unescape(standard_filtering(text_input))
+                cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
+                # Further clean to remove any other unwanted characters
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_string)
+                # Remove all newline characters (single or multiple)
+                cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             elif text_filtering == "standard":
-                cleaned_string = standard_filtering(text_input)
+                cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
+                # Further clean to remove any other unwanted characters
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_string)
+                # Remove all newline characters (single or multiple)
+                cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             else:
                 cleaned_string = text_input
             response = await generate_audio(cleaned_string, character_voice_gen, language, output_file_path, streaming)
         if sounddevice_installed == False or streaming == True:
             autoplay = False
         if autoplay:
-            play_audio(output_file_path, autoplay_volume)
+            play_audio(output_file_path, autoplay_volume)       
         if streaming:
             return StreamingResponse(response, media_type="audio/wav")
-        return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url)}, status_code=200)
+        return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url), "output_cache_url": str(output_cache_url)}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"status": "generate-failure", "error": "An error occurred"}, status_code=500)
 
