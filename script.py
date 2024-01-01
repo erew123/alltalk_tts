@@ -732,10 +732,6 @@ def input_modifier(string, state):
     shared.processing_message = "*Is recording a voice message...*"
     return string
 
-def custom_css():
-    path_to_css = Path(f"{this_dir}/style.css")
-    return open(path_to_css, "r").read()
-
 
 def ui():
     with gr.Accordion(params["branding"] + " TTS (XTTSv2)"):
