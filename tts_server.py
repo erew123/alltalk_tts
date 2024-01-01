@@ -6,6 +6,8 @@ import torch
 import torchaudio
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
+import io
+import wave
 
 ##########################
 #### Webserver Imports####
@@ -17,10 +19,9 @@ from fastapi import (
     Response,
     Depends,
 )
-from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from jinja2 import Template
 from contextlib import asynccontextmanager
 
 ###########################
@@ -452,12 +453,23 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
 ########################
 #### TTS GENERATION ####
 ########################
+
 # TTS VOICE GENERATION METHODS (called from voice_preview and output_modifer)
-async def generate_audio(text, voice, language, output_file):
+async def generate_audio(text, voice, language, output_file, streaming=False):
+    # Get the async generator from the internal function
+    response = generate_audio_internal(text, voice, language, output_file, streaming)
+    # If streaming, then return the generator as-is, otherwise just exhaust it and return
+    if streaming:
+        return response
+    async for _ in response:
+        pass
+    
+async def generate_audio_internal(text, voice, language, output_file, streaming):
     global model
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
+    
     # XTTSv2 LOCAL & Xttsv2 FT Method
     if params["tts_method_xtts_local"] or tts_method_xtts_ft:
         print(f"[{params['branding']}TTSGen] {text}")
@@ -467,11 +479,16 @@ async def generate_audio(text, voice, language, output_file):
             max_ref_length=model.config.max_ref_len,
             sound_norm_refs=model.config.sound_norm_refs,
         )
-        out = model.inference(
+
+        # If the user has requested streaming, then use the TTS.inference_stream function,
+        # otherwise use TTS.inference
+        inference_func = model.inference_stream if streaming else model.inference
+        output = inference_func(
             text,
             language,
             gpt_cond_latent=gpt_cond_latent,
             speaker_embedding=speaker_embedding,
+            stream_chunk_size=20 if streaming else None,
             temperature=float(params["local_temperature"]),
             length_penalty=float(model.config.length_penalty),
             repetition_penalty=float(params["local_repetition_penalty"]),
@@ -479,9 +496,46 @@ async def generate_audio(text, voice, language, output_file):
             top_p=float(model.config.top_p),
             enable_text_splitting=True,
         )
-        torchaudio.save(output_file, torch.tensor(out["wav"]).unsqueeze(0), 24000)
+
+        if streaming:
+            # If streaming, then yield each chunk of audio as it is generated. We also collect each
+            # chunk in a list so that we can save the full audio to a file once the stream is finished.
+            file_chunks = []
+            
+            # Create and yield a wav file with no data to start the stream
+            wav_buf = io.BytesIO()
+            with wave.open(wav_buf, "wb") as vfout:
+                vfout.setnchannels(1)
+                vfout.setsampwidth(2)
+                vfout.setframerate(24000)
+                vfout.writeframes(b"")
+            wav_buf.seek(0)
+            yield wav_buf.read()
+
+            # Yield each chunk of audio as it is generated
+            for i, chunk in enumerate(output):
+                # Append the chunk to later save to a file
+                file_chunks.append(chunk)
+                # Process the wav data
+                if isinstance(chunk, list):
+                    chunk = torch.cat(chunk, dim=0)
+                chunk = chunk.clone().detach().cpu().numpy()
+                chunk = chunk[None, : int(chunk.shape[0])]
+                chunk = np.clip(chunk, -1, 1)
+                chunk = (chunk * 32767).astype(np.int16)
+                # Then yield the chunk to be sent to the client
+                yield chunk.tobytes()
+
+        else:
+            # If not streaming, then save to the file on disk
+            torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
+    
     # API LOCAL Methods
     elif params["tts_method_api_local"]:
+        # Streaming only allowed for XTTSv2 local
+        if streaming:
+            raise ValueError("Streaming is only supported in XTTSv2 local")
+
         # Set the correct output path (different from the if statement)
         print(f"[{params['branding']}TTSGen] Using API Local")
         model.tts_to_file(
@@ -495,8 +549,13 @@ async def generate_audio(text, voice, language, output_file):
             top_k=model.config.top_k,
             top_p=model.config.top_p,
         )
+
     # API TTS
     elif params["tts_method_api_tts"]:
+        # Streaming only allowed for XTTSv2 local
+        if streaming:
+            raise ValueError("Streaming is only supported in XTTSv2 local")
+
         print(f"[{params['branding']}TTSGen] Using API TTS")
         model.tts_to_file(
             text=text,
@@ -504,6 +563,7 @@ async def generate_audio(text, voice, language, output_file):
             speaker_wav=[f"{this_dir}/voices/{voice}"],
             language=language,
         )
+
     # Print Generation time and settings
     generate_end_time = time.time()  # Record the end time to generate TTS
     generate_elapsed_time = generate_end_time - generate_start_time
@@ -526,8 +586,11 @@ async def generate(request: Request):
         voice = data["voice"]
         language = data["language"]
         output_file = data["output_file"]
+        streaming = data["streaming"] or False
         # Generation logic
-        await generate_audio(text, voice, language, output_file)
+        response = await generate_audio(text, voice, language, output_file, streaming)
+        if streaming:
+            return StreamingResponse(response, media_type="audio/wav")
         return JSONResponse(
             content={"status": "generate-success", "data": {"audio_path": output_file}}
         )
@@ -637,14 +700,25 @@ async def update_settings(
 ##################################
 #### SETTINGS PAGE DEMO VOICE ####
 ##################################
-# Submit demo post here
+
+@app.get("/tts-demo-request", response_class=StreamingResponse)
+async def tts_demo_request_streaming(text: str, voice: str, language: str, output_file: str):
+    try:
+        output_file_path = this_dir / "outputs" / output_file
+        stream = await generate_audio(text, voice, language, output_file_path, streaming=True)
+        return StreamingResponse(stream, media_type="audio/wav")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
 @app.post("/tts-demo-request", response_class=JSONResponse)
 async def tts_demo_request(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
     try:
         output_file_path = this_dir / "outputs" / output_file
-        await generate_audio(text, voice, language, output_file_path)
+        await generate_audio(text, voice, language, output_file_path, streaming=False)
         return JSONResponse(content={"output_file_path": str(output_file)}, status_code=200)
     except Exception as e:
+        print(f"An error occurred: {e}")
         return JSONResponse(content={"error": "An error occurred"}, status_code=500)
 
 # Gives web access to the output files
@@ -682,7 +756,7 @@ async def preview_voice(request: Request, voice: str = Form(...)):
 
         # Generate the audio
         output_file_path = this_dir / "outputs" / f"{output_file_name}.wav"
-        await generate_audio(text, voice, language, output_file_path)
+        await generate_audio(text, voice, language, output_file_path, streaming=False)
 
         # Generate the URL
         output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
@@ -837,6 +911,7 @@ async def tts_generate(
     output_file_timestamp: bool = Form(...),
     autoplay: bool = Form(...),
     autoplay_volume: float = Form(...),
+    streaming: bool = Form(False),
 ):
     try:
         json_input_data = {
@@ -851,6 +926,7 @@ async def tts_generate(
             "output_file_timestamp": output_file_timestamp,
             "autoplay": autoplay,
             "autoplay_volume": autoplay_volume,
+            "streaming": streaming,
         }
         JSONresult = TTSGenerator.validate_json_input(json_input_data)
         if JSONresult is None:
@@ -894,7 +970,7 @@ async def tts_generate(
                     voice_to_use = narrator_voice_gen
                 output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}_{i}.wav"
                 output_file_str = output_file.as_posix()
-                await generate_audio(cleaned_part, voice_to_use, language, output_file_str)
+                response = await generate_audio(cleaned_part, voice_to_use, language, output_file_str, streaming)
                 audio_path = output_file_str
                 audio_files_paragraph.append(audio_path)
             # Accumulate audio files within the paragraph
@@ -915,11 +991,13 @@ async def tts_generate(
                 cleaned_string = standard_filtering(text_input)
             else:
                 cleaned_string = text_input
-            await generate_audio(cleaned_string, character_voice_gen, language, output_file_path)
-        if sounddevice_installed == False:
+            response = await generate_audio(cleaned_string, character_voice_gen, language, output_file_path, streaming)
+        if sounddevice_installed == False or streaming == True:
             autoplay = False
         if autoplay:
             play_audio(output_file_path, autoplay_volume)
+        if streaming:
+            return StreamingResponse(response, media_type="audio/wav")
         return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url)}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"status": "generate-failure", "error": "An error occurred"}, status_code=500)
