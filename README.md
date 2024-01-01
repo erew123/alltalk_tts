@@ -79,7 +79,8 @@ I could force a delimeter in at this stage, but I know it would/may affect thing
 This is pretty much a repeat of the installation process. 
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
-`cd text-generation-webui`
+`cd text-generation-webui` and start the Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br>
 
 2) Move into your extensions and alltalk_tts folder:<br><br>
 `cd extensions` then `cd alltalk_tts`
@@ -276,7 +277,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 ## ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
-- An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
+- An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
 - To install a few portions of the Nvidia CUDA 11.8 Toolkit (this will not impact text-generation-webui's cuda setup.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
