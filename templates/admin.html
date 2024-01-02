@@ -400,6 +400,9 @@
         });
         // Form submit
         const form = document.getElementById('ttsForm');
+        const ipAddress = "{{ params.ip_address }}";
+        const portNumber = "{{ params.port_number }}";
+        const baseurl = `http://${ipAddress}:${portNumber}`;
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
@@ -425,7 +428,7 @@
             if (formData.get('streaming') === 'true') {
                 // For streaming, update the audio player src
                 const searchParams = new URLSearchParams(formData).toString();
-                audioPlayer.src = "/tts-demo-request?" + searchParams;
+                audioPlayer.src = baseurl + "/tts-demo-request?" + searchParams;
                 audioPlayer.load(); // Reload the audio player
             } else {
                 // For non-streaming, send a POST request
@@ -440,7 +443,7 @@
                 // Update output file path and audio player source
                 const outputFilePath = document.getElementById('outputFilePath');
                 outputFilePath.textContent = result.output_file_path;
-                audioPlayer.src = `/audio/${result.output_file_path}`;
+                audioPlayer.src = baseurl + `/audio/${result.output_file_path}`;
                 audioPlayer.load(); // Reload the audio player
             }
         });
