@@ -243,9 +243,9 @@
         cloning/speech generation system. To generate TTS, you can use the provided gradio interface or interact with
         the server using JSON/CURL commands.&nbsp;</p>
     <p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span> When loading up a new
-        character in Text generation webUI it may look like nothing is happening for 20-30 seconds. Its actually
+        character in Text generation webUI it may look like nothing is happening for 20-30 seconds. It's actually
         processing the introduction section (greeting message) of the text and once that is completed, it will appear.
-        You can see the activity occuring in the console window. Refreshing the page multiple times will try force the
+        You can see the activity occurring in the console window. Refreshing the page multiple times will try force the
         TTS engine to keep re-generating the text, so please just wait and check the console if needed.</p>
     <p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note: </span>Ensure that your RP
         character card has asterisks around anything for the narration and double quotes around anything spoken. There
@@ -274,7 +274,8 @@
             here<br /><br /></a><span style="text-decoration: underline;"><strong>Text generation webUI</strong></span>
         <br />Web interface&nbsp;<a href="http://{{ params.ip_address }}:7860" target="_blank" rel="noopener">link
             here</a> <br />Documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki"
-            target="_blank" rel="noopener">link here</a></p>
+            target="_blank" rel="noopener">link here</a>
+    </p>
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
     <h2 id="server-information">Server Information</h2>
@@ -410,10 +411,6 @@
             // Get and clean the text input from the textarea
             let textInput = formData.get('text');
             let cleanedText = textInput.replace(/ \- | \– /g, ' '); // Replace hyphens
-
-            // Get and clean the text input from the textarea
-            let textInput = formData.get('text');
-            let cleanedText = textInput.replace(/ \- | \– /g, ' '); // Replace hyphens
             cleanedText = cleanedText.replace(/([!?.])\1+/g, '$1');
             cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"]/g, '');
             cleanedText = cleanedText.replace(/\n+/g, ' ');
@@ -459,7 +456,7 @@
     <h4 id="where-are-the-outputs-stored">Where are the outputs stored &amp; Automatic output wav file deletion.</h4>
     <p style="padding-left: 30px; text-align: justify;">Voice outputs are stored in&nbsp;<span
             style="color: #3366ff;">/alltalk_tts/outputs/</span></p>
-    <p style="padding-left: 30px; text-align: justify;">You can configure automatic maintenence deletion of old wav
+    <p style="padding-left: 30px; text-align: justify;">You can configure automatic maintenance deletion of old wav
         files by setting <span style="color: #3366ff;">Del WAV's older than</span> in the settings above.</p>
     <p style="padding-left: 30px; text-align: justify;">When <span style="color: #3366ff;">Disabled</span> your output
         wav files will be left untouched. When set to a setting <span style="color: #3366ff;">1 Day</span> or greater,
@@ -472,16 +469,18 @@
         and store it wherever your OS normally stores it (Windows/Linux/Mac).</p>
 
     <h4>How do I create a new voice sample?</h4>
-    <p style="padding-left: 30px; text-align: justify;">To create a new voice sample you need to make a wav file that is
+    <p style="padding-left: 30px; text-align: justify;">To create a new voice sample, you need to make a wav file that
+        is
         <span style="color: #3366ff;">22050Hz</span>, <span style="color: #3366ff;">Mono</span>, <span
             style="color: #3366ff;">16 bit</span> and between 6 to 30 seconds long, though 8 to 10 seconds is usually
-        good enough. The model can handle up to a 30 second samples, however Ive not noticed any improvement in voice
-        output from a much longer clips.</p>
+        good enough. The model can handle up to a 30 second samples, however I've not noticed any improvement in voice
+        output from a much longer clips.
+    </p>
     <p style="padding-left: 30px; text-align: justify;">You want to find a nice clear selection of audio, so lets say
         you wanted to clone your favourite celebrity. You may go looking for an interview where they are talking. Pay
-        close attention to the audio you are listening to and trying to sample. Are there noises in the backgroud, hiss
+        close attention to the audio you are listening to and trying to sample. Are there noises in the background, hiss
         on the soundtrack, a low humm, some quiet music playing or something? The better quality the audio the better
-        the final TTS result. Dont forget, the AI that processes the sounds can hear everything in your sample and it
+        the final TTS result. Don't forget, the AI that processes the sounds can hear everything in your sample and it
         will use them in the voice its trying to recreate.</p>
     <p style="padding-left: 30px; text-align: justify;">Try make your clip one of nice flowing speech, like the included
         example files. No big pauses, gaps or other sounds. Preferably a sample that the person you are trying to copy
@@ -489,10 +488,10 @@
         breathy sounds (breathing in/out etc).</p>
 
     <h4>Editing your sample!</h4>
-    <p style="padding-left: 30px; text-align: justify;">So youve downloaded your favoutie celebrity interview off
-        Youtube, from here you need to chop it down to 6 to 30 seconds in length and resample it.</p>
+    <p style="padding-left: 30px; text-align: justify;">So, you’ve downloaded your favourite celebrity interview off
+        YouTube, from here you need to chop it down to 6 to 30 seconds in length and resample it.</p>
     <p style="text-align: justify; padding-left: 30px;">If you need to clean it up, do audio processing, volume level
-        changes etc, do this before downsampling.<br /><br />Using the latest version of Audacity <span
+        changes etc, do this before down-sampling.<br /><br />Using the latest version of Audacity <span
             style="color: #3366ff;">select/highlight</span> your 6 to 30 second clip and:<br /><br /><span
             style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Tracks</span>
         &gt;<span style="color: #3366ff;"> Resample to 22050Hz</span>&nbsp;then<br /><span
@@ -500,7 +499,8 @@
         <span style="color: #3366ff;">Mix</span> &gt; <span style="color: #3366ff;">Stereo to
             Mono&nbsp;</span>then<br /><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
             &nbsp; &nbsp; File</span> &gt; <span style="color: #3366ff;">Export Audio</span>&nbsp;saving it as a <span
-            style="color: #3366ff;">WAV</span> of <span style="color: #3366ff;">22050Hz</span>.</p>
+            style="color: #3366ff;">WAV</span> of <span style="color: #3366ff;">22050Hz</span>.
+    </p>
     <p style="padding-left: 30px; text-align: justify;">Save your generated wav file in the&nbsp;<span
             style="color: #3366ff;">/alltalk_tts/voices/ <span style="color: #808080;">folder.</span></span></p>
     <p style="padding-left: 30px; text-align: justify;">Its worth mentioning that using AI generated audio clips may
@@ -510,7 +510,7 @@
     <p style="padding-left: 30px; text-align: justify;">Maybe you might be interested in trying <a
             href="#finetune">Finetuning of the model</a>. Otherwise, the reasons can be that you:</p>
     <ul style="text-align: justify;">
-        <li>Didn't downsample it as above.</li>
+        <li>Didn't down-sample it as above.</li>
         <li>Have a bad quality voice sample.</li>
         <li>Try using the 3x different generation methods: <span style="color: #3366ff;">API TTS</span>, <span
                 style="color: #3366ff;">API Local</span>, and <span style="color: #3366ff;">XTTSv2 Local</span> within
@@ -528,7 +528,8 @@
         <br /><br />This leaves a bit of a mess because sometimes un-marked text is narration and sometimes its the
         character talking, leaving no clear way to know where to split sentences and what voice to use. Whilst there is
         no 100% solution at the moment many models lean more one way or the other as to what that unmarked text will be
-        (character or narrator).</p>
+        (character or narrator).
+    </p>
     <p style="padding-left: 30px; text-align: justify;">As such, the "Text not inside" function at least gives you the
         choice to set how you want the TTS engine to handle situations of un-marked text.</p>
     <div style="text-align: center;"><img src="/static/textnotinside.jpg"
@@ -541,7 +542,8 @@
         This feature strategically manages the relocation of the Text-to-Speech (TTS) model between your system's Random
         Access Memory (RAM) and VRAM, moving it between the two on the fly. Obviously, this is very useful for people
         who have smaller graphics cards and will use all their VRAM to load in their LLM.</p>
-    <p style="padding-left: 30px; text-align: justify;">When you dont have enough VRAM free after loading your LLM model
+    <p style="padding-left: 30px; text-align: justify;">When you don't have enough VRAM free after loading your LLM
+        model
         into your VRAM (Normal Mode example below), you can see that with so little working space, your GPU will have to
         swap in and out bits of the TTS model, which causes horrible slowdown.</p>
     <p style="padding-left: 30px; text-align: justify;"><span style="color: #ff0000;">Note:</span> An Nvidia Graphics
@@ -588,7 +590,7 @@
 
     <h4>The audio you will use:</h4>
     <p style="margin-left:40px; text-align:justify">I would suggest that if its in an interview format, you cut out the
-        interviewer speaking in audacity or your chosen audio editing package. You dont have to worry about being
+        interviewer speaking in audacity or your chosen audio editing package. You don't have to worry about being
         perfect with your cuts, the finetuning Step 1 will go and find spoken audio and cut it out for you. Is there is
         music over the spoken parts, for best quality you would cut out those parts, though its not 100% necessary. As
         always, try to avoid bad quality audio with noises in it (humming sounds, hiss etc). You can try something like
@@ -700,7 +702,8 @@
                 Toolkit 11.8 or 12.1</a></li>
         <li>Open a terminal console.</li>
         <li>Install <span style="color: #3366ff;">libaio-dev</span> (however your Linux version installs things) e.g.
-            <span style="color: #3366ff;">sudo apt install libaio-dev</span></li>
+            <span style="color: #3366ff;">sudo apt install libaio-dev</span>
+        </li>
         <li>Move into your Text generation webUI folder e.g. <span style="color: #0000ff;"><span
                     style="color: #3366ff;">cd text-generation-webui</span><br /></span></li>
         <li>Start the Text generation webUI Python environment <span style="color: #0000ff;"><span
@@ -736,7 +739,8 @@
             Text-generation-webUI's standard Python environment.<br /><br /><span
                 style="color: #ff0000;">Removal</span><strong> -</strong> If it became necessary to uninstall DeepSpeed,
             you can do so with <span style="color: #3366ff;">./cmd_linux.sh</span> and then <span
-                style="color: #3366ff;">pip uninstall deepspeed</span></li>
+                style="color: #3366ff;">pip uninstall deepspeed</span>
+        </li>
     </ol>
 
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
@@ -776,7 +780,8 @@
                         Detected<br /></span></span></strong><strong><span style="background-color: #999999;"><span
                         style="color: #ffff00; background-color: #ffffff;"><br /></span></span></strong></li>
         <li>Within AllTalk, you will now have a checkbox for <span style="color: #3366ff;">Activate DeepSpeed</span>
-            though remember you can only change 1x setting every 15 or so seconds, so dont try to activate DeepSpeed and
+            though remember you can only change 1x setting every 15 or so seconds, so don't try to activate DeepSpeed
+            and
             LowVRAM simultaneously. When you are happy it works, you can set the default start-up settings in the
             settings page.<br /><br /><span style="color: #ff0000;">Removal</span> - If it became necessary to uninstall
             DeepSpeed, you can do so with <span style="color: #3366ff;">cmd_windows.bat</span> and then <span
@@ -849,7 +854,7 @@
                 closely mimic the input sample's voice, intonation, and overall style. This tends to produce more
                 "coherent" speech that aligns closely with the characteristics of the training data or input voice
                 sample. It adds a level of predictability and consistency, potentially reducing expressive variations.
-                So it could end up sounging too monotone.</li>
+                So it could end up sounding too monotone.</li>
         </ul>
         <p style="padding-left: 30px; text-align: justify;">The factory setting for temperature is 0.70</p>
 
@@ -879,8 +884,8 @@
         <p style="padding-left: 30px; text-align: justify;">A basic environment check to ensure everything should work
             e.g. is the model already downloaded, are the configuration files set correctly etc.</p>
         <p style="padding-left: 30px; text-align: justify;">AllTalk will download the Xtts model (version 2.0.2) into
-            your models folder. Many people didnt like the quality of the 2.0.3 model, however the latest model will be
-            accessable on the API TTS setting (2.0.3 at the time of writing) so you have the best of both worlds.</p>
+            your models folder. Many people didn't like the quality of the 2.0.3 model, however the latest model will be
+            accessible on the API TTS setting (2.0.3 at the time of writing) so you have the best of both worlds.</p>
         <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
         <h2 id="customTTSmodels">Custom TTS Models and Model path</h2>
@@ -890,8 +895,9 @@
             stored on your OS of choice).</p>
         <p style="padding-left: 30px; text-align: justify;">Many people did not like the sound quality of the Coqui
             <span style="color: #000000;">2.0.3</span> model, and as such the AllTalk downloads the <span
-                style="color: #000000;">2.0.2</span> model seperately from the <span
-                style="color: #000000;">2.0.3</span> model that TTS service downloads and manages.</p>
+                style="color: #000000;">2.0.2</span> model separately from the <span
+                style="color: #000000;">2.0.3</span> model that TTS service downloads and manages.
+        </p>
         <p style="padding-left: 30px; text-align: justify;">Typically the <span style="color: #000000;">2.0.2</span>
             model is stored in your <span style="color: #3366ff;">/alltalk_tts/models</span> folder and it is downloaded
             on first start-up of the&nbsp;AllTalk_tts extension. However, you may either want to use a custom model
@@ -935,7 +941,7 @@
         <p style="padding-left: 30px;">When you are happy it's' working correctly, you are welcome to go delete the
             models folder stored at&nbsp;<span style="color: #3366ff;">/alltalk_tts/models</span><strong>.</strong></p>
         <p style="padding-left: 30px;">If you wish to change the files that the modeldownloader is pulling at startup,
-            you can futher edit the <span style="color: #3366ff;">modeldownload.json</span> and change the https
+            you can further edit the <span style="color: #3366ff;">modeldownload.json</span> and change the https
             addresses within this files&nbsp;<span style="color: #3366ff;">files_to_download</span> section &nbsp;e.g.
         </p>
         <p style="padding-left: 30px;">"files_to_download": {<br /> &nbsp; &nbsp; &nbsp; &nbsp; "LICENSE.txt": "<span
@@ -1279,12 +1285,12 @@
                     </span></p>
             </li>
             <li>
-                <p><strong>autoplay</strong>: <span style="color: #ff0000;">Feature not yet available</span>. Enable or
+                <p><strong>autoplay</strong>: Enable or
                     disable autoplay. Still needs to be specified in the JSON request.</p>
                 <p><span style="color: #3366ff;">-d "autoplay=true" <br />-d "autoplay=false"</span></p>
             </li>
             <li>
-                <p><strong>autoplay_volume</strong>: <span style="color: #ff0000;">Feature not yet available</span>. Set
+                <p><strong>autoplay_volume</strong>: Set
                     the autoplay volume. Should be between 0.1 and 1.0.&nbsp;Still needs to be specified in the JSON
                     request.</p>
                 <p><span style="color: #3366ff;">-d "autoplay_volume=0.8" </span></p>
@@ -1377,12 +1383,12 @@
                 style="color: black;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[AllTalk
                 Startup]</span> <span style="color: #ff0000;">Warning</span> <span style="color: black;">TTS Subprocess
                 has NOT started up yet, Will keep trying for 80 seconds maximum</span> <br /><br />This is normal
-            behavior if the subprocess is taking a while to start, however, if there is an issue starting the
+            behaviour if the subprocess is taking a while to start, however, if there is an issue starting the
             subprocess, you may see multiples of this message and an it will time out after 80 seconds, resulting in the
             TTS engine not starting. Its likely that you are not in the correct python environment or one that has a TTS
             engine inside, if this happens, though the system will output a warning about that ahead of this message</p>
-        <p style="padding-left: 30px; text-align: justify;">Typically the command line console will output any warning
-            or error messages. If you need to reset your default configuation, the settings are all listed above in the
+        <p style="padding-left: 30px; text-align: justify;">Typically, the command line console will output any warning
+            or error messages. If you need to reset your default configuration, the settings are all listed above in the
             configuration details.</p>
         <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 

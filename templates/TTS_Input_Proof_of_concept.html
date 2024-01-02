@@ -293,6 +293,7 @@
 
     <div class="action-buttons">
         <button onclick="generateTTS()">Generate TTS</button>
+        <button onclick="togglePausePlayback()">Pause/Resume Playback</button>
         <button onclick="stopPlayback()">Stop Playback</button>
         <button onclick="previewVoice()">Preview Voice</button>
     </div>
@@ -499,6 +500,14 @@
                 currentlyPlaying = false;
                 playNextLocalChunk();
             };
+        }
+    }
+ 
+    function togglePausePlayback() {
+        if (audioElement.paused) {
+            audioElement.play();
+        } else {
+            audioElement.pause();
         }
     }
 
