@@ -1087,8 +1087,8 @@ async def read_root():
     return HTMLResponse(content=rendered_html, status_code=200)
 
 # Start Uvicorn Webserver
-host_parameter = {params["ip_address"]}
-port_parameter = str(params["port_number"])
+host_parameter = params["ip_address"]
+port_parameter = int(params["port_number"])
 
 if __name__ == "__main__":
     import uvicorn
