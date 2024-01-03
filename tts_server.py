@@ -1057,7 +1057,7 @@ async def tts_generate(
 #### Word Add-in Sharing ####
 #############################
 # Mount the static files from the 'word_addin' directory
-app.mount('/api/word_addin', StaticFiles(directory='templates/word_addin'), name='word_addin')
+app.mount("/api/word_addin", StaticFiles(directory=os.path.join(this_dir / 'templates' / 'word_addin')), name="word_addin")
 
 ###################################################
 #### Webserver Startup & Initial model Loading ####
