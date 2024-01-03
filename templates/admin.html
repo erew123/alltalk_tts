@@ -415,11 +415,11 @@
             let textInput = formData.get('text');
             let cleanedText = textInput.replace(/ \- | \– /g, ' '); // Replace hyphens
             cleanedText = cleanedText.replace(/%/g, " percent");
-            cleanedText = cleanedText.replace(/([!?.])\1+/g, '$1');
+            //cleanedText = cleanedText.replace(/([!?.])\1+/g, '$1');
             cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"]/g, '');
             cleanedText = cleanedText.replace(/\n+/g, ' ');
             cleanedText = cleanedText.replace(/\.\s'/g, ".'"); // Remove space between period and single quote
-            cleanedText = cleanedText.replace(/'/g, ""); // Remove all single quotes
+            //cleanedText = cleanedText.replace(/'/g, ""); // Remove all single quotes
 
             // Set the cleaned text back to the form data
             formData.set('text', cleanedText);
