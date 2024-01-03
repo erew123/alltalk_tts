@@ -1052,6 +1052,13 @@ async def tts_generate(
     except Exception as e:
         return JSONResponse(content={"status": "generate-failure", "error": "An error occurred"}, status_code=500)
 
+
+#############################
+#### Word Add-in Sharing ####
+#############################
+# Mount the static files from the 'word_addin' directory
+app.mount('/api/word_addin', StaticFiles(directory='templates/word_addin'), name='word_addin')
+
 ###################################################
 #### Webserver Startup & Initial model Loading ####
 ###################################################

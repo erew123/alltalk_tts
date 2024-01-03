@@ -400,6 +400,9 @@
         });
         // Form submit
         const form = document.getElementById('ttsForm');
+        const ipAddress = "{{ params.ip_address }}";
+        const portNumber = "{{ params.port_number }}";
+        const baseurl = `http://${ipAddress}:${portNumber}`;
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
@@ -411,6 +414,7 @@
             // Get and clean the text input from the textarea
             let textInput = formData.get('text');
             let cleanedText = textInput.replace(/ \- | \– /g, ' '); // Replace hyphens
+            cleanedText = cleanedText.replace(/%/g, " percent");
             cleanedText = cleanedText.replace(/([!?.])\1+/g, '$1');
             cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"]/g, '');
             cleanedText = cleanedText.replace(/\n+/g, ' ');
@@ -425,7 +429,7 @@
             if (formData.get('streaming') === 'true') {
                 // For streaming, update the audio player src
                 const searchParams = new URLSearchParams(formData).toString();
-                audioPlayer.src = "/tts-demo-request?" + searchParams;
+                audioPlayer.src = baseurl + "/tts-demo-request?" + searchParams;
                 audioPlayer.load(); // Reload the audio player
             } else {
                 // For non-streaming, send a POST request
@@ -440,7 +444,7 @@
                 // Update output file path and audio player source
                 const outputFilePath = document.getElementById('outputFilePath');
                 outputFilePath.textContent = result.output_file_path;
-                audioPlayer.src = `/audio/${result.output_file_path}`;
+                audioPlayer.src = baseurl + `/audio/${result.output_file_path}`;
                 audioPlayer.load(); // Reload the audio player
             }
         });
@@ -473,7 +477,7 @@
         is
         <span style="color: #3366ff;">22050Hz</span>, <span style="color: #3366ff;">Mono</span>, <span
             style="color: #3366ff;">16 bit</span> and between 6 to 30 seconds long, though 8 to 10 seconds is usually
-        good enough. The model can handle up to a 30 second samples, however I've not noticed any improvement in voice
+        good enough. The model can handle up to 30 second samples, however I've not noticed any improvement in voice
         output from a much longer clips.
     </p>
     <p style="padding-left: 30px; text-align: justify;">You want to find a nice clear selection of audio, so lets say
