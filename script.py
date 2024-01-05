@@ -600,7 +600,7 @@ def output_modifier(string, state):
                     # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
                     cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
                     # Further clean to remove any other unwanted characters
-                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\$]', '', cleaned_part)
+                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_part)
                     # Remove all newline characters (single or multiple)
                     cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
 
@@ -622,7 +622,7 @@ def output_modifier(string, state):
                 # Replace multiple instances of certain punctuation marks with a single instance
                 cleaned_part = re.sub(r'([!?.])\1+', r'\1', cleaned_part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\$]', '', cleaned_part)
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
                 # Process the part and give it a non-character name if being used vai API or standalone.
