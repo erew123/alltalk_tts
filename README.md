@@ -536,7 +536,7 @@ You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio
 
 7) Start AllTalk with `python script.py`<br><br>
 
-Anytime you wish to use AllTalk, update its requirements, install some other requirements such as DeepSpeed, you will need to start its Conda Python Environment in the terminal/prompt, which you will do with `conda activate alltalkenv` as long as the Conda executable is accessible at the command prompt/terminal you are in.<br><br>It is fully possible to create a batch file or script file that you can use as a launcher from your Start Menu/Application Launcher that will start the environment and AllTalk for you. 
+🔹Anytime you wish to use AllTalk, update its requirements, install some other requirements such as DeepSpeed, you will need to start its Conda Python Environment in the terminal/prompt, which you will do with `conda activate alltalkenv` as long as the Conda executable is accessible at the command prompt/terminal you are in.<br><br>It is fully possible to create a batch file or script file that you can use as a launcher from your Start Menu/Application Launcher that will start the environment and AllTalk for you. 
 
 Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.
 
