@@ -527,8 +527,8 @@ Different Python applications have different requirements, some of those require
 
 5) Once that process has completed, we now need to change from the `(base)` Conda Python environment, to our newly created `(alltalkenv)` Conda Python environment:<br><br>`conda activate alltalkenv`<br><br>Your prompt should now change from `(base) C:\myfiles\>` to `(alltalkenv) C:\myfiles\>`
 
-5) **If you are NOT using an Nvidia card and CUDA, skip to step 6** We will need to force PyTorch to install with CUDA. So perform the following:<br><br>`pip cache purge` (Will clear out all current copies of downloads that pip has)<br>`pip uninstall torch torchaudio` (Will uninstall the the current version of Torch and Torchaudio from the `(alltalkenv)` environment)<br><br>
-You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio with **one** of the following<br><br>**CUDA 11.8** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`<br>**CUDA 12.1** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
+5) **If you are NOT using an Nvidia card and CUDA, skip to step 6** We will need to force PyTorch to install with CUDA. So perform the following:<br><br>`pip cache purge` (Clear the current Pip cache)<br><br>`pip uninstall torch torchaudio` (Uninstall Torch and Torchaudio from the `alltalkenv` environment)<br><br>
+You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio with **one** of the following<br><br>**CUDA 11.8** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`<br><br>**CUDA 12.1** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
 
 6) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
