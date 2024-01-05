@@ -517,28 +517,26 @@ Different Python applications have different requirements, some of those require
 **Note:** A standard VENV can cause module path issues, hence Conda is the correct method to create a Python environment for AllTalk. 
 
 #### 🔹 Building a custom Python Environment with Miniconda
-1) Open a terminal/command prompt, and confirm that both `python --version` and `pip` both work. Neither of them should give an error message. If they do you may need to install Python (and maybe Pip).<br><br>[Python Website](https://www.python.org/downloads/)<br>[Pip Website](https://pip.pypa.io/en/stable/installation/)<br><br>Once you have those working you can now continue on.
+1) Open a terminal/command prompt, and confirm that both `python --version` and `pip` both work. Neither of them should give an error message. If they do you may need to install Python (and maybe Pip).<br><br>[Python Website](https://www.python.org/downloads/)<br>[Pip Website](https://pip.pypa.io/en/stable/installation/)<br><br>Once you have those working you can now continue on.<br><br>
 
-2) Assuming you don't already have Miniconda installed, we will need to download and install Minoconda as this is what we will use to build our custom Python environment.<br><br>[Miniconda Website](https://docs.conda.io/projects/miniconda/en/latest/)<br><br>Download the Miniconda version that is correct for your OS and then install it. Miniconda will create some items in your Start Menu or Application Launcher called something like `Anaconda Prompt`<br><br> You will start the `Anaconda Prompt` and your prompt in your terminal/command prompt will say something like: <br><br>`(base) C:\users\myaccount\>`<br><br> The important bit is that it has the `(base)`, the location after that doesn't matter. `(base)` signifies we are in the base conda Python environment and can now create custom Python environments with Conda.
+2) Assuming you don't already have Miniconda installed, we will need to download and install Minoconda as this is what we will use to build our custom Python environment.<br><br>[Miniconda Website](https://docs.conda.io/projects/miniconda/en/latest/)<br><br>Download the Miniconda version that is correct for your OS and then install it. Miniconda will create some items in your Start Menu or Application Launcher called something like `Anaconda Prompt`<br><br> You will start the `Anaconda Prompt` and your prompt in your terminal/command prompt will say something like: <br><br>`(base) C:\users\myaccount\>`<br><br> The important bit is that it has the `(base)`, the location after that doesn't matter. `(base)` signifies we are in the base conda Python environment and can now create custom Python environments with Conda.<br><br>
   
-3) In your `Anaconda Prompt` command prompt/terminal, move into the folder where you want to download AllTalk to and then git clone this repository. For simplicity I am going to assume that location is `c:\myfiles\`. So you will:<br><br>`cd myfiles`<br><br>`git clone https://github.com/erew123/alltalk_tts`
+3) In your Anaconda Prompt command prompt/terminal, move into the folder where you want to download AllTalk to and then git clone this repository. For simplicity I am going to assume that location is `c:\myfiles\`. So you will:<br><br>`cd myfiles`<br><br>`git clone https://github.com/erew123/alltalk_tts`<br><br>
 
-4) Now we will create our custom Conda Python 3.11.5 environment and give it the name `alltalkenv` by typing the following at the prompt:<br><br>`conda create --name alltalkenv python=3.11.5`<br><br>You will be prompted if you want to continue and you say yes.
+4) Now we will create our custom Conda Python 3.11.5 environment and give it the name alltalkenv by typing the following at the prompt:<br><br>`conda create --name alltalkenv python=3.11.5`<br><br>You will be prompted if you want to continue and you say yes.<br><br>Once that process has completed, we now need to change from the `(base)` Conda Python environment, to our newly created `(alltalkenv)` environment. So type the following:<br><br>`conda activate alltalkenv`<br><br>Your prompt should now change from `(base) C:\myfiles\>` to `(alltalkenv) C:\myfiles\>`<br><br>
 
-5) Once that process has completed, we now need to change from the `(base)` Conda Python environment, to our newly created `(alltalkenv)` Conda Python environment:<br><br>`conda activate alltalkenv`<br><br>Your prompt should now change from `(base) C:\myfiles\>` to `(alltalkenv) C:\myfiles\>`
+5) **If you are NOT using an Nvidia card and CUDA, skip to step 6**. To force PyTorch to install with CUDA, perform the following:<br><br>`pip cache purge` (Clear the current Pip cache)<br><br>`pip uninstall torch torchaudio` (Uninstall Torch and Torchaudio from the `alltalkenv` environment)<br><br>
+You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio with **one** of the following<br><br>**CUDA 11.8** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`<br><br>**CUDA 12.1** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`<br><br>
 
-5) **If you are NOT using an Nvidia card and CUDA, skip to step 6** We will need to force PyTorch to install with CUDA. So perform the following:<br><br>`pip cache purge` (Clear the current Pip cache)<br><br>`pip uninstall torch torchaudio` (Uninstall Torch and Torchaudio from the `alltalkenv` environment)<br><br>
-You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio with **one** of the following<br><br>**CUDA 11.8** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`<br><br>**CUDA 12.1** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
-
-6) Move into the `alltalk_tts` folder and install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>`cd alltalk_tts`<br><br>
+6) Move into the alltalk_tts folder and install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>`cd alltalk_tts`<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
-**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`<br><br>
 
 7) Start AllTalk with `python script.py`<br><br>
 
 🔹Anytime you wish to use AllTalk, update its requirements, install some other requirements such as DeepSpeed, you will need to start its Conda Python Environment in the terminal/prompt, which you will do with `conda activate alltalkenv` as long as the Conda executable is accessible at the command prompt/terminal you are in.<br><br>It is fully possible to create a batch file or script file that you can use as a launcher from your Start Menu/Application Launcher that will start the environment and AllTalk for you. 
 
-Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.
+Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.<br><br>
 
 ## 🟠 API Suite and JSON-CURL
 ### 🟠Overview
