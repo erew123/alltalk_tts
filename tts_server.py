@@ -1006,7 +1006,7 @@ async def tts_generate(
                 # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
                 cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_part)
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\$]', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
                 output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}.wav"
@@ -1030,13 +1030,13 @@ async def tts_generate(
                 cleaned_string = html.unescape(standard_filtering(text_input))
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_string)
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\$]', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             elif text_filtering == "standard":
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"]', '', cleaned_string)
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\$]', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             else:
@@ -1057,7 +1057,7 @@ async def tts_generate(
 #### Word Add-in Sharing ####
 #############################
 # Mount the static files from the 'word_addin' directory
-app.mount('/api/word_addin', StaticFiles(directory='templates/word_addin'), name='word_addin')
+app.mount("/api/word_addin", StaticFiles(directory=os.path.join(this_dir / 'templates' / 'word_addin')), name="word_addin")
 
 ###################################################
 #### Webserver Startup & Initial model Loading ####
@@ -1087,8 +1087,8 @@ async def read_root():
     return HTMLResponse(content=rendered_html, status_code=200)
 
 # Start Uvicorn Webserver
-host_parameter = {params["ip_address"]}
-port_parameter = str(params["port_number"])
+host_parameter = params["ip_address"]
+port_parameter = int(params["port_number"])
 
 if __name__ == "__main__":
     import uvicorn
