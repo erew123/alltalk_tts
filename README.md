@@ -530,7 +530,7 @@ Different Python applications have different requirements, some of those require
 5) **If you are NOT using an Nvidia card and CUDA, skip to step 6** We will need to force PyTorch to install with CUDA. So perform the following:<br><br>`pip cache purge` (Clear the current Pip cache)<br><br>`pip uninstall torch torchaudio` (Uninstall Torch and Torchaudio from the `alltalkenv` environment)<br><br>
 You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio with **one** of the following<br><br>**CUDA 11.8** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`<br><br>**CUDA 12.1** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
 
-6) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
+6) Move into the `alltalk_tts` folder and install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>`cd alltalk_tts`<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
 **Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
 
