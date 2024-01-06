@@ -4,7 +4,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app) **or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts?#-installation-on-text-generation-web-ui)
 - **Model Finetuning:** Train the model specifically on a voice of your choosing for better reproduction.
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
-- **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you.
+- **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you [demo](https://www.youtube.com/watch?v=hunvXn0mLzc).
 - **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
 - **Low VRAM mode:** Great for people with small GPU memory or if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
@@ -542,7 +542,7 @@ You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio
 Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.<br><br>
 
 ## ⬜ AllTalk TTS Generator
-AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently.<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed generation. 
+AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently. Please see here for a quick [demo](https://www.youtube.com/watch?v=hunvXn0mLzc)<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed generation. 
 
 #### ⬜ Quick Start
 - **Text Input:** Enter the text you wish to convert into speech in the 'Text Input' box.
