@@ -542,7 +542,7 @@ You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio
 Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.<br><br>
 
 ## ⬜ AllTalk TTS Generator
-AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently.<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page. 
+AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently.<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed generation. 
 
 #### ⬜ Quick Start
 - **Text Input:** Enter the text you wish to convert into speech in the 'Text Input' box.
