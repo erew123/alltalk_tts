@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <link rel="shortcut icon" href="#">
+    <link rel="icon" href="./static/favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AllTalk TTS for Text generation webUI</title>
@@ -218,6 +218,7 @@
         <li><a href="#getting-started">Getting Started</a></li>
         <li><a href="#server-information">Server Information</a></li>
         <li><a href="#demotesttts">Demo/Test TTS output</a></li>
+        <li><a href="#tts-generator">AllTalk TTS Generator</a></li>
         <li><a href="#using-voice-samples">Using Voice Samples</a></li>
         <li><a href="#text-not-inside">Text Not inside</a></li>
         <li><a href="#low-vram">Low VRAM</a></li>
@@ -271,6 +272,8 @@
             here</a><br />Update instructions <a href="https://github.com/erew123/alltalk_tts?#-updating"
             target="_blank" rel="noopener">link here</a><br />Help and issues <a
             href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank" rel="noopener">link
+            here</a><br />TTS Generator <a
+            href="http://127.0.0.1:7851/static/tts_chunk_player/tts_chunk_player.html" target="_blank" rel="noopener">link
             here<br /><br /></a><span style="text-decoration: underline;"><strong>Text generation webUI</strong></span>
         <br />Web interface&nbsp;<a href="http://{{ params.ip_address }}:7860" target="_blank" rel="noopener">link
             here</a> <br />Documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki"
@@ -288,6 +291,7 @@
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
     <h2 id="demotesttts">Demo/Test TTS</h2>
+    <p style="padding-left: 30px;">If you are wanting to generate bulk quantites of TTS and have control over them, please see the <a href="#tts-generator">AllTalk TTS Generator</a> below.</p>
     <div id="container">
         <form method="post" action="/tts-demo-request" id="ttsForm">
             <label for="text">Text:</label>
@@ -416,7 +420,7 @@
             let cleanedText = textInput.replace(/ \- | \– /g, ' '); // Replace hyphens
             cleanedText = cleanedText.replace(/%/g, " percent");
             //cleanedText = cleanedText.replace(/([!?.])\1+/g, '$1');
-            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171]/g, '');
+            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF]/g, '');
             cleanedText = cleanedText.replace(/\n+/g, ' ');
             cleanedText = cleanedText.replace(/\.\s'/g, ".'"); // Remove space between period and single quote
             //cleanedText = cleanedText.replace(/'/g, ""); // Remove all single quotes
@@ -451,6 +455,87 @@
 
     </script>
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+
+
+
+    <h2 id="tts-generator"><strong>AllTalk TTS Generator</strong></h2>
+    <p style="padding-left: 30px;">AllTalk TTS Generator is the solution for converting large volumes of text into
+        speech using the voice of your choice. Whether you're creating audio content or just want to hear text read
+        aloud, the TTS Generator is equipped to handle it all efficiently.</p>
+    <p style="padding-left: 30px;">The TTS Generator is available on this <a
+            href="http://127.0.0.1:7851/static/tts_chunk_player/tts_chunk_player.html" target="_blank"
+            rel="noopener">link</a></p>
+    <h4>Quick Start</h4>
+    <ul>
+        <li><strong>Text Input:</strong> Enter the text you wish to convert into speech in the 'Text Input' box.</li>
+        <li><strong>Generate TTS Button:</strong> Hit this to start the text-to-speech conversion.</li>
+        <li><strong>Pause/Resume:</strong> Used to pause and resume the playback of the initial generation of wavs or
+            the stream.</li>
+        <li><strong>Stop Playback:</strong> This will stop the current audio playing back. It does not stop the text
+            from being generated however.</li>
+    </ul>
+    <p style="padding-left: 30px;">Once you have sent text off to be generated, either as a stream or wav file
+        generation, the TTS server will remain busy until this process has competed. As such, think carefully as to how
+        much you want to send to the server.</p>
+    <p style="padding-left: 30px;">If you are generating wav files and populating the queue, you can generate one lot of
+        text to speech, then input your next lot of text and it will continue adding to the list.</p>
+    <h4>TTS Generation Modes</h4>
+    <ul>
+        <li><strong>Wav Chunks:</strong> Perfect for creating audio books, or anything you want to keep long term.
+            Breaks down your text into manageable wav files and queues them up. Generation begins automatically, and
+            playback will start after a few chunks have been prepared ahead. You can set the volume to 0 if you
+            don&rsquo;t want to hear playback. With Wav chunks, you can edit and/or regenerate portions of the TTS as
+            needed.</li>
+        <li><strong>Streaming:</strong> For immediate playback without the ability to save. Ideal for on-the-fly speech
+            generation and listening. This will not generate wav files and it will play back through your browser. You
+            cannot stop the server generating the TTS once it has been sent.</li>
+    </ul>
+    <p style="padding-left: 30px;">With wav chunks you can either playback &ldquo;In Browser&rdquo; which is the web
+        page you are on, or &ldquo;On Server&rdquo; which is through the console/terminal where AllTalk is running from.
+        Only generation &ldquo;In Browser&rdquo; can play back smoothly and populate the Generated TTS List. Setting the
+        Volume will affect the volume level played back both &ldquo;In Browser&rdquo; and &ldquo;On Server&rdquo;.</p>
+    <h4>Playback and List Management</h4>
+    <ul>
+        <li><strong>Playback Controls:</strong> Utilize 'Play List' to start from the beginning or 'Stop Playback' to
+            halt at any time.</li>
+        <li><strong>Custom Start:</strong> Jump into your list at a specific ID to hear a particular section.</li>
+        <li><strong>Regeneration and Editing:</strong> If a chunk isn't quite right, you can opt to regenerate it or
+            edit the text directly. Click off the text to save changes and hit regenerate for the specific line.</li>
+        <li><strong>Export/Import List:</strong> Save your TTS list as a JSON file or import one. Note: Existing wav
+            files are needed for playback. Exporting is handy if you want to take your files away into another program
+            and have a list of which wav is which, or if you keep your audio files, but want to come back at a later
+            date, edit one or two lines, regenerate the speech and re-combine the wav&rsquo;s into one new long wav.
+        </li>
+    </ul>
+    <h4>Exporting Your Audio</h4>
+    <ul>
+        <li><strong>Export to WAV:</strong> Combine all generated TTS from the list, into one single WAV file for easy
+            download and distribution.</li>
+    </ul>
+    <h4>Customization and Preferences</h4>
+    <ul>
+        <li><strong>Character Voice:</strong> Choose the voice that will read your text.</li>
+        <li><strong>Language:</strong> Select the language of your text.</li>
+        <li><strong>Chunk Sizes:</strong> Decide the size of text chunks for generation. Smaller sizes are recommended
+            for better TTS quality.</li>
+    </ul>
+    <h4>Interface and Accessibility</h4>
+    <ul>
+        <li><strong>Dark/Light Mode:</strong> Switch between themes for your visual comfort.</li>
+        <li><strong>Word Count and Generation Queue:</strong> Keep track of the word count and the generation progress.
+        </li>
+    </ul>
+    <h4>Notes on Usage</h4>
+    <ul>
+        <li>For seamless TTS generation, it's advised to keep text chunks under 250 characters, which you can control
+            with the Chunk sizes.</li>
+        <li>Generated audio can be played back from the list, which also highlights the currently playing chunk.</li>
+        <li>The TTS Generator remembers your settings, so you can pick up where you left off even after refreshing the
+            page.</li>
+    </ul>
+    <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+
+
 
     <h2 id="using-voice-samples"><strong>Using Voice Samples</strong></h2>
     <h4 id="where-are-the-sample-voices-stored">Where are the sample voices stored?</h4>
