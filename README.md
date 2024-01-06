@@ -553,7 +553,7 @@ Once you have sent text off to be generated, either as a stream or wav file gene
 If you are generating wav files and populating the queue, you can generate one lot of text to speech, then input your next lot of text and it will continue adding to the list.
 #### ⬜ TTS Generation Modes
 - **Wav Chunks:** Perfect for creating audio books, or anything you want to keep long term. Breaks down your text into manageable wav files and queues them up. Generation begins automatically, and playback will start after a few chunks have been prepared ahead. You can set the volume to 0 if you don’t want to hear playback. With Wav chunks, you can edit and/or regenerate portions of the TTS as needed.
-- **Streaming:** For immediate playback without the ability to save. Ideal for on-the-fly speech generation and listening. This will not generate wav files and it will play back through your browser. You cannot stop the server generating the TTS once it has been sent.
+- **Streaming:** For immediate playback without the ability to save. Ideal for on-the-fly speech generation and listening. This will not generate wav files and it will play back through your browser. You cannot stop the server generating the TTS once it has been sent.<br><br>
 With wav chunks you can either playback “In Browser” which is the web page you are on, or “On Server” which is through the console/terminal where AllTalk is running from. Only generation “In Browser” can play back smoothly and populate the Generated TTS List. Setting the Volume will affect the volume level played back both “In Browser” and “On Server”.
 #### ⬜ Playback and List Management
 - **Playback Controls:** Utilize 'Play List' to start from the beginning or 'Stop Playback' to halt at any time.
