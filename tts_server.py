@@ -1006,7 +1006,7 @@ async def tts_generate(
                 # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
                 cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_part)
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171]\$', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
                 output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}.wav"
@@ -1030,13 +1030,13 @@ async def tts_generate(
                 cleaned_string = html.unescape(standard_filtering(text_input))
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_string)
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171]\$', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             elif text_filtering == "standard":
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_string)
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171]\$', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             else:
