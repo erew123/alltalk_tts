@@ -654,7 +654,7 @@
             let cleanedText = textInput.replace(/ \- | \– /g, ' ');
             cleanedText = cleanedText.replace(/%/g, " percent");
             cleanedText = cleanedText.replace(/\.\s'/g, ".'");
-            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171]/g, '');
+            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171]\$/g, '');
             //let sentences = cleanedText.match(/("[^"]+"|[^.!?]+[.!?]+)/g);
             let sentences = cleanedText.match(/(?:\d+\.\d+|[^\d.!?])+\b[.!?]+(?=\s|$)/g);
 
