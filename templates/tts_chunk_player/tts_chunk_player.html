@@ -602,6 +602,15 @@
     <button onclick="exportToJSON()" style="margin-right: 10px;">Export List as JSON</button>
     <button onclick="importFromJSON()" style="margin-right: 10px;">Import JSON to list</button>
     <button onclick="exportMP3()" style="margin-right: 10px;">Export to Wav</button>
+    <label for="splitEvery">Split every:</label>
+    <select id="splitEvery" name="splitEvery">
+        <option value="100">100</option>
+        <option value="200">200</option>
+        <option value="300">300</option>
+        <option value="400">400</option>
+        <option value="500" selected>500</option>
+        <option value="600">600</option>
+    </select>
     <div id="paginationControls">
         <button id="prevPage" class="pagination-btn">Previous</button>
         <span id="pageIndicator">Page 1 of X</span>
@@ -625,43 +634,59 @@
 <!-- Howler.js script inclusion -->
 <script src="./howler.min.js"></script>
 <script type="module">
-    // Import Crunker from the CDN
     import Crunker from './crunker.esm.js';
 
     async function exportMP3() {
-        const crunker = new Crunker();
-        const fileUrls = ttsList.map(item => item.fileUrl);
-        const progressIndicator = document.getElementById('progressIndicator');
-        const progressText = document.getElementById('progressText');
+    const crunker = new Crunker();
+    const fileUrls = ttsList.map(item => item.fileUrl);
+    const splitEvery = parseInt(document.getElementById('splitEvery').value) || 500;
+    const progressIndicator = document.getElementById('progressIndicator');
+    const progressText = document.getElementById('progressText');
 
-        // Show progress indicator and update text
-        if (progressIndicator && progressText) {
-            progressText.textContent = 'Export';
-            progressText.style.color = 'black'; // Set the text color to black
-            progressIndicator.style.display = 'block';
-        }
-
-        try {
-            const audioBuffers = await crunker.fetchAudio(...fileUrls);
-            const combined = crunker.concatAudio(audioBuffers);
-            const output = crunker.export(combined, "audio/wav");
-            crunker.download(output.blob, "combined_audio"); // This will download the file as 'combined_audio.mp3'
-        } catch (error) {
-            console.error('Error combining files:', error);
-            if (progressText) {
-                progressText.textContent = 'Error during export!';
-            }
-        } finally {
-            // Hide progress indicator after completion or error
-            if (progressIndicator) {
-                progressIndicator.style.display = 'none';
-            }
-        }
+    if (progressIndicator && progressText) {
+        progressIndicator.style.display = 'block';
+        progressText.textContent = 'Starting export...';
     }
 
-    // Attach exportMP3 to the window object to make it globally accessible
-    window.exportMP3 = exportMP3;
+    try {
+        for (let i = 0; i < fileUrls.length; i += splitEvery) {
+            const currentBatch = Math.floor(i / splitEvery) + 1;
+            const totalBatches = Math.ceil(fileUrls.length / splitEvery);
+            if (progressText) {
+                progressText.textContent = `Processing batch ${currentBatch} of ${totalBatches}`;
+                progressText.style.color = 'black'; // Set the text color to black
+            }
+
+            const batchUrls = fileUrls.slice(i, Math.min(i + splitEvery, fileUrls.length));
+            const audioBuffers = await crunker.fetchAudio(...batchUrls);
+            const combined = crunker.concatAudio(audioBuffers);
+            const output = crunker.export(combined, "audio/wav");
+            crunker.download(output.blob, `combined_audio_part_${currentBatch}.wav`);
+
+            // Clear audioBuffers array to free up memory
+            audioBuffers.length = 0;
+
+            console.log(`Exported batch ${currentBatch} of ${totalBatches}`);
+        }
+    } catch (error) {
+        console.error('Error combining files:', error);
+        if (progressText) {
+            progressText.textContent = 'Error during export!';
+        }
+    } finally {
+        if (progressIndicator && progressText) {
+            progressIndicator.style.display = 'none';
+            progressText.textContent = ''; // Reset progress text
+        }
+    }
+}
+
+window.exportMP3 = exportMP3;
+
+
+
 </script>
+
 
 
 <script>
