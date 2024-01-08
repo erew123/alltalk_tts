@@ -175,27 +175,32 @@
         }
 
         .progress-overlay {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 5px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column; /* Stack items vertically */
-    align-items: center; /* Center items horizontally within the container */
-    justify-content: center; /* Center items vertically within the container */
-    z-index: 10;
-}
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            /* Stack items vertically */
+            align-items: center;
+            /* Center items horizontally within the container */
+            justify-content: center;
+            /* Center items vertically within the container */
+            z-index: 10;
+        }
 
-/* Ensure the text is wrapped in a container with a class, e.g., .progress-text */
-.progress-text {
-    text-align: right; /* Center the text horizontally */
-    margin-top: 10px; /* Add space between the spinner and the text */
-}
+        /* Ensure the text is wrapped in a container with a class, e.g., .progress-text */
+        .progress-text {
+            text-align: right;
+            /* Center the text horizontally */
+            margin-top: 10px;
+            /* Add space between the spinner and the text */
+        }
 
 
-#progressIndicator {
+        #progressIndicator {
             /* Adjust this if you want to position the spinning disk differently */
             display: inline-block;
             margin-left: 20px;
@@ -413,6 +418,78 @@
             margin-left: 45px;
             /* Adjust the value as needed */
         }
+
+        /* Pagination Buttons Styling */
+        .pagination-btn {
+            padding: 5px 10px;
+            /* Adjust padding to reduce height */
+            font-size: 0.8em;
+            /* Adjust font size for smaller buttons */
+            line-height: 1;
+            /* Adjust line height to match the smaller size */
+            margin: 2px;
+            /* Optional: adjust spacing between buttons */
+        }
+
+        /* Smaller input field for jump-to-page */
+        .pagination-input {
+            height: 20px;
+            /* Adjust height for smaller input field */
+            padding: 2px 5px;
+            /* Adjust padding for smaller input field */
+            font-size: 0.8em;
+            /* Adjust font size for smaller input field */
+            line-height: 1;
+            /* Adjust line height to match the smaller size */
+            vertical-align: middle;
+            /* Align with buttons if necessary */
+        }
+
+        /* Apply the styles to your pagination controls */
+        #paginationControls button {
+            /* Apply the button styling */
+            height: auto;
+            /* Let padding control the height */
+            min-height: 20px;
+            /* Set a minimum height if needed */
+        }
+
+        #paginationControls input[type="number"] {
+            /* Apply the input styling */
+        }
+
+        /* Smaller input field for jump-to-page */
+        .pagination-input {
+            height: 2px;
+            /* Reduce the height */
+            padding: 0px 0px;
+            /* Reduce the padding to decrease overall height */
+            font-size: 0.8em;
+            /* Optionally reduce the font size */
+            margin-bottom: 13px;
+            margin-top: 2px;
+            border: 0px solid #ccc;
+            /* Adjust border styling if needed */
+            line-height: normal;
+            /* Adjust line height to match the new size */
+            vertical-align: top;
+            /* Align vertically with buttons */
+        }
+
+        /* Apply the styles to your pagination controls */
+        #paginationControls1 button {
+            /* Apply the button styling */
+            height: auto;
+            /* Let padding control the height */
+            min-height: 20px;
+            /* Set a minimum height if needed */
+            margin-top: 15px
+        }
+
+        #paginationControls1 input[type="number"] {
+            /* Apply the input styling */
+            margin-top: 15px
+        }
     </style>
 
 
@@ -469,6 +546,7 @@
             <select id="playMode" name="playMode" class="fixed-size-dropdown">
                 <option value="local" selected>In Browser</option>
                 <option value="remote">On Server</option>
+                <option value="none">No Playback</option>
             </select>
         </div>
 
@@ -524,8 +602,22 @@
     <button onclick="exportToJSON()" style="margin-right: 10px;">Export List as JSON</button>
     <button onclick="importFromJSON()" style="margin-right: 10px;">Import JSON to list</button>
     <button onclick="exportMP3()" style="margin-right: 10px;">Export to Wav</button>
+    <div id="paginationControls">
+        <button id="prevPage" class="pagination-btn">Previous</button>
+        <span id="pageIndicator">Page 1 of X</span>
+        <button id="nextPage" class="pagination-btn">Next</button>
+        <input type="number" id="jumpToPage" class="pagination-input" min="1" placeholder="Jump to Page">
+        <button id="jumpButton" class="pagination-btn">Go</button>
+    </div>
     <div id="ttsListDisplay" class="tts-list-display">
         <!-- Dynamically populated TTS details will go here -->
+    </div>
+    <div id="paginationControls1">
+        <button id="prevPage1" class="pagination-btn">Previous</button>
+        <span id="pageIndicator1">Page 1 of X</span>
+        <button id="nextPage1" class="pagination-btn">Next</button>
+        <input type="number" id="jumpToPage1" class="pagination-input" min="1" placeholder="Jump to Page">
+        <button id="jumpButton1" class="pagination-btn">Go</button>
     </div>
 </div>
 </div>
@@ -537,35 +629,35 @@
     import Crunker from './crunker.esm.js';
 
     async function exportMP3() {
-    const crunker = new Crunker();
-    const fileUrls = ttsList.map(item => item.fileUrl);
-    const progressIndicator = document.getElementById('progressIndicator');
-    const progressText = document.getElementById('progressText');
+        const crunker = new Crunker();
+        const fileUrls = ttsList.map(item => item.fileUrl);
+        const progressIndicator = document.getElementById('progressIndicator');
+        const progressText = document.getElementById('progressText');
 
-    // Show progress indicator and update text
-    if (progressIndicator && progressText) {
-        progressText.textContent = 'Export';
-        progressText.style.color = 'black'; // Set the text color to black
-        progressIndicator.style.display = 'block';
-    }
+        // Show progress indicator and update text
+        if (progressIndicator && progressText) {
+            progressText.textContent = 'Export';
+            progressText.style.color = 'black'; // Set the text color to black
+            progressIndicator.style.display = 'block';
+        }
 
-    try {
-        const audioBuffers = await crunker.fetchAudio(...fileUrls);
-        const combined = crunker.concatAudio(audioBuffers);
-        const output = crunker.export(combined, "audio/wav");
-        crunker.download(output.blob, "combined_audio"); // This will download the file as 'combined_audio.mp3'
-    } catch (error) {
-        console.error('Error combining files:', error);
-        if (progressText) {
-            progressText.textContent = 'Error during export!';
-        }
-    } finally {
-        // Hide progress indicator after completion or error
-        if (progressIndicator) {
-            progressIndicator.style.display = 'none';
+        try {
+            const audioBuffers = await crunker.fetchAudio(...fileUrls);
+            const combined = crunker.concatAudio(audioBuffers);
+            const output = crunker.export(combined, "audio/wav");
+            crunker.download(output.blob, "combined_audio"); // This will download the file as 'combined_audio.mp3'
+        } catch (error) {
+            console.error('Error combining files:', error);
+            if (progressText) {
+                progressText.textContent = 'Error during export!';
+            }
+        } finally {
+            // Hide progress indicator after completion or error
+            if (progressIndicator) {
+                progressIndicator.style.display = 'none';
+            }
         }
     }
-}
 
     // Attach exportMP3 to the window object to make it globally accessible
     window.exportMP3 = exportMP3;
@@ -582,7 +674,7 @@
     let audioQueue = [];
     let currentlyPlayingIndex = 0;
     let isPlaying = false;
-    let playModeValue = 'local';
+    let playModeValue = localStorage.getItem('playMode') || 'local';
     let currentSound = null;
     let preloadThreshold = 2; // Number of files to preload before starting playback
     let isStreamInitialized = false;
@@ -591,6 +683,9 @@
     const howlInstances = {};
     let listPlaying = false;
     let listPlayIndex = 0;
+    let currentPage = 1;
+    let itemsPerPage = 100; // Adjust as needed
+
 
     ////////////////////////////////////
     //////// Progress Indicator ////////
@@ -602,7 +697,7 @@
 
         if (progressIndicator && generationProgress) {
             let message = '';
-            console.log("PlayType is:", playType);
+            //console.log("PlayType is:", playType);
             if (playType === 'stream') {
                 // When streaming, display a different message
                 message = '<span class="highlight-count">&nbsp&nbsp&nbsp&nbsp&nbsp&nbspStreaming...</span>';
@@ -650,6 +745,7 @@
             const volume = parseFloat(document.getElementById("volume").value);
             const chunkSize = parseInt(document.getElementById("chunkSize").value);
             const playType = document.getElementById('playType').value; // Play type (chunk or stream)
+            playModeValue = document.getElementById('playMode').value;
 
             let cleanedText = textInput.replace(/ \- | \– /g, ' ');
             cleanedText = cleanedText.replace(/%/g, " percent");
@@ -685,9 +781,14 @@
                     if (stopTTSGeneration) break;
                     showProgress(i + 1, totalChunks, playType);
                     if (playModeValue === 'local') {
+                        // Generate the chunk and play it locally
                         await generateAndCache(chunks[i], language, characterVoice, volume);
-                    } else {
+                    } else if (playModeValue === 'remote') {
+                        // Generate the chunk and play it remotely
                         await generateAndPlayRemote(chunks[i], language, characterVoice, volume);
+                    } else if (playModeValue === 'none') {
+                        // Generate the chunk but do not play it
+                        await generateWithoutPlayback(chunks[i], language, characterVoice);
                     }
                 }
             }
@@ -735,6 +836,7 @@
 
             const result = await response.json();
             if (result.output_file_url) {
+                //console.log('TTS Generation Result:', result);
                 // If an ID was passed in, we're regenerating an existing item
                 if (id !== null) {
                     let itemIndex = ttsList.findIndex(item => item.id === id);
@@ -748,6 +850,15 @@
                     // No ID was passed in, so we add a new item to the list
                     addToTTSList(result.output_file_url, chunk, characterVoice, language);
                 }
+                const newPage = Math.ceil(ttsList.length / itemsPerPage);
+                //console.log('New Page Calculated:', newPage);
+                if (currentPage !== newPage) {
+                    currentPage = newPage; // Move to the new page where the item was added
+                    //console.log('Updating Current Page to:', currentPage);
+                }
+
+                // Refresh the list display to reflect the new pagination state
+                updateUIList();
 
                 // Update the audio queue and UI
                 const sound = new Howl({
@@ -769,6 +880,56 @@
         }
     }
 
+    async function generateWithoutPlayback(chunk, language, characterVoice, id = null) {
+        // Perform the generation process as usual but do not play the audio
+        try {
+            const data = new URLSearchParams({
+                text_input: chunk.trim(),
+                text_filtering: "standard",
+                character_voice_gen: characterVoice,
+                narrator_enabled: "false",
+                narrator_voice_gen: characterVoice,
+                text_not_inside: "character",
+                language: language,
+                output_file_name: "TTS",
+                output_file_timestamp: "true",
+                autoplay: "false",
+                autoplay_volume: "0.1"
+            });
+            const response = await fetch("http://127.0.0.1:7851/api/tts-generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: data,
+            });
+            const result = await response.json();
+            if (result.output_file_url) {
+                // If an ID was passed in, we're regenerating an existing item
+                if (id !== null) {
+                    let itemIndex = ttsList.findIndex(item => item.id === id);
+                    if (itemIndex !== -1) {
+                        ttsList[itemIndex].fileUrl = result.output_file_url;
+                        // Other properties can be updated as needed, e.g., in case the language or voice has changed
+                        ttsList[itemIndex].language = language;
+                        ttsList[itemIndex].characterVoice = characterVoice;
+                    }
+                } else {
+                    // No ID was passed in, so we add a new item to the list
+                    addToTTSList(result.output_file_url, chunk, characterVoice, language);
+                }
+                const newPage = Math.ceil(ttsList.length / itemsPerPage);
+                if (currentPage !== newPage) {
+                    currentPage = newPage; // Move to the new page where the item was added
+                }
+                updateUIList();
+            }
+        } catch (error) {
+            console.error("Error in generateWithoutPlayback:", error);
+        }
+    }
+
+
     function addToTTSList(fileUrl, text, characterVoice, language) {
         try {
             ttsList.push({
@@ -783,6 +944,7 @@
             console.error('Error inside addToTTSList:', e);
         }
     }
+
 
     async function regenerateTTS(id) {
         // Find the details of the TTS to regenerate
@@ -804,7 +966,13 @@
         }
         listDisplay.innerHTML = ''; // Clear the current list
 
-        ttsList.forEach(item => {
+        // Determine the range of items to display for pagination
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedItems = ttsList.slice(start, end);
+
+        // Add items to the display for the current page
+        paginatedItems.forEach(item => {
             // Extract just the file name from the URL
             const wavFileName = item.fileUrl.split('/').pop();
 
@@ -814,22 +982,29 @@
             const entryDiv = document.createElement('div');
             entryDiv.id = `item-${item.id}`; // Assign an ID to the div for highlighting
             entryDiv.classList.add('ttsListItem'); // Add a class for styling
-            entryDiv.id = `item-${item.id}`; // Make sure this is unique and correct
 
             // Update the Play/Stop button's onclick to call a function that handles playing and highlighting
             entryDiv.innerHTML = `
-            <button onclick="regenerateTTS(${item.id})">Regenerate</button>
-            <button onclick="playSound('${item.fileUrl}', ${item.id})">Play/Stop</button>
-            <span class="label">ID:</span> <span class="value">${item.id}</span>
-            <span class="label">Voice:</span> <span class="value">${item.characterVoice}</span>
-            <span class="label">Language:</span> <span class="value">${item.language}</span>
-            <span class="label">Wav:</span> <span class="value">${wavFileName}</span>
-            <button id="edit-btn-${item.id}" class="edit-btn" onclick="editText(${item.id})">Edit</button>
-            <span class="item-field text-preview value" title="${item.text}" data-fulltext="${item.text}">${displayText}</span>
+        <button onclick="regenerateTTS(${item.id})">Regenerate</button>
+        <button onclick="playSound('${item.fileUrl}', ${item.id})">Play/Stop</button>
+        <span class="label">ID:</span> <span class="value">${item.id}</span>
+        <span class="label">Voice:</span> <span class="value">${item.characterVoice}</span>
+        <span class="label">Language:</span> <span class="value">${item.language}</span>
+        <span class="label">Wav:</span> <span class="value">${wavFileName}</span>
+        <button id="edit-btn-${item.id}" class="edit-btn" onclick="editText(${item.id})">Edit</button>
+        <span class="item-field text-preview value" title="${item.text}" data-fulltext="${item.text}">${displayText}</span>
         `;
             listDisplay.appendChild(entryDiv);
         });
+
+        // Update pagination controls
+        const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${lastPage}`;
+        document.getElementById('pageIndicator1').innerText = `Page ${currentPage} of ${lastPage}`;
+        document.getElementById('prevPage').disabled = (currentPage === 1);
+        document.getElementById('nextPage').disabled = (currentPage === lastPage);
     }
+
 
     async function generateAndPlayRemote(chunk, language, characterVoice, volume) {
         try {
@@ -837,7 +1012,6 @@
                 console.log("TTS generation stopped.");
                 return; // Early return if stop flag is set
             }
-            console.log("generateAndPlayRemote:", chunk);
             const data = new URLSearchParams({
                 text_input: chunk.trim(),
                 text_filtering: "standard",
@@ -913,13 +1087,10 @@
                 src: [fileUrl],
                 volume: parseFloat(document.getElementById("volume").value),
                 onplay: function () {
-                    console.log('Playback started for', fileUrl);
                 },
                 onend: function () {
-                    console.log('Playback finished for', fileUrl);
                 },
                 onpause: function () {
-                    console.log('Playback paused for', fileUrl);
                 },
                 onloaderror: function (e) {
                     console.error('Load error for', fileUrl, ':', e);
@@ -1054,15 +1225,26 @@
     function playNextLocalChunk() {
         if (audioQueue.length > 0 && currentlyPlayingIndex < audioQueue.length) {
             isPlaying = true;
-            audioQueue[currentlyPlayingIndex++].play();
+            let currentSound = audioQueue[currentlyPlayingIndex];
+            currentSound.play();
+
+            // Once a sound finishes playing, unload it
+            currentSound.on('end', () => {
+                currentSound.unload();
+            });
+
+            currentlyPlayingIndex++;
         } else {
             isPlaying = false;
         }
     }
 
+
     function stopPlayback() {
         Howler.stop();
         audioQueue = [];
+        // Unload each sound in the queue
+        audioQueue.forEach(sound => sound.unload());
         currentlyPlayingIndex = 0;
         isPlaying = false;
     }
@@ -1102,7 +1284,6 @@
         const startFromIdElement = document.getElementById('startFromId');
         if (startFromIdElement) {
             startFromIdElement.setAttribute('value', '1');
-            console.log('Start From ID set to 1');
         }
         // Other initializations...
     });
@@ -1122,6 +1303,7 @@
             // and highlight the corresponding item
             playListFromIndex(startIndex);
             highlightPlaying(startIndex + 1); // Assuming the list items are 1-indexed
+            updateCurrentPage(startIndex + 1); // Update the current page based on the playing item
         } else {
             // If list is set to pause, pause the current item
             // and remove highlighting
@@ -1153,6 +1335,26 @@
         const currentItem = document.getElementById(`item-${id}`);
         if (currentItem) {
             currentItem.classList.add('highlight');
+        }
+        updateCurrentPage(id);
+    }
+
+
+    function updateCurrentPage(itemIndex) {
+        // Calculate the page number based on the item index
+        // Note: Ensure that the itemIndex is 1-based; if it's 0-based, add 1.
+        const newPage = Math.ceil(itemIndex / itemsPerPage);
+
+        // Update the current page and UI if the new page is different from the current page
+        if (currentPage !== newPage) {
+            currentPage = newPage; // Set the new current page
+            updateUIList(); // Refresh the list display to show the correct page
+        }
+
+        // Optionally, update the 'Jump to Page' input to reflect the current page
+        const jumpToPageInput = document.getElementById('jumpToPage');
+        if (jumpToPageInput) {
+            jumpToPageInput.value = currentPage;
         }
     }
 
@@ -1191,6 +1393,7 @@
             console.log('Index is out of bounds, stopping playback.');
             // Clear any highlights if out of bounds
             highlightPlaying(null);
+            updateUIList();
         }
     }
 
@@ -1211,6 +1414,14 @@
         const startFromIdElement = document.getElementById('startFromId');
         if (startFromIdElement) {
             startFromIdElement.value = '1';
+        }
+        const pageIndicator = document.getElementById('pageIndicator');
+        if (pageIndicator) {
+            pageIndicator.textContent = 'Page 1 of 1';
+        }
+        const pageIndicator1 = document.getElementById('pageIndicator1');
+        if (pageIndicator1) {
+            pageIndicator1.textContent = 'Page 1 of 1';
         }
     }
 
@@ -1424,6 +1635,70 @@
     //////// General Dcoument Listeners ////////
     ////////////////////////////////////////////
 
+    // Event listeners for pagination controls
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateUIList();
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+        const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        if (currentPage < lastPage) {
+            currentPage++;
+            updateUIList();
+        }
+    });
+
+    // Initialize the list on page load
+    document.addEventListener('DOMContentLoaded', updateUIList);
+
+
+    // For the 'Previous' button at the bottom
+    document.getElementById('prevPage1').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateUIList();
+        }
+    });
+
+    // For the 'Next' button at the bottom
+    document.getElementById('nextPage1').addEventListener('click', () => {
+        let lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        if (currentPage < lastPage) {
+            currentPage++;
+            updateUIList();
+        }
+    });
+
+    function handleJumpButtonClick(event) {
+        // Determine which set of controls to use based on the button that was clicked
+        const suffix = event.target.id === 'jumpButton' ? '' : '1';
+        const jumpToInput = document.getElementById(`jumpToPage${suffix}`);
+        const jumpToValue = jumpToInput.value.trim(); // Get the trimmed value
+        const jumpTo = parseInt(jumpToValue, 10); // Parse the value as an integer
+
+        if (!isNaN(jumpTo)) {
+            let lastPage = Math.ceil(ttsList.length / itemsPerPage);
+
+            if (jumpTo >= 1 && jumpTo <= lastPage) {
+                currentPage = jumpTo;
+                updateUIList();
+            } else {
+                alert(`Please enter a valid page number between 1 and ${lastPage}`);
+            }
+        } else {
+            alert("Please enter a number to jump to.");
+        }
+    }
+
+    // Set up the event listener for both jump buttons
+    document.getElementById('jumpButton').addEventListener('click', handleJumpButtonClick);
+    document.getElementById('jumpButton1').addEventListener('click', handleJumpButtonClick);
+
+
+
     // Event listener for changing play type
     document.getElementById('playType').addEventListener('change', function () {
         isStreamingMode = this.value === 'stream';
@@ -1545,11 +1820,13 @@
             adjustPlaybackAndChunkSize(savedPlayType); // Adjust selectability on page load
         }
 
-        // Initialize playback based on preference
-        const savedPlayMode = localStorage.getItem('playMode');
-        if (savedPlayMode) {
-            document.getElementById('playMode').value = savedPlayMode;
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedPlayMode = localStorage.getItem('playMode');
+            if (savedPlayMode) {
+                document.getElementById('playMode').value = savedPlayMode;
+            }
+            playModeValue = savedPlayMode || 'local'; // Default to 'local' if nothing is saved
+        });
 
         // Initialize chunk size based on preference
         const savedChunkSize = localStorage.getItem('chunkSize');
