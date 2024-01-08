@@ -1506,34 +1506,58 @@
     }
 
     function importFromJSON() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
 
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.readAsText(file);
-                reader.onload = (e) => {
-                    try {
-                        const jsonData = JSON.parse(e.target.result);
-                        console.log('JSON data imported:', jsonData);
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.readAsText(file);
+            reader.onload = (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
 
-                        // Update the ttsList with the imported data
-                        ttsList = jsonData;
+                    ttsList = jsonData;
+                    currentPage = 1; // Reset to the first page
+                    updateUIList();
+                    updatePaginationControls(); // Update pagination controls
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            };
+        }
+    };
 
-                        // Refresh the on-screen list
-                        updateUIList(); // This function updates the UI with the contents of ttsList
-                    } catch (error) {
-                        console.error('Error parsing JSON:', error);
-                    }
-                };
-            }
-        };
+    input.click();
+}
 
-        input.click();
+function updatePaginationControls() {
+    const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+    const pageIndicator = document.getElementById('pageIndicator');
+    if (pageIndicator) {
+        pageIndicator.textContent = `Page ${currentPage} of ${lastPage}`;
     }
+
+    const prevPageButton = document.getElementById('prevPage');
+    if (prevPageButton) {
+        prevPageButton.disabled = (currentPage === 1);
+    }
+
+    const nextPageButton = document.getElementById('nextPage');
+    if (nextPageButton) {
+        nextPageButton.disabled = (currentPage === lastPage);
+    }
+
+    // Similar updates for any additional pagination controls if you have them
+    // ...
+}
+
+
+
+
+
 
     //////////////////////////////
     //////// Other Things ////////
