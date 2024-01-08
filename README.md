@@ -544,6 +544,9 @@ Deepspeed and other such things can be installed. Please read the relevant instr
 ## ⬜ AllTalk TTS Generator
 AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently. Please see here for a quick [demo](https://www.youtube.com/watch?v=hunvXn0mLzc)<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed up generation. **Low VRAM** would be best turned off and your LLM model unloaded from your GPU VRAM (unload your model). **No Playback** will reduce memory overhead on very large generations (15,000 words or more). Splitting **Export to Wav** into smaller groupswill also reduce memory overhead at the point of exporting your wav files (so good for low memory systems). 
 
+#### ⬜ Estimated Throughput
+This will vary by system for a multitude of reasons, however, while generating a 58,000 word document to TTS, with DeepSpeed enabled, LowVram disabled, splitting size 2 and on an Nvidia RTX 4070, throughput was around 1,000 words per minute. Meaning, this took 1 hour to generate the TTS. Exporting to combined wavs took about 2-3 minutes total.
+
 #### ⬜ Quick Start
 - **Text Input:** Enter the text you wish to convert into speech in the 'Text Input' box.
 - **Generate TTS:** Hit this to start the text-to-speech conversion.
