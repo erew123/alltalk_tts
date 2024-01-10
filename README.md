@@ -35,8 +35,8 @@ Please check the below link to find a list of all recent updates and changes.
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
-If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)
-If you wish to install AllTalk as a standalone application without Text-generation-webui, please go to [this link here](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
+- If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)<br>
+- If you wish to install AllTalk as a **standalone application** without Text-generation-webui, please go to [this link here](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
