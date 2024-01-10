@@ -791,6 +791,7 @@ audioElement.play(); // Play the audio stream directly
 - **Language (language):** This setting determines the language in which the text should be spoken. A two-letter language code (like `en` for English, `fr` for French, etc.).<br>
 - **Output File (output_file):** This parameter names the output file where the audio will be streamed. It should be a string representing the file name, such as `stream_output.wav`. AllTalk will not save this as a file in its outputs folder.<br>
 <br>
+
 ### 🔴 Future to-do list
 - Possibly add some additional TTS engines (TBD).
 - Tagging support within text.
