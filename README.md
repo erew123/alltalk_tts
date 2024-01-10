@@ -602,6 +602,22 @@ Retrieve a list of available voices for generating speech.
 
    JSON return: `{"voices": ["voice1.wav", "voice2.wav", "voice3.wav"]}`
 
+#### 🟠 Current Settings Endpoint<br>
+Retrieve a list of available voices for generating speech.
+
+- URL: `http://127.0.0.1:7851/api/currentsettings`<br> - Method: `GET`<br>
+
+   `curl -X GET "http://127.0.0.1:7851/api/currentsettings"`
+
+   JSON return: `{"models_available":[{"name":"Coqui","model_name":"API TTS"},{"name":"Coqui","model_name":"API Local"},{"name":"Coqui","model_name":"XTTSv2 Local"}],"current_model_loaded":"XTTSv2 Local","deepspeed_available":true,"deepspeed_status":true,"low_vram_status":true,"finetuned_model":false}
+
+  name & model_name = listing the currently available models.
+  current_model_loaded = what model is currently loaded into VRAM.
+  deepspeed_available = was DeepSpeed detected on startup and available to be activated.
+  deepspeed_status = If DeepSpeed was detected, is it currently activated.
+  low_vram_status = Is Low VRAM currently enabled.
+  finetuned_model = Was a finetuned model detected. (XTTSv2 FT).
+
 #### 🟠 Preview Voice Endpoint
 Generate a preview of a specified voice with hardcoded settings.
 
@@ -650,8 +666,8 @@ Generate a preview of a specified voice with hardcoded settings.
 
 - URL: `http://127.0.0.1:7851/api/tts-generate`<br> - Method: `POST`<br> - Content-Type: `application/x-www-form-urlencoded`<br>
 
-### 🟠 Example command lines
-Standard TTS speech Example (standard text) generating a time-stamped file<br>
+### 🟠 Example command lines (Standard Generation)
+Standard TTS generation supports Narration and will generate a wav file/blob. Standard TTS speech Example (standard text) generating a time-stamped file<br>
 
 `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest" -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=false" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`<br>
 
@@ -754,7 +770,28 @@ Example JSON TTS Generation Response:
 
 `{"status":"generate-success","output_file_path":"C:\\text-generation-webui\\extensions\\alltalk_tts\\outputs\\myoutputfile_1704141936.wav","output_file_url":"http://127.0.0.1:7851/audio/myoutputfile_1704141936.wav","output_cache_url":"http://127.0.0.1:7851/audiocache/myoutputfile_1704141936.wav"}`
 
-### 🔴 Future to-do list
-- SillyTavern Support
+### 🟠 Example command lines (Streaming Generation)
+Streaming TTS generation does NOT support Narration and will generate an audio stream. Streaming TTS speech JavaScript Example:<br>
+```
+// Example parameters
+const text = "Here is some text";
+const voice = "female_01.wav";
+const language = "en";
+const outputFile = "stream_output.wav";
+// Encode the text for URL
+const encodedText = encodeURIComponent(text);
+// Create the streaming URL
+const streamingUrl = `http://localhost:7851/api/tts-generate-streaming?text=${encodedText}&voice=${voice}&language=${language}&output_file=${outputFile}`;
+// Create and play the audio element
+const audioElement = new Audio(streamingUrl);
+audioElement.play(); // Play the audio stream directly
+```
+- **Text (text):** This is the actual text you want to convert to speech. It should be a string and must be URL-encoded to ensure that special characters (like spaces and punctuation) are correctly transmitted in the URL. Example: `Hello World` becomes `Hello%20World` when URL-encoded.<br>
+- **Voice (voice):** This parameter specifies the voice type to be used for the TTS. The value should match one of the available voice options in AllTalks voices folder. This is a string representing the file, like `female_01.wav`.<br>
+- **Language (language):** This setting determines the language in which the text should be spoken. A two-letter language code (like `en` for English, `fr` for French, etc.).<br>
+- **Output File (output_file):** This parameter names the output file where the audio will be streamed. It should be a string representing the file name, such as `stream_output.wav`. AllTalk will not save this as a file in its outputs folder.<br>
+
+<br>### 🔴 Future to-do list
 - Possibly add some additional TTS engines (TBD).
+- Tagging support within text.
 - Have a break!
