@@ -736,93 +736,16 @@ def input_modifier(string, state):
 def ui():
     with gr.Accordion(params["branding"] + " TTS (XTTSv2)"):
         with gr.Row():
-            activate = gr.Checkbox(value=params["activate"], label="Activate TTS")
-            autoplay = gr.Checkbox(
-                value=params["autoplay"], label="Play TTS automatically"
-            )
-
+            activate = gr.Checkbox(value=params['activate'], label='Enable TTS')
+            autoplay = gr.Checkbox(value=params['autoplay'], label='Autoplay TTS')
+            show_text = gr.Checkbox(value=params['show_text'], label='Show Text')
+            
         with gr.Row():
-            show_text = gr.Checkbox(
-                value=params["show_text"], label="Show message text under audio player"
-            )
-            remove_trailing_dots = gr.Checkbox(
-                value=params["remove_trailing_dots"],
-                label='Remove trailing "." from text segments before generation',
-            )
-
-        with gr.Row():
-            with gr.Row():
-                available_voices = get_available_voices()
-                default_voice = params["voice"]
-                # Check if the default voice is in the list of available voices
-                if default_voice not in available_voices:
-                    # Handle the case where the default voice is not in the list (choose a default value or update it)
-                    default_voice = available_voices[
-                        0
-                    ]  # Choose the first available voice as the default
-                # Add allow_custom_value=True to the Dropdown
-                voice = gr.Dropdown(
-                    available_voices,
-                    label="Default Voice",
-                    value=default_voice,
-                    allow_custom_value=True,
-                )
-                create_refresh_button(
-                    voice,
-                    lambda: None,
-                    lambda: {
-                        "choices": get_available_voices(),
-                        "value": params["voice"],
-                    },
-                    "refresh-button",
-                )
-
-            language = gr.Dropdown(
-                languages.keys(),
-                label="Language",
-                allow_custom_value=True,
-                value=params["language"],
-            )
-
-        with gr.Row():
-            with gr.Row():
-                narrator_voice_gr = gr.Dropdown(
-                    get_available_voices(),
-                    label="Narrator Voice",
-                    allow_custom_value=True,
-                    value=params["narrator_voice"],
-                )
-                create_refresh_button(
-                    narrator_voice_gr,
-                    lambda: None,
-                    lambda: {
-                        "choices": get_available_voices(),
-                        "value": params["narrator_voice"],
-                    },
-                    "refresh-button",
-                )
-                narrator_enabled_gr = gr.Radio(
-                    choices={"Enabled": "true", "Disabled": "false"},
-                    label="Narrator Activation",
-                    value="Enabled" if params.get("narrator_enabled") else "Disabled",
-                )
-                non_quoted_text_is_gr = gr.Radio(
-                    choices={"Char": "true", "Narrator": "false"},
-                    label='Text NOT inside of * or " is',
-                    value="Char" if non_quoted_text_is else "Narrator",
-                )
-
-        with gr.Row():
-            low_vram = gr.Checkbox(
-                value=params["low_vram"], label="Low VRAM mode (Read NOTE)"
-            )
+            low_vram = gr.Checkbox(value=params['low_vram'], label='Enable Low VRAM Mode')
             low_vram_play = gr.HTML(visible=False)
-            deepspeed_checkbox = gr.Checkbox(
-                value=params["deepspeed_activate"],
-                label="Activate DeepSpeed (Read NOTE)",
-                visible=deepspeed_installed,
-            )
+            deepspeed_checkbox = gr.Checkbox(value=params['deepspeed_activate'], label='Enable DeepSpeed', visible=deepspeed_installed)
             deepspeed_checkbox_play = gr.HTML(visible=False)
+            remove_trailing_dots = gr.Checkbox(value=params['remove_trailing_dots'], label='Remove trailing "."')
 
         with gr.Row():
             model_loader_choices=["API TTS", "API Local", "XTTSv2 Local"]
@@ -830,13 +753,37 @@ def ui():
                 model_loader_choices.append("XTTSv2 FT")
             tts_radio_buttons = gr.Radio(
                 choices=model_loader_choices,
-                label="Select TTS Generation Method (Read NOTE)",
+                label="TTS Method (Each method sounds slightly different)",
                 value=gr_modelchoice,  # Set the default value
             )
             tts_radio_buttons_play = gr.HTML(visible=False)
-            explanation_text = gr.HTML(
-                f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Click here for the Settings page, help & instructions</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>NOTE: Switching Model Type, Low VRAM & DeepSpeed, each takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is installed on your system."
-            )
+            with gr.Row():
+                available_voices = get_available_voices()
+                default_voice = params["voice"] # Check if the default voice is in the list of available voices
+
+                if default_voice not in available_voices:
+                    default_voice = available_voices[ 0 ] # Choose the first available voice as the default
+                # Add allow_custom_value=True to the Dropdown
+                voice = gr.Dropdown(available_voices, label="Character Voice", value=default_voice, allow_custom_value=True, )
+                create_refresh_button(voice, lambda: None, lambda: {"choices": get_available_voices(), "value": params["voice"],}, "refresh-button",)
+
+        with gr.Row():
+            language = gr.Dropdown(languages.keys(), label="Language", value=params["language"])
+            with gr.Row():
+                narrator_voice_gr = gr.Dropdown(get_available_voices(), label="Narrator Voice", allow_custom_value=True, value=params["narrator_voice"])
+                create_refresh_button(narrator_voice_gr, lambda: None, lambda: {"choices": get_available_voices(), "value": params["narrator_voice"],}, "refresh-button")
+
+        # Temperature and Repetition Penalty (Not yet parsed to api/implemented)
+        # with gr.Row():
+        #     local_temperature_gr = gr.Slider(minimum=0, maximum=1, step=0.05, label="Temperature", value=params["local_temperature"])
+        #     local_repetition_penalty_gr = gr.Slider(minimum=0, maximum=20, step=0.5, label="Repetition Penalty", value=params["local_repetition_penalty"])
+
+        with gr.Row():
+            with gr.Row():
+                narrator_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Narrator", value="Enabled" if params.get("narrator_enabled") else "Disabled")
+                non_quoted_text_is_gr = gr.Radio(choices={"Character": "true", "Narrator": "false"}, label='Unmarked text NOT inside of * or " is', value="Character" if non_quoted_text_is else "Narrator")
+                explanation_text = gr.HTML(
+                f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>")
 
         with gr.Row():
             preview_text = gr.Text(
@@ -914,6 +861,10 @@ def ui():
     )
     voice.change(lambda x: params.update({"voice": x}), voice, None)
     language.change(lambda x: params.update({"language": x}), language, None)
+
+    # TTS Settings (Not yet parsed to api/implemented)
+    # local_temperature_gr.change(lambda x: params.update({"local_temperature": x}), local_temperature_gr, None)
+    # local_repetition_penalty_gr.change(lambda x: params.update({"local_repetition_penalty": x}), local_repetition_penalty_gr, None)
 
     # Narrator selection actions
     narrator_enabled_gr.change(update_narrator_enabled, narrator_enabled_gr, None)
