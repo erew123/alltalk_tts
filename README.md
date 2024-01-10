@@ -790,8 +790,8 @@ audioElement.play(); // Play the audio stream directly
 - **Voice (voice):** This parameter specifies the voice type to be used for the TTS. The value should match one of the available voice options in AllTalks voices folder. This is a string representing the file, like `female_01.wav`.<br>
 - **Language (language):** This setting determines the language in which the text should be spoken. A two-letter language code (like `en` for English, `fr` for French, etc.).<br>
 - **Output File (output_file):** This parameter names the output file where the audio will be streamed. It should be a string representing the file name, such as `stream_output.wav`. AllTalk will not save this as a file in its outputs folder.<br>
-
-<br>### 🔴 Future to-do list
+<br>
+### 🔴 Future to-do list
 - Possibly add some additional TTS engines (TBD).
 - Tagging support within text.
 - Have a break!
