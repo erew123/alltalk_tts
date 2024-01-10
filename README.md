@@ -13,6 +13,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Console output:** Clear command line output for any warnings or issues.
 - **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
+- **SillyTavern integration:** Full integration with SillyTavern.
 
 ## Index
 
@@ -34,7 +35,8 @@ Please check the below link to find a list of all recent updates and changes.
 ## 🟩 Installation on Text generation web UI
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
-If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w) 
+If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)
+If you wish to install AllTalk as a standalone application without Text-generation-webui, please go to [this link here](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
