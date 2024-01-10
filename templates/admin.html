@@ -222,6 +222,7 @@
         <li><a href="#using-voice-samples">Using Voice Samples</a></li>
         <li><a href="#text-not-inside">Text Not inside</a></li>
         <li><a href="#low-vram">Low VRAM</a></li>
+        <li><a href="#sillytavern-support">Silly Tavern Support</a></li>
         <li><a href="#finetune">Finetuning (Training the model)</a></li>
         <li><a href="#deepspeed">DeepSpeed</a>
             <ul>
@@ -272,8 +273,8 @@
             here</a><br />Update instructions <a href="https://github.com/erew123/alltalk_tts?#-updating"
             target="_blank" rel="noopener">link here</a><br />Help and issues <a
             href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank" rel="noopener">link
-            here</a><br />TTS Generator <a
-            href="http://127.0.0.1:7851/static/tts_chunk_player/tts_chunk_player.html" target="_blank" rel="noopener">link
+            here</a><br />TTS Generator <a href="http://127.0.0.1:7851/static/tts_chunk_player/tts_chunk_player.html"
+            target="_blank" rel="noopener">link
             here<br /><br /></a><span style="text-decoration: underline;"><strong>Text generation webUI</strong></span>
         <br />Web interface&nbsp;<a href="http://{{ params.ip_address }}:7860" target="_blank" rel="noopener">link
             here</a> <br />Documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki"
@@ -291,7 +292,8 @@
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
     <h2 id="demotesttts">Demo/Test TTS</h2>
-    <p style="padding-left: 30px;">If you are wanting to generate bulk quantites of TTS and have control over them, please see the <a href="#tts-generator">AllTalk TTS Generator</a> below.</p>
+    <p style="padding-left: 30px;">If you are wanting to generate bulk quantites of TTS and have control over them,
+        please see the <a href="#tts-generator">AllTalk TTS Generator</a> below.</p>
     <div id="container">
         <form method="post" action="/tts-demo-request" id="ttsForm">
             <label for="text">Text:</label>
@@ -655,6 +657,100 @@
         Users and is particularly beneficial for users with less than 2GB of free VRAM after loading their LLM,
         delivering a substantial 5-10x improvement in TTS generation speed.</p>
     <div style="text-align: center;"><img src="/static/lowvrammode.png" alt="How Low VRAM Works" /></div>
+
+    <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
+
+    <h2 id="sillytavern-support"><strong>SillyTavern Support</strong></h2>
+    <h4>Important note for Text-generation-webui users</h4>
+    <p style="padding-left: 30px;">You <strong><span style="color: #3366ff;">HAVE</span></strong> to disable
+        <strong>Activate TTS</strong> or <strong>Enable TTS</strong> within the Text-generation-webui AllTalk interface,
+        otherwise&nbsp;Text-generation-webui will also generate TTS due to the way it sends out text. You can do this
+        each time you start up&nbsp;Text-generation-webui or set it in the start-up settings at the top of this page.
+    </p>
+    <h4>TTS Generation Methods in SilllyTavern</h4>
+    <p style="padding-left: 30px;">You have 2 types of audio generation options, Streaming and Standard.</p>
+    <p style="padding-left: 30px; text-align: justify;">The Streaming Audio Generation method is designed for speed and
+        is best suited for situations where you just want quick audio playback. This method, however, is limited to
+        using just one voice per TTS generation request. This means a limitation of the Streaming method is the
+        inability to utilize the AllTalk narrator function, making it a straightforward but less nuanced option.</p>
+    <p style="padding-left: 30px; text-align: justify;">On the other hand, the Standard Audio Generation method provides
+        a richer auditory experience. It's slightly slower than the Streaming method but compensates for this with its
+        ability to split text into multiple voices. This functionality is particularly useful in scenarios where
+        differentiating between character dialogues and narration can enhance the storytelling and delivery. The
+        inclusion of the AllTalk narrator functionality in the Standard method allows for a more layered and immersive
+        experience, making it ideal for content where depth and variety in voice narration add significant value.</p>
+    <p style="padding-left: 30px; text-align: justify;">In summary, the choice between Streaming and Standard methods in
+        AllTalk TTS depends on what you want. Streaming is great for quick and simple audio generation, while Standard
+        is preferable for a more dynamic and engaging audio experience.</p>>
+    <ul>
+        <li><strong>AllTalk TTS Generation Method:</strong>
+            <ul>
+                <li>Select between Standard and Streaming Audio Generation methods.</li>
+                <li>This setting impacts the AllTalk narrator functionality.</li>
+            </ul>
+        </li>
+        <li><strong>Language Selection:</strong><br />
+            <ul>
+                <li>Select your preferred TTS generation language from the "Language" dropdown.</li>
+            </ul>
+        </li>
+        <li><strong>Model Switching:</strong>
+            <ul>
+                <li>Switch between different TTS models like API TTS, API Local, XTTSv2 Local, and optionally XTTSv2 FT
+                    if you have a finetuned model available.</li>
+                <li>Fine-tuned model availability (XTTSv2 FT) will only show when a finetuned model is detected by
+                    AllTalk.</li>
+                <li>See TTS Models/Methods for more information (though most people will want to stick with XTTSv2
+                    Local).</li>
+            </ul>
+        </li>
+        <li><strong>DeepSpeed and Low VRAM Options:</strong>
+            <ul>
+                <li>Optimize performance with DeepSpeed and Low VRAM settings.</li>
+                <li>DeepSpeed can offer a 2-3x performance boost on TTS generation.</li>
+                <li>See the relevant sections in this documentation for details.</li>
+            </ul>
+        </li>
+    </ul>
+    <p style="padding-left: 30px;">Changing model or DeepSpeed or Low VRAM <span
+            style="color: #0000ff;"><strong>each</strong></span> take about 15 seconds so you should only change one at
+        a time and wait for <span style="color: #99cc00;">Ready</span> before changing the next setting. To set these
+        options long term you can apply the settings at the top of this page.</p>
+    <h4>AllTalk Narrator</h4>
+    <p style="padding-left: 30px;">Only available on the Standard Audo Generation method.</p>
+    <ul>
+        <li><strong>Narrator Voice Selection:</strong>
+            <ul>
+                <li>Allows users to choose different narrator voices.</li>
+                <li>Access via the "Narrator Voice" dropdown.</li>
+            </ul>
+        </li>
+        <li><strong>AllTalk Narrator:</strong>
+            <ul>
+                <li>Toggle the AllTalk narrator feature.</li>
+                <li>Access via "AT Narrator" dropdown with Enabled/Disabled options.</li>
+            </ul>
+        </li>
+        <li><strong>Text Outside Asterisks Handling:</strong>
+            <ul>
+                <li>Choose how text outside asterisks is interpreted (as Narrator or Character voice).</li>
+                <li>Managed via the "Text Not Inside * or "" dropdown.</li>
+                <li>Note, only available when the AllTalk Narrator is enabled.</li>
+            </ul>
+        </li>
+    </ul>
+    <h4>Usage Notes:</h4>
+    <ul>
+        <li>On startup of SillyTavern, it will pull your current settings from AllTalk (Current model, DeepSpeed status,
+            Low VRAM status and Finetuned model availability).</li>
+        <li>Enabling the narrator automatically unchecks certain checkboxes related to text handling.</li>
+        <li>Changes in model or settings might trigger multiple requests to the server; patience is advised.</li>
+    </ul>
+    <h4>Troubleshooting:</h4>
+    <ul>
+        <li>If experiencing issues, use the Reload button in SillyTavern's TTS extension to reinitialize the connection
+            to AllTalk and check if AllTalk is started correctly.</li>
+    </ul>
 
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
