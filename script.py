@@ -781,7 +781,7 @@ def ui():
         with gr.Row():
             with gr.Row():
                 narrator_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Narrator", value="Enabled" if params.get("narrator_enabled") else "Disabled")
-                non_quoted_text_is_gr = gr.Radio(choices={"Char": "true", "Narrator": "false"}, label='Unmarked text NOT inside of * or " is', value="Char" if non_quoted_text_is else "Narrator")
+                non_quoted_text_is_gr = gr.Radio(choices={"Character": "true", "Narrator": "false"}, label='Unmarked text NOT inside of * or " is', value="Character" if non_quoted_text_is else "Narrator")
                 explanation_text = gr.HTML(
                 f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>")
 
