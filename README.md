@@ -1,17 +1,18 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
+- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app) **or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts?#-installation-on-text-generation-web-ui)
+- **Model Finetuning:** Train the model specifically on a voice of your choosing for better reproduction.
+- **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
+- **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you [demo](https://www.youtube.com/watch?v=hunvXn0mLzc).
+- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
+- **Low VRAM mode:** Great for people with small GPU memory or if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18nrv7FR6wuA)
-- **Low VRAM mode:** Great for people with small GPU memory or if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
-- **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **Finetuning** Train the model specifically on a voice of your choosing for better reproduction.
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **Console output** Clear command line output for any warnings or issues.
-- **API Suite and 3rd Party support via JSON calls** Can be used with 3rd party applications via JSON calls.
-- **Can be run as a standalone app** Not just inside of text-generation-webui.
+- **Console output:** Clear command line output for any warnings or issues.
+- **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
 
 ## Index
 
@@ -22,6 +23,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
 - 🟦 [Running AllTalk as a standalone app](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
+- ⬜ [AllTalk TTS Generator](https://github.com/erew123/alltalk_tts?#-alltalk-tts-generator)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
@@ -149,6 +151,7 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 |:---:|:---:|
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |  ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
 |![image](https://github.com/erew123/alltalk_tts/assets/35898566/68edc968-bdd2-4f98-9d56-b9ca40decf26) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/eb5e617b-2345-418d-8267-a9d30f705a10) |
+|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4bd0f02e-298d-4e46-95ea-afc003c1cb70) |
 
 ## 🟨 Help with problems
 #### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
@@ -538,6 +541,43 @@ You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio
 
 Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.<br><br>
 
+## ⬜ AllTalk TTS Generator
+AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently. Please see here for a quick [demo](https://www.youtube.com/watch?v=hunvXn0mLzc)<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed up generation. **Low VRAM** would be best turned off and your LLM model unloaded from your GPU VRAM (unload your model). **No Playback** will reduce memory overhead on very large generations (15,000 words or more). Splitting **Export to Wav** into smaller groups will also reduce memory overhead at the point of exporting your wav files (so good for low memory systems). 
+
+#### ⬜ Estimated Throughput
+This will vary by system for a multitude of reasons, however, while generating a 58,000 word document to TTS, with DeepSpeed enabled, LowVram disabled, splitting size 2 and on an Nvidia RTX 4070, throughput was around 1,000 words per minute. Meaning, this took 1 hour to generate the TTS. Exporting to combined wavs took about 2-3 minutes total.
+
+#### ⬜ Quick Start
+- **Text Input:** Enter the text you wish to convert into speech in the 'Text Input' box.
+- **Generate TTS:** Hit this to start the text-to-speech conversion.
+- **Pause/Resume:** Used to pause and resume the playback of the initial generation of wavs or the stream.
+- **Stop Playback:** This will stop the current audio playing back. It does not stop the text from being generated however. 
+Once you have sent text off to be generated, either as a stream or wav file generation, the TTS server will remain busy until this process has competed. As such, think carefully as to how much you want to send to the server. 
+If you are generating wav files and populating the queue, you can generate one lot of text to speech, then input your next lot of text and it will continue adding to the list.
+#### ⬜ TTS Generation Modes
+- **Wav Chunks:** Perfect for creating audio books, or anything you want to keep long term. Breaks down your text into manageable wav files and queues them up. Generation begins automatically, and playback will start after a few chunks have been prepared ahead. You can set the volume to 0 if you don’t want to hear playback. With Wav chunks, you can edit and/or regenerate portions of the TTS as needed.
+- **Streaming:** For immediate playback without the ability to save. Ideal for on-the-fly speech generation and listening. This will not generate wav files and it will play back through your browser. You cannot stop the server generating the TTS once it has been sent.<br><br>
+With wav chunks you can either playback “In Browser” which is the web page you are on, or “On Server” which is through the console/terminal where AllTalk is running from, or "No Playback". Only generation “In Browser” can play back smoothly and populate the Generated TTS List. Setting the Volume will affect the volume level played back both “In Browser” and “On Server”.<br><br>
+For generating **large amounts of TTS**, it's recommended to select the **No Playback** option. This setting minimizes the memory usage in your web browser by avoiding the loading and playing of audio files directly within the browser, which is particularly beneficial for handling extensive audio generations. The definition of large will vary depending on your system RAM availability (will update when I have more information as to guidelines). Once the audio is generated, you can export your list to JSON (for safety) and use the **Play List** option to play back your audio.
+#### ⬜ Playback and List Management
+- **Playback Controls:** Utilize 'Play List' to start from the beginning or 'Stop Playback' to halt at any time.
+- **Custom Start:** Jump into your list at a specific ID to hear a particular section.
+- **Regeneration and Editing:** If a chunk isn't quite right, you can opt to regenerate it or edit the text directly. Click off the text to save changes and hit regenerate for the specific line.
+- **Export/Import List:** Save your TTS list as a JSON file or import one. Note: Existing wav files are needed for playback. Exporting is handy if you want to take your files away into another program and have a list of which wav is which, or if you keep your audio files, but want to come back at a later date, edit one or two lines, regenerate the speech and re-combine the wav’s into one new long wav.
+#### ⬜ Exporting Your Audio
+- **Export to WAV:** Combine all generated TTS from the list, into one single WAV file for easy download and distribution. Its always recommended to export your list to a JSON before exporting, so that you have a backup, should something go wrong. You can simply re-import the list and try exporting again.<br><br>When exporting, there is a file size limit of 1GB and as such you have the option to choose how many files to include in each block of audio exported. 600 is just on the limit of 1GB, depending on the average file size, so 500 or less is a good amount to work with. You can combine the generated files after if you wish, in Audacity or similar.<br><br>Additionally, lower export batches will lower the memory requirements, so if your system is low on memory (maybe 8 or 16GB system), you can use smaller export batches to keep the memory requirement down.
+#### ⬜ Customization and Preferences
+- **Character Voice:** Choose the voice that will read your text.
+- **Language:** Select the language of your text.
+- **Chunk Sizes:** Decide the size of text chunks for generation. Smaller sizes are recommended for better TTS quality.
+#### ⬜ Interface and Accessibility
+- **Dark/Light Mode:** Switch between themes for your visual comfort.
+- **Word Count and Generation Queue:** Keep track of the word count and the generation progress.
+#### ⬜ Notes on Usage
+- For seamless TTS generation, it's advised to keep text chunks under 250 characters, which you can control with the Chunk sizes.
+- Generated audio can be played back from the list, which also highlights the currently playing chunk.
+- The TTS Generator remembers your settings, so you can pick up where you left off even after refreshing the page.
+
 ## 🟠 API Suite and JSON-CURL
 ### 🟠Overview
 The Text-to-Speech (TTS) Generation API allows you to generate speech from text input using various configuration options. This API supports both character and narrator voices, providing flexibility for creating dynamic and engaging audio content.
@@ -713,7 +753,6 @@ Example JSON TTS Generation Response:
 `{"status":"generate-success","output_file_path":"C:\\text-generation-webui\\extensions\\alltalk_tts\\outputs\\myoutputfile_1704141936.wav","output_file_url":"http://127.0.0.1:7851/audio/myoutputfile_1704141936.wav","output_cache_url":"http://127.0.0.1:7851/audiocache/myoutputfile_1704141936.wav"}`
 
 ### 🔴 Future to-do list
-- Voice output within the command prompt/terminal (TBD).
-- Correct a few spelling mistakes in the documentation.
+- SillyTavern Support
 - Possibly add some additional TTS engines (TBD).
 - Have a break!
