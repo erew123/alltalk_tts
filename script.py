@@ -237,10 +237,12 @@ process = subprocess.Popen(["python", script_path])
 # Check if the subprocess has started successfully
 if process.poll() is None:
     print(f"[{params['branding']}Startup] TTS Subprocess starting")
+    print(f"[{params['branding']}Startup]")
     print(
-        f"[{params['branding']}Startup] Readme available here:",
+        f"[{params['branding']}Startup] web interface here:",
         f"http://{params['ip_address']}:{params['port_number']}",
     )
+    print(f"[{params['branding']}Startup]")
 else:
     print(
         f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process"
