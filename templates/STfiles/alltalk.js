@@ -268,23 +268,56 @@ class AllTalkTtsProvider {
         // Apply settings to Narrator Voice dropdown
         if (narratorVoiceSelect && this.settings.narrator_voice) {
             narratorVoiceSelect.value = this.settings.narrator_voice.replace('.wav', '');
+            this.settings.narrator_voice_gen = this.settings.narrator_voice;
+            //console.log(this.settings.narrator_voice_gen)
         }
         // Apply settings to AT Narrator Enabled dropdown
         if (atNarratorSelect) {
+            //console.log(this.settings.narrator_enabled)
+            // Sync the state with the checkbox in index.js
+            const ttsPassAsterisksCheckbox = document.getElementById('tts_pass_asterisks'); // Access the checkbox from index.js
+            const ttsNarrateQuotedCheckbox = document.getElementById('tts_narrate_quoted'); // Access the checkbox from index.js
+            const ttsNarrateDialoguesCheckbox = document.getElementById('tts_narrate_dialogues'); // Access the checkbox from index.js
+            // Sync the state with the checkbox in index.js
+            if (this.settings.narrator_enabled) {
+                ttsPassAsterisksCheckbox.checked = false;
+                $('#tts_pass_asterisks').click(); // Simulate a click event
+                $('#tts_pass_asterisks').trigger('change');
+            }
+            if (!this.settings.narrator_enabled) {
+                ttsPassAsterisksCheckbox.checked = true;
+                $('#tts_pass_asterisks').click(); // Simulate a click event
+                $('#tts_pass_asterisks').trigger('change');
+            }
+            // Uncheck and set tts_narrate_quoted to false if narrator is enabled
+            if (this.settings.narrator_enabledd) {
+                ttsNarrateQuotedCheckbox.checked = true;
+                ttsNarrateDialoguesCheckbox.checked = true;
+                // Trigger click events instead of change events
+                $('#tts_narrate_quoted').click();
+                $('#tts_narrate_quoted').trigger('change');
+                $('#tts_narrate_dialogues').click();
+                $('#tts_narrate_dialogues').trigger('change');
+            }
             atNarratorSelect.value = this.settings.narrator_enabled.toString();
+            this.settings.narrator_enabled = this.settings.narrator_enabled.toString();
         }
         // Apply settings to the Language dropdown
         const languageSelect = document.getElementById('language_options');
         if (languageSelect && this.settings.language) {
             languageSelect.value = this.settings.language;
+            //console.log(this.settings.language)
         }
         // Apply settings to Text Not Inside dropdown
         if (textNotInsideSelect && this.settings.text_not_inside) {
             textNotInsideSelect.value = this.settings.text_not_inside;
+            this.settings.at_narrator_text_not_inside = this.settings.text_not_inside;
+            //console.log(this.settings.at_narrator_text_not_inside)
         }
         // Apply settings to Generation Method dropdown
         if (generationMethodSelect && this.settings.at_generation_method) {
             generationMethodSelect.value = this.settings.at_generation_method;
+            //console.log(this.settings.at_generation_method)
         }
         // Additional logic to disable/enable dropdowns based on the selected generation method
         const isStreamingEnabled = this.settings.at_generation_method === 'streaming_enabled';
@@ -595,21 +628,30 @@ class AllTalkTtsProvider {
                 narratorVoiceSelect.disabled = !isNarratorEnabled;
 
                 // Sync the state with the checkbox in index.js
-                if (ttsPassAsterisksCheckbox) {
-                    ttsPassAsterisksCheckbox.checked = isNarratorEnabled;
+                if (isNarratorEnabled) {
+                    ttsPassAsterisksCheckbox.checked = false;
+                    $('#tts_pass_asterisks').click(); // Simulate a click event
+                    $('#tts_pass_asterisks').trigger('change');
+                }
+                if (!isNarratorEnabled) {
+                    ttsPassAsterisksCheckbox.checked = true;
+                    $('#tts_pass_asterisks').click(); // Simulate a click event
+                    $('#tts_pass_asterisks').trigger('change');
                 }
                 // Uncheck and set tts_narrate_quoted to false if narrator is enabled
                 if (isNarratorEnabled) {
-                    ttsNarrateQuotedCheckbox.checked = false;
-                    ttsNarrateDialoguesCheckbox.checked = false;
-                    // Trigger any necessary event handlers or updates for tts_narrate_quoted
+                    ttsNarrateQuotedCheckbox.checked = true;
+                    ttsNarrateDialoguesCheckbox.checked = true;
+                    // Trigger click events instead of change events
+                    $('#tts_narrate_quoted').click();
                     $('#tts_narrate_quoted').trigger('change');
+                    $('#tts_narrate_dialogues').click();
                     $('#tts_narrate_dialogues').trigger('change');
                 }
-
                 this.onSettingsChangeAllTalk(); // Save the settings after change
             });
         }
+
 
 
         // Event Listener for AT Generation Method Dropdown
@@ -632,7 +674,6 @@ class AllTalkTtsProvider {
                 this.settings.at_generation_method = selectedMethod; // Update the setting here
                 this.onSettingsChangeAllTalk(); // Save the settings after change
             });
-
         }
 
         // Listener for Language Dropdown
@@ -874,6 +915,7 @@ function updateStatus(message) {
 
 function saveAllTalkSettings(settingsToSave) {
     // Save the specific settings to localStorage
+    console.log("settings", settingsToSave)
     localStorage.setItem('AllTalkSettings', JSON.stringify(settingsToSave));
 }
 
