@@ -402,6 +402,8 @@ If you've compacted and moved your model, its highly unlikely you would want to 
 
 ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 
+- #### DeepSpeed Installation for Text generation webUI
+
 1) Preferably use your built in package manager to install CUDA tools. Alternatively download and install the Nvidia Cuda Toolkit for Linux [Nvidia Cuda Toolkit 11.8 or 12.1](https://developer.nvidia.com/cuda-toolkit-archive)<br><br>
 2) Open a terminal console.<br><br>
 3) Install libaio-dev (however your Linux version installs things) e.g. `sudo apt install libaio-dev`<br><br>
@@ -413,13 +415,32 @@ If you've compacted and moved your model, its highly unlikely you would want to 
 `export CUDA_HOME=/etc/alternatives/cuda`<br><br>
 **every** time you run `./cmd_linux.sh`.<br> <br>
 If you try to start DeepSpeed with the CUDA_HOME path set incorrectly, expect an error similar to `[Errno 2] No such file or directory: /home/yourname/text-generation-webui/installer_files/env/bin/nvcc`<br> <br>
-9) Now install deepspeed with pip install deepspeed<br><br>
-10) You can now start Text generation webUI `python server.py` ensuring to activate your extensions.<br><br>
+8) Now install deepspeed with pip install deepspeed<br><br>
+9) You can now start Text generation webUI `python server.py` ensuring to activate your extensions.<br><br>
 Just to reiterate, starting Text-generation-webUI with `./start_linux.sh` will overwrite the CUDA_HOME variable unless you have permanently changed it, hence always starting it with `./cmd_linux.sh` **then** setting the environment variable manually (step 7) and **then** `python server.py`, which is how you would need to run it each time, unless you permanently set the environment variable for CUDA_HOME within Text-generation-webUI's standard Python environment.
 <br><br>
 **Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `./cmd_linux.sh` and then `pip uninstall deepspeed`<br><br>
+
+- #### DeepSpeed Installation for standalone alltalk_tts app
+
+1) Preferably use your built in package manager to install CUDA tools. Alternatively download and install the Nvidia Cuda Toolkit for Linux [Nvidia Cuda Toolkit 11.8 or 12.1](https://developer.nvidia.com/cuda-toolkit-archive)<br><br>
+2) Open a terminal console.<br><br>
+3) Install libaio-dev (however your Linux version installs things) e.g. `sudo apt install libaio-dev` If you are using an RPM based distribution the package will probably be named `libaio-devel`.<br><br> 
+4) Navigate to your alltalk_tts folder e.g. `cd alltext_tts`<br><br>
+5) Start the alltalk_tts Python environment `conda activate alltalkenv`<br><br>
+6) You will need to set the **CUDA_HOME** environment variable. Details to change it each time are on the next step. Below is a link to Conda's manual and changing environment variables permanently though its possible changing it permanently could affect other extensions, you would have to test.<br> <br>
+[Conda manual - Environment variables](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars)<br><br>
+7) Set the environment path for CUDA_HOME e.g. `export CUDA_HOME=/usr/local/cuda-12.1/bin` or `export CUDA_HOME=/etc/alternative/cuda`.  Verify the path on your Linux distro before setting this variable.<br>
+If you try to start DeepSpeed with the CUDA_HOME path set incorrectly, expect an error similar to `[Errno 2] No such file or directory` or `CUDA_HOME does not exist`<br> <br>
+If you set the `env` variable and you receive an error of `[Errno 2] No such file or directory: '/usr/local/cuda-12.1/bin/bin/nvcc'` with a double `bin/bin` path, you can remove the env variable with `unset CUDA_HOME` and add the path to your linux PATH env variable with: `export PATH=$PATH:/usr/local/cuda-12.1/bin`. (Verify the path on your Linux distro before setting this variable.)  However if you are using other applications that use CUDA, you will want to verify that configuring the path did not break those applications. <br><br> 
+8) Now install deepspeed with `pip install deepspeed`<br><br>
+9) You can now start the alltalk_tts webUI with `python script.py`<br><br>
+<br><br>
+**Removal** - If it became necessary to uninstall DeepSpeed, you can do so by entering your `alltalkenv` enviroment `conda activate alltalkenv` and then running `pip uninstall deepspeed`<br><br>
+
+
 </details>
-	
+
 #### 🟢🟡 Windows Installation
 DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
 

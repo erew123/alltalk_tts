@@ -864,6 +864,7 @@ def ui():
     voice.change(lambda x: params.update({"voice": x}), voice, None)
     language.change(lambda x: params.update({"language": x}), language, None)
 
+
     # TS Settings (Not yet parsed to api/implemented)
     # local_temperature_gr.change(lambda x: params.update({"local_temperature": x}), local_temperature_gr, None)
     # local_repetition_penalty_gr.change(lambda x: params.update({"local_repetition_penalty": x}), local_repetition_penalty_gr, None)
