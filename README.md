@@ -511,6 +511,9 @@ If you set the `env` variable and you receive an error of `[Errno 2] No such fil
 </details>
 
 #### 🟢🟡 Windows Installation
+<details>
+	<summary>Click to Expand: Windows DeepSpeed options</summary><br>
+	
 DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
 
 Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
@@ -634,6 +637,7 @@ def get_shm_size():
 11. Now `cd dist` to go into your dist folder and you can now `pip install deepspeed-YOURFILENAME.whl` (or whatever your WHL file is called).
 <br><br>
 **Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
+</details>
 </details>
 
 ## ⬜ AllTalk TTS Generator
