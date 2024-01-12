@@ -361,6 +361,13 @@ if "%UserChoice%" == "1" (
     pip install -r requirements_other.txt
 )
 
+@rem Create start_environment.bat to run AllTalk environment
+echo @echo off > start_environment.bat
+echo cd /D "%~dp0" >> start_environment.bat
+echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_environment.bat
+echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_environment.bat
+echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_environment.bat
+echo exit >> start_environment.bat
 @rem Create start_alltalk.bat to run AllTalk
 echo @echo off > start_alltalk.bat
 echo cd /D "%~dp0" >> start_alltalk.bat
@@ -394,6 +401,7 @@ conda deactivate
 echo Deleting "alltalk_environment". Please wait.
 rd /s /q "alltalk_environment"
 del start_alltalk.bat
+del start_environment.bat
 if %ERRORLEVEL% neq 0 (
     echo.
     echo    Failed to delete alltalk_environment folder.
