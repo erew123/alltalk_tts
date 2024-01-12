@@ -1,7 +1,7 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
-- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)**or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
+- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
 - **Model Finetuning:** Train the model specifically on a voice of your choosing for better reproduction.
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you [demo](https://www.youtube.com/watch?v=hunvXn0mLzc).
