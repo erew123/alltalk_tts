@@ -215,6 +215,13 @@ def log_system_info():
 
             # Print colored output
             print(f"{package_name.ljust(max_package_length)}  Required: {color_required}{operator} {required_version.ljust(12)}\033[0m  Installed: {color_installed}{installed_version}\033[0m")
+
+        print("\nOn Nvidia Graphics cards machines, if your \033[92mInstalled\033[0m version of \033[92mTorch\033[0m and \033[92mTorchaudio\033[0m does")    
+        print("not have \033[92m+cu118\033[0m (Cuda 11.8) or \033[92m+cu121\033[0m (Cuda 12.1) listed after them, you do not have CUDA")
+        print("installed for Torch or Torchaudio in this Python environment. This will cause you problems")
+        print("with \033[94mAllTalk\033[0m and \033[94mFinetuning.\033[0m You may have to 'pip install' a new version of torch and")
+        print("torchaudio, using '\033[94m--upgrade --force-reinstall\033[0m' with the correct version of PyTorch for\033[0m")
+        print("your Python environment.\033[0m")
         print("\033[94m\nRequirements file specifier meanings:\033[0m")
         explanation = textwrap.dedent("""
         == Exact version              != Any version except          < Less than               

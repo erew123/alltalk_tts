@@ -13,6 +13,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
 - **Console output:** Clear command line output for any warnings or issues.
 - **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
+- **SillyTavern integration:** Full integration with SillyTavern.
 
 ## Index
 
@@ -31,10 +32,49 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 Please check the below link to find a list of all recent updates and changes.
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
+## 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
+For Windows 10/11 and Linux machines there is a quick setup script. 
+<details>
+	<summary>(Click to expand) QUICK SETUP - Text-Generation-webui</summary><br>
+	
+1) To download the AllTalk setup you can either:
+   - A) On this page select **CODE** > **Download ZIP** then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\`<br><br>
+   - B) Go to a terminal/console, move into the `\text-generation-webui\extensions\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
+3) In a terminal/command prompt, in the text-generation-webui folder you will start its Python environment with either `cmd_windows.bat` or `./cmd_linux.sh`
+4) Move into the AllTalk folder e.g. `cd extensions` then `cd alltalk_tts`
+5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
+6) Follow the on-screen prompts and install the correct requirements files that you need. It's recommended to test AllTalk works before installing DeepSpeed.
+
+   Any time you need to make changes to AllTalk, or use Finetuning etc, always start the Text-generation-webui Python environment first.
+
+   Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
+</details>
+<details>
+	<summary>(Click to expand) QUICK SETUP - Standalone Installation</summary><br>
+	
+1) To download the AllTalk setup you can either:
+   - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`<br><br>
+   - B) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
+4) In a terminal/command prompt, move into the AllTalk folder e.g. `cd alltalk_tts`
+5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
+6) Follow the on-screen prompts and install the correct requirements files that you need. It's recommended to test AllTalk works before installing DeepSpeed.
+
+   DeepSpeed on Windows machines will be installed as standard. Linux machines have other requirements which are detailed within the setup utility and on this page.
+
+   Finetuning has other installation requirements so please read any instructions in the setup utility and refer back here to this page for detailed instructions.<br><br>
+</details>
+
+
+
 ## 🟩 Installation on Text generation web UI
+On Mac's or if you wish to perform a manual installation, please expand the below.
+<details>
+	<summary>(Click to expand) MANUAL INSTALLATION - Text-Generation-webui</summary><br>
+
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
-If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w) 
+- If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)<br>
+- If you wish to install AllTalk as a **standalone application** without Text-generation-webui, please go to [this link here](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui`
@@ -62,6 +102,7 @@ If you want to watch a video of how to do the below [link here](https://youtu.be
 10) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
 
 11) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
+</details>
 
 #### 🟩 Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
@@ -621,6 +662,22 @@ Retrieve a list of available voices for generating speech.
 
    JSON return: `{"voices": ["voice1.wav", "voice2.wav", "voice3.wav"]}`
 
+#### 🟠 Current Settings Endpoint<br>
+Retrieve a list of available voices for generating speech.
+
+- URL: `http://127.0.0.1:7851/api/currentsettings`<br> - Method: `GET`<br>
+
+   `curl -X GET "http://127.0.0.1:7851/api/currentsettings"`
+
+   JSON return: `{"models_available":[{"name":"Coqui","model_name":"API TTS"},{"name":"Coqui","model_name":"API Local"},{"name":"Coqui","model_name":"XTTSv2 Local"}],"current_model_loaded":"XTTSv2 Local","deepspeed_available":true,"deepspeed_status":true,"low_vram_status":true,"finetuned_model":false}
+
+  name & model_name = listing the currently available models.
+  current_model_loaded = what model is currently loaded into VRAM.
+  deepspeed_available = was DeepSpeed detected on startup and available to be activated.
+  deepspeed_status = If DeepSpeed was detected, is it currently activated.
+  low_vram_status = Is Low VRAM currently enabled.
+  finetuned_model = Was a finetuned model detected. (XTTSv2 FT).
+
 #### 🟠 Preview Voice Endpoint
 Generate a preview of a specified voice with hardcoded settings.
 
@@ -669,8 +726,8 @@ Generate a preview of a specified voice with hardcoded settings.
 
 - URL: `http://127.0.0.1:7851/api/tts-generate`<br> - Method: `POST`<br> - Content-Type: `application/x-www-form-urlencoded`<br>
 
-### 🟠 Example command lines
-Standard TTS speech Example (standard text) generating a time-stamped file<br>
+### 🟠 Example command lines (Standard Generation)
+Standard TTS generation supports Narration and will generate a wav file/blob. Standard TTS speech Example (standard text) generating a time-stamped file<br>
 
 `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest" -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=false" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`<br>
 
@@ -773,7 +830,29 @@ Example JSON TTS Generation Response:
 
 `{"status":"generate-success","output_file_path":"C:\\text-generation-webui\\extensions\\alltalk_tts\\outputs\\myoutputfile_1704141936.wav","output_file_url":"http://127.0.0.1:7851/audio/myoutputfile_1704141936.wav","output_cache_url":"http://127.0.0.1:7851/audiocache/myoutputfile_1704141936.wav"}`
 
+### 🟠 Example command lines (Streaming Generation)
+Streaming TTS generation does NOT support Narration and will generate an audio stream. Streaming TTS speech JavaScript Example:<br>
+```
+// Example parameters
+const text = "Here is some text";
+const voice = "female_01.wav";
+const language = "en";
+const outputFile = "stream_output.wav";
+// Encode the text for URL
+const encodedText = encodeURIComponent(text);
+// Create the streaming URL
+const streamingUrl = `http://localhost:7851/api/tts-generate-streaming?text=${encodedText}&voice=${voice}&language=${language}&output_file=${outputFile}`;
+// Create and play the audio element
+const audioElement = new Audio(streamingUrl);
+audioElement.play(); // Play the audio stream directly
+```
+- **Text (text):** This is the actual text you want to convert to speech. It should be a string and must be URL-encoded to ensure that special characters (like spaces and punctuation) are correctly transmitted in the URL. Example: `Hello World` becomes `Hello%20World` when URL-encoded.<br>
+- **Voice (voice):** This parameter specifies the voice type to be used for the TTS. The value should match one of the available voice options in AllTalks voices folder. This is a string representing the file, like `female_01.wav`.<br>
+- **Language (language):** This setting determines the language in which the text should be spoken. A two-letter language code (like `en` for English, `fr` for French, etc.).<br>
+- **Output File (output_file):** This parameter names the output file where the audio will be streamed. It should be a string representing the file name, such as `stream_output.wav`. AllTalk will not save this as a file in its outputs folder.<br>
+<br>
+
 ### 🔴 Future to-do list
-- SillyTavern Support
 - Possibly add some additional TTS engines (TBD).
+- Tagging support within text.
 - Have a break!
