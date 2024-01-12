@@ -3,6 +3,28 @@ cd /D "%~dp0"
 
 set PATH=%PATH%;%SystemRoot%\system32
 
+:: Generate the ESC character
+for /F %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
+
+:: Standard Colors
+set "BLACK=%ESC%[30m"
+set "RED=%ESC%[31m"
+set "GREEN=%ESC%[32m"
+set "YELLOW=%ESC%[33m"
+set "BLUE=%ESC%[34m"
+set "MAGENTA=%ESC%[35m"
+set "CYAN=%ESC%[36m"
+set "WHITE=%ESC%[37m"
+set "L_BLACK=%ESC%[90m"
+set "L_RED=%ESC%[91m"
+set "L_GREEN=%ESC%[92m"
+set "L_YELLOW=%ESC%[93m"
+set "L_BLUE=%ESC%[94m"
+set "L_MAGENTA=%ESC%[95m"
+set "L_CYAN=%ESC%[96m"
+set "L_WHITE=%ESC%[97m"
+set "RESET=%ESC%[0m"
+
 @rem Check if curl is available
 curl --version >nul 2>&1
 if "%ERRORLEVEL%" NEQ "0" (
@@ -14,16 +36,15 @@ if "%ERRORLEVEL%" NEQ "0" (
 :MainMenu
 cls
 echo.
-echo Welcome to the AllTalk Setup Utility
+echo    %L_BLUE%ALLTALK WINDOWS SETUP UTILITY%RESET%
 echo.
-echo Please select an option:
+echo    INSTALLATION TYPE
+echo    1) I am using AllTalk as part of %L_GREEN%Text-generation-webui%RESET%
+echo    2) I am using AllTalk as a %L_GREEN%Standalone Application%RESET%
 echo.
-echo      1) I am using AllTalk as part of Text-generation-webui
-echo      2) I am using AllTalk as a Standalone Application
+echo    9) %L_RED%Exit/Quit%RESET%
 echo.
-echo      9) Exit/Quit
-echo.
-set /p UserOption="Enter your choice: "
+set /p UserOption="    Enter your choice: "
 
 if "%UserOption%"=="1" goto WebUIMenu
 if "%UserOption%"=="2" goto StandaloneMenu
@@ -33,20 +54,26 @@ goto MainMenu
 :WebUIMenu
 cls
 echo.
-echo You have selected Text-generation-webui.
+echo    %L_BLUE%TEXT-GENERATION-WEBUI SETUP%RESET%
 echo.
-echo Please ensure you have started your Text-generation-webui Python environment. If you have NOT done this,
-echo please run "cmd_windows.bat" in the text-generation-webui folder and then re-run "atsetup.bat"
+echo    Please ensure you have started your Text-generation-webui Python 
+echo    environment. If you have NOT done this, please run %L_GREEN%cmd_windows.bat%RESET% 
+echo    in the %L_GREEN%text-generation-webui%RESET% folder and then re-run this script.
 echo.
-echo      1) Install the requirements for a Nvidia machine.
-echo      2) Install the requirements for a AMD or MAC machine.
-echo      3) Install the Finetuning requirements.
-echo      4) Install "DeepSpeed v11.2 for CUDA 11.8 & Python 3.11.x".
-echo      5) Install "DeepSpeed v11.2 for CUDA 12.1 & Python 3.11.x".
-echo      6) Uninstall DeepSpeed.
-echo      7) Generate a diagnostics file.
+echo    BASE REQUIREMENTS
+echo    1) Install the requirements for a %L_GREEN%Nvidia machine%RESET%.
+echo    2) Install the requirements for a %L_GREEN%AMD or MAC machine%RESET%.
 echo.
-echo      9) Exit/Quit
+echo    OPTIONAL
+echo    3) Install the Finetuning requirements.
+echo    4) Install DeepSpeed v11.2 for CUDA %L_GREEN%11.8%RESET% and Python-3.11.x.
+echo    5) Install DeepSpeed v11.2 for CUDA %L_GREEN%12.1%RESET% and Python-3.11.x.
+echo    6) Uninstall DeepSpeed.
+echo.
+echo.   OTHER
+echo    7) Generate a diagnostics file.
+echo.
+echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p WebUIOption="Enter your choice: "
 if "%WebUIOption%"=="1" goto InstallNvidiaTextGen
@@ -62,14 +89,19 @@ goto WebUIMenu
 :StandaloneMenu
 cls
 echo.
-echo You have selected Standalone Application Setup.
+echo    %L_BLUE%ALLTALK STANDALONE APPLICATION SETUP%RESET%
 echo.
-echo      1) Install AllTalk's custom Python environment (Setup AllTalk as a standalone Application)
-echo      2) Delete AllTalk's custom Python environment (You will need to run 1 again after)
-echo      3) Install the Finetuning requirements (You need to have created the AllTalk custom environment)
-echo      4) Generate a diagnostics file (You need to have created the AllTalk custom environment)
+echo    BASE REQUIREMENTS
+echo    1) Install AllTalk as a Standalone Application
 echo.
-echo      9) Exit/Quit
+echo    OPTIONAL
+echo    2) Delete AllTalk's custom Python environment
+echo    3) Install the Finetuning requirements
+echo.
+echo.   OTHER
+echo    4) Generate a diagnostics file
+echo.
+echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p StandaloneOption="Enter your choice: "
 if "%StandaloneOption%"=="1" goto InstallCustomStandalone
@@ -83,18 +115,16 @@ goto StandaloneMenu
 pip install -r requirements_nvidia.txt
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      There was an error installing the Nvidia requirements.
-    echo      Press any key to return to the menu.
+    echo    There was an error installing the Nvidia requirements.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
 Echo.
-echo *************************************************************************************
 echo.
-Echo               Nvidia machine requirements installed successfully.
+Echo    Nvidia machine requirements installed successfully.
 Echo. 
-echo *************************************************************************************
 pause
 goto WebUIMenu
 
@@ -102,18 +132,16 @@ goto WebUIMenu
 pip install -r requirements_other.txt
 if %ERRORLEVEL% neq 0 (
     echo. 
-    echo      There was an error installing the Other requirements.
-    echo      Press any key to return to the menu.
+    echo    There was an error installing the Other requirements.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
 Echo.
-echo *************************************************************************************
 echo.
-Echo               Other machine requirements installed successfully.
+Echo    Other machine requirements installed successfully.
 Echo. 
-echo *************************************************************************************
 pause
 goto WebUIMenu
 
@@ -121,20 +149,17 @@ goto WebUIMenu
 pip install -r requirements_finetune.txt
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      There was an error installing the Finetune requirements.
-    echo      Press any key to return to the menu.
+    echo    There was an error installing the Finetune requirements.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
 Echo.
-Echo ******************************************************************************************************
+Echo    Finetune requirements installed successfully. Please ensure you have installed CUDA 11.8.
+Echo    Finetune needs access to %L_GREEN%cublas64_11.dll%RESET% and will error if this is not setup correctly.
+Echo    Please see here for details %L_GREEN%https://github.com/erew123/alltalk_tts#-finetuning-a-model%RESET%
 Echo.
-Echo Finetune requirements installed successfully. Please ensure you have installed CUDA 11.8 requirements.
-Echo Finetune needs access to cublas64_11.dll and will error if this is not setup correctly.
-Echo Please see here for details https://github.com/erew123/alltalk_tts#-finetuning-a-model
-Echo.
-Echo ******************************************************************************************************
 pause
 goto WebUIMenu
 
@@ -143,9 +168,9 @@ echo Downloading DeepSpeed...
 curl -LO https://github.com/erew123/alltalk_tts/releases/download/deepspeed/deepspeed-0.11.2+cuda118-cp311-cp311-win_amd64.whl
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      Failed to download DeepSpeed wheel file.
-    echo      Please check your internet connection or try again later.
-    echo      Press any key to return to the menu.
+    echo    Failed to download DeepSpeed wheel file.
+    echo    Please check your internet connection or try again later.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
@@ -155,19 +180,17 @@ echo Installing DeepSpeed...
 pip install deepspeed-0.11.2+cuda118-cp311-cp311-win_amd64.whl
 if %ERRORLEVEL% neq 0 (
     echo. 
-    echo      Failed to install DeepSpeed.
-    echo      Please check if the wheel file is compatible with your system.
-    echo      Press any key to return to the menu.
+    echo    Failed to install DeepSpeed.
+    echo    Please check if the wheel file is compatible with your system.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
 Echo.
-echo *************************************************************************************
 echo.
-Echo                        DeepSpeed installed successfully.
+Echo    DeepSpeed installed successfully.
 Echo. 
-echo *************************************************************************************
 del deepspeed-0.11.2+cuda118-cp311-cp311-win_amd64.whl
 pause
 goto WebUIMenu
@@ -177,31 +200,29 @@ echo Downloading DeepSpeed...
 curl -LO https://github.com/erew123/alltalk_tts/releases/download/deepspeed/deepspeed-0.11.2+cuda121-cp311-cp311-win_amd64.whl
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      Failed to download DeepSpeed wheel file.
-    echo      Please check your internet connection or try again later.
-    echo      Press any key to return to the menu.
+    echo    Failed to download DeepSpeed wheel file.
+    echo    Please check your internet connection or try again later.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
-echo DeepSpeed wheel file downloaded successfully.
-echo Installing DeepSpeed...
+echo    DeepSpeed wheel file downloaded successfully.
+echo    Installing DeepSpeed...
 pip install deepspeed-0.11.2+cuda121-cp311-cp311-win_amd64.whl
 if %ERRORLEVEL% neq 0 (
     echo. 
-    echo      Failed to install DeepSpeed.
-    echo      Please check if the wheel file is compatible with your system.
-    echo      Press any key to return to the menu.
+    echo    Failed to install DeepSpeed.
+    echo    Please check if the wheel file is compatible with your system.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
 Echo.
-echo *************************************************************************************
 echo.
-Echo                        DeepSpeed installed successfully.
+Echo    DeepSpeed installed successfully.
 Echo. 
-echo *************************************************************************************
 del deepspeed-0.11.2+cuda121-cp311-cp311-win_amd64.whl
 pause
 goto WebUIMenu
@@ -210,17 +231,15 @@ goto WebUIMenu
 pip uninstall deepspeed
 if %ERRORLEVEL% neq 0 (
     echo. 
-    echo      There was an error uninstalling DeepSpeed.
-    echo      Press any key to return to the menu.
+    echo    There was an error uninstalling DeepSpeed.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
-echo *************************************************************************************
 echo.
-Echo                        DeepSpeed uninstalled successfully.
+Echo    DeepSpeed uninstalled successfully.
 Echo. 
-echo *************************************************************************************
 pause
 goto WebUIMenu
 
@@ -228,17 +247,16 @@ goto WebUIMenu
 Python diagnostics.py
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      There was an error running diagnostics. Have you correctly started your 
-    echo      Text-generation-webui Python environment with "cmd_windows.bat"?
+    echo    There was an error running diagnostics. Have you correctly started your 
+    echo    Text-generation-webui Python environment with %L_GREEN%cmd_windows.bat%RESET%?
+    echo.
     pause
     goto WebUIMenu
 )
 Echo.
-echo *************************************************************************************
 echo.
-Echo         Diagnostics.log generated. Please scroll up to look over the log.
+Echo    Diagnostics.log generated. Please scroll up to look over the log.
 Echo. 
-echo *************************************************************************************
 pause
 goto WebUIMenu
 
@@ -303,14 +321,12 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
 
 @rem Ask user for the type of requirements to install
-echo *************************************************************************************
 echo.
-echo Choose the type of requirements to install (this will take 10-20 minutes to install):
+echo    %L_BLUE%Choose the type of requirements to install%RESET%
 echo.
-echo                         1. Nvidia graphics card machines
-echo                         2. Other machines (mac, amd, etc)
+echo    1. Nvidia graphics card machines
+echo    2. Other machines (mac, amd, etc)
 echo.
-echo *************************************************************************************
 set /p UserChoice="Enter your choice (1 or 2): "
 
 @rem Install requirements based on user choice
@@ -354,13 +370,8 @@ echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" 
 echo call python script.py >> start_alltalk.bat
 echo exit >> start_alltalk.bat
 Echo.
-Echo *************************************************************************************
-Echo.
-Echo                      "start_alltalk.bat" has been created.
-Echo.
-Echo                You can now start AllTalk with "start_alltalk.bat"
-Echo.
-Echo *************************************************************************************
+Echo    start_alltalk.bat has been created.
+Echo    You can now start AllTalk with %L_YELLOW%start_alltalk.bat%RESET%
 Echo.
 pause
 goto StandaloneMenu
@@ -369,7 +380,7 @@ goto StandaloneMenu
 @rem Check if the alltalk_environment directory exists
 if not exist "%cd%\alltalk_environment\" (
     echo.
-    echo      "alltalk_environment" directory does not exist. No need to delete.
+    echo    %L_GREEN%alltalk_environment%RESET% directory does not exist. No need to delete.
     echo.
     pause
     goto StandaloneMenu
@@ -377,7 +388,7 @@ if not exist "%cd%\alltalk_environment\" (
 @rem Check if a Conda environment is active
 if not defined CONDA_PREFIX goto NoCondaEnvDeleteCustomStandalone
 @rem Deactivate Conda environment if it's active
-Echo Exiting the Conda Environment. Please run "atsetup.bat" again and delete the environment.
+Echo    Exiting the Conda Environment. Please run %L_GREEN%atsetup.bat%RESET% again and delete the environment.
 conda deactivate
 :NoCondaEnvDeleteCustomStandalone
 echo Deleting "alltalk_environment". Please wait.
@@ -385,18 +396,16 @@ rd /s /q "alltalk_environment"
 del start_alltalk.bat
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      Failed to delete "alltalk_environment" folder.
-    echo      Please make sure it is not in use and try again.
+    echo    Failed to delete alltalk_environment folder.
+    echo    Please make sure it is not in use and try again.
     echo.
     pause
     goto StandaloneMenu
 )
 echo.
-Echo *************************************************************************************
 Echo.
-echo    Environment "alltalk_environment" deleted. Please set up the environment again.
+echo    Environment %L_GREEN%alltalk_environment%RESET% deleted. Please set up the environment again.
 Echo.
-Echo *************************************************************************************
 pause
 goto StandaloneMenu
 
@@ -407,8 +416,8 @@ set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
 @rem Check if the Conda environment exists
 if not exist "%INSTALL_ENV_DIR%\python.exe" (
     echo.
-    echo      The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
-    echo      Please install the environment before proceeding.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
     echo.
     pause
     goto StandaloneMenu
@@ -417,8 +426,8 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" (
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
 if errorlevel 1 (
     echo. 
-    echo      Failed to activate the Conda environment.
-    echo      Please check your installation and try again.
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
     echo.
     pause
     goto StandaloneMenu
@@ -427,20 +436,17 @@ if errorlevel 1 (
 pip install -r requirements_finetune.txt
 if %ERRORLEVEL% neq 0 (
     echo. 
-    echo      There was an error installing the Finetune requirements.
-    echo      Press any key to return to the menu.
+    echo    There was an error installing the Finetune requirements.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto StandaloneMenu
 )
 Echo.
-Echo ******************************************************************************************************
+Echo    Finetune requirements installed successfully. Please ensure you have installed CUDA 11.8.
+Echo    Finetune needs access to %L_GREEN%cublas64_11.dll%RESET% and will error if this is not setup correctly.
+Echo    Please see here for details %L_GREEN%https://github.com/erew123/alltalk_tts#-finetuning-a-model%RESET%
 Echo.
-Echo Finetune requirements installed successfully. Please ensure you have installed CUDA 11.8 requirements.
-Echo Finetune needs access to cublas64_11.dll and will error if this is not setup correctly.
-Echo Please see here for details https://github.com/erew123/alltalk_tts#-finetuning-a-model
-Echo.
-Echo ******************************************************************************************************
 pause
 goto StandaloneMenu
 
@@ -451,8 +457,8 @@ set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
 @rem Check if the Conda environment exists
 if not exist "%INSTALL_ENV_DIR%\python.exe" (
     echo.
-    echo      The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
-    echo      Please install the environment before proceeding.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
     echo. 
     pause
     goto StandaloneMenu
@@ -461,8 +467,8 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" (
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
 if errorlevel 1 (
     echo. 
-    echo      Failed to activate the Conda environment.
-    echo      Please check your installation and try again.
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
     echo.
     pause
     goto StandaloneMenu
@@ -471,18 +477,16 @@ if errorlevel 1 (
 Python diagnostics.py
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo      There was an error running diagnostics.
-    echo      Press any key to return to the menu.
+    echo    There was an error running diagnostics.
+    echo    Press any key to return to the menu.
     echo.
     pause
     goto StandaloneMenu
 )
 Echo.
-Echo *************************************************************************************
 Echo.
-Echo          Diagnostics.log generated. Please scroll up to look over the log.
+Echo    Diagnostics.log generated. Please scroll up to look over the log.
 Echo.
-Echo *************************************************************************************
 pause
 goto StandaloneMenu
 
