@@ -17,25 +17,24 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 
 ## Index
 
-- 🟩 [Installation](https://github.com/erew123/alltalk_tts?#-installation-on-text-generation-web-ui)
+- 🟩 [Installation](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
 - 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
 - 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
-- 🟦 [Running AllTalk as a standalone app](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app)
 - ⬜ [AllTalk TTS Generator](https://github.com/erew123/alltalk_tts?#-alltalk-tts-generator)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
-## 🔄 Updates
+## 🔄 Updates & Bug fixes
 Please check the below link to find a list of all recent updates and changes.
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 ## 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
-For Windows 10/11 and Linux machines there is a quick setup script. 
+For Windows 10/11 and Linux machines there is a quick setup script. Click to expand the correct section below:
 <details>
-	<summary>(Click to expand) QUICK SETUP - Text-Generation-webui</summary><br>
+	<summary>QUICK SETUP - Text-Generation-webui</summary><br>
 	
 1) To download the AllTalk setup you can either:
    - A) On this page select **CODE** > **Download ZIP** then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\`<br><br>
@@ -47,10 +46,12 @@ For Windows 10/11 and Linux machines there is a quick setup script.
 
    Any time you need to make changes to AllTalk, or use Finetuning etc, always start the Text-generation-webui Python environment first.
 
+   Please read the `🟩 Other installation notes` (also additional voices are available there).
+
    Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
 </details>
 <details>
-	<summary>(Click to expand) QUICK SETUP - Standalone Installation</summary><br>
+	<summary>QUICK SETUP - Standalone Installation</summary><br>
 	
 1) To download the AllTalk setup you can either:
    - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`<br><br>
@@ -61,13 +62,15 @@ For Windows 10/11 and Linux machines there is a quick setup script.
 
    DeepSpeed on Windows machines will be installed as standard. Linux machines have other requirements which are detailed within the setup utility and on this page.
 
+   Please read the `🟩 Other installation notes` (also additional voices are available there).
+
    Finetuning has other installation requirements so please read any instructions in the setup utility and refer back here to this page for detailed instructions.<br><br>
 </details>
 
 ## 🟩 Manual Installation - As part of Text generation web UI
-On Mac's or if you wish to perform a manual installation, please expand the below.
+On Mac's or if you wish to perform a manual installation. Click to expand the correct section below:
 <details>
-	<summary>(Click to expand) MANUAL INSTALLATION - Text-Generation-webui</summary><br>
+	<summary>MANUAL INSTALLATION - Text-Generation-webui</summary><br>
 
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
@@ -97,28 +100,34 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI with whichever **one** of the startup scripts is correct for your OS (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.<br><br> Starting Text-generation-webui with its correct start-up script is $\textcolor{red}{\textsf{VERY IMPORTANT}}$.
 
+   Any time you need to make changes to AllTalk, or use Finetuning etc, always start the Text-generation-webui Python environment first.
+
+   Please read the `🟩 Other installation notes` (also additional voices are available there).
+
+   Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
+
 </details>
 
 ## 🟩 Manual Installation - As a Standalone Application
-On Mac's or if you wish to perform a manual installation, please expand the below.
+On Mac's or if you wish to perform a manual installation. Click to expand the correct section below:
 <details>
-	<summary>(Click to expand) MANUAL INSTALLATION - I want to run AllTalk as a standalone when installed with Text-generation-webui</summary><br>
+	<summary>MANUAL INSTALLATION - I want to run AllTalk as a standalone when installed with Text-generation-webui</summary><br>
 	
 If you already have AllTalk as a extension of Text-generation-webui, and wish to run it as standalone, load Text-generation-webui's Python environment `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`, move into the AllTalk folder `cd extensions` > `cd alltalk_tts` and start AllTalk with `python script.py`. There is nothing beyond this you would need to do.
 </details>
 <details>
-	<summary>(Click to expand) MANUAL INSTALLATION - I wish to do a custom install of AllTalk</summary><br>
+	<summary>MANUAL INSTALLATION - I wish to do a custom install of AllTalk</summary><br>
 	
 AllTalk will run as a standalone app, as long as you install its requirements files into whatever Python environment you are using. You can follow the steps to install the AllTalk's requirements into whatever Python environment you wish. Because I dont know what Python environment you are wanting to use, I can only give you a loose set of installation instructions. 
 
 Please note, at time of writing, the TTS engine requires Python **3.9.x** to **3.11.x** [TTS Engine details here](https://pypi.org/project/TTS/). AllTalk and its requirements are tested on Python **3.11.x**.
 
-#### 🔹 A very quick understanding of Python Environments.
+#### 🟩 A very quick understanding of Python Environments.
 Different Python applications have different requirements, some of those requirement’s conflict with other Python applications requirements. To work around this problem, you can create different Python environments that remain separated from one another. A simple way of looking at Python environments, is just like how your house has different rooms for specific purposes (Kitchen, Bathroom, Bedroom etc). You can create a Python environment that is built/customised specifically for your current applications needs/purposes and will **not** interfere with any other Python applications environments/installations. <br><br>If you are adept at managing Python environments, have an existing Python environment and know that you won’t cause any conflicts by installing AllTalk's requirements within that Python environment, then load up your Python environment and install the requirements. For everyone else, here is a basic guide on installing AllTalk in its own custom Python environment (there will be small variations between OS's, but the principle is the same).
 
 **Note:** A standard VENV can cause module path issues, hence Conda is the correct method to create a Python environment for AllTalk. 
 
-#### 🔹 Building a custom Python Environment with Miniconda
+#### 🟩 Building a custom Python Environment with Miniconda
 1) Open a terminal/command prompt, and confirm that both `python --version` and `pip` both work. Neither of them should give an error message. If they do you may need to install Python (and maybe Pip).<br><br>[Python Website](https://www.python.org/downloads/)<br>[Pip Website](https://pip.pypa.io/en/stable/installation/)<br><br>Once you have those working you can now continue on.<br><br>
 
 2) Assuming you don't already have Miniconda installed, we will need to download and install Minoconda as this is what we will use to build our custom Python environment.<br><br>[Miniconda Website](https://docs.conda.io/projects/miniconda/en/latest/)<br><br>Download the Miniconda version that is correct for your OS and then install it. Miniconda will create some items in your Start Menu or Application Launcher called something like `Anaconda Prompt`<br><br> You will start the `Anaconda Prompt` and your prompt in your terminal/command prompt will say something like: <br><br>`(base) C:\users\myaccount\>`<br><br> The important bit is that it has the `(base)`, the location after that doesn't matter. `(base)` signifies we are in the base conda Python environment and can now create custom Python environments with Conda.<br><br>
@@ -136,9 +145,16 @@ You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio
 
 7) Start AllTalk with `python script.py`<br><br>
 
-🔹Anytime you wish to use AllTalk, update its requirements, install some other requirements such as DeepSpeed, you will need to start its Conda Python Environment in the terminal/prompt, which you will do with `conda activate alltalkenv` as long as the Conda executable is accessible at the command prompt/terminal you are in.<br><br>It is fully possible to create a batch file or script file that you can use as a launcher from your Start Menu/Application Launcher that will start the environment and AllTalk for you. 
+🟩 Anytime you wish to use AllTalk, update its requirements, install some other requirements such as DeepSpeed, you will need to start its Conda Python Environment in the terminal/prompt, which you will do with `conda activate alltalkenv` as long as the Conda executable is accessible at the command prompt/terminal you are in.<br><br>It is fully possible to create a batch file or script file that you can use as a launcher from your Start Menu/Application Launcher that will start the environment and AllTalk for you. 
 
 Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.<br><br>
+
+   Any time you need to make changes to AllTalk, or use Finetuning etc, always start your Python environment first.
+
+   Please read the `🟩 Other installation notes` (also additional voices are available there).
+
+   Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
+
 </details>
 
 
@@ -153,7 +169,7 @@ Please read the note below about start-up times and also the note about ensuring
 
 Some extra voices for AllTalk are downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
 
-#### 🟩 The one thing I cant easily work around
+#### 🟩 A note on Character Cards & Greeting Messages
 Messages intended for the Narrator should be enclosed in asterisks `*` and those for the character inside quotation marks `"`. However, AI systems often deviate from these rules, resulting in text that is neither in quotes nor asterisks. Sometimes, text may appear with only a single asterisk, and AI models may vary their formatting mid-conversation. For example, they might use asterisks initially and then switch to unmarked text. A properly formatted line should look like this:
 
 `"`Hey! I'm so excited to finally meet you. I've heard so many great things about you and I'm eager to pick your brain about computers.`"` `*`She walked across the room and picked up her cup of coffee`*`
@@ -163,14 +179,31 @@ Most narrator/character systems switch voices upon encountering an asterisk or q
 With improvements to the splitter/processor, I'm confident it's functioning well. You can monitor what AllTalk identifies as Narrator lines on the command line and adjust its behavior if needed (Text Not Inside - Function).
 
 ## 🟪 Updating
+<details>
+	<summary>UPDATING - I am using Text-Generation-webui</summary><br>
 This is pretty much a repeat of the installation process. 
 
 1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
 `cd text-generation-webui` and start the Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
 `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br>
 
-2) Move into your extensions and alltalk_tts folder:<br><br>
-`cd extensions` then `cd alltalk_tts`
+2) Move into your extensions and alltalk_tts folder e.g. `cd extensions` then `cd alltalk_tts`
+
+3) At the command prompt/terminal, type `git pull`
+
+4) Install the correct requirements for your machine:<br><br>
+**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`<br><br>
+</details>
+<details>
+	<summary>UPDATING - I am running as a Standalone Application</summary><br>
+This is pretty much a repeat of the installation process. 
+
+1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
+`cd text-generation-webui` and start the Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
+`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br>
+
+2) Move into your alltalk_tts folder e.g. `cd alltalk_tts`
 
 3) At the command prompt/terminal, type:<br><br>
 `git pull`
@@ -178,6 +211,8 @@ This is pretty much a repeat of the installation process.
 4) Install the correct requirements for your machine:<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
 **Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
+</details>
+
 
 #### 🟪 Updating "git pull" error
 
