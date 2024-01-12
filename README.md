@@ -1,7 +1,7 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
-- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts?#-running-alltalk-as-a-standalone-app) **or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts?#-installation-on-text-generation-web-ui)
+- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)**or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
 - **Model Finetuning:** Train the model specifically on a voice of your choosing for better reproduction.
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you [demo](https://www.youtube.com/watch?v=hunvXn0mLzc).
@@ -197,22 +197,15 @@ This is pretty much a repeat of the installation process.
 </details>
 <details>
 	<summary>UPDATING - I am running as a Standalone Application</summary><br>
-This is pretty much a repeat of the installation process. 
+	
+1) In a command prompt/terminal window you need to move into your `alltalk_tts` folder and run `start_environment.bat` or `/start_environment.sh` to load the Python environment.
 
-1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
-`cd text-generation-webui` and start the Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
-`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br>
+2) At the command prompt/terminal, type `git pull` and wait for it to complete the download.
 
-2) Move into your alltalk_tts folder e.g. `cd alltalk_tts`
-
-3) At the command prompt/terminal, type:<br><br>
-`git pull`
-
-4) Install the correct requirements for your machine:<br><br>
+3) Install the correct requirements for your machine:<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
-**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
+**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`<br><br>
 </details>
-
 
 #### 🟪 Updating "git pull" error
 
