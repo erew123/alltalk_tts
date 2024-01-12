@@ -32,7 +32,45 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 Please check the below link to find a list of all recent updates and changes.
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
+## 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
+For Windows 10/11 and Linux machines there is a quick setup script. 
+<details>
+	<summary>(Click to expand) QUICK SETUP - Text-Generation-webui</summary><br>
+	
+1) To download the AllTalk setup you can either:
+   - A) On this page select **CODE** > **Download ZIP** then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\`<br><br>
+   - B) Go to a terminal/console, move into the `\text-generation-webui\extensions\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
+3) In a terminal/command prompt, in the text-generation-webui folder you will start its Python environment with either `cmd_windows.bat` or `./cmd_linux.sh`
+4) Move into the AllTalk folder e.g. `cd extensions` then `cd alltalk_tts`
+5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
+6) Follow the on-screen prompts and install the correct requirements files that you need. It's recommended to test AllTalk works before installing DeepSpeed.
+
+   Any time you need to make changes to AllTalk, or use Finetuning etc, always start the Text-generation-webui Python environment first.
+
+   Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
+</details>
+<details>
+	<summary>(Click to expand) QUICK SETUP - Standalone Installation</summary><br>
+	
+1) To download the AllTalk setup you can either:
+   - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`<br><br>
+   - B) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
+4) In a terminal/command prompt, move into the AllTalk folder e.g. `cd alltalk_tts`
+5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
+6) Follow the on-screen prompts and install the correct requirements files that you need. It's recommended to test AllTalk works before installing DeepSpeed.
+
+   DeepSpeed on Windows machines will be installed as standard. Linux machines have other requirements which are detailed within the setup utility and on this page.
+
+   Finetuning has other installation requirements so please read any instructions in the setup utility and refer back here to this page for detailed instructions.<br><br>
+</details>
+
+
+
 ## 🟩 Installation on Text generation web UI
+On Mac's or if you wish to perform a manual installation, please expand the below.
+<details>
+	<summary>(Click to expand) MANUAL INSTALLATION - Text-Generation-webui</summary><br>
+
 This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
 
 - If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)<br>
@@ -64,6 +102,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 10) Please read the note below about start-up times and also the note about ensuring your character cards are set up [correctly](https://github.com/erew123/alltalk_tts#the-one-thing-i-cant-easily-work-around)
 
 11) Some extra voices downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link)
+</details>
 
 #### 🟩 Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
