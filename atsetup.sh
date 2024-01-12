@@ -314,7 +314,25 @@ install_custom_standalone() {
     else
         pip install -r requirements_other.txt
     fi
-
+    # Create start_environment.sh to run AllTalk
+    cat << EOF > start_environment.sh
+#!/bin/bash
+cd "$(dirname "${BASH_SOURCE[0]}")"
+if [[ "$(pwd)" =~ " " ]]; then echo This script relies on Miniconda which can not be silently installed under a path with spaces. && exit; fi
+# deactivate existing conda envs as needed to avoid conflicts
+{ conda deactivate && conda deactivate && conda deactivate; } 2> /dev/null
+# config
+CONDA_ROOT_PREFIX="$(pwd)/alltalk_environment/conda"
+INSTALL_ENV_DIR="$(pwd)/alltalk_environment/env"
+# environment isolation
+export PYTHONNOUSERSITE=1
+unset PYTHONPATH
+unset PYTHONHOME
+export CUDA_PATH="$INSTALL_ENV_DIR"
+export CUDA_HOME="$CUDA_PATH"
+# activate env
+bash --init-file <(echo "source \"$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh\" && conda activate \"$INSTALL_ENV_DIR\"")
+EOF
     # Create start_alltalk.sh to run AllTalk
     cat << EOF > start_alltalk.sh
 #!/bin/bash
@@ -323,6 +341,7 @@ conda activate "${INSTALL_ENV_DIR}"
 python script.py
 EOF
     chmod +x start_alltalk.sh
+    chmod +x start_environment.sh
     echo
     echo
     echo -e "    start_alltalk.sh has been created."
