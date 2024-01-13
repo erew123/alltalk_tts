@@ -436,11 +436,11 @@
             if (formData.get('streaming') === 'true') {
                 // For streaming, update the audio player src
                 const searchParams = new URLSearchParams(formData).toString();
-                audioPlayer.src = baseurl + "/tts-demo-request?" + searchParams;
+                audioPlayer.src = baseurl + "/api/tts-generate-streaming?" + searchParams;
                 audioPlayer.load(); // Reload the audio player
             } else {
                 // For non-streaming, send a POST request
-                const response = await fetch('/tts-demo-request', {
+                const response = await fetch('/api/tts-generate-streaming', {
                     method: 'POST',
                     body: formData,
                     cache: "no-store"
@@ -667,6 +667,19 @@
         otherwise&nbsp;Text-generation-webui will also generate TTS due to the way it sends out text. You can do this
         each time you start up&nbsp;Text-generation-webui or set it in the start-up settings at the top of this page.
     </p>
+    <h4>Quick Tips</h4>
+    <ul>
+        <li>Only change DeepSpeed, Low VRAM or Model one at a time. Wait for it to say Ready before changing something
+            else.</li>
+        <li>You can permanently change the AllTalk startup settings or DeepSpeed, Low VRAM and Model at the top of this
+            page.</li>
+        <li>Different AI models use quotes and asterisks differently, so you may need to change "Text not inside"
+            depending on model.</li>
+        <li>Add new voice samples to the voices folder. You can Finetune a model to make it sound even closer to the
+            original sample.</li>
+        <li>DeepSpeed will improve processing time to TTS to be 2-3x faster.</li>
+        <li>Low VRAM can be very beneficial if you don't have much memory left after loading your LLM.</li>
+    </ul>
     <h4>TTS Generation Methods in SilllyTavern</h4>
     <p style="padding-left: 30px;">You have 2 types of audio generation options, Streaming and Standard.</p>
     <p style="padding-left: 30px; text-align: justify;">The Streaming Audio Generation method is designed for speed and
@@ -933,7 +946,8 @@
 
     <h3 id="deepspeed-windows">DeepSpeed Setup - Windows</h3>
     <p style="padding-left: 30px;">➡️DeepSpeed requires an Nvidia Graphics card!⬅️</p>
-    <p style="padding-left: 30px;">The atsetup utility for Windows can install DeepSpeed for you (Stanalone users whom installed via the atsetup utility will already have DeepSpeed installed).</p>
+    <p style="padding-left: 30px;">The atsetup utility for Windows can install DeepSpeed for you (Stanalone users whom
+        installed via the atsetup utility will already have DeepSpeed installed).</p>
     <p style="padding-left: 30px;">DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11
         environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way <span
             style="color: #339966;"><strong>Option 1</strong></span>&nbsp;and a long way <span
