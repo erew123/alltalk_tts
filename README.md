@@ -269,6 +269,7 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 #### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 #### 🟨 How to make a diagnostics report file
+If you are on a Windows machine or a Linux machine, you should be able to use the `atsetup.bat` or `./atsetup.sh` utility to create a diagnositcs file. If you are unable to use the `atsetup` utility, please follow the instructions below.
 <details>
 	<summary>Click to expand</summary>
 	
