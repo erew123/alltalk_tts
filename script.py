@@ -237,10 +237,12 @@ process = subprocess.Popen(["python", script_path])
 # Check if the subprocess has started successfully
 if process.poll() is None:
     print(f"[{params['branding']}Startup] TTS Subprocess starting")
+    print(f"[{params['branding']}Startup]")
     print(
-        f"[{params['branding']}Startup] Readme available here:",
-        f"http://{params['ip_address']}:{params['port_number']}",
+        f"[{params['branding']}Startup] \033[94mSettings & Documentation:\033[00m",
+        f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
     )
+    print(f"[{params['branding']}Startup]")
 else:
     print(
         f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process"
@@ -862,7 +864,8 @@ def ui():
     voice.change(lambda x: params.update({"voice": x}), voice, None)
     language.change(lambda x: params.update({"language": x}), language, None)
 
-    # TTS Settings (Not yet parsed to api/implemented)
+
+    # TS Settings (Not yet parsed to api/implemented)
     # local_temperature_gr.change(lambda x: params.update({"local_temperature": x}), local_temperature_gr, None)
     # local_repetition_penalty_gr.change(lambda x: params.update({"local_repetition_penalty": x}), local_repetition_penalty_gr, None)
 

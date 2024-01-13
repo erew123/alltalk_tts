@@ -917,7 +917,9 @@ if __name__ == "__main__":
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>                
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. Very small sample files cause errors, so I would suggest 30 seconds and longer samples. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - When you have completed Steps 1, 2, and 3, you are welcome to delete your samples from "put-voice-samples-in-here".<br>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - When you have completed Steps 1, 2, and 3, you are welcome to delete your samples from "put-voice-samples-in-here".
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - FYI Anecdotal evidence suggests that the Whisper 2 model may yield superior results in audio splitting and dataset creation.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If this step is failing, it will be worth running the diagnostics with atsetup and confirming you have cu118 or cu112 listed against your torch and torchaudio.<br>
                 ### 🟨 <u>What this step is doing</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for finetuning the model on Step 2.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.

@@ -81,6 +81,17 @@ else:
         f"[{params['branding']}Startup] \033[91mWarning\033[0m modeldownload.config is missing so please re-download it and save it in the alltalk_tts main folder."
     )
 
+##################################################
+#### Check to see if a finetuned model exists ####
+##################################################
+# Set the path to the directory
+trained_model_directory = this_dir / "models" / "trainedmodel"
+# Check if the directory "trainedmodel" exists
+finetuned_model = trained_model_directory.exists()
+# If the directory exists, check for the existence of the required files
+if finetuned_model:
+    required_files = ["model.pth", "config.json", "vocab.json"]
+    finetuned_model = all((trained_model_directory / file).exists() for file in required_files)
 
 ########################
 #### STARTUP CHECKS ####
@@ -98,19 +109,17 @@ except ModuleNotFoundError:
     raise
 
 # DEEPSPEED Import - Check for DeepSpeed and import it if it exists
+deepspeed_available = False
 try:
     import deepspeed
-
-    deepspeed_installed = True
-    print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
-    print(
-        f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']} settings"
-    )
+    deepspeed_available = True
 except ImportError:
-    deepspeed_installed = False
-    print(
-        f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed"
-    )
+    pass
+if deepspeed_available:
+    print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
+    print(f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']}settings")
+else:
+    print(f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed")
 
 
 @asynccontextmanager
@@ -729,6 +738,11 @@ async def tts_demo_request(request: Request, text: str = Form(...), voice: str =
         print(f"An error occurred: {e}")
         return JSONResponse(content={"error": "An error occurred"}, status_code=500)
 
+
+#####################
+#### Audio feeds ####
+#####################
+
 # Gives web access to the output files
 @app.get("/audio/{filename}")
 async def get_audio(filename: str):
@@ -807,6 +821,35 @@ import uuid
 import numpy as np
 import soundfile as sf
 import sys
+import hashlib
+
+##############################
+#### Streaming Generation ####
+##############################
+
+@app.get("/api/tts-generate-streaming", response_class=StreamingResponse)
+async def tts_generate_streaming(text: str, voice: str, language: str, output_file: str):
+    try:
+        output_file_path = this_dir / "outputs" / output_file
+        stream = await generate_audio(text, voice, language, output_file_path, streaming=True)
+        return StreamingResponse(stream, media_type="audio/wav")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
+@app.post("/api/tts-generate-streaming", response_class=JSONResponse)
+async def tts_generate_streaming(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
+    try:
+        output_file_path = this_dir / "outputs" / output_file
+        await generate_audio(text, voice, language, output_file_path, streaming=False)
+        return JSONResponse(content={"output_file_path": str(output_file)}, status_code=200)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
+##############################
+#### Standard Generation ####
+##############################
 
 # Check for PortAudio library on Linux
 try:
@@ -1019,13 +1062,20 @@ async def tts_generate(
         else:
             if output_file_timestamp:
                 timestamp = int(time.time())
-                output_file_path = this_dir / "outputs" / f"{output_file_name}_{timestamp}.wav"
-                output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_{timestamp}.wav'
-                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}.wav'
+                # Generate a standard UUID
+                original_uuid = uuid.uuid4()
+                # Hash the UUID using SHA-256
+                hash_object = hashlib.sha256(str(original_uuid).encode())
+                hashed_uuid = hash_object.hexdigest()
+                # Truncate to the desired length, for example, 16 characters
+                short_uuid = hashed_uuid[:5]
+                output_file_path = this_dir / "outputs" / f"{output_file_name}_{timestamp}{short_uuid}.wav"
+                output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_{timestamp}{short_uuid}.wav'
+                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}{short_uuid}.wav'
             else:
                 output_file_path = this_dir / "outputs" / f"{output_file_name}.wav"
                 output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
-                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}.wav'
+                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}.wav'
             if text_filtering == "html":
                 cleaned_string = html.unescape(standard_filtering(text_input))
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
@@ -1052,6 +1102,38 @@ async def tts_generate(
     except Exception as e:
         return JSONResponse(content={"status": "generate-failure", "error": "An error occurred"}, status_code=500)
 
+
+##########################
+#### Current Settings ####
+##########################
+# Define the available models
+models_available = [
+    {"name": "Coqui", "model_name": "API TTS"},
+    {"name": "Coqui", "model_name": "API Local"},
+    {"name": "Coqui", "model_name": "XTTSv2 Local"}
+]
+
+@app.get('/api/currentsettings')
+def get_current_settings():
+    # Determine the current model loaded
+    if params["tts_method_api_tts"]:
+        current_model_loaded = "API TTS"
+    elif params["tts_method_api_local"]:
+        current_model_loaded = "API Local"
+    elif params["tts_method_xtts_local"]:
+        current_model_loaded = "XTTSv2 Local"
+    else:
+        current_model_loaded = None  # or a default value if no method is active
+
+    settings = {
+        "models_available": models_available,
+        "current_model_loaded": current_model_loaded,
+        "deepspeed_available": deepspeed_available,
+        "deepspeed_status": params["deepspeed_activate"],
+        "low_vram_status": params["low_vram"],
+        "finetuned_model": finetuned_model
+    }
+    return settings  # Automatically converted to JSON by Fas
 
 #############################
 #### Word Add-in Sharing ####
