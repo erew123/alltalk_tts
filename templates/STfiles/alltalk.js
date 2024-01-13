@@ -226,6 +226,14 @@ class AllTalkTtsProvider {
     </div>
 </div>`;
 
+html += `<div class="website-row">
+<div class="website-option">
+<span><strong>Text-generation-webui</strong> users - Uncheck <strong>Enable TTS</strong> in Text-generation-webui.</span>
+</div>
+</div>`;
+
+
+
         return html;
     }
 
