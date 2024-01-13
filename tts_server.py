@@ -821,6 +821,7 @@ import uuid
 import numpy as np
 import soundfile as sf
 import sys
+import hashlib
 
 ##############################
 #### Streaming Generation ####
@@ -1061,13 +1062,20 @@ async def tts_generate(
         else:
             if output_file_timestamp:
                 timestamp = int(time.time())
-                output_file_path = this_dir / "outputs" / f"{output_file_name}_{timestamp}.wav"
-                output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_{timestamp}.wav'
-                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}.wav'
+                # Generate a standard UUID
+                original_uuid = uuid.uuid4()
+                # Hash the UUID using SHA-256
+                hash_object = hashlib.sha256(str(original_uuid).encode())
+                hashed_uuid = hash_object.hexdigest()
+                # Truncate to the desired length, for example, 16 characters
+                short_uuid = hashed_uuid[:5]
+                output_file_path = this_dir / "outputs" / f"{output_file_name}_{timestamp}{short_uuid}.wav"
+                output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_{timestamp}{short_uuid}.wav'
+                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}{short_uuid}.wav'
             else:
                 output_file_path = this_dir / "outputs" / f"{output_file_name}.wav"
                 output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
-                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}.wav'
+                output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}.wav'
             if text_filtering == "html":
                 cleaned_string = html.unescape(standard_filtering(text_input))
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
