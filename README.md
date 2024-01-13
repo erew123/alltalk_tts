@@ -259,9 +259,9 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 </details>
 
 ## 🟫 Screenshots
-|![image](https://github.com/erew123/screenshots/blob/main/textgensettings.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/setuputilitys.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/deepspeed.jpg) |![image](https://github.com/erew123/screenshots/blob/main/textgen.jpg) |
+|![image](https://github.com/erew123/screenshots/raw/main/textgensettings.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/setuputilitys.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/deepspeed.jpg) |![image](https://github.com/erew123/screenshots/raw/main/textgen.jpg) |
 |:---:|:---:|:---:|:---:|
-|![image](https://github.com/erew123/screenshots/blob/main/settingsanddocs.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/finetune1.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/finetune2.jpg) |![image](https://github.com/erew123/screenshots/blob/main/sillytavern.jpg)|
+|![image](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune1.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune2.jpg) |![image](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)|
 
 ## 🟨 Help with problems
 ##&nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
