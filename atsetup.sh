@@ -311,6 +311,8 @@ install_custom_standalone() {
     	pip install pydantic==1.10.13
     	pip install sounddevice==0.4.6
     	pip install python-multipart==0.0.6
+        pip install cutlet>=0.3.0
+    	pip install unidic-lite>=1.0.8
     else
         pip install -r requirements_other.txt
     fi
