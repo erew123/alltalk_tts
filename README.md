@@ -5,12 +5,12 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Model Finetuning:** Train the model specifically on a voice of your choosing for better reproduction.
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you [demo](https://www.youtube.com/watch?v=hunvXn0mLzc).
-- **DeepSpeed:** A 3-4x performance boost generating TTS. [DeepSpeed Windows/Linux Instructions](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#deepspeed-installation-options) [Screenshot](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db)
-- **Low VRAM mode:** Great for people with small GPU memory or if your VRAM is filled by your LLM. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
+- **DeepSpeed:** A 2-3x performance boost generating TTS. [Screenshot](https://github.com/erew123/screenshots/raw/main/deepspeed.jpg)
+- **Low VRAM mode:** Great for people with small GPU memory or if your VRAM is filled by your LLM.
+- **Custom Start-up Settings:** Adjust your default start-up settings. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18nrv7FR6wuA)
-- **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
-- **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/alltalk_tts#screenshots)
+- **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
+- **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
 - **Console output:** Clear command line output for any warnings or issues.
 - **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
 - **SillyTavern integration:** Full integration with SillyTavern.
