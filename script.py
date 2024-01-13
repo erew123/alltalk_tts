@@ -239,8 +239,8 @@ if process.poll() is None:
     print(f"[{params['branding']}Startup] TTS Subprocess starting")
     print(f"[{params['branding']}Startup]")
     print(
-        f"[{params['branding']}Startup] Settings & Documentation:",
-        f"http://{params['ip_address']}:{params['port_number']}",
+        f"[{params['branding']}Startup] \033[94mSettings & Documentation:\033[00m",
+        f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
     )
     print(f"[{params['branding']}Startup]")
 else:

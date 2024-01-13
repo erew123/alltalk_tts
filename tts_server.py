@@ -117,7 +117,7 @@ except ImportError:
     pass
 if deepspeed_available:
     print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
-    print(f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']} settings")
+    print(f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']}settings")
 else:
     print(f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed")
 
