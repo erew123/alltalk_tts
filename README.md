@@ -765,6 +765,7 @@ Generate a preview of a specified voice with hardcoded settings.
    JSON return `{"status": "lowvram-success"}`
 
 ### 🟠 TTS Generation Endpoint (Standard Generation)
+Streaming endpoint details are further down the page.
 
 - URL: `http://127.0.0.1:7851/api/tts-generate`<br> - Method: `POST`<br> - Content-Type: `application/x-www-form-urlencoded`<br>
 
@@ -872,7 +873,7 @@ Example JSON TTS Generation Response:
 
 `{"status":"generate-success","output_file_path":"C:\\text-generation-webui\\extensions\\alltalk_tts\\outputs\\myoutputfile_1704141936.wav","output_file_url":"http://127.0.0.1:7851/audio/myoutputfile_1704141936.wav","output_cache_url":"http://127.0.0.1:7851/audiocache/myoutputfile_1704141936.wav"}`
 
-### 🟠 Example command lines (Streaming Generation)
+### 🟠 TTS Generation Endpoint (Streaming Generation)
 Streaming TTS generation does NOT support Narration and will generate an audio stream. Streaming TTS speech JavaScript Example:<br>
 
 - URL: `http://localhost:7851/api/tts-generate-streaming`<br> - Method: `POST`<br> - Content-Type: `application/x-www-form-urlencoded`<br><br>
