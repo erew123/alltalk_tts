@@ -398,6 +398,7 @@ If you have a voice that the model doesnt quite reproduce correctly, or indeed y
 - To install a few portions of the Nvidia CUDA 11.8 Toolkit (this will not impact text-generation-webui's cuda setup.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
+- As a side note, many people seem to think that the Whisper v2 model (used on Step 1) is giving better results at generating training datasets, so you may prefer to try that, as opposed to the Whisper 3 model.
 
 #### ⚫ How will this work/How complicated is it?
 Everything has been done to make this as simple as possible. At its simplest, you can literally just download a large chunk of audio from an interview, and tell the finetuning to strip through it, find spoken parts and build your dataset. You can literally click 4 buttons, then copy a few files and you are done. At it's more complicated end you will clean up the audio a little beforehand, but its still only 4x buttons and copying a few files.
@@ -406,8 +407,8 @@ Everything has been done to make this as simple as possible. At its simplest, yo
 I would suggest that if its in an interview format, you cut out the interviewer speaking in audacity or your chosen audio editing package. You dont have to worry about being perfect with your cuts, the finetuning Step 1 will go and find spoken audio and cut it out for you. Is there is music over the spoken parts, for best quality you would cut out those parts, though its not 100% necessary. As always, try to avoid bad quality audio with noises in it (humming sounds, hiss etc). You can try something like [Audioenhancer](https://audioenhancer.ai/) to try clean up noisier audio. There is no need to down-sample any of the audio, all of that is handled for you. Just give the finetuning some good quality audio to work with. 
 
 #### ⚫ Important requirements CUDA 11.8
-As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. To keep the download+install as small as possible, you will need to:
-- Download the **xxx (network)** install of the Nvidia Cuda Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
+As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. This requirement is for Step1 of Finetuning. To keep the download+install as small as possible, you will need to:
+- Download the **xxx (network)** install of the Nvidia CUDA Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
 - Run the installer. At minimum, you need to [minimally] install the `nvcc` compiler and the `CUBLAS` development and runtime libraries:
   - Select **Custom Advanced** as your installation type.
   - Uncheck all the checkboxes in the list.
@@ -425,6 +426,8 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
     - Add these to your '~/.bashrc' if you want this to be permanent and not something you have to set each time you open a new terminal.
 - When you have made the changes, open a **new** terminal/command prompt (in order to load the new search paths) and `nvcc --version`. It should report back `Cuda compilation tools, release 11.8.` at which point, you are good to go.
 - If it doesn't report that, check you have correctly set the search environment paths, dont have overlapping other versions of cuda paths etc.
+
+**Note:** Its also important that your Torch and Torchaudio have cuda installed (of any version). If you run the AllTalk diagnostics you can see your Torch and Torchaudio versions listed there. Cuda 11.8 will be listed as `cu118` and Cuda 12.1 as `cu121`. This Torch and Torchaudio is seperate to the above requirement to have the Nvidia CUDA Toolkit installed, so dont confuse the two different requirements. If you dont have Cuda installed on Torch and Torchaudio, Step 2 of Finetuning will fail.
 
 #### ⚫ Starting Finetuning
 **NOTE:** Please make sure you have started AllTalk at least once after updating, so that it downloads the additional files needed for finetuning. 
