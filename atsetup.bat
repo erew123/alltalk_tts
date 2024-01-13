@@ -351,6 +351,8 @@ if "%UserChoice%" == "1" (
     pip install pydantic==1.10.13
     pip install sounddevice==0.4.6
     pip install python-multipart==0.0.6
+    pip install cutlet>=0.3.0
+    pip install unidic-lite>=1.0.8
     echo Downloading DeepSpeed...
     curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
     echo Installing DeepSpeed...
