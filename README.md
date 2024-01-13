@@ -259,14 +259,12 @@ Assuming its all working fine and you are happy, you can delete the old alltalk_
 </details>
 
 ## 🟫 Screenshots
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/15c6ba0b-e6b0-4570-8253-b920dd76174d) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/548619c8-5f1b-47d0-a73d-54d2fee3f3db) |
-|:---:|:---:|
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/b0e13dba-c6b1-4ab7-845d-244ac1158330) |  ![image](https://github.com/erew123/alltalk_tts/assets/35898566/e35e987c-543a-486b-b4fb-ee6ebe6f59c6) |
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/68edc968-bdd2-4f98-9d56-b9ca40decf26) | ![image](https://github.com/erew123/alltalk_tts/assets/35898566/eb5e617b-2345-418d-8267-a9d30f705a10) |
-|![image](https://github.com/erew123/alltalk_tts/assets/35898566/4bd0f02e-298d-4e46-95ea-afc003c1cb70) |
+|![image](https://github.com/erew123/screenshots/blob/main/textgensettings.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/setuputilitys.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/deepspeed.jpg) |![image](https://github.com/erew123/screenshots/blob/main/textgen.jpg) |
+|:---:|:---:|:---:|:---:|
+|![image](https://github.com/erew123/screenshots/blob/main/settingsanddocs.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/finetune1.jpg) | ![image](https://github.com/erew123/screenshots/blob/main/finetune2.jpg) |![image](https://github.com/erew123/screenshots/blob/main/sillytavern.jpg)|
 
 ## 🟨 Help with problems
-#### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
+##&nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
 #### 🟨 How to make a diagnostics report file
 If you are on a Windows machine or a Linux machine, you should be able to use the `atsetup.bat` or `./atsetup.sh` utility to create a diagnositcs file. If you are unable to use the `atsetup` utility, please follow the instructions below.
