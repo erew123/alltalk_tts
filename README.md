@@ -54,7 +54,7 @@ For Windows 10/11 and Linux machines there is a quick setup script. Click to exp
 <details>
 	<summary>QUICK SETUP - Standalone Installation</summary><br>
 
- If you wish to see this as a video, please go [here](https://youtu.be/icn2XS5rUH8)
+ If you wish to see this as a video, please go [here](https://www.youtube.com/watch?v=YghLnMBZLXw)
 1) To download the AllTalk setup you can either:
    - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`<br><br>
    - B) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
