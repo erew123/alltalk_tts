@@ -11,9 +11,9 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Narrarator:** Use different voices for main character and narration. [Example Narration](https://vocaroo.com/18nrv7FR6wuA)
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
-- **Console output:** Clear command line output for any warnings or issues.
+- **Clear Console output:** Clear command line output for any warnings or issues.
 - **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
-- **SillyTavern integration:** Full integration with SillyTavern.
+- **SillyTavern integration:** Full integration with SillyTavern. [Screenshot](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)
 
 ## Index
 
