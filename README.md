@@ -406,6 +406,14 @@ Everything has been done to make this as simple as possible. At its simplest, yo
 #### ⚫ The audio you will use
 I would suggest that if its in an interview format, you cut out the interviewer speaking in audacity or your chosen audio editing package. You dont have to worry about being perfect with your cuts, the finetuning Step 1 will go and find spoken audio and cut it out for you. Is there is music over the spoken parts, for best quality you would cut out those parts, though its not 100% necessary. As always, try to avoid bad quality audio with noises in it (humming sounds, hiss etc). You can try something like [Audioenhancer](https://audioenhancer.ai/) to try clean up noisier audio. There is no need to down-sample any of the audio, all of that is handled for you. Just give the finetuning some good quality audio to work with. 
 
+#### ⚫ A note about anonymous training Telemetry information & disabling it
+Portions of Coqui's TTS trainer scripts gather anonymous training information which you can disable. Their statement on this is listed [here](https://github.com/coqui-ai/Trainer?tab=readme-ov-file#anonymized-telemetry). Although I have tried to pass `TRAINER_TELEMETRY=0` through AllTalk, it appears you will have to set this manually if you wish to finetune on a non-internet enabled computer or disable the anonymous data being sent. You can do this by:
+
+- On Windows by typing `set TRAINER_TELEMETRY=0`
+- On Linux & Mac by typing `export TRAINER_TELEMETRY=0`
+
+Before you start `finetune.py`. You will now be able to finetune offline and no anonymous training data will be sent. 
+
 #### ⚫ Important requirements CUDA 11.8
 As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** installed. Not higher or lower versions. Specifically **11.8**. You do not have to uninstall any other versions, change any graphics drivers, reinstall torch or anything like that. This requirement is for Step1 of Finetuning. To keep the download+install as small as possible, you will need to:
 - Download the **xxx (network)** install of the Nvidia CUDA Toolkit 11.8 from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive)
