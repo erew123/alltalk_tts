@@ -708,14 +708,14 @@ Retrieve a list of available voices for generating speech.
 
    `curl -X GET "http://127.0.0.1:7851/api/currentsettings"`
 
-   JSON return: `{"models_available":[{"name":"Coqui","model_name":"API TTS"},{"name":"Coqui","model_name":"API Local"},{"name":"Coqui","model_name":"XTTSv2 Local"}],"current_model_loaded":"XTTSv2 Local","deepspeed_available":true,"deepspeed_status":true,"low_vram_status":true,"finetuned_model":false}
+   JSON return: ```{"models_available":[{"name":"Coqui","model_name":"API TTS"},{"name":"Coqui","model_name":"API Local"},{"name":"Coqui","model_name":"XTTSv2 Local"}],"current_model_loaded":"XTTSv2 Local","deepspeed_available":true,"deepspeed_status":true,"low_vram_status":true,"finetuned_model":false}```
 
-  name & model_name = listing the currently available models.
-  current_model_loaded = what model is currently loaded into VRAM.
-  deepspeed_available = was DeepSpeed detected on startup and available to be activated.
-  deepspeed_status = If DeepSpeed was detected, is it currently activated.
-  low_vram_status = Is Low VRAM currently enabled.
-  finetuned_model = Was a finetuned model detected. (XTTSv2 FT).
+  `name & model_name` = listing the currently available models.<br>
+  `current_model_loaded` = what model is currently loaded into VRAM.<br>
+  `deepspeed_available` = was DeepSpeed detected on startup and available to be activated.<br>
+  `deepspeed_status` = If DeepSpeed was detected, is it currently activated.<br>
+  `low_vram_status` = Is Low VRAM currently enabled.<br>
+  `finetuned_model` = Was a finetuned model detected. (XTTSv2 FT).<br>
 
 #### 🟠 Preview Voice Endpoint
 Generate a preview of a specified voice with hardcoded settings.
