@@ -936,8 +936,8 @@ def combine(output_file_timestamp, output_file_name, audio_files):
         output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_{timestamp}_combined.wav'
     else:
         output_file_path = os.path.join(this_dir / "outputs" / f'{output_file_name}_combined.wav')
-        output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
-        output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}.wav'
+        output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}_combined.wav'
+        output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}_combined.wav'
     try:
         sf.write(output_file_path, audio, samplerate=sample_rate)
         # Clean up unnecessary files
