@@ -292,7 +292,7 @@
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
 
     <h2 id="demotesttts">Demo/Test TTS</h2>
-    <p style="padding-left: 30px;">If you are wanting to generate bulk quantites of TTS and have control over them,
+    <p style="padding-left: 30px;">If you are wanting to generate bulk quantities of TTS and have control over them,
         please see the <a href="#tts-generator">AllTalk TTS Generator</a> below.</p>
     <div id="container">
         <form method="post" action="/tts-demo-request" id="ttsForm">
@@ -663,7 +663,7 @@
     <h2 id="sillytavern-support"><strong>SillyTavern Support</strong></h2>
     <h4>Important note for Text-generation-webui users</h4>
     <p style="padding-left: 30px;">You <strong><span style="color: #3366ff;">HAVE</span></strong> to disable
-        <strong>Activate TTS</strong> or <strong>Enable TTS</strong> within the Text-generation-webui AllTalk interface,
+        <strong>Enable TTS</strong> within the Text-generation-webui AllTalk interface,
         otherwise&nbsp;Text-generation-webui will also generate TTS due to the way it sends out text. You can do this
         each time you start up&nbsp;Text-generation-webui or set it in the start-up settings at the top of this page.
     </p>
@@ -681,7 +681,7 @@
         experience, making it ideal for content where depth and variety in voice narration add significant value.</p>
     <p style="padding-left: 30px; text-align: justify;">In summary, the choice between Streaming and Standard methods in
         AllTalk TTS depends on what you want. Streaming is great for quick and simple audio generation, while Standard
-        is preferable for a more dynamic and engaging audio experience.</p>>
+        is preferable for a more dynamic and engaging audio experience.</p>
     <ul>
         <li><strong>AllTalk TTS Generation Method:</strong>
             <ul>
@@ -707,7 +707,7 @@
         <li><strong>DeepSpeed and Low VRAM Options:</strong>
             <ul>
                 <li>Optimize performance with DeepSpeed and Low VRAM settings.</li>
-                <li>DeepSpeed can offer a 2-3x performance boost on TTS generation.</li>
+                <li>DeepSpeed can offer a 2-3x performance boost on TTS generation. (Requires installation)</li>
                 <li>See the relevant sections in this documentation for details.</li>
             </ul>
         </li>
@@ -933,6 +933,7 @@
 
     <h3 id="deepspeed-windows">DeepSpeed Setup - Windows</h3>
     <p style="padding-left: 30px;">➡️DeepSpeed requires an Nvidia Graphics card!⬅️</p>
+    <p style="padding-left: 30px;">The atsetup utility for Windows can install DeepSpeed for you (Stanalone users whom installed via the atsetup utility will already have DeepSpeed installed).</p>
     <p style="padding-left: 30px;">DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11
         environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way <span
             style="color: #339966;"><strong>Option 1</strong></span>&nbsp;and a long way <span
