@@ -27,7 +27,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
-## 🔄 Feature reqests, Updates & Bug fixes
+## 🔄 Feature requests, Updates & Bug fixes
 Please check the below link to find a list of all recent updates and changes.
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Current Feature request list** can be found [here](https://github.com/erew123/alltalk_tts/discussions/74)
