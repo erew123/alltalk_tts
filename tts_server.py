@@ -473,16 +473,16 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
 ########################
 
 # TTS VOICE GENERATION METHODS (called from voice_preview and output_modifer)
-async def generate_audio(text, voice, language, output_file, streaming=False):
+async def generate_audio(text, voice, language, temperature, repetition_penalty, output_file, streaming=False):
     # Get the async generator from the internal function
-    response = generate_audio_internal(text, voice, language, output_file, streaming)
+    response = generate_audio_internal(text, voice, language, temperature, repetition_penalty, output_file, streaming)
     # If streaming, then return the generator as-is, otherwise just exhaust it and return
     if streaming:
         return response
     async for _ in response:
         pass
     
-async def generate_audio_internal(text, voice, language, output_file, streaming):
+async def generate_audio_internal(text, voice, language, temperature, repetition_penalty, output_file, streaming):
     global model
     if params["low_vram"] and device == "cpu":
         await switch_device()
@@ -504,9 +504,9 @@ async def generate_audio_internal(text, voice, language, output_file, streaming)
             "language": language,
             "gpt_cond_latent": gpt_cond_latent,
             "speaker_embedding": speaker_embedding,
-            "temperature": float(params["local_temperature"]),
+            "temperature": float(temperature),
             "length_penalty": float(model.config.length_penalty),
-            "repetition_penalty": float(params["local_repetition_penalty"]),
+            "repetition_penalty": float(repetition_penalty),
             "top_k": int(model.config.top_k),
             "top_p": float(model.config.top_p),
             "enable_text_splitting": True
@@ -560,9 +560,9 @@ async def generate_audio_internal(text, voice, language, output_file, streaming)
             file_path=output_file,
             speaker_wav=[f"{this_dir}/voices/{voice}"],
             language=language,
-            temperature=float(params["local_temperature"]),
+            temperature=temperature,
             length_penalty=model.config.length_penalty,
-            repetition_penalty=float(params["local_repetition_penalty"]),
+            repetition_penalty=repetition_penalty,
             top_k=model.config.top_k,
             top_p=model.config.top_p,
         )
@@ -602,10 +602,12 @@ async def generate(request: Request):
         text = data["text"]
         voice = data["voice"]
         language = data["language"]
+        temperature = data["temperature"]
+        repetition_penalty = data["repetition_penalty"]
         output_file = data["output_file"]
         streaming = False
         # Generation logic
-        response = await generate_audio(text, voice, language, output_file, streaming)
+        response = await generate_audio(text, voice, language, temperature, repetition_penalty, output_file, streaming)
         if streaming:
             return StreamingResponse(response, media_type="audio/wav")
         return JSONResponse(
