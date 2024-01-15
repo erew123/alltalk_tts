@@ -57,6 +57,10 @@ params = load_config(configfile_path)
 # check someone hasnt enabled lowvram on a system thats not cuda enabled
 params["low_vram"] = "false" if not torch.cuda.is_available() else params["low_vram"]
 
+# Load values for temperature and repetition_penalty
+temperature = params["local_temperature"]
+repetition_penalty = params["local_repetition_penalty"]
+
 # Define the path to the JSON file
 config_file_path = this_dir / "modeldownload.json"
 
