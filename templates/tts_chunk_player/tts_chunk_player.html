@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="./favicon.ico" type="image/x-icon">
     <title>AllTalk TTS Generator</title>
-
     <style>
         body,
         textarea,
@@ -637,51 +636,51 @@
     import Crunker from './crunker.esm.js';
 
     async function exportMP3() {
-    const crunker = new Crunker();
-    const fileUrls = ttsList.map(item => item.fileUrl);
-    const splitEvery = parseInt(document.getElementById('splitEvery').value) || 500;
-    const progressIndicator = document.getElementById('progressIndicator');
-    const progressText = document.getElementById('progressText');
+        const crunker = new Crunker();
+        const fileUrls = ttsList.map(item => item.fileUrl);
+        const splitEvery = parseInt(document.getElementById('splitEvery').value) || 500;
+        const progressIndicator = document.getElementById('progressIndicator');
+        const progressText = document.getElementById('progressText');
 
-    if (progressIndicator && progressText) {
-        progressIndicator.style.display = 'block';
-        progressText.textContent = 'Starting export...';
-    }
-
-    try {
-        for (let i = 0; i < fileUrls.length; i += splitEvery) {
-            const currentBatch = Math.floor(i / splitEvery) + 1;
-            const totalBatches = Math.ceil(fileUrls.length / splitEvery);
-            if (progressText) {
-                progressText.textContent = `Processing batch ${currentBatch} of ${totalBatches}`;
-                progressText.style.color = 'black'; // Set the text color to black
-            }
-
-            const batchUrls = fileUrls.slice(i, Math.min(i + splitEvery, fileUrls.length));
-            const audioBuffers = await crunker.fetchAudio(...batchUrls);
-            const combined = crunker.concatAudio(audioBuffers);
-            const output = crunker.export(combined, "audio/wav");
-            crunker.download(output.blob, `combined_audio_part_${currentBatch}.wav`);
-
-            // Clear audioBuffers array to free up memory
-            audioBuffers.length = 0;
-
-            console.log(`Exported batch ${currentBatch} of ${totalBatches}`);
-        }
-    } catch (error) {
-        console.error('Error combining files:', error);
-        if (progressText) {
-            progressText.textContent = 'Error during export!';
-        }
-    } finally {
         if (progressIndicator && progressText) {
-            progressIndicator.style.display = 'none';
-            progressText.textContent = ''; // Reset progress text
+            progressIndicator.style.display = 'block';
+            progressText.textContent = 'Starting export...';
+        }
+
+        try {
+            for (let i = 0; i < fileUrls.length; i += splitEvery) {
+                const currentBatch = Math.floor(i / splitEvery) + 1;
+                const totalBatches = Math.ceil(fileUrls.length / splitEvery);
+                if (progressText) {
+                    progressText.textContent = `Processing batch ${currentBatch} of ${totalBatches}`;
+                    progressText.style.color = 'black'; // Set the text color to black
+                }
+
+                const batchUrls = fileUrls.slice(i, Math.min(i + splitEvery, fileUrls.length));
+                const audioBuffers = await crunker.fetchAudio(...batchUrls);
+                const combined = crunker.concatAudio(audioBuffers);
+                const output = crunker.export(combined, "audio/wav");
+                crunker.download(output.blob, `combined_audio_part_${currentBatch}.wav`);
+
+                // Clear audioBuffers array to free up memory
+                audioBuffers.length = 0;
+
+                console.log(`Exported batch ${currentBatch} of ${totalBatches}`);
+            }
+        } catch (error) {
+            console.error('Error combining files:', error);
+            if (progressText) {
+                progressText.textContent = 'Error during export!';
+            }
+        } finally {
+            if (progressIndicator && progressText) {
+                progressIndicator.style.display = 'none';
+                progressText.textContent = ''; // Reset progress text
+            }
         }
     }
-}
 
-window.exportMP3 = exportMP3;
+    window.exportMP3 = exportMP3;
 
 
 
@@ -1531,53 +1530,53 @@ window.exportMP3 = exportMP3;
     }
 
     function importFromJSON() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
 
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.readAsText(file);
-            reader.onload = (e) => {
-                try {
-                    const jsonData = JSON.parse(e.target.result);
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.readAsText(file);
+                reader.onload = (e) => {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
 
-                    ttsList = jsonData;
-                    currentPage = 1; // Reset to the first page
-                    updateUIList();
-                    updatePaginationControls(); // Update pagination controls
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                }
-            };
+                        ttsList = jsonData;
+                        currentPage = 1; // Reset to the first page
+                        updateUIList();
+                        updatePaginationControls(); // Update pagination controls
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
+                };
+            }
+        };
+
+        input.click();
+    }
+
+    function updatePaginationControls() {
+        const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        const pageIndicator = document.getElementById('pageIndicator');
+        if (pageIndicator) {
+            pageIndicator.textContent = `Page ${currentPage} of ${lastPage}`;
         }
-    };
 
-    input.click();
-}
+        const prevPageButton = document.getElementById('prevPage');
+        if (prevPageButton) {
+            prevPageButton.disabled = (currentPage === 1);
+        }
 
-function updatePaginationControls() {
-    const lastPage = Math.ceil(ttsList.length / itemsPerPage);
-    const pageIndicator = document.getElementById('pageIndicator');
-    if (pageIndicator) {
-        pageIndicator.textContent = `Page ${currentPage} of ${lastPage}`;
+        const nextPageButton = document.getElementById('nextPage');
+        if (nextPageButton) {
+            nextPageButton.disabled = (currentPage === lastPage);
+        }
+
+        // Similar updates for any additional pagination controls if you have them
+        // ...
     }
-
-    const prevPageButton = document.getElementById('prevPage');
-    if (prevPageButton) {
-        prevPageButton.disabled = (currentPage === 1);
-    }
-
-    const nextPageButton = document.getElementById('nextPage');
-    if (nextPageButton) {
-        nextPageButton.disabled = (currentPage === lastPage);
-    }
-
-    // Similar updates for any additional pagination controls if you have them
-    // ...
-}
 
 
 
@@ -1985,8 +1984,10 @@ function updatePaginationControls() {
     window.onload = function () {
         setupPage();
         hideProgress(); // Ensure the progress indicator is hidden on page load
+        if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+                alert('AllTalk TTS Generator is not designed to be run from your disk folder. Please run it from the correct URL e.g. http://127.0.0.1:7851/static/tts_chunk_player/tts_chunk_player.html');
+            }
     };
-
 
 </script>
 </body>
