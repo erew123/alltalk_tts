@@ -728,7 +728,7 @@ async def update_settings(
 async def tts_demo_request_streaming(text: str, voice: str, language: str, output_file: str):
     try:
         output_file_path = this_dir / "outputs" / output_file
-        stream = await generate_audio(text, voice, language, output_file_path, streaming=True)
+        stream = await generate_audio(text, voice, language, temperature, repetition_penalty, output_file_path, streaming=True)
         return StreamingResponse(stream, media_type="audio/wav")
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -738,7 +738,7 @@ async def tts_demo_request_streaming(text: str, voice: str, language: str, outpu
 async def tts_demo_request(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
     try:
         output_file_path = this_dir / "outputs" / output_file
-        await generate_audio(text, voice, language, output_file_path, streaming=False)
+        await generate_audio(text, voice, language, temperature, repetition_penalty, output_file_path, streaming=False)
         return JSONResponse(content={"output_file_path": str(output_file)}, status_code=200)
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -800,7 +800,7 @@ async def preview_voice(request: Request, voice: str = Form(...)):
 
         # Generate the audio
         output_file_path = this_dir / "outputs" / f"{output_file_name}.wav"
-        await generate_audio(text, voice, language, output_file_path, streaming=False)
+        await generate_audio(text, voice, language, temperature, repetition_penalty, output_file_path, streaming=False)
 
         # Generate the URL
         output_file_url = f'http://{params["ip_address"]}:{params["port_number"]}/audio/{output_file_name}.wav'
@@ -837,7 +837,7 @@ import hashlib
 async def tts_generate_streaming(text: str, voice: str, language: str, output_file: str):
     try:
         output_file_path = this_dir / "outputs" / output_file
-        stream = await generate_audio(text, voice, language, output_file_path, streaming=True)
+        stream = await generate_audio(text, voice, language, temperature, repetition_penalty, output_file_path, streaming=True)
         return StreamingResponse(stream, media_type="audio/wav")
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -847,7 +847,7 @@ async def tts_generate_streaming(text: str, voice: str, language: str, output_fi
 async def tts_generate_streaming(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
     try:
         output_file_path = this_dir / "outputs" / output_file
-        await generate_audio(text, voice, language, output_file_path, streaming=False)
+        await generate_audio(text, voice, language, temperature, repetition_penalty, output_file_path, streaming=False)
         return JSONResponse(content={"output_file_path": str(output_file)}, status_code=200)
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -1060,7 +1060,7 @@ async def tts_generate(
                 cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
                 output_file = this_dir / "outputs" / f"{output_file_name}_{uuid.uuid4()}_{int(time.time())}.wav"
                 output_file_str = output_file.as_posix()
-                response = await generate_audio(cleaned_part, voice_to_use, language, output_file_str, streaming)
+                response = await generate_audio(cleaned_part, voice_to_use, language,temperature, repetition_penalty, output_file_str, streaming)
                 audio_path = output_file_str
                 audio_files_all_paragraphs.append(audio_path)
             # Combine audio files across paragraphs
@@ -1097,7 +1097,7 @@ async def tts_generate(
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             else:
                 cleaned_string = text_input
-            response = await generate_audio(cleaned_string, character_voice_gen, language, output_file_path, streaming)
+            response = await generate_audio(cleaned_string, character_voice_gen, language, temperature, repetition_penalty, output_file_path, streaming)
         if sounddevice_installed == False or streaming == True:
             autoplay = False
         if autoplay:
