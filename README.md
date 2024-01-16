@@ -464,6 +464,19 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 11) Follow the on-screen instructions when the web interface starts up.
 12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
+#### ⚫ Evaluation Data Percentage
+In the process of finetuning, it's crucial to balance the data used for training the model against the data reserved for evaluating its performance. Typically, a portion of the dataset is set aside as an 'evaluation set' to assess the model's capabilities in dealing with unseen data. On Step 1 of finetuning you have the option to adjust this evaluation data percentage, offering more control over your model training process.<br><br>
+**Why Adjust the Evaluation Percentage?**<br><br>
+Adjusting the evaluation percentage **can** be beneficial in scenarios with limited voice samples. When dealing with a smaller dataset, allocating a slightly larger portion to training could enhance the model's ability to learn from these scarce samples. Conversely, with abundant data, a higher evaluation percentage might be more appropriate to rigorously test the model's performance. There are currently no absolutely optimal split percentages as it varies by dataset.
+- **Default Setting:** The default evaluation percentage is set at 15%, which is a balanced choice for most datasets.
+- **Adjustable Range:** Users can now adjust this percentage, but it’s generally recommend keeping it between 5% and 30%.
+  - **Lower Bound:** A minimum of 5% ensures that there's enough data to evaluate model performance.
+  - **Upper Bound:** Its suggested not exceeding 30% for evaluation to avoid limiting the amount of data available for training.
+
+- **Understanding the Impact:** Before adjusting this setting, it's important to understand its impact on model training and evaluation. Incorrect adjustments can lead to suboptimal model performance.
+- **Gradual Adjustments:** For those unfamiliar with the process, we recommend reading up on training data and training sets, then making small, incremental changes and observing their effects.
+- **Data Quality:** Regardless of the split, the quality of the audio data is paramount. Ensure that your datasets are built from good quality audio with enough data within them.
+
 #### ⚫ Using a Finetuned model in Text-generation-webui
 
 At the end of the finetune process, you will have an option to `Compact and move model to /trainedmodel/` this will compact the raw training file and move it to `/model/trainedmodel/`. When AllTalk starts up within Text-generation-webui, if it finds a model in this location a new loader will appear in the interface for `XTTSv2 FT` and you can use this to load your finetuned model. <br><br>**Be careful** not to train a new model from the base model, then overwrite your current `/model/trainedmodel/` **if** you want a seperately trained model. This is why there is an `OPTION B` to move your just trained model to `/models/lastfinetuned/`.
