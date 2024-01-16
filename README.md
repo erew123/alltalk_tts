@@ -921,6 +921,6 @@ audioElement.play(); // Play the audio stream directly
 <br>
 
 ### 🔴 Future to-do list
+- I am maintaining a list of things people request [here](https://github.com/erew123/alltalk_tts/discussions/74)
 - Possibly add some additional TTS engines (TBD).
-- Tagging support within text.
 - Have a break!
