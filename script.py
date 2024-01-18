@@ -489,12 +489,14 @@ def voice_preview(string):
     output_file = Path(params["output_folder_wav"]) / "voice_preview.wav"
     # Generate the audio
     language_code = languages.get(params["language"])
+    temperature = params["local_temperature"]
+    repetition_penalty = params["local_repetition_penalty"]
     # Convert the WindowsPath object to a string before using it in JSON payload
     output_file_str = output_file.as_posix()
     # Lock before making the generate request
     with process_lock:
         generate_response = send_generate_request(
-            string, params["voice"], language_code, output_file_str
+            string, params["voice"], language_code, temperature, repetition_penalty, output_file_str
         )
     # Check if lock is already acquired
     if process_lock.locked():
@@ -573,6 +575,8 @@ def output_modifier(string, state):
         return
     string = cleaned_string
     language_code = languages.get(params["language"])
+    temperature = params["local_temperature"]
+    repetition_penalty = params["local_repetition_penalty"]
     # Create a list to store generated audio paths
     audio_files = []
     if process_lock.acquire(blocking=False):
@@ -635,7 +639,7 @@ def output_modifier(string, state):
                 output_file_str = output_file.as_posix()
                 output_file = get_output_filename(state)
                 generate_response = send_generate_request(
-                    cleaned_part, params["voice"], language_code, output_file_str
+                    cleaned_part, params["voice"], language_code, temperature, repetition_penalty, output_file_str
                 )
                 audio_path = generate_response.get("data", {}).get("audio_path")
                 final_output_file = audio_path
@@ -684,12 +688,14 @@ def get_output_filename(state):
 ###############################################
 #### SEND GENERATION REQUEST TO TTS ENGINE ####
 ###############################################
-def send_generate_request(text, voice, language, output_file):
+def send_generate_request(text, voice, language, temperature, repetition_penalty, output_file):
     url = f"{base_url}/api/generate"
     payload = {
         "text": text,
         "voice": voice,
         "language": language,
+        "temperature": temperature,
+        "repetition_penalty": repetition_penalty,
         "output_file": output_file,
     }
     headers = {"Content-Type": "application/json"}
@@ -737,11 +743,13 @@ def input_modifier(string, state):
 
 def ui():
     with gr.Accordion(params["branding"] + " TTS (XTTSv2)"):
+        # Activate alltalk_tts, Enable autoplay, Show text
         with gr.Row():
             activate = gr.Checkbox(value=params['activate'], label='Enable TTS')
             autoplay = gr.Checkbox(value=params['autoplay'], label='Autoplay TTS')
             show_text = gr.Checkbox(value=params['show_text'], label='Show Text')
-            
+
+        # Low vram enable, Deepspeed enable, Remove trailing dots
         with gr.Row():
             low_vram = gr.Checkbox(value=params['low_vram'], label='Enable Low VRAM Mode')
             low_vram_play = gr.HTML(visible=False)
@@ -749,6 +757,7 @@ def ui():
             deepspeed_checkbox_play = gr.HTML(visible=False)
             remove_trailing_dots = gr.Checkbox(value=params['remove_trailing_dots'], label='Remove trailing "."')
 
+        # TTS method, Character voice selection
         with gr.Row():
             model_loader_choices=["API TTS", "API Local", "XTTSv2 Local"]
             if finetuned_model:
@@ -769,17 +778,19 @@ def ui():
                 voice = gr.Dropdown(available_voices, label="Character Voice", value=default_voice, allow_custom_value=True, )
                 create_refresh_button(voice, lambda: None, lambda: {"choices": get_available_voices(), "value": params["voice"],}, "refresh-button",)
 
+        # Language, Narrator voice
         with gr.Row():
             language = gr.Dropdown(languages.keys(), label="Language", value=params["language"])
             with gr.Row():
                 narrator_voice_gr = gr.Dropdown(get_available_voices(), label="Narrator Voice", allow_custom_value=True, value=params["narrator_voice"])
                 create_refresh_button(narrator_voice_gr, lambda: None, lambda: {"choices": get_available_voices(), "value": params["narrator_voice"],}, "refresh-button")
 
-        # Temperature and Repetition Penalty (Not yet parsed to api/implemented)
-        # with gr.Row():
-        #     local_temperature_gr = gr.Slider(minimum=0, maximum=1, step=0.05, label="Temperature", value=params["local_temperature"])
-        #     local_repetition_penalty_gr = gr.Slider(minimum=0, maximum=20, step=0.5, label="Repetition Penalty", value=params["local_repetition_penalty"])
+        # Temperature, Repetition Penalty
+        with gr.Row():
+            local_temperature_gr = gr.Slider(minimum=0.05, maximum=1, step=0.05, label="Temperature", value=params["local_temperature"])
+            local_repetition_penalty_gr = gr.Slider(minimum=0.5, maximum=20, step=0.5, label="Repetition Penalty", value=params["local_repetition_penalty"])
 
+        # Narrator enable, Non quoted text, Explanation text
         with gr.Row():
             with gr.Row():
                 narrator_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Narrator", value="Enabled" if params.get("narrator_enabled") else "Disabled")
@@ -787,6 +798,7 @@ def ui():
                 explanation_text = gr.HTML(
                 f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>")
 
+        # Preview speech
         with gr.Row():
             preview_text = gr.Text(
                 show_label=False,
@@ -795,7 +807,7 @@ def ui():
             )
             preview_play = gr.Button("Preview")
             preview_audio = gr.HTML(visible=False)
-
+        
         with gr.Row():
             convert = gr.Button("Permanently replace audios with the message texts")
             convert_cancel = gr.Button("Cancel", visible=False)
@@ -864,10 +876,9 @@ def ui():
     voice.change(lambda x: params.update({"voice": x}), voice, None)
     language.change(lambda x: params.update({"language": x}), language, None)
 
-
-    # TS Settings (Not yet parsed to api/implemented)
-    # local_temperature_gr.change(lambda x: params.update({"local_temperature": x}), local_temperature_gr, None)
-    # local_repetition_penalty_gr.change(lambda x: params.update({"local_repetition_penalty": x}), local_repetition_penalty_gr, None)
+    # TSS Settings
+    local_temperature_gr.change(lambda x: params.update({"local_temperature": x}), local_temperature_gr, None)
+    local_repetition_penalty_gr.change(lambda x: params.update({"local_repetition_penalty": x}), local_repetition_penalty_gr, None)
 
     # Narrator selection actions
     narrator_enabled_gr.change(update_narrator_enabled, narrator_enabled_gr, None)
