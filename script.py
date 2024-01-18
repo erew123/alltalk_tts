@@ -613,7 +613,7 @@ def output_modifier(string, state):
                     # Generate TTS and output to a file
                     output_filename = get_output_filename(state)
                     generate_response = send_generate_request(
-                        cleaned_part, voice_to_use, language_code, output_filename
+                        cleaned_part, voice_to_use, language_code, temperature, repetition_penalty, output_filename
                     )
                     audio_path = generate_response.get("data", {}).get("audio_path")
                     audio_files_all_paragraphs.append(audio_path)
