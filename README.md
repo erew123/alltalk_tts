@@ -161,7 +161,7 @@ Deepspeed and other such things can be installed. Please read the relevant instr
 
 
 #### 🟩 Other installation notes
-On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser.
+On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser. If you are running a headless system and need to change the IP, please see the Help with problems section down below.
 
 Once the extension is loaded, please find all documentation and settings on the link provided in the interface (as shown in the screenshot below).
 
@@ -346,6 +346,15 @@ Im not sure if the Pydantic version has been recently updated by the Text-genera
 You can either follow the [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.<br><br>
 
 If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options)
+</details>
+
+#### 🟨 I am running a Headless system and need to change the IP Address manually as I cannot reach the config page.
+<details>
+	<summary>Click to expand</summary><br>
+	
+To do this you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for `"ip_address": "127.0.0.1",` and change the `127.0.0.1` to your chosen IP address,then save the file and start AllTalk.<br><br>
+
+When doing this, be careful not to impact the formatting of the JSON file. Worst case, you can re-download a fresh copy of `confignew.json` from this website and that will put you back to a factory setting.
 </details>
 
 #### 🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug
