@@ -709,7 +709,10 @@
     let listPlayIndex = 0;
     let currentPage = 1;
     let itemsPerPage = 100; // Adjust as needed
-
+    var protocol = window.location.protocol;
+    var host = window.location.hostname;
+    var port = window.location.port;
+    var baseUrl = protocol + "//" + host + (port ? ':' + port : '');
 
     ////////////////////////////////////
     //////// Progress Indicator ////////
@@ -850,7 +853,7 @@
                 autoplay_volume: volume
             });
 
-            const response = await fetch("http://127.0.0.1:7851/api/tts-generate", {
+            const response = await fetch(baseUrl + "/api/tts-generate", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -920,7 +923,7 @@
                 autoplay: "false",
                 autoplay_volume: "0.1"
             });
-            const response = await fetch("http://127.0.0.1:7851/api/tts-generate", {
+            const response = await fetch(baseUrl + "/api/tts-generate", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -1050,7 +1053,7 @@
                 autoplay_volume: volume,
             });
 
-            const response = await fetch("http://127.0.0.1:7851/api/tts-generate", {
+            const response = await fetch(baseUrl + "/api/tts-generate", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -1080,8 +1083,9 @@
             });
 
             // Reinitialize currentSound every time
+            var srcUrl = baseUrl + "/tts-demo-request?" + queryParams.toString();
             currentSound = new Howl({
-                src: [`http://127.0.0.1:7851/tts-demo-request?${queryParams.toString()}`],
+                src: [srcUrl],
                 volume: volume,
                 html5: true // Force HTML5 Audio to enable streaming
             });
@@ -1140,7 +1144,7 @@
             const formData = new FormData();
             formData.append("voice", characterVoice);
 
-            const response = await fetch("http://127.0.0.1:7851/api/previewvoice/", {
+            const response = await fetch(baseUrl + "/api/previewvoice/", {
                 method: "POST",
                 body: formData,
             });
@@ -1632,7 +1636,7 @@
 
     async function fetchVoices() {
         try {
-            const response = await fetch("http://127.0.0.1:7851/api/voices");
+            const response = await fetch(baseUrl + "/api/voices");
             const result = await response.json();
             const characterVoiceSelect = document.getElementById("character_voice_gen");
 
