@@ -15,7 +15,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
 - **SillyTavern integration:** Full integration with SillyTavern. [Screenshot](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)
 
-## Index
+### Index
 
 - 🟩 [Installation](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
 - 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
@@ -27,14 +27,14 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
-## 🔄 Feature requests, Updates & Bug fixes
+### 🔄 Feature requests, Updates & Bug fixes
 Please check the below link to find a list of all recent updates and changes.
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Current Feature request list** can be found [here](https://github.com/erew123/alltalk_tts/discussions/74)
 
 I welcome your input and ideas for new features, suggestions, and improvements. Feel free to share your thoughts and collaborate in the discussions area. If you find this project valuable and would like to show your appreciation, you can make a donation on my [Ko-fi](https://ko-fi.com/erew123) page. Your support goes a long way in ensuring that I can continue to deliver even better features and experiences.
 
-## 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
+### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
 For Windows 10/11 and Linux machines there is a quick setup script. Click to expand the correct section below:
 <details>
 	<summary>QUICK SETUP - Text-Generation-webui</summary><br>
@@ -72,7 +72,7 @@ For Windows 10/11 and Linux machines there is a quick setup script. Click to exp
    Finetuning has other installation requirements so please read any instructions in the setup utility and refer back here to this page for detailed instructions.<br><br>
 </details>
 
-## 🟩 Manual Installation - As part of Text generation web UI
+### 🟩 Manual Installation - As part of Text generation web UI
 On Mac's or if you wish to perform a manual installation. Click to expand the correct section below:
 <details>
 	<summary>MANUAL INSTALLATION - Text-Generation-webui</summary><br>
@@ -112,7 +112,7 @@ This has been tested on the current Dec 2023 release of Text generation webUI. I
 
 </details>
 
-## 🟩 Manual Installation - As a Standalone Application
+### 🟩 Manual Installation - As a Standalone Application
 On Mac's or if you wish to perform a manual installation. Click to expand the correct section below:
 <details>
 	<summary>MANUAL INSTALLATION - I want to run AllTalk as a standalone when installed with Text-generation-webui</summary><br>
@@ -182,7 +182,7 @@ Most narrator/character systems switch voices upon encountering an asterisk or q
 
 With improvements to the splitter/processor, I'm confident it's functioning well. You can monitor what AllTalk identifies as Narrator lines on the command line and adjust its behavior if needed (Text Not Inside - Function).
 
-## 🟪 Updating
+### 🟪 Updating
 <details>
 	<summary>UPDATING - I am using Text-Generation-webui</summary><br>
 This is pretty much a repeat of the installation process. 
@@ -261,12 +261,12 @@ You can now start text-generation-webui or AllTalk (standalone) and it should st
 Assuming its all working fine and you are happy, you can delete the old alltalk_tts.old folder.
 </details>
 
-## 🟫 Screenshots
+### 🟫 Screenshots
 |![image](https://github.com/erew123/screenshots/raw/main/textgensettings.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/setuputilitys.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/deepspeed.jpg) |![image](https://github.com/erew123/screenshots/raw/main/textgen.jpg) |
 |:---:|:---:|:---:|:---:|
 |![image](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune1.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune2.jpg) |![image](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)|
 
-## 🟨 Help with problems
+### 🟨 Help with problems
 
 #### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
@@ -403,7 +403,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 
 </details>
 
-## ⚫ Finetuning a model
+### ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
 - An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
@@ -500,7 +500,7 @@ At the end of the finetune process, you will have an option to `Compact and move
 
 If you've compacted and moved your model, its highly unlikely you would want to keep that data, however the choice is there to keep it if you wish. It will be between 5-10GB in size, so most people will want to delete it.
 
-## 🔵🟢🟡 DeepSpeed Installation Options
+### 🔵🟢🟡 DeepSpeed Installation Options
 **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
 
 #### 🔵 Linux Installation
@@ -678,7 +678,7 @@ def get_shm_size():
 </details>
 </details>
 
-## ⬜ AllTalk TTS Generator
+### ⬜ AllTalk TTS Generator
 AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently. Please see here for a quick [demo](https://www.youtube.com/watch?v=hunvXn0mLzc)<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed up generation. **Low VRAM** would be best turned off and your LLM model unloaded from your GPU VRAM (unload your model). **No Playback** will reduce memory overhead on very large generations (15,000 words or more). Splitting **Export to Wav** into smaller groups will also reduce memory overhead at the point of exporting your wav files (so good for low memory systems). 
 
 #### ⬜ Estimated Throughput
@@ -715,7 +715,7 @@ For generating **large amounts of TTS**, it's recommended to select the **No Pla
 - Generated audio can be played back from the list, which also highlights the currently playing chunk.
 - The TTS Generator remembers your settings, so you can pick up where you left off even after refreshing the page.
 
-## 🟠 API Suite and JSON-CURL
+### 🟠 API Suite and JSON-CURL
 ### 🟠Overview
 The Text-to-Speech (TTS) Generation API allows you to generate speech from text input using various configuration options. This API supports both character and narrator voices, providing flexibility for creating dynamic and engaging audio content.
 
