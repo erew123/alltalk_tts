@@ -16,6 +16,14 @@ import numpy as np
 import soundfile as sf
 import uuid
 
+######################################
+#### ALLTALK ALLOWED STARTUP TIME ####
+######################################
+startup_wait_time = 120
+
+# You can change the above setting to a larger number to allow AllTAlk more time to start up. The default setting is 120 seconds (2 minutes).
+# On some older systems you may need to allow AllTalk more time. So you could set it to 240 (4 minutes) which will give AllTalk more to load.
+
 #################################################################
 #### LOAD PARAMS FROM confignew.json - REQUIRED FOR BRANDING ####
 #################################################################
@@ -239,7 +247,7 @@ if process.poll() is None:
     print(f"[{params['branding']}Startup] TTS Subprocess starting")
     print(f"[{params['branding']}Startup]")
     print(
-        f"[{params['branding']}Startup] \033[94mSettings & Documentation:\033[00m",
+        f"[{params['branding']}Startup] \033[94m {params['branding']}Settings & Documentation:\033[00m",
         f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
     )
     print(f"[{params['branding']}Startup]")
@@ -266,7 +274,7 @@ else:
     # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
     sys.exit(1)
 
-timeout = 120  # Adjust the timeout as needed
+timeout = startup_wait_time  # Gather timeout setting from startup_wait_time
 
 # Introduce a delay before starting the check loop
 time.sleep(26)  # Wait 26 secs before checking if the tts_server.py has started up.
@@ -279,13 +287,15 @@ while time.time() - start_time < timeout:
     except requests.RequestException as e:
         # Print the exception for debugging purposes
         print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait."
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for {timeout} seconds maximum. Please wait."
         )
-    time.sleep(4)
+    time.sleep(5)
 else:
-    print(
-        f"[{params['branding']}Startup] Startup timed out. Check the server logs for more information."
-    )
+    print(f"\n[{params['branding']}Startup] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m")
+    print(f"[{params['branding']}Startup] On older system you may wish to open and edit \033[94mscript.py\033[0m with a text editor and changing the")
+    print(f"[{params['branding']}Startup] \033[94mstartup_wait_time = 120\033[0m setting to something like \033[94mstartup_wait_time = 240\033[0m as this will allow")
+    print(f"[{params['branding']}Startup] AllTalk more time to try load the model into your VRAM. Otherise please visit the Github for")
+    print(f"[{params['branding']}Startup] a list of other possible troubleshooting options.")
     # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
     sys.exit(1)
 
