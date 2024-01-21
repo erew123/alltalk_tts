@@ -32,6 +32,8 @@ Please check the below link to find a list of all recent updates and changes.
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 #### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Current Feature request list** can be found [here](https://github.com/erew123/alltalk_tts/discussions/74)
 
+I welcome your input and ideas for new features, suggestions, and improvements. Feel free to share your thoughts and collaborate in the discussions area. If you find this project valuable and would like to show your appreciation, you can make a donation on my [Ko-fi](https://ko-fi.com/erew123) page. Your support goes a long way in ensuring that I can continue to deliver even better features and experiences.
+
 ## 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
 For Windows 10/11 and Linux machines there is a quick setup script. Click to expand the correct section below:
 <details>
