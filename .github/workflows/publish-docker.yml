@@ -55,9 +55,9 @@ jobs:
             ghcr.io/${{ env.ACTOR_LOWER }}/${{ env.REPO_NAME }}:${{ matrix.tag_name }}-${{ github.sha }}
             ghcr.io/${{ env.ACTOR_LOWER }}/${{ env.REPO_NAME }}:${{ matrix.tag_name }}
             ghcr.io/${{ env.ACTOR_LOWER }}/${{ env.REPO_NAME }}:latest
-            ${{ steps.vars.outputs.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ matrix.tag_name }}-${{ github.sha }}
-            ${{ steps.vars.outputs.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ matrix.tag_name }}
-            ${{ steps.vars.outputs.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ matrix.tag_name }}-${{ github.sha }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ matrix.tag_name }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3.4.2
