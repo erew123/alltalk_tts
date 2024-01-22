@@ -313,6 +313,7 @@ install_custom_standalone() {
     	pip install python-multipart==0.0.6
         pip install cutlet>=0.3.0
     	pip install unidic-lite>=1.0.8
+        pip install transformers==4.36.2
     else
         pip install -r requirements_other.txt
     fi
