@@ -37,7 +37,9 @@ I welcome your input and ideas for new features, suggestions, and improvements. 
 **ERROR** `ImportError: cannot import name 'SampleOutput' from 'transformers.generation.utils'` please see this issue [here](https://github.com/erew123/alltalk_tts/issues/82)
 
 ### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
-For Windows 10/11 and Linux machines there is a quick setup script. Click to expand the correct section below:
+For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section. 
+
+Click to expand the correct section below:
 <details>
 	<summary>QUICK SETUP - Text-Generation-webui</summary><br>
 
@@ -328,6 +330,15 @@ Other possibilities for this issue are:
 10) You are running DeepSpeed on a Linux machine and although you are starting with `./start_linux.sh` AllTalk is failing there on starting. This is because text-generation-webui will overwrite some environment variables when it loads its python environment. To see if this is the problem, from a terminal go into your text-generation-webui folder and `./cmd_linux.sh` then set your environment variable again e.g. `export CUDA_HOME=/usr/local/cuda` (this may vary depending on your OS, but this is the standard one for Linux, and assuming you have installed the CUDA toolkit), then `python server.py` and see if it starts up. If you want to edit the environment permanently you can do so, I have not managed to write full instructions yet, but here is the conda guide [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars).
 
 11) You have built yourself a custom Python environment and something is funky with it. This is very hard to diagnose as its not a standard environment. You may want to updating text-generation-webui and re installing its requirements file (whichever one you use that comes down with text-generation-webui).
+</details>
+
+#### 🟨 Windows & Python requirements for compiling packages
+<details>
+	<summary>Click to expand</summary><br>
+
+ Python requires that you install C++ development tools on Windows. This is detailed on the [Python site here](https://wiki.python.org/moin/WindowsCompilers). You would need to install `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK` from the C++ Build tools section. 
+ 
+ You can get hold of the **Community** edition [here](https://visualstudio.microsoft.com/downloads/) the during installation, selecting `C++ Build tools` and then `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK`. 
 </details>
 
 #### 🟨 I think AllTalks requirements file has installed something another extension doesn't like
