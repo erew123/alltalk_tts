@@ -8,3 +8,4 @@ services:
     volumes:
       - ./outputs:/app/outputs/
       - ./finetune/put-voice-samples-in-here:/app/finetune/put-voice-samples-in-here
+      - ./dockerconfig.json:/app/confignew.json

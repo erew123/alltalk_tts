@@ -8,7 +8,7 @@ services:
     volumes:
       - ./outputs:/app/outputs/
       - ./finetune/put-voice-samples-in-here:/app/finetune/put-voice-samples-in-here
-      - ./confignew.json:/app/confignew.json
+      - ./dockerconfig.json:/app/confignew.json
     deploy:
       resources:
         reservations:
