@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+ARG image_name=python:3.11-slim
+FROM ${image_name}
 WORKDIR /app
 COPY . .
 # Argument for specifying the GPU type, defaulting to "other"
