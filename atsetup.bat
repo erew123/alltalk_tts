@@ -370,7 +370,6 @@ echo cd /D "%~dp0" >> start_environment.bat
 echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_environment.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_environment.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_environment.bat
-echo exit >> start_environment.bat
 @rem Create start_alltalk.bat to run AllTalk
 echo @echo off > start_alltalk.bat
 echo cd /D "%~dp0" >> start_alltalk.bat
@@ -378,7 +377,6 @@ echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_alltalk.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_alltalk.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_alltalk.bat
 echo call python script.py >> start_alltalk.bat
-echo exit >> start_alltalk.bat
 Echo.
 Echo    start_alltalk.bat has been created.
 Echo    You can now start AllTalk with %L_YELLOW%start_alltalk.bat%RESET%
