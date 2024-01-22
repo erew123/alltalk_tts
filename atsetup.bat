@@ -353,6 +353,7 @@ if "%UserChoice%" == "1" (
     pip install python-multipart==0.0.6
     pip install cutlet>=0.3.0
     pip install unidic-lite>=1.0.8
+    pip install transformers==4.36.2
     echo Downloading DeepSpeed...
     curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
     echo Installing DeepSpeed...
