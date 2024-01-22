@@ -15,3 +15,4 @@ sounddevice>=0.4.6
 python-multipart>=0.0.6
 cutlet>=0.3.0
 unidic-lite>=1.0.8
+transformers==4.36.2
