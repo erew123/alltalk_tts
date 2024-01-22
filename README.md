@@ -332,7 +332,10 @@ Other possibilities for this issue are:
 11) You have built yourself a custom Python environment and something is funky with it. This is very hard to diagnose as its not a standard environment. You may want to updating text-generation-webui and re installing its requirements file (whichever one you use that comes down with text-generation-webui).
 </details>
 
-#### 🟨 Windows & Python requirements for compiling packages `error: Microsoft Visual C++ 14.0 or greater is required`
+#### 🟨 Windows & Python requirements for compiling packages
+
+`ERROR: Microsoft Visual C++ 14.0 or greater is required` or `ERROR: Could not build wheels for TTS.`
+
 <details>
 	<summary>Click to expand</summary><br>
 
