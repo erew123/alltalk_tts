@@ -7,4 +7,4 @@ WORKDIR /app
 COPY . .
 RUN pip install --no-cache-dir -r requirements_other.txt
 EXPOSE 7851
-CMD ["python", "script.py"]
+CMD ["python3", "script.py"]

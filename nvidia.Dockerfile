@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements_nvidia.txt && \
     pip install --no-cache-dir -r requirements_other.txt && \
     pip install --no-cache-dir deepspeed
 EXPOSE 7851
-CMD ["python", "script.py"]
+CMD ["python3", "script.py"]
