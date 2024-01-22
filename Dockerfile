@@ -1,9 +1,8 @@
-ARG image_name=python:3.11-slim
-FROM ${image_name}
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 WORKDIR /app
 COPY . .
-# Argument for specifying the GPU type, defaulting to "other"
-ARG gpu_type=other
-RUN pip install --no-cache-dir -r requirements_${gpu_type}.txt
+RUN pip install --no-cache-dir -r requirements_nvidia.txt && \
+    pip install --no-cache-dir -r requirements_finetune.txt && \
+    pip install --no-cache-dir -r requirements_other.txt
 EXPOSE 7851
 CMD ["python", "script.py"]

@@ -10,18 +10,6 @@ on:
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - image_name: "python:3.11-slim"
-            gpu_type: "other"
-            platforms: "linux/amd64,linux/arm64/v8"
-            tag_name: "other"
-          - image_name: "nvidia/cuda:12.1.1-devel-ubuntu22.04"
-            gpu_type: "nvidia"
-            platforms: "linux/amd64"
-            tag_name: "cuda"
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,11 +29,8 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: ${{ matrix.platforms }}
+          platforms: "linux/amd64"
           push: true
           tags: |
-            ghcr.io/josh-xt/alltalk_tts:${{ matrix.tag_name }}
-            ghcr.io/josh-xt/alltalk_tts:${{ matrix.tag_name }}-${{ github.sha }}
-          build-args: |
-            image_name=${{ matrix.image_name }}
-            gpu_type=${{ matrix.gpu_type }}
+            ghcr.io/josh-xt/alltalk_tts:latest
+            ghcr.io/josh-xt/alltalk_tts:main-${{ github.sha }}
