@@ -342,6 +342,9 @@ Other possibilities for this issue are:
  Python requires that you install C++ development tools on Windows. This is detailed on the [Python site here](https://wiki.python.org/moin/WindowsCompilers). You would need to install `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK` from the C++ Build tools section. 
  
  You can get hold of the **Community** edition [here](https://visualstudio.microsoft.com/downloads/) the during installation, selecting `C++ Build tools` and then `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK`. 
+
+![image](https://github.com/erew123/screenshots/raw/main/pythonrequirementswindows.jpg)
+ 
 </details>
 
 #### 🟨 I think AllTalks requirements file has installed something another extension doesn't like
