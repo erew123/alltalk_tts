@@ -1,4 +1,4 @@
-FROM python:3-slim-bullseye
+FROM ubuntu:22.04
 ENV HOST 0.0.0.0
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y git build-essential \
