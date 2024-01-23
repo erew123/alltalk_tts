@@ -30,11 +30,13 @@ startup_wait_time = 120
 # STARTUP VARIABLE - Create "this_dir" variable as the current script directory
 this_dir = Path(__file__).parent.resolve()
 
+
 # load config file in and get settings
 def load_config(file_path):
     with open(file_path, "r") as config_file:
         config = json.load(config_file)
     return config
+
 
 config_file_path = this_dir / "confignew.json"
 # Load the params dictionary from the confignew.json file
@@ -56,6 +58,7 @@ except ModuleNotFoundError:
 # IMPORT - Attempt Importing DeepSpeed (required for displaying Deepspeed checkbox in gradio)
 try:
     import deepspeed
+
     deepspeed_installed = True
 except ImportError:
     deepspeed_installed = False
@@ -68,6 +71,7 @@ try:
     from modules.logging_colors import logger
     from modules.ui import create_refresh_button
     from modules.utils import gradio
+
     # This is set to check if the script is being run within text generation webui or as a standalone script. False is running as part of text gen web ui or a gradio interface
     running_in_standalone = False
     output_folder_wav = params["output_folder_wav"]
@@ -88,9 +92,11 @@ process_lock = threading.Lock()
 # Base setting for a possible FineTuned model existing and the loader being available
 tts_method_xtts_ft = False
 
+
 # Gather the voice files
 def get_available_voices():
     return sorted([voice.name for voice in Path(f"{this_dir}/voices").glob("*.wav")])
+
 
 #########################
 #### LICENSE DISPLAY ####
@@ -149,6 +155,7 @@ def check_required_files():
     subprocess.run(["python", str(download_script_path)])
     print(f"[{params['branding']}Startup] All required files are present.")
 
+
 # STARTUP Call Check routine
 check_required_files()
 
@@ -163,7 +170,9 @@ finetuned_model = trained_model_directory.exists()
 # If true, this will add a extra option in the Gradio interface for loading Xttsv2 FT
 if finetuned_model:
     required_files = ["model.pth", "config.json", "vocab.json"]
-    finetuned_model = all((trained_model_directory / file).exists() for file in required_files)
+    finetuned_model = all(
+        (trained_model_directory / file).exists() for file in required_files
+    )
 if finetuned_model:
     print(f"[{params['branding']}Startup] Finetuned model \033[93mDetected\033[0m")
 
@@ -180,6 +189,7 @@ elif params["tts_method_xtts_local"] == True:
 
 # Set the default for Narrated text without asterisk or quotes to be Narrator
 non_quoted_text_is = True
+
 
 ######################
 #### GRADIO STUFF ####
@@ -238,66 +248,80 @@ def signal_handler(sig, frame):
 
 # Attach the signal handler to the SIGINT signal (Ctrl+C)
 signal.signal(signal.SIGINT, signal_handler)
-
-# Start the subprocess
-process = subprocess.Popen(["python", script_path])
-
-# Check if the subprocess has started successfully
-if process.poll() is None:
-    print(f"[{params['branding']}Startup] TTS Subprocess starting")
-    print(f"[{params['branding']}Startup]")
+# Check if we're running in docker
+if os.path.isfile("/.dockerenv"):
     print(
-        f"[{params['branding']}Startup] \033[94m {params['branding']}Settings & Documentation:\033[00m",
-        f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
+        f"[{params['branding']}Startup] \033[94mRunning in Docker. Please wait.\033[0m"
     )
-    print(f"[{params['branding']}Startup]")
 else:
-    print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process"
-    )
-    print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m It could be that you have something on port:",
-        params["port_number"],
-    )
-    print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m Or you have not started in a Python environement with all the necesssary bits installed"
-    )
-    print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m Check you are starting Text-generation-webui with either the start_xxxxx file or the Python environment with cmd_xxxxx file."
-    )
-    print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m xxxxx is the type of OS you are on e.g. windows, linux or mac."
-    )
-    print(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m Alternatively, you could check no other Python processes are running that shouldnt be e.g. Restart your computer is the simple way."
-    )
-    # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
-    sys.exit(1)
-
-timeout = startup_wait_time  # Gather timeout setting from startup_wait_time
-
-# Introduce a delay before starting the check loop
-time.sleep(26)  # Wait 26 secs before checking if the tts_server.py has started up.
-start_time = time.time()
-while time.time() - start_time < timeout:
-    try:
-        response = requests.get(f"{base_url}/ready")
-        if response.status_code == 200:
-            break
-    except requests.RequestException as e:
-        # Print the exception for debugging purposes
+    # Start the subprocess
+    process = subprocess.Popen(["python", script_path])
+    # Check if the subprocess has started successfully
+    if process.poll() is None:
+        print(f"[{params['branding']}Startup] TTS Subprocess starting")
+        print(f"[{params['branding']}Startup]")
         print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for {timeout} seconds maximum. Please wait."
+            f"[{params['branding']}Startup] \033[94m {params['branding']}Settings & Documentation:\033[00m",
+            f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
         )
-    time.sleep(5)
-else:
-    print(f"\n[{params['branding']}Startup] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m")
-    print(f"[{params['branding']}Startup] On older system you may wish to open and edit \033[94mscript.py\033[0m with a text editor and changing the")
-    print(f"[{params['branding']}Startup] \033[94mstartup_wait_time = 120\033[0m setting to something like \033[94mstartup_wait_time = 240\033[0m as this will allow")
-    print(f"[{params['branding']}Startup] AllTalk more time to try load the model into your VRAM. Otherise please visit the Github for")
-    print(f"[{params['branding']}Startup] a list of other possible troubleshooting options.")
-    # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
-    sys.exit(1)
+        print(f"[{params['branding']}Startup]")
+    else:
+        print(
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process"
+        )
+        print(
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m It could be that you have something on port:",
+            params["port_number"],
+        )
+        print(
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m Or you have not started in a Python environement with all the necesssary bits installed"
+        )
+        print(
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m Check you are starting Text-generation-webui with either the start_xxxxx file or the Python environment with cmd_xxxxx file."
+        )
+        print(
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m xxxxx is the type of OS you are on e.g. windows, linux or mac."
+        )
+        print(
+            f"[{params['branding']}Startup] \033[91mWarning\033[0m Alternatively, you could check no other Python processes are running that shouldnt be e.g. Restart your computer is the simple way."
+        )
+        # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
+        sys.exit(1)
+
+    timeout = startup_wait_time  # Gather timeout setting from startup_wait_time
+
+    # Introduce a delay before starting the check loop
+    time.sleep(26)  # Wait 26 secs before checking if the tts_server.py has started up.
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.get(f"{base_url}/ready")
+            if response.status_code == 200:
+                break
+        except requests.RequestException as e:
+            # Print the exception for debugging purposes
+            print(
+                f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for {timeout} seconds maximum. Please wait."
+            )
+        time.sleep(5)
+    else:
+        print(
+            f"\n[{params['branding']}Startup] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m"
+        )
+        print(
+            f"[{params['branding']}Startup] On older system you may wish to open and edit \033[94mscript.py\033[0m with a text editor and changing the"
+        )
+        print(
+            f"[{params['branding']}Startup] \033[94mstartup_wait_time = 120\033[0m setting to something like \033[94mstartup_wait_time = 240\033[0m as this will allow"
+        )
+        print(
+            f"[{params['branding']}Startup] AllTalk more time to try load the model into your VRAM. Otherise please visit the Github for"
+        )
+        print(
+            f"[{params['branding']}Startup] a list of other possible troubleshooting options."
+        )
+        # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
+        sys.exit(1)
 
 
 #####################################
@@ -352,6 +376,7 @@ def send_reload_request(tts_method):
         )
         return {"status": "error", "message": str(e)}
 
+
 ##################
 #### LOW VRAM ####
 ##################
@@ -392,7 +417,7 @@ def send_deepspeed_request(deepspeed_param):
             audio_path = this_dir / "templates" / "deepspeedenabled.wav"
         else:
             audio_path = this_dir / "templates" / "deepspeeddisabled.wav"
-        
+
         url = f"{base_url}/api/deepspeed?new_deepspeed_value={deepspeed_param}"
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, headers=headers)
@@ -466,9 +491,13 @@ def combine(audio_files, output_folder, state):
 
     # Save the combined audio to a file with a specified sample rate
     if "character_menu" in state:
-        output_file_path = os.path.join(output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav')
+        output_file_path = os.path.join(
+            output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav'
+        )
     else:
-        output_file_path = os.path.join(output_folder, f'TTSOUT_{int(time.time())}_combined.wav')
+        output_file_path = os.path.join(
+            output_folder, f"TTSOUT_{int(time.time())}_combined.wav"
+        )
     sf.write(output_file_path, audio, samplerate=sample_rate)
     # Clean up unnecessary files
     for audio_file in audio_files:
@@ -506,7 +535,12 @@ def voice_preview(string):
     # Lock before making the generate request
     with process_lock:
         generate_response = send_generate_request(
-            string, params["voice"], language_code, temperature, repetition_penalty, output_file_str
+            string,
+            params["voice"],
+            language_code,
+            temperature,
+            repetition_penalty,
+            output_file_str,
         )
     # Check if lock is already acquired
     if process_lock.locked():
@@ -528,7 +562,7 @@ def process_text(text):
     text = html.unescape(text)
 
     # Replace ellipsis with a single dot
-    text = re.sub(r'\.{3,}', '.', text)
+    text = re.sub(r"\.{3,}", ".", text)
 
     # Pattern to identify combined narrator and character speech
     combined_pattern = r'(\*[^*"]+\*|"[^"*]+")'
@@ -543,22 +577,22 @@ def process_text(text):
     for match in re.finditer(combined_pattern, text):
         # Add the text before the match, if any, as ambiguous
         if start < match.start():
-            ambiguous_text = text[start:match.start()].strip()
+            ambiguous_text = text[start : match.start()].strip()
             if ambiguous_text:
-                ordered_parts.append(('ambiguous', ambiguous_text))
+                ordered_parts.append(("ambiguous", ambiguous_text))
 
         # Add the matched part as either narrator or character
         matched_text = match.group(0)
-        if matched_text.startswith('*') and matched_text.endswith('*'):
-            ordered_parts.append(('narrator', matched_text.strip('*').strip()))
+        if matched_text.startswith("*") and matched_text.endswith("*"):
+            ordered_parts.append(("narrator", matched_text.strip("*").strip()))
         elif matched_text.startswith('"') and matched_text.endswith('"'):
-            ordered_parts.append(('character', matched_text.strip('"').strip()))
+            ordered_parts.append(("character", matched_text.strip('"').strip()))
         else:
             # In case of mixed or improperly formatted parts
-            if '*' in matched_text:
-                ordered_parts.append(('narrator', matched_text.strip('*').strip('"')))
+            if "*" in matched_text:
+                ordered_parts.append(("narrator", matched_text.strip("*").strip('"')))
             else:
-                ordered_parts.append(('character', matched_text.strip('"').strip('*')))
+                ordered_parts.append(("character", matched_text.strip('"').strip("*")))
 
         # Update the start of the next segment
         start = match.end()
@@ -567,9 +601,10 @@ def process_text(text):
     if start < len(text):
         ambiguous_text = text[start:].strip()
         if ambiguous_text:
-            ordered_parts.append(('ambiguous', ambiguous_text))
+            ordered_parts.append(("ambiguous", ambiguous_text))
 
     return ordered_parts
+
 
 #################################
 #### TTS STANDARD GENERATION ####
@@ -579,7 +614,7 @@ def output_modifier(string, state):
     if not params["activate"]:
         return string
     original_string = string
-    #print("ORIGINAL STRING IS:", original_string)
+    # print("ORIGINAL STRING IS:", original_string)
     cleaned_string = before_audio_generation(string, params)
     if cleaned_string is None:
         return
@@ -601,29 +636,50 @@ def output_modifier(string, state):
                         continue
 
                     # Determine the voice to use based on the part type
-                    if part_type == 'narrator':
+                    if part_type == "narrator":
                         voice_to_use = params["narrator_voice"]
-                        print(f"[{params['branding']}TTSGen] \033[92mNarrator\033[0m")  # Green
-                    elif part_type == 'character':
+                        print(
+                            f"[{params['branding']}TTSGen] \033[92mNarrator\033[0m"
+                        )  # Green
+                    elif part_type == "character":
                         voice_to_use = params["voice"]
-                        print(f"[{params['branding']}TTSGen] \033[36mCharacter\033[0m")  # Yellow
+                        print(
+                            f"[{params['branding']}TTSGen] \033[36mCharacter\033[0m"
+                        )  # Yellow
                     else:
                         # Handle ambiguous parts based on user preference
-                        voice_to_use = params["voice"] if non_quoted_text_is else params["narrator_voice"]
-                        voice_description = "\033[36mCharacter (Text-not-inside)\033[0m" if non_quoted_text_is else "\033[92mNarrator (Text-not-inside)\033[0m"
+                        voice_to_use = (
+                            params["voice"]
+                            if non_quoted_text_is
+                            else params["narrator_voice"]
+                        )
+                        voice_description = (
+                            "\033[36mCharacter (Text-not-inside)\033[0m"
+                            if non_quoted_text_is
+                            else "\033[92mNarrator (Text-not-inside)\033[0m"
+                        )
                         print(f"[{params['branding']}TTSGen] {voice_description}")
 
                     # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
-                    cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
+                    cleaned_part = re.sub(r"([!?.])\1+", r"\1", part)
                     # Further clean to remove any other unwanted characters
-                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_part)
+                    cleaned_part = re.sub(
+                        r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]',
+                        "",
+                        cleaned_part,
+                    )
                     # Remove all newline characters (single or multiple)
-                    cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
+                    cleaned_part = re.sub(r"\n+", " ", cleaned_part)
 
                     # Generate TTS and output to a file
                     output_filename = get_output_filename(state)
                     generate_response = send_generate_request(
-                        cleaned_part, voice_to_use, language_code, temperature, repetition_penalty, output_filename
+                        cleaned_part,
+                        voice_to_use,
+                        language_code,
+                        temperature,
+                        repetition_penalty,
+                        output_filename,
                     )
                     audio_path = generate_response.get("data", {}).get("audio_path")
                     audio_files_all_paragraphs.append(audio_path)
@@ -636,20 +692,33 @@ def output_modifier(string, state):
                 # Decode HTML entities first
                 cleaned_part = html.unescape(original_string)
                 # Replace multiple instances of certain punctuation marks with a single instance
-                cleaned_part = re.sub(r'([!?.])\1+', r'\1', cleaned_part)
+                cleaned_part = re.sub(r"([!?.])\1+", r"\1", cleaned_part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]', '', cleaned_part)
+                cleaned_part = re.sub(
+                    r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\$]',
+                    "",
+                    cleaned_part,
+                )
                 # Remove all newline characters (single or multiple)
-                cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
+                cleaned_part = re.sub(r"\n+", " ", cleaned_part)
                 # Process the part and give it a non-character name if being used vai API or standalone.
                 if "character_menu" in state:
-                    output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')
+                    output_file = Path(
+                        f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav'
+                    )
                 else:
-                    output_file = Path(f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav')
+                    output_file = Path(
+                        f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav'
+                    )
                 output_file_str = output_file.as_posix()
                 output_file = get_output_filename(state)
                 generate_response = send_generate_request(
-                    cleaned_part, params["voice"], language_code, temperature, repetition_penalty, output_file_str
+                    cleaned_part,
+                    params["voice"],
+                    language_code,
+                    temperature,
+                    repetition_penalty,
+                    output_file_str,
                 )
                 audio_path = generate_response.get("data", {}).get("audio_path")
                 final_output_file = audio_path
@@ -690,15 +759,21 @@ def output_modifier(string, state):
 
 def get_output_filename(state):
     if "character_menu" in state:
-        return Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{str(uuid.uuid4())[:8]}.wav').as_posix()
+        return Path(
+            f'{params["output_folder_wav"]}/{state["character_menu"]}_{str(uuid.uuid4())[:8]}.wav'
+        ).as_posix()
     else:
-        return Path(f'{params["output_folder_wav"]}/TTSOUT_{str(uuid.uuid4())[:8]}.wav').as_posix()
+        return Path(
+            f'{params["output_folder_wav"]}/TTSOUT_{str(uuid.uuid4())[:8]}.wav'
+        ).as_posix()
 
 
 ###############################################
 #### SEND GENERATION REQUEST TO TTS ENGINE ####
 ###############################################
-def send_generate_request(text, voice, language, temperature, repetition_penalty, output_file):
+def send_generate_request(
+    text, voice, language, temperature, repetition_penalty, output_file
+):
     url = f"{base_url}/api/generate"
     payload = {
         "text": text,
@@ -730,11 +805,13 @@ def state_modifier(state):
     state["stream"] = False
     return state
 
+
 def update_narrator_enabled(value):
     if value == "Enabled":
         params["narrator_enabled"] = True
     elif value == "Disabled":
         params["narrator_enabled"] = False
+
 
 def update_non_quoted_text_is(value):
     global non_quoted_text_is
@@ -742,6 +819,7 @@ def update_non_quoted_text_is(value):
         non_quoted_text_is = False
     elif value == "Char":
         non_quoted_text_is = True
+
 
 def input_modifier(string, state):
     if not params["activate"]:
@@ -755,21 +833,29 @@ def ui():
     with gr.Accordion(params["branding"] + " TTS (XTTSv2)"):
         # Activate alltalk_tts, Enable autoplay, Show text
         with gr.Row():
-            activate = gr.Checkbox(value=params['activate'], label='Enable TTS')
-            autoplay = gr.Checkbox(value=params['autoplay'], label='Autoplay TTS')
-            show_text = gr.Checkbox(value=params['show_text'], label='Show Text')
+            activate = gr.Checkbox(value=params["activate"], label="Enable TTS")
+            autoplay = gr.Checkbox(value=params["autoplay"], label="Autoplay TTS")
+            show_text = gr.Checkbox(value=params["show_text"], label="Show Text")
 
         # Low vram enable, Deepspeed enable, Remove trailing dots
         with gr.Row():
-            low_vram = gr.Checkbox(value=params['low_vram'], label='Enable Low VRAM Mode')
+            low_vram = gr.Checkbox(
+                value=params["low_vram"], label="Enable Low VRAM Mode"
+            )
             low_vram_play = gr.HTML(visible=False)
-            deepspeed_checkbox = gr.Checkbox(value=params['deepspeed_activate'], label='Enable DeepSpeed', visible=deepspeed_installed)
+            deepspeed_checkbox = gr.Checkbox(
+                value=params["deepspeed_activate"],
+                label="Enable DeepSpeed",
+                visible=deepspeed_installed,
+            )
             deepspeed_checkbox_play = gr.HTML(visible=False)
-            remove_trailing_dots = gr.Checkbox(value=params['remove_trailing_dots'], label='Remove trailing "."')
+            remove_trailing_dots = gr.Checkbox(
+                value=params["remove_trailing_dots"], label='Remove trailing "."'
+            )
 
         # TTS method, Character voice selection
         with gr.Row():
-            model_loader_choices=["API TTS", "API Local", "XTTSv2 Local"]
+            model_loader_choices = ["API TTS", "API Local", "XTTSv2 Local"]
             if finetuned_model:
                 model_loader_choices.append("XTTSv2 FT")
             tts_radio_buttons = gr.Radio(
@@ -780,33 +866,86 @@ def ui():
             tts_radio_buttons_play = gr.HTML(visible=False)
             with gr.Row():
                 available_voices = get_available_voices()
-                default_voice = params["voice"] # Check if the default voice is in the list of available voices
+                default_voice = params[
+                    "voice"
+                ]  # Check if the default voice is in the list of available voices
 
                 if default_voice not in available_voices:
-                    default_voice = available_voices[ 0 ] # Choose the first available voice as the default
+                    default_voice = available_voices[
+                        0
+                    ]  # Choose the first available voice as the default
                 # Add allow_custom_value=True to the Dropdown
-                voice = gr.Dropdown(available_voices, label="Character Voice", value=default_voice, allow_custom_value=True, )
-                create_refresh_button(voice, lambda: None, lambda: {"choices": get_available_voices(), "value": params["voice"],}, "refresh-button",)
+                voice = gr.Dropdown(
+                    available_voices,
+                    label="Character Voice",
+                    value=default_voice,
+                    allow_custom_value=True,
+                )
+                create_refresh_button(
+                    voice,
+                    lambda: None,
+                    lambda: {
+                        "choices": get_available_voices(),
+                        "value": params["voice"],
+                    },
+                    "refresh-button",
+                )
 
         # Language, Narrator voice
         with gr.Row():
-            language = gr.Dropdown(languages.keys(), label="Language", value=params["language"])
+            language = gr.Dropdown(
+                languages.keys(), label="Language", value=params["language"]
+            )
             with gr.Row():
-                narrator_voice_gr = gr.Dropdown(get_available_voices(), label="Narrator Voice", allow_custom_value=True, value=params["narrator_voice"])
-                create_refresh_button(narrator_voice_gr, lambda: None, lambda: {"choices": get_available_voices(), "value": params["narrator_voice"],}, "refresh-button")
+                narrator_voice_gr = gr.Dropdown(
+                    get_available_voices(),
+                    label="Narrator Voice",
+                    allow_custom_value=True,
+                    value=params["narrator_voice"],
+                )
+                create_refresh_button(
+                    narrator_voice_gr,
+                    lambda: None,
+                    lambda: {
+                        "choices": get_available_voices(),
+                        "value": params["narrator_voice"],
+                    },
+                    "refresh-button",
+                )
 
         # Temperature, Repetition Penalty
         with gr.Row():
-            local_temperature_gr = gr.Slider(minimum=0.05, maximum=1, step=0.05, label="Temperature", value=params["local_temperature"])
-            local_repetition_penalty_gr = gr.Slider(minimum=0.5, maximum=20, step=0.5, label="Repetition Penalty", value=params["local_repetition_penalty"])
+            local_temperature_gr = gr.Slider(
+                minimum=0.05,
+                maximum=1,
+                step=0.05,
+                label="Temperature",
+                value=params["local_temperature"],
+            )
+            local_repetition_penalty_gr = gr.Slider(
+                minimum=0.5,
+                maximum=20,
+                step=0.5,
+                label="Repetition Penalty",
+                value=params["local_repetition_penalty"],
+            )
 
         # Narrator enable, Non quoted text, Explanation text
         with gr.Row():
             with gr.Row():
-                narrator_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Narrator", value="Enabled" if params.get("narrator_enabled") else "Disabled")
-                non_quoted_text_is_gr = gr.Radio(choices={"Character": "true", "Narrator": "false"}, label='Unmarked text NOT inside of * or " is', value="Character" if non_quoted_text_is else "Narrator")
+                narrator_enabled_gr = gr.Radio(
+                    choices={"Enabled": "true", "Disabled": "false"},
+                    label="Narrator",
+                    value="Enabled" if params.get("narrator_enabled") else "Disabled",
+                )
+                non_quoted_text_is_gr = gr.Radio(
+                    choices={"Character": "true", "Narrator": "false"},
+                    label='Unmarked text NOT inside of * or " is',
+                    value="Character" if non_quoted_text_is else "Narrator",
+                )
                 explanation_text = gr.HTML(
-                f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>")
+                    f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>"
+                )
 
         # Preview speech
         with gr.Row():
@@ -817,7 +956,7 @@ def ui():
             )
             preview_play = gr.Button("Preview")
             preview_audio = gr.HTML(visible=False)
-        
+
         with gr.Row():
             convert = gr.Button("Permanently replace audios with the message texts")
             convert_cancel = gr.Button("Cancel", visible=False)
@@ -878,8 +1017,12 @@ def ui():
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
     low_vram.change(lambda x: params.update({"low_vram": x}), low_vram, None)
     low_vram.change(lambda x: send_lowvram_request(x), low_vram, low_vram_play, None)
-    tts_radio_buttons.change(send_reload_request, tts_radio_buttons, tts_radio_buttons_play, None)
-    deepspeed_checkbox.change(send_deepspeed_request, deepspeed_checkbox, deepspeed_checkbox_play, None)
+    tts_radio_buttons.change(
+        send_reload_request, tts_radio_buttons, tts_radio_buttons_play, None
+    )
+    deepspeed_checkbox.change(
+        send_deepspeed_request, deepspeed_checkbox, deepspeed_checkbox_play, None
+    )
     remove_trailing_dots.change(
         lambda x: params.update({"remove_trailing_dots": x}), remove_trailing_dots, None
     )
@@ -887,13 +1030,21 @@ def ui():
     language.change(lambda x: params.update({"language": x}), language, None)
 
     # TSS Settings
-    local_temperature_gr.change(lambda x: params.update({"local_temperature": x}), local_temperature_gr, None)
-    local_repetition_penalty_gr.change(lambda x: params.update({"local_repetition_penalty": x}), local_repetition_penalty_gr, None)
+    local_temperature_gr.change(
+        lambda x: params.update({"local_temperature": x}), local_temperature_gr, None
+    )
+    local_repetition_penalty_gr.change(
+        lambda x: params.update({"local_repetition_penalty": x}),
+        local_repetition_penalty_gr,
+        None,
+    )
 
     # Narrator selection actions
     narrator_enabled_gr.change(update_narrator_enabled, narrator_enabled_gr, None)
     non_quoted_text_is_gr.change(update_non_quoted_text_is, non_quoted_text_is_gr, None)
-    narrator_voice_gr.change(lambda x: params.update({"narrator_voice": x}), narrator_voice_gr, None)
+    narrator_voice_gr.change(
+        lambda x: params.update({"narrator_voice": x}), narrator_voice_gr, None
+    )
 
     # Play preview
     preview_text.submit(voice_preview, preview_text, preview_audio)
