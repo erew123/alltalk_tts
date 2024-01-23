@@ -248,12 +248,12 @@ def signal_handler(sig, frame):
 
 # Attach the signal handler to the SIGINT signal (Ctrl+C)
 signal.signal(signal.SIGINT, signal_handler)
-
-try:
-    response = requests.get(f"{base_url}/ready")
-    if response.status_code == 200:
-        pass
-except:
+# Check if we're running in docker
+if os.path.isfile("/.dockerenv"):
+    print(
+        f"[{params['branding']}Startup] \033[94mRunning in Docker. Please wait.\033[0m"
+    )
+else:
     # Start the subprocess
     process = subprocess.Popen(["python", script_path])
     # Check if the subprocess has started successfully
