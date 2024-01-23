@@ -37,7 +37,7 @@ I welcome your input and ideas for new features, suggestions, and improvements. 
 **ERROR** `ImportError: cannot import name 'SampleOutput' from 'transformers.generation.utils'` please see this issue [here](https://github.com/erew123/alltalk_tts/issues/82)
 
 ### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
-For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section. 
+For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section.
 
 Click to expand the correct section below:
 <details>
@@ -45,7 +45,7 @@ Click to expand the correct section below:
 
  If you wish to see this as a video, please go [here](https://www.youtube.com/watch?v=icn2XS5rUH8)
 1) To download the AllTalk setup you can either:
-   - A) On this page select **CODE** > **Download ZIP** then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\`<br><br>
+   - A) Go to the [Releases page](https://github.com/erew123/alltalk_tts/releases) and download the latest `alltalk_tts.zip` then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\`.<br><br>
    - B) Go to a terminal/console, move into the `\text-generation-webui\extensions\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
 3) In a terminal/command prompt, in the text-generation-webui folder you will start its Python environment with either `cmd_windows.bat` or `./cmd_linux.sh`
 4) Move into the AllTalk folder e.g. `cd extensions` then `cd alltalk_tts`
@@ -63,7 +63,7 @@ Click to expand the correct section below:
 
  If you wish to see this as a video, please go [here](https://www.youtube.com/watch?v=AQYCccDRbaY)
 1) To download the AllTalk setup you can either:
-   - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`<br><br>
+   - A) Go to the [Releases page](https://github.com/erew123/alltalk_tts/releases) and download the latest `alltalk_tts.zip` and extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`.<br><br>
    - B) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
 4) In a terminal/command prompt, move into the AllTalk folder e.g. `cd alltalk_tts`
 5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
@@ -72,6 +72,8 @@ Click to expand the correct section below:
    DeepSpeed on Windows machines will be installed as standard. Linux machines have other requirements which are detailed within the setup utility and on this page.
 
    Please read the `🟩 Other installation notes` (also additional voices are available there).
+
+   You cannot have a dash in your folder path e.g. `c:\myfiles\alltalk_tts-main` so please ensure you remove any `-` from your folder path. This is a conda specific requirement and will cause AllTalk not to start at all.
 
    Finetuning has other installation requirements so please read any instructions in the setup utility and refer back here to this page for detailed instructions.<br><br>
 </details>
@@ -385,6 +387,14 @@ When doing this, be careful not to impact the formatting of the JSON file. Worst
 Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an ticket [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers. Please create a `diagnostics.log` report file to submit with a support request.<br><br>
 
 Also, is your text-generation-webui up to date? [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
+</details>
+
+#### 🟨 Standalone Install - start_{youros}.xx opens and closes instantly and AllTalk doesnt start
+<details>
+	<summary>Click to expand</summary><br>
+
+This is more than likely caused by having a `-` in your folder path e.g. `c:\myfiles\alltalk_tts-main`. In this circumstance you would be best renaming the folder to remove the `-` from its name e.g. `c:\myfiles\alltalk_tts`, delete the `alltalk_environment` folder and `start_alltalk.bat` or `start_alltalk.sh` and then re-run `atsetup` to re-create the environment and startup files. 
+
 </details>
 
 #### 🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.
