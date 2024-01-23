@@ -13,7 +13,8 @@ ENV CUDA_DOCKER_ARCH=all
 
 RUN pip install --no-cache-dir -r requirements_nvidia.txt && \
     pip install --no-cache-dir -r requirements_finetune.txt && \
-    pip install --no-cache-dir -r requirements_other.txt
+    pip install --no-cache-dir -r requirements_other.txt && \
+    pip install --no-cache-dir deepspeed
 EXPOSE 7851
 RUN chmod +x launch.sh
 ENTRYPOINT ["sh", "-c", "./launch.sh"]
