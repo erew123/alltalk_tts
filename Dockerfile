@@ -8,4 +8,4 @@ WORKDIR /app
 COPY . .
 RUN pip install --no-cache-dir -r requirements_other.txt
 EXPOSE 7851
-CMD ["python", "script.py"]
+ENTRYPOINT ["sh", "-c", "./launch.sh"]
