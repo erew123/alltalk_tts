@@ -45,7 +45,7 @@ Click to expand the correct section below:
 
  If you wish to see this as a video, please go [here](https://www.youtube.com/watch?v=icn2XS5rUH8)
 1) To download the AllTalk setup you can either:
-   - A) On this page select **CODE** > **Download ZIP** then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\`<br><br>
+   - A) On this page select **CODE** > **Download ZIP** then extract it to the text-generation-webui extensions folder<br>e.g. `\text-generation-webui\extensions\alltalk_tts\` remove `-main` from the folder name.<br><br>
    - B) Go to a terminal/console, move into the `\text-generation-webui\extensions\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
 3) In a terminal/command prompt, in the text-generation-webui folder you will start its Python environment with either `cmd_windows.bat` or `./cmd_linux.sh`
 4) Move into the AllTalk folder e.g. `cd extensions` then `cd alltalk_tts`
@@ -63,7 +63,7 @@ Click to expand the correct section below:
 
  If you wish to see this as a video, please go [here](https://www.youtube.com/watch?v=AQYCccDRbaY)
 1) To download the AllTalk setup you can either:
-   - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`<br><br>
+   - A) On this page select **CODE** > **Download ZIP** then extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\` remove `-main` from the folder name.<br><br>
    - B) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
 4) In a terminal/command prompt, move into the AllTalk folder e.g. `cd alltalk_tts`
 5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
