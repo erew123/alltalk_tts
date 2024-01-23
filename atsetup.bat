@@ -341,6 +341,7 @@ if "%UserChoice%" == "1" (
     pip install fsspec>=2023.6.0
     pip install soundfile==0.12.1
     pip install uvicorn==0.24.0.post1
+    pip install transformers==4.36.2
     pip install TTS==0.21.3
     pip install fastapi==0.104.1
     pip install Jinja2==3.1.2
@@ -351,6 +352,8 @@ if "%UserChoice%" == "1" (
     pip install pydantic==1.10.13
     pip install sounddevice==0.4.6
     pip install python-multipart==0.0.6
+    pip install cutlet>=0.3.0
+    pip install unidic-lite>=1.0.8
     echo Downloading DeepSpeed...
     curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
     echo Installing DeepSpeed...
@@ -367,7 +370,6 @@ echo cd /D "%~dp0" >> start_environment.bat
 echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_environment.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_environment.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_environment.bat
-echo exit >> start_environment.bat
 @rem Create start_alltalk.bat to run AllTalk
 echo @echo off > start_alltalk.bat
 echo cd /D "%~dp0" >> start_alltalk.bat
@@ -375,7 +377,6 @@ echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_alltalk.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_alltalk.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_alltalk.bat
 echo call python script.py >> start_alltalk.bat
-echo exit >> start_alltalk.bat
 Echo.
 Echo    start_alltalk.bat has been created.
 Echo    You can now start AllTalk with %L_YELLOW%start_alltalk.bat%RESET%

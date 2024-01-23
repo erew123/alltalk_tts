@@ -1,6 +1,7 @@
 numpy>=1.22.0
 soundfile>=0.12.1
 uvicorn>=0.24.0.post1
+transformers==4.36.2
 TTS>=0.21.3
 torch>=2.1.0
 torchaudio>=2.1.0
@@ -13,3 +14,5 @@ packaging>=23.2
 pydantic>=1.10.13
 sounddevice>=0.4.6
 python-multipart>=0.0.6
+cutlet>=0.3.0
+unidic-lite>=1.0.8

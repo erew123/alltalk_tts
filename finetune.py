@@ -75,10 +75,10 @@ def create_temporary_file(folder, suffix=".wav"):
     unique_filename = f"custom_tempfile_{int(time.time())}_{random.randint(1, 1000)}{suffix}"
     return os.path.join(folder, unique_filename)
 
-def format_audio_list(target_language, whisper_model, out_path, gradio_progress=progress):
+def format_audio_list(target_language, whisper_model, out_path, eval_split_number, gradio_progress=progress):
     audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith(('.mp3', '.flac', '.wav'))]
     buffer=0.2
-    eval_percentage=0.15
+    eval_percentage = eval_split_number / 100.0
     speaker_name="coqui"
     audio_total_size = 0
     os.makedirs(out_path, exist_ok=True)
@@ -87,6 +87,7 @@ def format_audio_list(target_language, whisper_model, out_path, gradio_progress=
     print("[FINETUNE] \033[94mPart of AllTalk\033[0m https://github.com/erew123/alltalk_tts/")
     print("[FINETUNE] \033[94mCoqui Public Model License\033[0m")
     print("[FINETUNE] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
+    print(f"[FINETUNE] \033[94mWhisper model: \033[92m{whisper_model} \033[94mLanguage: \033[92m{target_language} \033[94mEvaluation data percentage: \033[92m{eval_split_number}%\033[0m")
     print("[FINETUNE] \033[94mStarting Step 1\033[0m - Preparing Audio/Generating the dataset")
     # Write the target language to lang.txt in the output directory
     lang_file_path = os.path.join(out_path, "lang.txt")
@@ -968,6 +969,14 @@ if __name__ == "__main__":
                         "ja"
                     ],
                 )
+
+                eval_split_number = gr.Number(
+                    label="Evaluation data Split (the % to use for Evaluation data)",
+                    value=15,  # Default value
+                    minimum=5,  # Minimum value
+                    maximum=95,  # Maximum value
+                    step=1,  # Increment step
+                )
             progress_data = gr.Label(
                 label="Progress:"
             )
@@ -979,14 +988,14 @@ if __name__ == "__main__":
 
             prompt_compute_btn = gr.Button(value="Step 1 - Create dataset")
         
-            def preprocess_dataset(language,  whisper_model, out_path, progress=gr.Progress(track_tqdm=True)):
+            def preprocess_dataset(language,  whisper_model, out_path, eval_split_number, progress=gr.Progress(track_tqdm=True)):
                 clear_gpu_cache()
                 test_for_audio_files = [file for file in os.listdir(audio_folder) if any(file.lower().endswith(ext) for ext in ['.wav', '.mp3', '.flac'])]
                 if not test_for_audio_files:
                     return "I cannot find any mp3, wav or flac files in the folder called 'put-voice-samples-in-here'", "", ""
                 else:
                     try:
-                        train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model ,out_path=out_path, gradio_progress=progress)
+                        train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model, out_path=out_path, eval_split_number=eval_split_number, gradio_progress=progress)
                     except:
                         traceback.print_exc()
                         error = traceback.format_exc()
@@ -1274,6 +1283,7 @@ if __name__ == "__main__":
                     lang,
                     whisper_model,
                     out_path,
+                    eval_split_number,
                 ],
                 outputs=[
                     progress_data,

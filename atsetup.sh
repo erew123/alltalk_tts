@@ -301,6 +301,7 @@ install_custom_standalone() {
     	pip install fsspec>=2023.6.0
 	pip install soundfile==0.12.1
     	pip install uvicorn==0.24.0.post1
+        pip install transformers==4.36.2
     	pip install TTS==0.21.3
     	pip install fastapi==0.104.1
     	pip install Jinja2==3.1.2
@@ -311,6 +312,8 @@ install_custom_standalone() {
     	pip install pydantic==1.10.13
     	pip install sounddevice==0.4.6
     	pip install python-multipart==0.0.6
+        pip install cutlet>=0.3.0
+    	pip install unidic-lite>=1.0.8
     else
         pip install -r requirements_other.txt
     fi
