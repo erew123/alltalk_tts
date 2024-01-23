@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   alltalk-tts:
-    image: joshxt/alltalk_tts:cuda
+    image: erew123/alltalk_tts:cuda
     restart: unless-stopped
     ports:
       - "7851:7851"
