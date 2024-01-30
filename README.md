@@ -336,7 +336,7 @@ Other possibilities for this issue are:
 
 #### 🟨 Windows & Python requirements for compiling packages
 
-`ERROR: Microsoft Visual C++ 14.0 or greater is required` or `ERROR: Could not build wheels for TTS.`
+`ERROR: Microsoft Visual C++ 14.0 or greater is required` or `ERROR: Could not build wheels for TTS.` or `ModuleNotFoundError: No module named 'TTS`
 
 <details>
 	<summary>Click to expand</summary><br>
