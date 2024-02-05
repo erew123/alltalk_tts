@@ -883,7 +883,7 @@ class Request(BaseModel):
     pass
 
 class JSONInput(BaseModel):
-    text_input: str = Field(..., max_length=1000, description="text_input needs to be 1000 characters or less.")
+    text_input: str = Field(..., max_length=2000, description="text_input needs to be 2000 characters or less.")
     text_filtering: str = Field(..., pattern="^(none|standard|html)$", description="text_filtering needs to be 'none', 'standard' or 'html'.")
     character_voice_gen: str = Field(..., pattern="^.*\.wav$", description="character_voice_gen needs to be the name of a wav file e.g. mysample.wav.")
     narrator_enabled: bool = Field(..., description="narrator_enabled needs to be true or false.")
