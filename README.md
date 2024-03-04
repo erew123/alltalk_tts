@@ -551,6 +551,7 @@ If you've compacted and moved your model, its highly unlikely you would want to 
 `export CUDA_HOME=/etc/alternatives/cuda`<br><br>
 **every** time you run `./cmd_linux.sh`.<br> <br>
 If you try to start DeepSpeed with the CUDA_HOME path set incorrectly, expect an error similar to `[Errno 2] No such file or directory: /home/yourname/text-generation-webui/installer_files/env/bin/nvcc`<br> <br>
+You can also add the `export` line into the start scripts just below the `conda active .......` line, to avoid running the command each time. <br> <br>
 8) Now install deepspeed with pip install deepspeed<br><br>
 9) You can now start Text generation webUI `python server.py` ensuring to activate your extensions.<br><br>
 Just to reiterate, starting Text-generation-webUI with `./start_linux.sh` will overwrite the CUDA_HOME variable unless you have permanently changed it, hence always starting it with `./cmd_linux.sh` **then** setting the environment variable manually (step 7) and **then** `python server.py`, which is how you would need to run it each time, unless you permanently set the environment variable for CUDA_HOME within Text-generation-webUI's standard Python environment.
