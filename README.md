@@ -504,6 +504,16 @@ As mentioned you must have a small portion of the Nvidia CUDA Toolkit **11.8** i
 11) Follow the on-screen instructions when the web interface starts up.
 12) When you have finished finetuning, the final tab will tell you what to do with your files and how to move your newly trained model to the correct location on disk.
 
+#### ⚫ How many Epochs etc is the right amount?
+
+In finetuning the suggested/recommended amount of epochs, batch size, evaluation percent etc is already set. However, there is no absolutely correct answer to what the settings should be, it all depends on what you are doing. 
+
+- If you just want to train a normal human voice that is in an existing language, for most people’s needs, the base settings would work fine. You may choose to increase the epochs up to maybe 20, or run a second round of training if needed.
+- If you were training an entirely new language, you would need a huge amount of training data and it requires around 1000 epochs (based on things I can find around the internet of people who tried this).
+- If you are training a cartoon style voice in an existing language, it may need well upwards of 40 epochs until it can reproduce that voice with some success.
+
+There are no absolute correct settings, as there are too many variables, ranging from the amount of samples you are using (5 minutes worth? 4 hours worth? etc), if they are similar samples to what the AI model already understands, so on and so forth. Coqui whom originally trained the model usually say something along the lines of, once you’ve trained it X amount, if it sounds good then you are done and if it doesn’t, train it more.
+
 #### ⚫ Evaluation Data Percentage
 In the process of finetuning, it's crucial to balance the data used for training the model against the data reserved for evaluating its performance. Typically, a portion of the dataset is set aside as an 'evaluation set' to assess the model's capabilities in dealing with unseen data. On Step 1 of finetuning you have the option to adjust this evaluation data percentage, offering more control over your model training process.<br><br>
 **Why Adjust the Evaluation Percentage?**<br><br>
