@@ -179,7 +179,7 @@ Please read the note below about start-up times and also the note about ensuring
 
 Some extra voices for AllTalk are downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link) and [here](https://drive.google.com/file/d/1CPnx1rpkuKvVj5fGr9OiUJHZ_e8DfTzP/view)
 
-#### 🟩 Changing the IP address
+#### 🟩 Changing AllTalks IP address & Accessing AllTalk over your Network
 AllTalk is coded to start on 127.0.0.1, meaning that it will ONLY be accessable to the local computer it is running on. If you want to make AllTalk available to other systems on your network, you will need to change its IP address to match the IP address of your network card. There are 2x ways to change the IP address:
 
 1) Start AllTalk and within its web interface and you can edit the IP address on the "AllTalk Startup Settings".
@@ -379,10 +379,11 @@ You can either follow the [Problems Updating](https://github.com/erew123/alltalk
 If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options)
 </details>
 
-#### 🟨 I cannot access AllTalk from another machine
+#### 🟨 I cannot access AllTalk from another machine on my Network
 <details>
 	<summary>Click to expand</summary><br>
-You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [here](https://github.com/erew123/alltalk_tts/edit/main/README.md#-changing-the-ip-address)<br><br>
+
+You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [Changing AllTalks IP address & Accessing AllTalk over your Network](https://github.com/erew123/alltalk_tts/edit/main/README.md#-changing-alltalks-ip-address--accessing-alltalk-over-your-network) at the top of this page.<br><br>
 
 You may also need to allow access through your firewall or Antivirus package to AllTalk.
 </details>
