@@ -179,6 +179,14 @@ Please read the note below about start-up times and also the note about ensuring
 
 Some extra voices for AllTalk are downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link) and [here](https://drive.google.com/file/d/1CPnx1rpkuKvVj5fGr9OiUJHZ_e8DfTzP/view)
 
+#### 🟩 Changing the IP address
+AllTalk is coded to start on 127.0.0.1, meaning that it will ONLY be accessable to the local computer it is running on. If you want to make AllTalk available to other systems on your network, you will need to change its IP address to match the IP address of your network card. There are 2x ways to change the IP address:
+
+1) Start AllTalk and within its web interface and you can edit the IP address on the "AllTalk Startup Settings".
+2) You can edit the `confignew.json`file in a text editor and change `"ip_address": "127.0.0.1",` to the IP address of your choosing.
+
+So, for example, if your computer's network card was on IP address 192.168.0.20, you would change AllTalk's setting to 192.168.1.20 and then **restart** AllTalk. You will need to ensure your machine stays on this IP address each time it is restarted, by setting your machine to have a static IP address.
+
 #### 🟩 A note on Character Cards & Greeting Messages
 Messages intended for the Narrator should be enclosed in asterisks `*` and those for the character inside quotation marks `"`. However, AI systems often deviate from these rules, resulting in text that is neither in quotes nor asterisks. Sometimes, text may appear with only a single asterisk, and AI models may vary their formatting mid-conversation. For example, they might use asterisks initially and then switch to unmarked text. A properly formatted line should look like this:
 
@@ -369,6 +377,14 @@ Im not sure if the Pydantic version has been recently updated by the Text-genera
 You can either follow the [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.<br><br>
 
 If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options)
+</details>
+
+#### 🟨 I cannot access AllTalk from another machine
+<details>
+	<summary>Click to expand</summary><br>
+You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [here](https://github.com/erew123/alltalk_tts/edit/main/README.md#-changing-the-ip-address)<br><br>
+
+You may also need to allow access through your firewall or Antivirus package to AllTalk.
 </details>
 
 #### 🟨 I am running a Headless system and need to change the IP Address manually as I cannot reach the config page.
