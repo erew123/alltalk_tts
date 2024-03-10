@@ -382,6 +382,11 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     # define audio config
     audio_config = XttsAudioConfig(sample_rate=22050, dvae_sample_rate=22050, output_sample_rate=24000)
     
+    # Resolve Japanese threading issue
+    number_of_workers = 8
+    if language == "ja":
+        number_of_workers = 0
+
     # training parameters config
     config = GPTTrainerConfig(
         epochs=num_epochs,
@@ -396,7 +401,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         batch_size=BATCH_SIZE,
         batch_group_size=48,
         eval_batch_size=BATCH_SIZE,
-        num_loader_workers=8,
+        num_loader_workers=number_of_workers,
         eval_split_max_size=256,
         print_step=50,
         plot_step=100,
@@ -913,6 +918,10 @@ if __name__ == "__main__":
             gr.Markdown(
                 f"""
                 ## <u>STEP 1 - Preparing Audio/Generating the dataset</u><br>
+                ### 🟥 <u>Important Note - Windows - "UserWarning: huggingface_hub cache-system uses symlinks."</u>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - This error is caused by Huggingfaces download software. If you get this error, please restart your Windows command prompt with "Run as Administrator" and restart finetuning. This is<br>&nbsp;&nbsp;&nbsp;&nbsp;caused by the Huggingface downloader and should only occur the 1st time it downloads the Whisper model. [Huggingface Reference here](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache#limitations)
+                ### 🟥 <u>Important Note - General failures</u>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If this step is failing, it will be worth running the diagnostics with atsetup and confirming you have cu118 or cu112 listed against your torch and torchaudio.<br>
                 ### 🟦 <u>What you need to do</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>                
@@ -920,10 +929,9 @@ if __name__ == "__main__":
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. Very small sample files cause errors, so I would suggest 30 seconds and longer samples. 
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - When you have completed Steps 1, 2, and 3, you are welcome to delete your samples from "put-voice-samples-in-here".
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - FYI Anecdotal evidence suggests that the Whisper 2 model may yield superior results in audio splitting and dataset creation.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If this step is failing, it will be worth running the diagnostics with atsetup and confirming you have cu118 or cu112 listed against your torch and torchaudio.<br>
                 ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for finetuning the model on Step 2.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for<br>&nbsp;&nbsp;&nbsp;&nbsp;finetuning the model on Step 2.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use.<br>&nbsp;&nbsp;&nbsp;&nbsp;If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.
                 ### 🟩 <u>How long will this take?</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.
                 """
@@ -937,7 +945,7 @@ if __name__ == "__main__":
             with gr.Row():
                 whisper_model = gr.Dropdown(
                     label="Whisper Model",
-                    value="large-v3",
+                    value="large-v2",
                     choices=[
                         "large-v3",
                         "large-v2",
@@ -1106,8 +1114,8 @@ if __name__ == "__main__":
                     return f"The training was interrupted due an error !! Please check the console to check the full error message! \n Error summary: {error}", "", "", "", ""
 
                 # copy original files to avoid parameters changes issues
-                os.system(f"cp {config_path} {exp_path}")
-                os.system(f"cp {vocab_file} {exp_path}")
+                shutil.copy(config_path, exp_path)
+                shutil.copy(vocab_file, exp_path)
 
                 ft_xtts_checkpoint = os.path.join(exp_path, "best_model.pth")
                 print("[FINETUNE] Model training done. Move to Step 3")
@@ -1124,7 +1132,8 @@ if __name__ == "__main__":
                 ## <u>STEP 3 -  Inference/Testing</u><br>
                 ### 🟥 <u>Important Note</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - This step will error if you are using TTS version 0.22.0. Please re-run  <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span> if it errors loading the model.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont see multiple speaker reference files and you used more than 3 minutes of speech, try refreshing the page as it may not have loaded them correctly.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont see multiple speaker reference files and you used more than 3 minutes of speech, this may be because of how Whipser (Step 1) split down the audio. You may need to manually<br>&nbsp;&nbsp;&nbsp;&nbsp;split down your audio files a little and try again.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If the vocab.json file isnt listed because you have restarted, you can manually put in the path to the base models vocab file e.g. D:&#92;alltalk_tts&#92;models&#92;xttsv2_2.0.2&#92;vocab.json
                 ### 🟦 <u>What you need to do</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.
@@ -1227,10 +1236,13 @@ if __name__ == "__main__":
                 ### 🟦 <u>What you need to do</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - You have a few options below:
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compact &amp; move model. This will compress the raw finetuned model and move it, along with any large enough wav files created to one of two locations (please read text next to the button).<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You can use the wav files in that location as sample voices with your model. Models moved to <span style="color: #3366ff;">/models/trainedmodel/</span> will be loadable within Text-gen-webui on the <span style="color: #3366ff;">XTTSv2 FT</span> loader.
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 WAV files/Sample Vocies. The wav files that you can use as sample voices will be moved alongside the model. You will need to MANUALLY copy/move the WAV file(s) you want to use to the AllTalk<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; voices folder, to make them available within the interface.
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete Generated Training data. This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete original voice samples. This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compress a legacy finetuned model. For any models that were generated pre the current version of finetuning, you can still compact them down.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - Instructions on using the finetuned model in Text-generation-webui and also further tuning this model you just created are on <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>.
+                ### 🟩 <u>Using your Finetuned model as you main model</u>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you wish to use the model you have just fintuned as your main model, you will need to MANUALLY copy it over the base model in <span style="color: #3366ff;">/models/trainedmodel/</span> after you have used Option A or B.
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - Should you ever wish to revert your model back to the base model, you can delete the files in <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> and new copies will be re-downloaded when AllTalk starts up.
                 ### 🟨 <u>Clearing up disk space</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) 
                 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Linux <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span>
@@ -1267,13 +1279,6 @@ if __name__ == "__main__":
                 gr.Markdown(
                 f"""
                 ##### This will <span style="color: red;">DELETE</span> your original voice samples from <span style="color: #3366ff;">/finetune/put-voice-samples-in-here/</span>.
-                """
-                )
-            with gr.Row():
-                compact_legacy_btn = gr.Button(value="Compact a legacy finetuned model")
-                gr.Markdown(
-                f"""
-                ##### This will compact your old finetuned models from 5GB to 1.9GB. Place your 5GB <span style="color: #3366ff;">base_model.pth</span> file in <span style="color: #3366ff;">/finetune/</span> (rename your file to <span style="color: #3366ff;">base_model.pth</span> if necessary). This will generate you a <span style="color: #3366ff;">model.pth</span> file.
                 """
                 )
 
@@ -1342,10 +1347,6 @@ if __name__ == "__main__":
             )
             delete_voicesamples_btn.click(
                 fn=delete_voice_sample_contents,
-                outputs=[final_progress_data],
-            )
-            compact_legacy_btn.click(
-                fn=compact_legacy_model,
                 outputs=[final_progress_data],
             )
             model_to_train.change(basemodel_or_finetunedmodel_choice, model_to_train, None)
