@@ -167,7 +167,6 @@ Deepspeed and other such things can be installed. Please read the relevant instr
 
 </details>
 
-
 #### 🟩 Other installation notes
 On first startup, AllTalk will download the Coqui XTTSv2 2.0.2 model to its **models** folder (1.8GB space required). Check the command prompt/terminal window if you want to know what its doing. After it says "Model Loaded" the Text generation webUI is usually available on its IP address a few seconds later, for you to connect to in your browser. If you are running a headless system and need to change the IP, please see the Help with problems section down below.
 
@@ -303,7 +302,6 @@ If you are on a Windows machine or a Linux machine, you should be able to use th
 ![image](https://github.com/erew123/alltalk_tts/assets/35898566/81b9a6e1-c54b-4da0-b85d-3c6fde566d6a)
 <br><br></details>
 
-
 #### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.
 
 <details>
@@ -383,7 +381,7 @@ If you want to use DeepSpeed, you need an Nvidia Graphics card and to install De
 <details>
 	<summary>Click to expand</summary><br>
 
-You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [Changing AllTalks IP address & Accessing AllTalk over your Network](https://github.com/erew123/alltalk_tts/edit/main/README.md#-changing-alltalks-ip-address--accessing-alltalk-over-your-network) at the top of this page.<br><br>
+You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [Changing AllTalks IP address & Accessing AllTalk over your Network](https://github.com/erew123/alltalk_tts/tree/main?tab=readme-ov-file#-changing-alltalks-ip-address--accessing-alltalk-over-your-network) at the top of this page.<br><br>
 
 You may also need to allow access through your firewall or Antivirus package to AllTalk.
 </details>
