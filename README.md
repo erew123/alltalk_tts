@@ -1,7 +1,12 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
-- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of** [Text-generation-webui](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **using the a quick setup utility**
+- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
+   - **Text-generation-webui** [link](https://github.com/oobabooga/text-generation-webui)
+   - **SillyTavern** [link](https://github.com/SillyTavern/SillyTavern)
+   - **KoboldCPP** [link](https://github.com/LostRuins/koboldcpp)
+- **Simple setup utlilty** Windows & Linux.
+- **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
 - **Model Finetuning:** Train the model specifically on a voice of your choosing for better reproduction.
 - **Local/Custom models:** Use any of the XTTSv2 models (API Local and XTTSv2 Local).
 - **Bulk TTS Generator/Editor:** Generate hours of TTS into one big file or have something read back to you [demo](https://www.youtube.com/watch?v=hunvXn0mLzc).
@@ -12,8 +17,6 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Optional wav file maintenance:** Configurable deletion of old output wav files. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
 - **Clear Console output:** Clear command line output for any warnings or issues.
-- **API Suite and 3rd Party support via JSON calls:** Can be used with 3rd party applications via JSON calls.
-- **SillyTavern integration:** Full integration with SillyTavern. [Screenshot](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)
 
 ### Index
 
