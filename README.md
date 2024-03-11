@@ -18,11 +18,16 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - **Documentation:** Fully documented with a built in webpage. [Screenshot](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg)
 - **Clear Console output:** Clear command line output for any warnings or issues.
 
+### 🟦 Screenshots
+|![image](https://github.com/erew123/screenshots/raw/main/textgensettings.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/setuputilitys.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/deepspeed.jpg) |![image](https://github.com/erew123/screenshots/raw/main/textgen.jpg) |
+|:---:|:---:|:---:|:---:|
+|![image](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune1.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune2.jpg) |![image](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)|
+
 ### Index
 
+- 🟦 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟩 [Installation](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
 - 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
-- 🟫 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
 - 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
@@ -274,11 +279,6 @@ You can now start text-generation-webui or AllTalk (standalone) and it should st
 
 Assuming its all working fine and you are happy, you can delete the old alltalk_tts.old folder.
 </details>
-
-### 🟫 Screenshots
-|![image](https://github.com/erew123/screenshots/raw/main/textgensettings.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/setuputilitys.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/deepspeed.jpg) |![image](https://github.com/erew123/screenshots/raw/main/textgen.jpg) |
-|:---:|:---:|:---:|:---:|
-|![image](https://github.com/erew123/screenshots/raw/main/settingsanddocs.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune1.jpg) | ![image](https://github.com/erew123/screenshots/raw/main/finetune2.jpg) |![image](https://github.com/erew123/screenshots/raw/main/sillytavern.jpg)|
 
 ### 🟨 Help with problems
 
