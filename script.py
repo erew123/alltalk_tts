@@ -557,6 +557,10 @@ def voice_preview(string):
         return f"[{params['branding']}Server] Audio generation failed. Status: {generate_response.get('status')}"
 
 
+#######################
+#### TEXT CLEANING ####
+#######################
+
 def process_text(text):
     # Normalize HTML encoded quotes
     text = html.unescape(text)
@@ -606,6 +610,30 @@ def process_text(text):
     return ordered_parts
 
 
+########################
+#### IMAGE CLEANING ####
+########################
+
+img_pattern = r'<img[^>]*src\s*=\s*["\'][^"\'>]+["\'][^>]*>'
+
+def extract_and_remove_images(text):
+    """
+    Extracts all image data from the text and removes it for clean TTS processing.
+    Returns the cleaned text and the extracted image data.
+    """
+    img_matches = re.findall(img_pattern, text)
+    img_info = "\n".join(img_matches)  # Store extracted image data
+    cleaned_text = re.sub(img_pattern, '', text)  # Remove images from text
+    return cleaned_text, img_info
+
+def reinsert_images(text, img_info):
+    """
+    Reinserts the previously extracted image data back into the text.
+    """
+    if img_info:  # Check if there are images to reinsert
+        text += f"\n\n{img_info}"
+    return text
+
 #################################
 #### TTS STANDARD GENERATION ####
 #################################
@@ -613,12 +641,12 @@ def process_text(text):
 def output_modifier(string, state):
     if not params["activate"]:
         return string
-    original_string = string
-    # print("ORIGINAL STRING IS:", original_string)
-    cleaned_string = before_audio_generation(string, params)
+    img_info = ""
+    cleaned_text, img_info = extract_and_remove_images(string)
+    # print("Cleaned STRING IS:", cleaned_text)
+    cleaned_string = before_audio_generation(cleaned_text, params)
     if cleaned_string is None:
         return
-    string = cleaned_string
     language_code = languages.get(params["language"])
     temperature = params["local_temperature"]
     repetition_penalty = params["local_repetition_penalty"]
@@ -627,7 +655,7 @@ def output_modifier(string, state):
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
-                processed_parts = process_text(original_string)
+                processed_parts = process_text(cleaned_string)
 
                 audio_files_all_paragraphs = []
                 for part_type, part in processed_parts:
@@ -686,7 +714,7 @@ def output_modifier(string, state):
                 )
             else:
                 # Decode HTML entities first
-                cleaned_part = html.unescape(original_string)
+                cleaned_part = html.unescape(cleaned_string)
                 # Replace multiple instances of certain punctuation marks with a single instance
                 cleaned_part = re.sub(r"([!?.])\1+", r"\1", cleaned_part)
                 # Further clean to remove any other unwanted characters
@@ -729,25 +757,15 @@ def output_modifier(string, state):
         if audio_path:
             # Handle Gradio and playback
             autoplay = "autoplay" if params["autoplay"] else ""
-            string = (
-                f'<audio src="file/{final_output_file}" controls {autoplay}></audio>'
-            )
-
+            string = (f'<audio src="file/{final_output_file}" controls {autoplay}></audio>')
             if params["show_text"]:
-                string += f"\n\n{original_string}"
+                string += reinsert_images(cleaned_string, img_info)
                 shared.processing_message = "*Is typing...*"
-
             return string
         else:
-            print(
-                f"[{params['branding']}Server] \033[91mWarning\033[0m No audio path in the response."
-            )
+            print(f"[{params['branding']}Server] \033[91mWarning\033[0m No audio path in the response.")
     else:
-        print(
-            f"[{params['branding']}Server] \033[91mWarning\033[0m Audio generation failed. Status:",
-            generate_response.get("message"),
-        )
-
+        print(f"[{params['branding']}Server] \033[91mWarning\033[0m Audio generation failed. Status:", generate_response.get("message"),)
 
 def get_output_filename(state):
     if "character_menu" in state:
