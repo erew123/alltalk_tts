@@ -34,8 +34,6 @@ Please check the below link to find a list of all recent updates and changes.
 
 I welcome your input and ideas for new features, suggestions, and improvements. Feel free to share your thoughts and collaborate in the discussions area. If you find this project valuable and would like to show your appreciation, you can make a donation on my [Ko-fi](https://ko-fi.com/erew123) page. Your support goes a long way in ensuring that I can continue to deliver even better features and experiences.
 
-**ERROR** `ImportError: cannot import name 'SampleOutput' from 'transformers.generation.utils'` please see this issue [here](https://github.com/erew123/alltalk_tts/issues/82)
-
 ### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
 For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section.
 
@@ -179,12 +177,28 @@ Please read the note below about start-up times and also the note about ensuring
 Some extra voices for AllTalk are downloadable [here](https://drive.google.com/file/d/1bYdZdr3L69kmzUN3vSiqZmLRD7-A3M47/view?usp=drive_link) and [here](https://drive.google.com/file/d/1CPnx1rpkuKvVj5fGr9OiUJHZ_e8DfTzP/view)
 
 #### 🟩 Changing AllTalks IP address & Accessing AllTalk over your Network
-AllTalk is coded to start on 127.0.0.1, meaning that it will ONLY be accessable to the local computer it is running on. If you want to make AllTalk available to other systems on your network, you will need to change its IP address to match the IP address of your network card. There are 2x ways to change the IP address:
-
-1) Start AllTalk and within its web interface and you can edit the IP address on the "AllTalk Startup Settings".
-2) You can edit the `confignew.json`file in a text editor and change `"ip_address": "127.0.0.1",` to the IP address of your choosing.
+<details>
+	<summary>Click to expand</summary><br>
+	
+AllTalk is coded to start on 127.0.0.1, meaning that it will ONLY be accessable to the local computer it is running on. If you want to make AllTalk available to other systems on your network, you will need to change its IP address to match the IP address of your network card/computers current IP address. There are 2x ways to change the IP address:
+  1) Start AllTalk and within its web interface and you can edit the IP address on the "AllTalk Startup Settings".
+  2) You can edit the `confignew.json`file in a text editor and change `"ip_address": "127.0.0.1",` to the IP address of your choosing.
 
 So, for example, if your computer's network card was on IP address 192.168.0.20, you would change AllTalk's setting to 192.168.1.20 and then **restart** AllTalk. You will need to ensure your machine stays on this IP address each time it is restarted, by setting your machine to have a static IP address.
+
+</details>
+
+#### 🟩 Text-geneneration-webui & Stable-Diffusion Plugin - Load Order & stripped text
+<details>
+	<summary>Click to expand</summary><br>
+	
+The Stable Diffusion plugin for Text-generation-webui **strips out** some of the text, which is passed to Stable Diffusion for image/scene generation. Because this text is stripped, its important to consider the load order of the plugins to get the desired result you want. Lets assume the AI has just generated the following message `*He walks into the room with a smile on his face and says* Hello how are you?`. Depending on the load order will change what text reaches AllTalk for generation e.g.
+
+**SD Plugin loaded before AllTalk** - Only `Hi how are you?` is sent to AllTalk, with the `*He walks into the room with a smile on his face and says*` being sent over to SD for image generation. Narration of the scene is not possible.<br><br>
+**AllTalk loaded before SD Plugin** - `*He walks into the room with a smile on his face and says* Hello how are you?` is sent to AllTalk with the `*He walks into the room with a smile on his face and says*` being sent over to SD for image generation.<br><br>
+The load order can be changed within Text-generation-webui's `settings.yaml` file or `cmd_flags.txt` (depending on how you are managing your extensions).<br><br>
+![image](https://github.com/erew123/screenshots/blob/main/atandsdplugin.jpg)
+</details>
 
 #### 🟩 A note on Character Cards & Greeting Messages
 Messages intended for the Narrator should be enclosed in asterisks `*` and those for the character inside quotation marks `"`. However, AI systems often deviate from these rules, resulting in text that is neither in quotes nor asterisks. Sometimes, text may appear with only a single asterisk, and AI models may vary their formatting mid-conversation. For example, they might use asterisks initially and then switch to unmarked text. A properly formatted line should look like this:
@@ -222,24 +236,6 @@ This is pretty much a repeat of the installation process.
 3) Install the correct requirements for your machine:<br><br>
 **Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
 **Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`<br><br>
-</details>
-
-#### 🟪 Updating "git pull" error
-
-<details>
-	<summary>Click to expand</summary><br>
-	
-I did leave a mistake in the `/extensions/alltalk_tts/.gitignore` file at one point. If your `git pull` doesnt work, you can either follow the Problems Updating section below, or edit the `.gitignore` file and **replace its entire contents** with the below, save the file, then re-try the `git pull`<br><br>
-```
-voices/*.*
-models/*.*
-outputs/*.*
-finetune/*.*
-config.json
-confignew.json
-models.json
-diagnostics.log
-```
 </details>
 
 #### 🟪 Updating other problems
