@@ -463,6 +463,9 @@ Everything has been done to make this as simple as possible. At its simplest, yo
 #### ⚫ The audio you will use
 I would suggest that if its in an interview format, you cut out the interviewer speaking in audacity or your chosen audio editing package. You dont have to worry about being perfect with your cuts, the finetuning Step 1 will go and find spoken audio and cut it out for you. Is there is music over the spoken parts, for best quality you would cut out those parts, though its not 100% necessary. As always, try to avoid bad quality audio with noises in it (humming sounds, hiss etc). You can try something like [Audioenhancer](https://audioenhancer.ai/) to try clean up noisier audio. There is no need to down-sample any of the audio, all of that is handled for you. Just give the finetuning some good quality audio to work with. 
 
+#### ⚫ Can I Finetune a model more than once on more than one voice
+Yes you can. You would do these as multiple finetuning's, but its absolutely possible and fine to do. Finetuning the XTTS model does not restrict it to only being able to reproduce that 1x voice you trained it on. Finetuning is generally nuding the model in a direction to learn the ability to sound a bit more like a voice its not heard before. 
+
 #### ⚫ A note about anonymous training Telemetry information & disabling it
 Portions of Coqui's TTS trainer scripts gather anonymous training information which you can disable. Their statement on this is listed [here](https://github.com/coqui-ai/Trainer?tab=readme-ov-file#anonymized-telemetry). Although I have tried to pass `TRAINER_TELEMETRY=0` through AllTalk, it appears you will have to set this manually if you wish to finetune on a non-internet enabled computer or disable the anonymous data being sent. You can do this by:
 
