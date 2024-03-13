@@ -893,6 +893,7 @@ if __name__ == "__main__":
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. Ive been testing with 5 minute long clips.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - This process will need access to all your GPU and VRAM, so close any other software that's using your GPU currently.
                 ### 🟨 <u>Setting up cuBLAS and cuDNN <span style="color: red;">Version 11.8</span></u>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 11.8, CUDA 12.1 etc. The CUDA Development Toolkit is a completly different and seperate thing.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - If you have the <span style="color: #3366ff;;">Nvidia CUDA Toolkit Version 11.8</span> installed and can type <span style="color: #3366ff;;">nvcc --version</span> at the command prompt/terminal and it reports <span style="color: #00a000;">Cuda compilation tools, release 11.8</span> you should be good to go. 
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need to download the Nvidia Cuda Toolkit 11.8<span style="color: #3366ff;"> network</span> install from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive) 
@@ -1027,7 +1028,9 @@ if __name__ == "__main__":
 
             gr.Markdown(
                 f"""
-                ## <u>STEP 2 - Fine-tuning the XTTS Encoder</u><br>
+                ## <u>STEP 2 - Fine-tuning the XTTS Encoder</u><br>                
+                ### 🟥 <u>Important Note - Disk Space requirements</u>
+                #### &nbsp;&nbsp;&nbsp;&nbsp; - This step may use up to 18GB of disk space temporarily during training. It may also use 2GB of disk space in your OS's temp location. Please ensure you have enough disk space.<br>
                 ### 🟦 <u>What you need to do</u>
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click the button again.             
                 #### &nbsp;&nbsp;&nbsp;&nbsp; - If for any reason it crashed, close the app and re-start the finetuning and kick it off again, clicking through setp 1 (it doesnt need to regenerate the data)
