@@ -9,4 +9,6 @@ Author	BBC
 This file is licensed under the Creative Commons Attribution 3.0 Unported license.
 https://creativecommons.org/licenses/by/3.0/deed.en
 
-Downsampled to 22050hz, mono and cut shorter
+Downsampled to 22050hz, mono and cut shorter.
+
+This license applies to both the original file ( «Clint_Eastwood CC3.wav» ) and it's derivative, the enhanced file ( «Clint_Eastwood (enhanced)CC3.wav» ).
