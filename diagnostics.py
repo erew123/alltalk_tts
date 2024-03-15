@@ -9,6 +9,7 @@ try:
     import sys
     import glob
     import textwrap
+    import torch
     import packaging.version
     import packaging.specifiers
     from packaging.specifiers import SpecifierSet
@@ -46,7 +47,10 @@ def get_requirements_file():
         return "requirements.txt"
 
 # Set up logging with filemode='w'
-logging.basicConfig(filename='diagnostics.log', filemode='w', level=logging.INFO)
+logging.basicConfig(filename='diagnostics.log',
+                    filemode='w',
+                    level=logging.INFO,
+                    format='%(message)s')  # Custom format
 
 # Function to get GPU information using subprocess
 def get_gpu_info():
@@ -55,6 +59,22 @@ def get_gpu_info():
         return result.stdout
     except FileNotFoundError:
         return "NVIDIA GPU information not available"
+    
+def get_cpu_info():
+    cpu_info = {
+        'physical_cores': psutil.cpu_count(logical=False),
+        'total_cores': psutil.cpu_count(logical=True),
+        'max_frequency': psutil.cpu_freq().max
+    }
+    return cpu_info
+
+def get_disk_info():
+    disk_info = []
+    partitions = psutil.disk_partitions()
+    for p in partitions:
+        usage = psutil.disk_usage(p.mountpoint)
+        disk_info.append(f" Drive: {p.device} | Total: {usage.total / (1024 ** 3):.2f} GB | Used: {usage.used / (1024 ** 3):.2f} GB | Free: {usage.free / (1024 ** 3):.2f} GB | Type: {p.fstype}")
+    return disk_info
 
 # Function to check if a port is in use
 def is_port_in_use(port):
@@ -73,6 +93,32 @@ def satisfies_wildcard(installed_version, required_version):
         return True
     return False
 
+def test_cuda():
+    cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        try:
+            # Attempt to create a tensor on GPU
+            torch.tensor([1.0, 2.0]).cuda()
+            return "Success - CUDA is available and working."
+        except Exception as e:
+            return f"Fail - CUDA is available but not working. Error: {e}"
+    else:
+        return "Fail - CUDA is not available."
+
+def find_files_in_path_with_wildcard(pattern):
+    # Split the system's PATH variable into a list of directories
+    search_path = os.environ.get('PATH', '').split(os.pathsep)
+    
+    found_paths = []
+    # Iterate over each directory in the search path
+    for directory in search_path:
+        # Use glob to find all files matching the pattern in this directory
+        for file_path in glob.glob(os.path.join(directory, pattern)):
+            if os.path.isfile(file_path):  # Ensure it's a file
+                found_paths.append(file_path)
+    
+    return found_paths
+
 # Function to log and print system information
 def log_system_info():
     # System information
@@ -88,6 +134,9 @@ def log_system_info():
 
     # Torch version
     torch_version = torch.__version__
+    cuda_test_result = test_cuda()
+    cpu_info = get_cpu_info()
+    disk_info = get_disk_info()
 
     # System RAM using psutil
     try:
@@ -123,6 +172,10 @@ def log_system_info():
     search_path = sys.path
     path_env = os.environ.get('PATH', 'N/A')
 
+    # Check for cublas
+    file_name = 'cublas64_11.*' 
+    found_paths = find_files_in_path_with_wildcard(file_name)
+
     # Compare with requirements file
     requirements_file = get_requirements_file()
     if requirements_file:
@@ -146,51 +199,71 @@ def log_system_info():
             logging.info(f"NOTE {requirements_file} not found. Skipping version checks.")
 
     # Log and print information
-    logging.info(f"OS Version: {os_version}")
-    logging.info(f"Note: Windows 11 will list as build is 10.x.22xxx")
-    logging.info(f"Torch Version: {torch_version}")
-    logging.info(f"System RAM: {system_ram}")
-    logging.info(f"CUDA_HOME: {cuda_home}")
-    logging.info(f"Port Status: {port_status}")
-    logging.info(f"Python Version: {platform.python_version()}")
-    logging.info(f"Python Version Info: {python_version_info}")
-    logging.info(f"Python Executable: {python_executable}")
-    logging.info(f"Python Virtual Environment: {python_virtual_env} (Should be N/A when in Text-generation-webui Conda Python environment)")
-    logging.info(f"Conda Environment: {conda_env}")
+    logging.info(f"OPERATING SYSTEM:")
+    logging.info(f" OS Version: {os_version}")
+    logging.info(f" Note: Windows 11 will list as build is 10.x.22xxx")
+    logging.info(f"\nHARDWARE ENVIRONMENT:")
+    logging.info(f" CPU: Physical Cores: {cpu_info['physical_cores']}, Total Cores: {cpu_info['total_cores']}, Max Frequency: {cpu_info['max_frequency']} MHz")
+    logging.info(f" System RAM: {system_ram}")
+    logging.info(f"\nGPU INFORMATION:{gpu_info}")
+    logging.info("DISK INFORMATION:")
+    for disk in disk_info:
+        logging.info(disk)
+    logging.info("\nNETWORK PORT:")
+    logging.info(f" Port Status: {port_status}")
+    logging.info("\nCUDA:")
+    logging.info(f" CUDA Working: {cuda_test_result}")
+    logging.info(f" CUDA_HOME: {cuda_home}")
+    if found_paths:
+        logging.info(f" Cublas64_11 Path: {', '.join(found_paths)}")
+    else:
+        logging.info(f" Cublas64_11 Path: Not found in any search path directories.")
+    logging.info("\nPYTHON & PYTORCH:")
+    logging.info(f" Torch Version: {torch_version}")
+    logging.info(f" Python Version: {platform.python_version()}")
+    logging.info(f" Python Version Info: {python_version_info}")
+    logging.info(f" Python Executable: {python_executable}")
+    logging.info(f" Python Virtual Environment: {python_virtual_env} (Should be N/A when in Text-generation-webui Conda Python environment)")
+    logging.info(f" Conda Environment: {conda_env}")
     logging.info("\nPython Search Path:")
     for path in search_path:
         logging.info(f"  {path}")
-    logging.info("\nOS PATH Environment Variable:")
+    logging.info("\nOS SEARCHPATH ENVIRONMENT:")
     for path in path_env.split(';'):
         logging.info(f"  {path}")
     if required_packages:  # Check if the dictionary is not empty
-        logging.info("\nPackage Versions:")
+        logging.info("\nPACKAGE VERSIONS vs REQUIREMENTS FILE:")
         max_package_length = max(len(package) for package in required_packages.keys())
         for package_name, (operator, required_version) in required_packages.items():
             installed_version = installed_packages.get(package_name, 'Not installed')
-            logging.info(f"{package_name.ljust(max_package_length)}  Required: {operator} {required_version.ljust(12)}  Installed: {installed_version}")
-    logging.info(f"GPU Information:\n{gpu_info}")
-    logging.info("Package Versions:")
+            logging.info(f" {package_name.ljust(max_package_length)}  Required: {operator} {required_version.ljust(12)}  Installed: {installed_version}")
+    logging.info("\nPYTHON PACKAGES:")
     for package, version in package_versions.items():
-        logging.info(f"{package}>= {version}")
+        logging.info(f" {package}>= {version}")
 
     # Print to screen
     print(f"\n\033[94mOS Version:\033[0m \033[92m{os_version}\033[0m")
     print(f"\033[94mOS Ver note:\033[0m \033[92m(Windows 11 will say build is 10.x.22xxx)\033[0m")
-    print(f"\033[94mCUDA_HOME:\033[0m \033[92m{cuda_home}\033[0m")
     print(f"\033[94mSystem RAM:\033[0m \033[92m{system_ram}\033[0m")
-    print(f"\033[94mPort Status:\033[0m \033[92m{port_status}\033[0m")
-    print(f"\033[94mTorch Version:\033[0m \033[92m{torch_version}\033[0m")
+    for disk in disk_info:
+        print(f"\033[94mDisk:\033[0m \033[92m{disk}\033[0m")
+    print(f"\033[94m\nGPU Information:\033[0m {gpu_info}")
+    print(f"\033[94mPort Status:\033[0m \033[92m{port_status}\033[0m\n")
+    if "Fail" in cuda_test_result:
+        print(f"\033[91mCUDA Working:\033[0m \033[91m{cuda_test_result}\033[0m")
+    else:
+        print(f"\033[94mCUDA Working:\033[0m \033[92m{cuda_test_result}\033[0m")
+    print(f"\033[94mCUDA_HOME:\033[0m \033[92m{cuda_home}\033[0m")
+    if found_paths:
+        print(f"\033[94mCublas64_11 Path:\033[0m \033[92m{', '.join(found_paths)}\033[0m")
+    else:
+        print(f"\033[94mCublas64_11 Path:\033[0m \033[91mNot found in any search path directories.\033[0m")    
+    print(f"\033[94m\nTorch Version:\033[0m \033[92m{torch_version}\033[0m")
     print(f"\033[94mPython Version:\033[0m \033[92m{platform.python_version()}\033[0m")
-    print(f"\033[94mPython Version Info:\033[0m \033[92m{python_version_info}\033[0m")
     print(f"\033[94mPython Executable:\033[0m \033[92m{python_executable}\033[0m")
-    print(f"\033[94mPython Virtual Environment:\033[0m \033[92m{python_virtual_env}\033[0m (Should be N/A when in Text-generation-webui Conda Python environment)")
     print(f"\033[94mConda Environment:\033[0m \033[92m{conda_env}\033[0m")
     print(f"\n\033[94mPython Search Path:\033[0m")
     for path in search_path:
-        print(f"  {path}")
-    print(f"\n\033[94mOS Search PATH Environment Variable:\033[0m")
-    for path in path_env.split(';'):
         print(f"  {path}")
     if required_packages:  # Check if the dictionary is not empty
         print("\033[94m\nRequirements file package comparison:\033[0m")
@@ -214,7 +287,7 @@ def log_system_info():
             color_installed = "\033[92m" if condition_met else "\033[91m"
 
             # Print colored output
-            print(f"{package_name.ljust(max_package_length)}  Required: {color_required}{operator} {required_version.ljust(12)}\033[0m  Installed: {color_installed}{installed_version}\033[0m")
+            print(f"  {package_name.ljust(max_package_length)}  Required: {color_required}{operator} {required_version.ljust(12)}\033[0m  Installed: {color_installed}{installed_version}\033[0m")
 
         print("\nOn Nvidia Graphics cards machines, if your \033[92mInstalled\033[0m version of \033[92mTorch\033[0m and \033[92mTorchaudio\033[0m does")    
         print("not have \033[92m+cu118\033[0m (Cuda 11.8) or \033[92m+cu121\033[0m (Cuda 12.1) listed after them, you do not have CUDA")
@@ -231,9 +304,9 @@ def log_system_info():
         """)
         print(explanation.strip())
     print("")
-    print(f"GPU Information:{gpu_info}")
-    print(f"\033[94mDiagnostic log created:\033[0m \033[92mdiagnostics.log\033[0m")
-    print(f"\033[94mPlease upload the log file with any support ticket.\033[0m")
+    print(f"\033[94mDiagnostic log created:\033[0m \033[92mdiagnostics.log. \033[94mA brief summary of results is displayed above on\033[0m")
+    print(f"\033[94mscreen. Please see the log file for more detail.\033[0m")
+    print(f"\033[94m\nPlease upload the log file with any support ticket.\033[0m")
 
 if __name__ == "__main__":
     log_system_info()
