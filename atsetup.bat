@@ -73,8 +73,9 @@ echo    5) Install DeepSpeed v11.2 for CUDA %L_GREEN%12.1%RESET% and Python-3.11
 echo.
 echo    DEEPSPEED FOR %L_YELLOW=%PyTorch 2.2.x%RESET% (March 2024 builds of Text-gen-webui and later)
 echo    6) Install DeepSpeed v14.0 for CUDA %L_GREEN%12.1%RESET% and Python-3.11.x and %L_YELLOW%PyTorch 2.2.x%RESET%.
+echo    7) Install DeepSpeed v14.0 for CUDA %L_GREEN%11.8%RESET% and Python-3.11.x and %L_YELLOW%PyTorch 2.2.x%RESET%.
 echo.
-echo    7) Uninstall DeepSpeed.
+echo    U) Uninstall DeepSpeed.
 echo.
 echo.   OTHER
 echo    8) Generate a diagnostics file.
@@ -88,7 +89,9 @@ if "%WebUIOption%"=="3" goto InstallFinetuneTextGen
 if "%WebUIOption%"=="4" goto InstallDeepSpeed118TextGen
 if "%WebUIOption%"=="5" goto InstallDeepSpeed121TextGen
 if "%WebUIOption%"=="6" goto InstallDeepSpeed121TextGenPytorch221
-if "%WebUIOption%"=="7" goto UnInstallDeepSpeed
+if "%WebUIOption%"=="7" goto InstallDeepSpeed118TextGenPytorch221
+if "%WebUIOption%"=="U" goto UnInstallDeepSpeed
+if "%WebUIOption%"=="u" goto UnInstallDeepSpeed
 if "%WebUIOption%"=="8" goto GenerateDiagsTextGen
 if "%WebUIOption%"=="9" goto End
 goto WebUIMenu
@@ -263,6 +266,38 @@ echo.
 Echo    DeepSpeed installed successfully.
 Echo. 
 del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+pause
+goto WebUIMenu
+
+:InstallDeepSpeed118TextGenPytorch221
+echo Downloading DeepSpeed...
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    Failed to download DeepSpeed wheel file.
+    echo    Please check your internet connection or try again later.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto WebUIMenu
+)
+echo    DeepSpeed wheel file downloaded successfully.
+echo    Installing DeepSpeed...
+pip install deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
+if %ERRORLEVEL% neq 0 (
+    echo. 
+    echo    Failed to install DeepSpeed.
+    echo    Please check if the wheel file is compatible with your system.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto WebUIMenu
+)
+Echo.
+echo.
+Echo    DeepSpeed installed successfully.
+Echo. 
+del deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 pause
 goto WebUIMenu
 
