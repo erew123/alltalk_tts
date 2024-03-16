@@ -381,7 +381,7 @@ if "%UserChoice%" == "1" (
     pip install soundfile==0.12.1
     pip install uvicorn==0.24.0.post1
     pip install transformers>=4.37.1
-    pip install TTS==0.21.3
+    pip install TTS==0.22.0
     pip install fastapi==0.104.1
     pip install Jinja2==3.1.2
     pip install requests==2.31.0
