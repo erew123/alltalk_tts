@@ -13,6 +13,7 @@ import random
 import gc
 import time
 import shutil
+import psutil
 import pandas
 import glob
 import json
@@ -20,7 +21,8 @@ from pathlib import Path
 from tqdm import tqdm
 from faster_whisper import WhisperModel  
 from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
-
+import importlib.metadata as metadata
+from packaging import version
 
 # STARTUP VARIABLES 
 this_dir = Path(__file__).parent.resolve()
@@ -61,6 +63,139 @@ if finetuned_model:
     required_files = ["model.pth", "config.json", "vocab.json", "mel_stats.pth", "dvae.pth"]
     finetuned_model = all((trained_model_directory / file).exists() for file in required_files)
 basemodel_or_finetunedmodel = True
+
+#######################
+#### DIAGS for PFC ####
+#######################
+
+def check_disk_space():
+    # Get the current working directory
+    current_directory = os.getcwd()
+    # Get the disk usage statistics for the current directory's disk
+    disk_usage = shutil.disk_usage(current_directory)
+    # Convert the free space to GB (1GB = 1 << 30 bytes)
+    free_space_gb = disk_usage.free / (1 << 30)
+    # Check if the free space is more than 18GB
+    is_more_than_18gb = free_space_gb > 18
+
+    # Generating the markdown text for disk space check
+    disk_space_markdown = f"""
+    ### 🟩 <u>Disk Space Check</u>
+    ◽ **Disk Space (> 18 GB):** {'✅ Pass - ' if is_more_than_18gb else '❌ Fail - '} {free_space_gb:.2f} GB
+    """
+    return disk_space_markdown
+
+def test_cuda():
+    cuda_home = os.environ.get('CUDA_HOME', 'N/A')
+    cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        try:
+            # Attempt to create a tensor on GPU
+            torch.tensor([1.0, 2.0]).cuda()
+            cuda_status = "✅ Pass - CUDA is available and working."
+        except Exception as e:
+            cuda_status = f"❌ Fail - CUDA is available but not working. Error: {e}"
+    else:
+        cuda_status = "❌ Fail - CUDA is not available."
+    return cuda_status, cuda_home
+
+def find_files_in_path_with_wildcard(pattern):
+    # Split the system's PATH variable into a list of directories
+    search_path = os.environ.get('PATH', '').split(os.pathsep)
+    found_paths = []
+    # Iterate over each directory in the search path
+    for directory in search_path:
+        # Use glob to find all files matching the pattern in this directory
+        for file_path in glob.glob(os.path.join(directory, pattern)):
+            if os.path.isfile(file_path):  # Ensure it's a file
+                found_paths.append(file_path)
+    return found_paths
+
+def generate_cuda_markdown():
+    cuda_status, cuda_home = test_cuda()
+    file_name = 'cublas64_11.*'
+    found_paths = find_files_in_path_with_wildcard(file_name)
+    if found_paths:
+        found_paths_str = '✅ Pass - ' + ' '.join(found_paths)
+    else:
+        found_paths_str = "❌ Fail - cublas64_11 is not accessible."
+        # Check if 'cu118' or 'cu121' is in the PyTorch version string
+    pytorch_version = torch.__version__
+    if 'cu118' in pytorch_version or 'cu121' in pytorch_version:
+        pytorch_cuda_version_status = '✅ Pass - '
+    else:
+        pytorch_cuda_version_status = '❌ Fail - '
+    cuda_markdown = f"""
+    ### 🟨 <u>CUDA Information</u><br>
+    ◽ **Cublas64_11 found:** {found_paths_str}  
+    ◽ **CUDA_HOME path:** {cuda_home}
+    """
+    pytorch_markdown = f"""
+    ### 🟦 <u>Python & Pytorch Information</u>  
+    ◽ **PyTorch Version:** {pytorch_cuda_version_status} {torch.__version__}  
+    ◽ **CUDA is working:** {cuda_status}
+    """
+    return cuda_markdown, pytorch_markdown
+
+def get_system_ram_markdown():
+    virtual_memory = psutil.virtual_memory()
+    total_ram = f"{virtual_memory.total / (1024 ** 3):.2f} GB"
+    available_ram = f"{virtual_memory.available / (1024 ** 3):.2f} GB"
+    used_ram_percentage = f"{virtual_memory.percent:.2f}%"
+    system_ram_markdown = f"""
+    ### 🟪 <u>System RAM Information</u>  <br>
+    ◽ **Total RAM:** {total_ram}<br>
+    ◽ **Available RAM:** {available_ram} ({used_ram_percentage} used)
+    """
+    return system_ram_markdown
+
+def check_base_model(base_model_path, files_to_download):
+    # Assuming files_to_download is a dict with keys as filenames
+    base_model_files = list(files_to_download.keys())
+    missing_files = []
+    # Check if all base model files exist
+    for file in base_model_files:
+        file_path = this_dir / base_path / model_path / file
+        if not file_path.exists():
+            missing_files.append(file)
+    return len(missing_files) == 0
+
+
+# Assuming base_model_path and files_to_download are set from the JSON config as shown above
+base_model_detected = check_base_model(base_model_path, files_to_download)
+
+def generate_base_model_markdown(base_model_detected):
+    base_model_status = '✅ Pass - Base model detected' if base_model_detected else '❌ Fail - Base model not detected'
+    base_model_markdown = f"""
+    ### ⬛ <u>XTTS Base Model Detection</u>
+    ◽ **Base XTTS Model Status:** {base_model_status}
+    """
+    return base_model_markdown
+
+def check_tts_version(required_version="0.22.0"):
+    try:
+        # Get the installed version of TTS
+        installed_version = metadata.version("tts")
+        # Check if the installed version meets the required version
+        if version.parse(installed_version) >= version.parse(required_version):
+            tts_status = f"✅ Pass - TTS version {installed_version} is installed and meets the requirement."
+        else:
+            tts_status = f"❌ Fail - TTS version {installed_version} is installed but does not meet the required version {required_version}."
+    except metadata.PackageNotFoundError:
+        # If TTS is not installed
+        tts_status = "❌ Fail - TTS is not installed."
+    tts_markdown = f"""
+    ### 🟥 <u>TTS Information</u><br>
+    ◽ **TTS Version:** {tts_status}
+    """
+    return tts_markdown
+
+# Disk space check results to append to the Markdown
+disk_space_results = check_disk_space()
+cuda_results, pytorch_results = generate_cuda_markdown()
+system_ram_results = get_system_ram_markdown()
+base_model_results = generate_base_model_markdown(base_model_detected)
+tts_version_status = check_tts_version()
 
 #####################
 #### STEP 1 BITS ####
@@ -381,6 +516,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     )
     # define audio config
     audio_config = XttsAudioConfig(sample_rate=22050, dvae_sample_rate=22050, output_sample_rate=24000)
+    print("language is:",language)
     
     # Resolve Japanese threading issue
     number_of_workers = 8
@@ -474,6 +610,12 @@ def clear_gpu_cache():
     # clear the GPU cache
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        
+def find_a_speaker_file(folder_path):
+    search_path = folder_path / "*" / "speakers_xtts.pth"
+    files = glob.glob(str(search_path), recursive=True)
+    latest_file = max(files, key=os.path.getctime, default=None)
+    return latest_file
 
 XTTS_MODEL = None
 def load_model(xtts_checkpoint, xtts_config, xtts_vocab):
@@ -481,11 +623,12 @@ def load_model(xtts_checkpoint, xtts_config, xtts_vocab):
     clear_gpu_cache()
     if not xtts_checkpoint or not xtts_config or not xtts_vocab:
         return "You need to run the previous steps or manually set the `XTTS checkpoint path`, `XTTS config path`, and `XTTS vocab path` fields !!"
+    xtts_speakers_pth = find_a_speaker_file(this_dir / "models")
     config = XttsConfig()
     config.load_json(xtts_config)
     XTTS_MODEL = Xtts.init_from_config(config)
     print("[FINETUNE] \033[94mStarting Step 3\033[0m Loading XTTS model!")
-    XTTS_MODEL.load_checkpoint(config, checkpoint_path=xtts_checkpoint, vocab_path=xtts_vocab, use_deepspeed=False)
+    XTTS_MODEL.load_checkpoint(config, checkpoint_path=xtts_checkpoint, vocab_path=xtts_vocab, use_deepspeed=False, speaker_file_path=xtts_speakers_pth)
     if torch.cuda.is_available():
         XTTS_MODEL.cuda()
 
@@ -587,7 +730,7 @@ def compact_model():
     torch.save(checkpoint, target_dir / "model.pth")
 
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth"]
+    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth","speakers_xtts.pth", ]
 
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
@@ -645,7 +788,7 @@ def compact_lastfinetuned_model():
     torch.save(checkpoint, target_dir / "model.pth")
 
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth"]
+    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth", "speakers_xtts.pth",]
 
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
@@ -825,11 +968,31 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
     return refresh_button
 
+pfc_markdown = f"""
+    ### 🚀 <u>Pre-flight Checklist for Fine-tuning</u><br>
+    Please review the following checks to confirm your system is configured correctly for the fine-tuning process. Should you encounter any issues, additional guidance is available in the corresponding tabs above.
+    Ensure each criterion is marked with a green check. For an overview of fine-tuning procedures, please refer to the "General info" tab or visit the AllTalk GitHub repository.
+    """
+
+custom_css = """
+body {
+    font-size: 16px; /* Adjust the base font size as needed */
+}
+h1, h2, h3, h4, h5, h6 {
+    font-size: 1.25em; /* Adjust heading sizes relative to the base size */
+}
+p {
+    font-size: 1.1em; /* Paragraph font size, relative to the base size */
+    margin-bottom: 10px; /* Adjust paragraph spacing */
+}
+.gradio_container {
+    zoom: 1.1; /* Adjust the zoom to scale the entire container */
+}
+"""
 
 if __name__ == "__main__":
     # Register the signal handler
     signal.signal(signal.SIGINT, cleanup_before_exit)
-
 
 ################
 #### GRADIO ####
@@ -874,67 +1037,137 @@ if __name__ == "__main__":
 #### GRADIO INFO ####
 #####################
 
-    with gr.Blocks(theme=theme) as demo:
-        with gr.Tab("Information/Guide"):
-
-            gr.Markdown(
+    with gr.Blocks(theme=theme, css=custom_css) as demo:
+        with gr.Tab("🚀 PFC"):
+            with gr.Tab("🚀 Pre-Flight Checklist"):
+                gr.Markdown(
                 f"""
-                ## <u>Finetuning Information</u><br>
-                ### 🟥 <u>Important Note</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - <span style="color: #3366ff;">finetune.py</span> needs to be run from the <span style="color: #3366ff;">/alltalk_tts/</span> folder. Don't move the location of this script.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Have you run AllTalk at least once? It needs to have downloaded+updated the voice model, before we can finetune it.
-                ### 🟦 <u>What you need to run finetuning</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - An Nvidia GPU. Tested on Windows with extended shared VRAM and training used about 16GB's total (which worked on a 12GB card).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you have multiple Nvidia GPU's in your system, please see this [important note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - I have not been able to test this on a GPU with less than 12GB of VRAM, so cannot say if it will work or how that would affect performance.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - <span style="color: red;">Version 11.8</span> of Nvidia cuBLAS and cuDNN (guide below). Only 11.8 of cuBLAS and cuDNN work for this process currently.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Minimum <span style="color: red;">18GB</span> free disk space (most of it is used temporarily).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Some decent quality audio, multiple files if you like. Minimum of 2 minutes and Ive tested up to 20 minutes of audio.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. Ive been testing with 5 minute long clips.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - This process will need access to all your GPU and VRAM, so close any other software that's using your GPU currently.
-                ### 🟨 <u>Setting up cuBLAS and cuDNN <span style="color: red;">Version 11.8</span></u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 11.8, CUDA 12.1 etc. The CUDA Development Toolkit is a completly different and seperate thing.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you have the <span style="color: #3366ff;;">Nvidia CUDA Toolkit Version 11.8</span> installed and can type <span style="color: #3366ff;;">nvcc --version</span> at the command prompt/terminal and it reports <span style="color: #00a000;">Cuda compilation tools, release 11.8</span> you should be good to go. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need to download the Nvidia Cuda Toolkit 11.8<span style="color: #3366ff;"> network</span> install from [here](https://developer.nvidia.com/cuda-11-8-0-download-archive) 
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1) Run the installer and select <span style="color: #3366ff;">Custom Advanced</span> Uncheck <span style="color: #3366ff;">everything</span> at the top then expand <span style="color: #3366ff;">CUDA</span>, <span style="color: #3366ff;">Development</span> > <span style="color: #3366ff;">Compiler</span> > and select <span style="color: #3366ff;;">nvcc</span> then expand <span style="color: #3366ff;;">Libraries</span> and select <span style="color: #3366ff;;">CUBLAS</span>.
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2) Back at the top of <span style="color: #3366ff;">CUDA</span>, expand <span style="color: #3366ff;">Runtime</span> > <span style="color: #3366ff;">Libraries</span> and select <span style="color: #3366ff;">CUBLAS</span>. Click <span style="color: #3366ff;;">Next</span>, accept the default path (taking a note of its location) and let the install run. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>. If it does you are good to go. If it doesn't > Step 4.
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4) Linux users, you can temporarily add these paths on your current terminal window with (you may need to confirm these are correct for your flavour of Linux):
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64&colon;&dollar;&lbrace;LD_LIBRARY_PATH&colon;&plus;&colon;&dollar;&lbrace;LD_LIBRARY_PATH&rbrace;&rbrace;</span> (Add it to your ~/.bashrc if you want this to be permanent)
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin</span>
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Windows users need the add the following to the PATH environment variable. Start menu and search for "Environment Variables" or "Edit the system environment variables.". 
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Find and select the "Path" variable, then click on the "Edit...". Click on the "New" button and add:
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">C:&bsol;Program Files&bsol;NVIDIA GPU Computing Toolkit&bsol;CUDA&bsol;v11.8&bsol;bin.</span>
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5) Once you have these set correctly, you should be able to open a new command prompt/terminal and <span style="color: #3366ff;">nvcc --version</span> at the command prompt/terminal, resulting in <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>.
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6) If the nvcc command doesn't work OR it reports a version different from 11.8, finetuning wont work, so you will to double check your environment variables and get them working correctly.
+                {pfc_markdown}       
+                {disk_space_results}
+                {system_ram_results}
+                {cuda_results}
+                {pytorch_results}
+                {base_model_results}
+                {tts_version_status}
                 """
             )
+            with gr.Tab("🟩 Disks Help"):
+                gr.Markdown(
+                f"""
+                {disk_space_results}<br><br>
+                ◽ During actual training (Step 2) Finetuning will require approximately 18GB's of free disk space while performing training and will fail or perform badly if there is any less disk space. The majority of this disk space is used temporarily and will be cleared when you reach Step 4 and move & compact the model then delete the training data.<br>
+                ◽ Because lots of data is being copied around, <strong>mechanical hard disks</strong> will be slow.
+                """
+            )
+            with gr.Tab("🟪 RAM & VRAM Help"):
+                gr.Markdown(
+                f"""
+                {system_ram_results}<br>  
+                ◽ During actual training (Step 2) Finetuning will use around 14GB of VRAM. If your GPU doesnt have 14GB's of VRAM it will attempt to overspill into your System RAM. So if you also have very low or slow System RAM you can expect bad performance or the training to fail.<br>
+                ◽ 12GB cards may need 2GB System RAM.<br>
+                ◽ 8GB cards may need 6GB System RAM.<br>
+                ◽ 6GB cards may need 8GB System RAM.<br>
+                ◽ Its hard to estimate what performance impact this could will have, due to different memory speeds, PCI speeds, GPU speeds etc.<br>
+                ◽ If you have a low VRAM scenario and also are attempting to run on a mechanical hard drive, Finetuning could take ??? amount of time.<br>
+                ◽ On Windows machines, please ensure you have not disabled System Memory Fallback for Stable Diffusion <a href="https://nvidia.custhelp.com/app/answers/detail/a_id/5490/~/system-memory-fallback-for-stable-diffusion" target="_blank">link here</a><br>
+                """
+            )
+            with gr.Tab("🟨 CUDA & Cublas Help"):
+                gr.Markdown(
+                f"""         
+                {cuda_results}<br><br>
+                ◽ It DOESNT matter what version of CUDA you have installed within Python either, CUDA 11.8, CUDA 12.1 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing from Python/PyTorch.<br>
+                ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit 11.8 called Cublas64_11.<br>
+                ◽ If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ You will need to download the Nvidia Cuda Toolkit 11.8<span style="color: #3366ff;"> network install</span> from <a href="https://developer.nvidia.com/cuda-11-8-0-download-archive" target="_blank">link here</a><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 1) Run the installer and select <span style="color: #3366ff;">Custom Advanced</span> Uncheck <span style="color: #3366ff;">everything</span> at the top then expand <span style="color: #3366ff;">CUDA</span>, <span style="color: #3366ff;">Development</span> > <span style="color: #3366ff;">Compiler</span> > and select <span style="color: #3366ff;;">nvcc</span> then expand <span style="color: #3366ff;;">Libraries</span> and select <span style="color: #3366ff;;">CUBLAS</span>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 2) Back at the top of <span style="color: #3366ff;">CUDA</span>, expand <span style="color: #3366ff;">Runtime</span> > <span style="color: #3366ff;">Libraries</span> and select <span style="color: #3366ff;">CUBLAS</span>. Click <span style="color: #3366ff;;">Next</span>, accept the default path (taking a note of its location) and let the install run. <br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>. If it does you are good to go. If it doesn't > Step 4.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 4) <strong>Linux users</strong>, you can temporarily add these paths on your current terminal window with (you may need to confirm these are correct for your flavour of Linux):<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64&colon;&dollar;&lbrace;LD_LIBRARY_PATH&colon;&plus;&colon;&dollar;&lbrace;LD_LIBRARY_PATH&rbrace;&rbrace;</span> (Add it to your ~/.bashrc if you want this to be permanent)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Windows users</strong> need the add the following to the PATH environment variable. Start menu and search for "Environment Variables" or "Edit the system environment variables.". <br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Find and select the "Path" variable, then click on the "Edit...". Click on the "New" button and add:<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">C:&bsol;Program Files&bsol;NVIDIA GPU Computing Toolkit&bsol;CUDA&bsol;v11.8&bsol;bin.</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 5) Once you have these set correctly, you should be able to open a new command prompt/terminal and <span style="color: #3366ff;">nvcc --version</span> at the command prompt/terminal, resulting in <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 6) If the nvcc command doesn't work OR it reports a version different from 11.8, finetuning wont work, so you will to double check your environment variables and get them working correctly.<br>
+                """
+            )
+            with gr.Tab("🟦 Python & PyTorch Help"):
+                gr.Markdown(
+                f"""         
+                {pytorch_results}<br><br>
+                ◽ On the PyTorch version the:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- first few digits are the version of PyTorch e.g. 2.1.0 is PyTorch 2.1.0<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- last few digits refer to the CUDA version e.g. cu118 is Cuda 11.8. cu121 is Cuda 12.1.<br>
+                ◽ If PyTorch does not show a CUDA version, then PyTorch will need reinstalling with CUDA. I would suggest running <span style="color: #3366ff;">pip cache purge</span> before installing PyTorch again.<br>
+                ◽ It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 11.8, CUDA 12.1 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing.<br>
+                ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit called Cublas64_11.<br>
+                ◽ If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.<br>
+                """
+            )
+            with gr.Tab("⬛ XTTS Base Model Help"):
+                gr.Markdown(
+                f"""         
+                {base_model_results}<br><br>
+                ◽ If your basemodel is not being detected, please ensure that <span style="color: #3366ff;">finetune.py</span> is being run from the AllTalk main folder.<br>
+                ◽ Ensure you have started AllTalk normally at least once. You can start it again and it will download any missing files.<br>
+                ◽ Check that there is an XTTS model within the models folder e.g. <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span><br>
+                """
+            )
+            with gr.Tab("🟥 TTS Version Help"):
+                gr.Markdown(
+                f"""         
+                {tts_version_status}<br><br>
+                ◽ If your TTS version is showing as the incorrect version, please reinstall the Finetuning requirements at the command prompt/terminal.<br>
+                ◽ <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span><br>
+                """
+            )
+                
+        with gr.Tab("ℹ️ General Finetuning info"):
+            gr.Markdown(
+            f"""
+            ### 🟥 <u>Important Note</u>
+            ◽ <span style="color: #3366ff;">finetune.py</span> needs to be run from the <span style="color: #3366ff;">/alltalk_tts/</span> folder. Don't move the location of this script.
+            ### 🟦 <u>What you need to run finetuning</u>
+            ◽ An Nvidia GPU.<br>
+            ◽ If you have multiple Nvidia GPU's in your system, please see this [important note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning).<br>
+            ◽ Some decent quality audio, multiple files if you like. Minimum of 2 minutes and Ive tested up to 20 minutes of audio.<br>
+            ◽ There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. Ive been testing with 5 minute long clips.<br>
+            ◽ This process will need access to all your GPU and VRAM, so close any other software that's using your GPU currently.<br>
+            ### 🟨 <u>What do I do from here?</u><br>
+            ◽ Proceed through Step 1, 2, 3 and onto "What to do next".<br>
+            ### 🟩 <u>Additional Information</u><br>
+            ◽ I will add more information/documentation however for now, please visit the AllTalk Github.<br>
+            """
+        )
 
 #######################
 #### GRADIO STEP 1 ####
 #######################
-        with gr.Tab("Step 1 - Preparing Audio/Generating the dataset"):
+        with gr.Tab("📁 Step 1 - Generating the dataset"):
 
             gr.Markdown(
                 f"""
-                ## <u>STEP 1 - Preparing Audio/Generating the dataset</u><br>
+                ### 📁 <u>Generating the dataset</u><br>
                 ### 🟥 <u>Important Note - Windows - "UserWarning: huggingface_hub cache-system uses symlinks."</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - This error is caused by Huggingfaces download software. If you get this error, please restart your Windows command prompt with "Run as Administrator" and restart finetuning. This is<br>&nbsp;&nbsp;&nbsp;&nbsp;caused by the Huggingface downloader and should only occur the 1st time it downloads the Whisper model. [Huggingface Reference here](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache#limitations)
-                ### 🟥 <u>Important Note - General failures</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If this step is failing, it will be worth running the diagnostics with atsetup and confirming you have cu118 or cu112 listed against your torch and torchaudio.<br>
+                ◽ This error is caused by Huggingfaces download software downloading the Whisper model. If you get this error, please restart your Windows command prompt with "Run as Administrator" and restart finetuning.<br>
+                ◽ This should only occur the 1st time it downloads the Whisper model. [Huggingface Reference here](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache#limitations)
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>                
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. Very small sample files cause errors, so I would suggest 30 seconds and longer samples. 
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - When you have completed Steps 1, 2, and 3, you are welcome to delete your samples from "put-voice-samples-in-here".
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - FYI Anecdotal evidence suggests that the Whisper 2 model may yield superior results in audio splitting and dataset creation.
-                ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for<br>&nbsp;&nbsp;&nbsp;&nbsp;finetuning the model on Step 2.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use.<br>&nbsp;&nbsp;&nbsp;&nbsp;If and when you have completed training, you wish to delete this 3GB model from your system, you are welcome to do so.
-                ### 🟩 <u>How long will this take?</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.
+                ◽ Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)<br>
+                ◽ Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>          
+                ◽ Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span><br>
+                ◽ You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. 5 to 10 minutes of audio would probably be better, allowing for more varied sample data to be generated.<br>
+                ◽ Very small sample files cause errors, so I would reccommend that the samples are at least 30 seconds and longer.<br>
+                ◽ FYI Anecdotal evidence suggests that the Whisper 2 model may yield superior results in audio splitting and dataset creation.<br>
+                ### 🟨 <u>What this step is doing</u><br>
+                ◽ With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for Step 2.<br>
+                ◽ Whisper is making a best effort to find spoken audio and break it down into smaller audio files. The content of these audio files is then transcribed into CSV fles (which you can edit in Excel or similar).<br>
+                ◽ These files (audio and CSV) are used at the next step to train the model "this is what the audio sounds like and these are the words being spoken". Wisper is doing a best effort to pull out the correct audio and generate text. If you wish to manually look at the CSV files before running the next step, you are welcome to do so and ammend them as necessary.<br>
+                ◽ Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. <br>
+                ◽ If and when you have completed training, should you wish to delete this 3GB Whisper model from your system, you are welcome to do so.<br>
+                ### 🟩 <u>How long will this take?</u><br>
+                ◽ First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.<br>
                 """
             )
                  
@@ -1024,22 +1257,24 @@ if __name__ == "__main__":
 #######################
 #### GRADIO STEP 2 ####
 #######################
-        with gr.Tab("Step 2 - Fine-tuning the XTTS Encoder"):
+        with gr.Tab("💻 Step 2 - Training"):
 
             gr.Markdown(
                 f"""
-                ## <u>STEP 2 - Fine-tuning the XTTS Encoder</u><br>                
-                ### 🟥 <u>Important Note - Disk Space requirements</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - This step may use up to 18GB of disk space temporarily during training. It may also use 2GB of disk space in your OS's temp location. Please ensure you have enough disk space.<br>
+                ### 💻 <u>Training</u><br>                
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click the button again.             
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If for any reason it crashed, close the app and re-start the finetuning and kick it off again, clicking through setp 1 (it doesnt need to regenerate the data)
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - The settings below are factory and should be ok.<br>
-                ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice.
-                ### 🟩 <u>How long will this take?</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Look at your command prompt/terminal window if you want to see what it is doing.
+                ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click the button again.<br>
+                ◽ If for any reason it crashed, close the app and re-start the finetuning and kick it off again, clicking through setp 1 (it doesnt need to regenerate the data)<br>
+                ◽ The default settings below are the suggested settings for most purposes, however you may choose to alter them depending on your specific use case.<br>
+                ◽ There are no absolute "correct" settings for training. It will vary based on:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- What you are training (A human voice, A cartoon voice, A new language entirely etc)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- How much audio you have (you may want less or more eval or epochs)<br>
+                ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary to achieve the sound quality you're aiming for.<br>
+                ### 🟨 <u>What this step is doing</u><br>
+                ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
+                ### 🟩 <u>How long will this take?</u><br>
+                ◽ On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.<br>
+                ◽ Look at your command prompt/terminal window if you want to see what it is doing.<br>
                 """
             )
             with gr.Row():
@@ -1089,7 +1324,7 @@ if __name__ == "__main__":
                 )
                 gr.Markdown(
                 f"""
-                ##### If you have an existing finetuned model in <span style="color: #3366ff;">/models/trainedmodel/</span> you will have an option to select <span style="color: #3366ff;">Existing finetuned model</span>, allowing you to further train it. Otherwise, you will only have Base Model as an option.
+                If you have an existing finetuned model in <span style="color: #3366ff;">/models/trainedmodel/</span> you will have an option to select <span style="color: #3366ff;">Existing finetuned model</span>, allowing you to further train it. Otherwise, you will only have Base Model as an option.
                 """
                 )
 
@@ -1129,22 +1364,22 @@ if __name__ == "__main__":
 #### GRADIO STEP 3 ####
 #######################
             
-        with gr.Tab("Step 3 - Inference/Testing"):
+        with gr.Tab("✅ Step 3 - Testing"):
             gr.Markdown(
                 f"""
-                ## <u>STEP 3 -  Inference/Testing</u><br>
+                ### ✅ <u>Testing</u><br>
                 ### 🟥 <u>Important Note</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - This step will error if you are using TTS version 0.22.0. Please re-run  <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span> if it errors loading the model.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you dont see multiple speaker reference files and you used more than 3 minutes of speech, this may be because of how Whipser (Step 1) split down the audio. You may need to manually<br>&nbsp;&nbsp;&nbsp;&nbsp;split down your audio files a little and try again.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If the vocab.json file isnt listed because you have restarted, you can manually put in the path to the base models vocab file e.g. D:&#92;alltalk_tts&#92;models&#92;xttsv2_2.0.2&#92;vocab.json
+                ◽ Upon successful processing of your speech data, expect to find multiple speaker reference files if your input consisted of over 3 minutes of speech. Please note that audio clips shorter than 7 seconds are automatically excluded from the reference list, as they generally do not provide sufficient length for effective TTS generation.<br>
+                ◽ Should you find a lower number of reference files than anticipated, it may be due to the initial segmentation performed by Whisper (Step 1), which can occasionally result in clips that are too brief for our criteria or indeed too long. In such cases, consider manually segmenting your audio to give Whisper a better chance at generating training data and repeating the process.<br>
+                ◽ If the vocab.json file isnt listed because you have restarted, you can manually put in the path to the base models vocab file e.g. D:&#92;alltalk_tts&#92;models&#92;xttsv2_2.0.2&#92;vocab.json<br>
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - All the <span style="color: #3366ff;">Speaker Reference Audios</span> in the dropdown are ones that are <span style="color: #3366ff;">8 seconds</span> long or more. You can use one of these later for your voice sample in All Talk, so remember the one you like.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Some <span style="color: #3366ff;">Speaker Reference Audios</span> are a bit long and may cause issues generating the TTS, so try different ones.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Once you are happy, move to the next tab for instruction on cleaning out the training data and how to copy your newly trained model over your current model.
+                ◽ The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.<br>
+                ◽ You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.<br>
+                ◽ All the <span style="color: #3366ff;">Speaker Reference Audios</span> in the dropdown are ones that are <span style="color: #3366ff;">8 seconds</span> long or more. You can use one of these later for your voice sample in All Talk, so remember the one you like.<br>
+                ◽ Some <span style="color: #3366ff;">Speaker Reference Audios</span> are a bit long and may cause issues generating the TTS, so try different ones.<br>
+                ◽ Once you are happy, move to the next tab for instruction on cleaning out the training data and how to copy your newly trained model over your current model.<br>
                 ### 🟨 <u>What this step is doing</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Its loading the finetuned model into memory, loading a voice sample and generating TTS, so that you can test out how well fine tuning worked.
+                ◽ Its loading the finetuned model into memory, loading a voice sample and generating TTS, so that you can test out how well fine tuning worked.
                 """
             )
 
@@ -1232,25 +1467,25 @@ if __name__ == "__main__":
                     tts_output_audio = gr.Audio(label="TTS Generated Audio.")
                     reference_audio = gr.Audio(label="Speaker Reference Audio Used.")
 
-        with gr.Tab("What to do next"):
+        with gr.Tab("🔜 What to do next"):
             gr.Markdown(
                 f"""
-                ## <u>What to do next</u><br>
+                ### 🔜 <u>What to do next</u><br>
                 ### 🟦 <u>What you need to do</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - You have a few options below:
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Compact &amp; move model. This will compress the raw finetuned model and move it, along with any large enough wav files created to one of two locations (please read text next to the button).<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You can use the wav files in that location as sample voices with your model. Models moved to <span style="color: #3366ff;">/models/trainedmodel/</span> will be loadable within Text-gen-webui on the <span style="color: #3366ff;">XTTSv2 FT</span> loader.
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 WAV files/Sample Vocies. The wav files that you can use as sample voices will be moved alongside the model. You will need to MANUALLY copy/move the WAV file(s) you want to use to the AllTalk<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; voices folder, to make them available within the interface.
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete Generated Training data. This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔹 Delete original voice samples. This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Instructions on using the finetuned model in Text-generation-webui and also further tuning this model you just created are on <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>.
+                You have a few options below:<br>
+                ◽ Compact &amp; move model. This will compress the raw finetuned model and move it, along with any large enough wav files created to one of two locations (please read text next to the button). You can use the wav files in that location as sample voices with your model. Models moved to <span style="color: #3366ff;">/models/trainedmodel/</span> will be loadable within Text-gen-webui on the <span style="color: #3366ff;">XTTSv2 FT</span> loader.<br>
+                ◽ WAV files/Sample Vocies. The wav files that you can use as sample voices will be moved alongside the model. You will need to MANUALLY copy/move the WAV file(s) you want to use to the AllTalk voices folder, to make them available within the interface.<br>
+                ◽ Delete Generated Training data. This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.<br>
+                ◽ Delete original voice samples. This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).<br>
+                Instructions on using the finetuned model in Text-generation-webui and also further tuning this model you just created are on <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>.<br>
                 ### 🟩 <u>Using your Finetuned model as you main model</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you wish to use the model you have just fintuned as your main model, you will need to MANUALLY copy it over the base model in <span style="color: #3366ff;">/models/trainedmodel/</span> after you have used Option A or B.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - Should you ever wish to revert your model back to the base model, you can delete the files in <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> and new copies will be re-downloaded when AllTalk starts up.
+                ◽ If you wish to use the model you have just fintuned as your main model, you will need to MANUALLY copy it over the base model in <span style="color: #3366ff;">/models/trainedmodel/</span> after you have used Option A or B.<br>
+                ◽ Should you ever wish to revert your model back to the base model, you can delete the files in <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> and new copies will be re-downloaded when AllTalk starts up.<br>
                 ### 🟨 <u>Clearing up disk space</u>
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) 
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Linux <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span>
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Windows <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.
-                #### &nbsp;&nbsp;&nbsp;&nbsp; - You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.
+                ◽ If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) <br>
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Linux <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span><br>
+                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Windows <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.<br>
+                ◽ You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.<br>
                 """
             )
             final_progress_data = gr.Label(
@@ -1260,28 +1495,28 @@ if __name__ == "__main__":
                 compact_btn = gr.Button(value="OPTION A - Compact and move model to '/trainedmodel/'")
                 gr.Markdown(
                 f"""
-                ##### This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/trainedmodel/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This model will become available to load in Text-gen-webui with the <span style="color: #3366ff;">XTTSv2 FT</span> loader. It will also be detected by Finetune as a model that can be further trained (Reload finetune.py).
+                This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/trainedmodel/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This model will become available to load in Text-gen-webui with the <span style="color: #3366ff;">XTTSv2 FT</span> loader. It will also be detected by Finetune as a model that can be further trained (Reload finetune.py).
                 """
                 )
             with gr.Row():
                 compact_lastfinetuned_btn = gr.Button(value="OPTION B - Compact and move model to '/lastfinetuned/'")
                 gr.Markdown(
                 f"""
-                ##### This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/lastfinetuned/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This will just leave you a finetuned model that you can do with as you please. It will <span style="color: red;">NOT</span> be available in Text-gen-webui unless you copy it over one of the other model loader locations.
+                This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/lastfinetuned/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This will just leave you a finetuned model that you can do with as you please. It will <span style="color: red;">NOT</span> be available in Text-gen-webui unless you copy it over one of the other model loader locations.
                 """
                 )
             with gr.Row():
                 delete_training_btn = gr.Button(value="Delete generated training data")
                 gr.Markdown(
                 f"""
-                ##### This will <span style="color: red;">DELETE</span> your training data and the raw finetuned model from <span style="color: #3366ff;">/finetune/tmp-trn/</span>.
+                This will <span style="color: red;">DELETE</span> your training data and the raw finetuned model from <span style="color: #3366ff;">/finetune/tmp-trn/</span>.
                 """
                 )
             with gr.Row():
                 delete_voicesamples_btn = gr.Button(value="Delete original voice samples")
                 gr.Markdown(
                 f"""
-                ##### This will <span style="color: red;">DELETE</span> your original voice samples from <span style="color: #3366ff;">/finetune/put-voice-samples-in-here/</span>.
+                This will <span style="color: red;">DELETE</span> your original voice samples from <span style="color: #3366ff;">/finetune/put-voice-samples-in-here/</span>.
                 """
                 )
 
