@@ -20,7 +20,9 @@ import json
 from pathlib import Path
 from tqdm import tqdm
 from faster_whisper import WhisperModel  
-from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
+# Use a local Tokenizer to resolve Japanese support
+# from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
+from templates.tokenizer.tokenizer import multilingual_cleaners
 import importlib.metadata as metadata
 from packaging import version
 
@@ -32,6 +34,7 @@ progress = 0
 theme = gr.themes.Default()
 refresh_symbol = '🔄'
 os.environ['TRAINER_TELEMETRY'] = '0'
+pfc_status = "pass"
 
 # Define the path to the modeldownload config file file
 modeldownload_config_file_path = this_dir / "modeldownload.json"
@@ -69,6 +72,7 @@ basemodel_or_finetunedmodel = True
 #######################
 
 def check_disk_space():
+    global pfc_status
     # Get the current working directory
     current_directory = os.getcwd()
     # Get the disk usage statistics for the current directory's disk
@@ -77,7 +81,8 @@ def check_disk_space():
     free_space_gb = disk_usage.free / (1 << 30)
     # Check if the free space is more than 18GB
     is_more_than_18gb = free_space_gb > 18
-
+    if not is_more_than_18gb:
+        pfc_status = "fail"  # Update global status if disk space check fails
     # Generating the markdown text for disk space check
     disk_space_markdown = f"""
     ### 🟩 <u>Disk Space Check</u>
@@ -86,6 +91,7 @@ def check_disk_space():
     return disk_space_markdown
 
 def test_cuda():
+    global pfc_status
     cuda_home = os.environ.get('CUDA_HOME', 'N/A')
     cuda_available = torch.cuda.is_available()
     if cuda_available:
@@ -95,11 +101,14 @@ def test_cuda():
             cuda_status = "✅ Pass - CUDA is available and working."
         except Exception as e:
             cuda_status = f"❌ Fail - CUDA is available but not working. Error: {e}"
+            pfc_status = "fail"  # Update global status
     else:
         cuda_status = "❌ Fail - CUDA is not available."
+        pfc_status = "fail"  # Update global status
     return cuda_status, cuda_home
 
 def find_files_in_path_with_wildcard(pattern):
+    global pfc_status
     # Split the system's PATH variable into a list of directories
     search_path = os.environ.get('PATH', '').split(os.pathsep)
     found_paths = []
@@ -112,6 +121,7 @@ def find_files_in_path_with_wildcard(pattern):
     return found_paths
 
 def generate_cuda_markdown():
+    global pfc_status
     cuda_status, cuda_home = test_cuda()
     file_name = 'cublas64_11.*'
     found_paths = find_files_in_path_with_wildcard(file_name)
@@ -119,12 +129,14 @@ def generate_cuda_markdown():
         found_paths_str = '✅ Pass - ' + ' '.join(found_paths)
     else:
         found_paths_str = "❌ Fail - cublas64_11 is not accessible."
+        pfc_status = "fail"  # Update global status
         # Check if 'cu118' or 'cu121' is in the PyTorch version string
     pytorch_version = torch.__version__
     if 'cu118' in pytorch_version or 'cu121' in pytorch_version:
         pytorch_cuda_version_status = '✅ Pass - '
     else:
         pytorch_cuda_version_status = '❌ Fail - '
+        pfc_status = "fail"  # Update global status
     cuda_markdown = f"""
     ### 🟨 <u>CUDA Information</u><br>
     ◽ **Cublas64_11 found:** {found_paths_str}  
@@ -138,6 +150,7 @@ def generate_cuda_markdown():
     return cuda_markdown, pytorch_markdown
 
 def get_system_ram_markdown():
+    global pfc_status
     virtual_memory = psutil.virtual_memory()
     total_ram = f"{virtual_memory.total / (1024 ** 3):.2f} GB"
     available_ram = f"{virtual_memory.available / (1024 ** 3):.2f} GB"
@@ -150,6 +163,7 @@ def get_system_ram_markdown():
     return system_ram_markdown
 
 def check_base_model(base_model_path, files_to_download):
+    global pfc_status
     # Assuming files_to_download is a dict with keys as filenames
     base_model_files = list(files_to_download.keys())
     missing_files = []
@@ -158,13 +172,14 @@ def check_base_model(base_model_path, files_to_download):
         file_path = this_dir / base_path / model_path / file
         if not file_path.exists():
             missing_files.append(file)
+            pfc_status = "fail"
     return len(missing_files) == 0
-
 
 # Assuming base_model_path and files_to_download are set from the JSON config as shown above
 base_model_detected = check_base_model(base_model_path, files_to_download)
 
 def generate_base_model_markdown(base_model_detected):
+    global pfc_status
     base_model_status = '✅ Pass - Base model detected' if base_model_detected else '❌ Fail - Base model not detected'
     base_model_markdown = f"""
     ### ⬛ <u>XTTS Base Model Detection</u>
@@ -173,6 +188,7 @@ def generate_base_model_markdown(base_model_detected):
     return base_model_markdown
 
 def check_tts_version(required_version="0.22.0"):
+    global pfc_status
     try:
         # Get the installed version of TTS
         installed_version = metadata.version("tts")
@@ -181,9 +197,11 @@ def check_tts_version(required_version="0.22.0"):
             tts_status = f"✅ Pass - TTS version {installed_version} is installed and meets the requirement."
         else:
             tts_status = f"❌ Fail - TTS version {installed_version} is installed but does not meet the required version {required_version}."
+            pfc_status = "fail"  # Update global status
     except metadata.PackageNotFoundError:
         # If TTS is not installed
         tts_status = "❌ Fail - TTS is not installed."
+        pfc_status = "fail"  # Update global status
     tts_markdown = f"""
     ### 🟥 <u>TTS Information</u><br>
     ◽ **TTS Version:** {tts_status}
@@ -196,6 +214,16 @@ cuda_results, pytorch_results = generate_cuda_markdown()
 system_ram_results = get_system_ram_markdown()
 base_model_results = generate_base_model_markdown(base_model_detected)
 tts_version_status = check_tts_version()
+
+def pfc_check_fail():
+    global pfc_status
+    if pfc_status == "fail":
+        print("[FINETUNE]")
+        print("[FINETUNE] \033[91m****** WARNING PRE-FLIGHT CHECKS FAILED ******* WARNING PRE-FLIGHT CHECKS FAILED *****\033[0m")
+        print("[FINETUNE] \033[91m* Please refer to the \033[93mPre-flight check tab \033[91mand resolve any issues before continuing. *\033[0m")
+        print("[FINETUNE] \033[91m*********** Expect errors and failures if you do not resolve these issues. ***********\033[0m")
+        print("[FINETUNE]")
+    return
 
 #####################
 #### STEP 1 BITS ####
@@ -211,6 +239,7 @@ def create_temporary_file(folder, suffix=".wav"):
     return os.path.join(folder, unique_filename)
 
 def format_audio_list(target_language, whisper_model, out_path, eval_split_number, gradio_progress=progress):
+    pfc_check_fail()
     audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith(('.mp3', '.flac', '.wav'))]
     buffer=0.2
     eval_percentage = eval_split_number / 100.0
@@ -449,6 +478,7 @@ def basemodel_or_finetunedmodel_choice(value):
         basemodel_or_finetunedmodel = False
 
 def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, output_path, max_audio_length=255995):
+    pfc_check_fail()
     #  Logging parameters
     RUN_NAME = "XTTS_FT"
     PROJECT_NAME = "XTTS_trainer"
@@ -458,6 +488,9 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     # Set here the path that the checkpoints will be saved. Default: ./training/
     OUT_PATH = os.path.join(output_path, "training")
     print("[FINETUNE] \033[94mStarting Step 2\033[0m - Fine-tuning the XTTS Encoder")
+    print(f"[FINETUNE] \033[94mLanguage: \033[92m{language} \033[94mEpochs: \033[92m{num_epochs} \033[94mBatch size: \033[92m{batch_size}\033[0m \033[94mGrad accumulation steps: \033[92m{grad_acumm}\033[0m")
+    print(f"[FINETUNE] \033[94mTraining   : \033[92m{train_csv}\033[0m")
+    print(f"[FINETUNE] \033[94mEvaluation : \033[92m{eval_csv}\033[0m")
     # Create the directory
     os.makedirs(OUT_PATH, exist_ok=True)
 
@@ -482,7 +515,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
 
     if basemodel_or_finetunedmodel:
         # BASE XTTS model checkpoints for fine-tuning.
-        print("[FINETUNE] Starting finetuning on Base Model")
+        print("[FINETUNE] Starting finetuning on \033[92mBase Model\033[0m")
         TOKENIZER_FILE = str(this_dir / base_path / model_path / "vocab.json")
         XTTS_CHECKPOINT = str(this_dir / base_path / model_path / "model.pth")
         XTTS_CONFIG_FILE = str(this_dir / base_path / model_path / "config.json")
@@ -490,7 +523,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         MEL_NORM_FILE = str(this_dir / base_path / model_path / "mel_stats.pth")
     else:
         # FINETUNED XTTS model checkpoints for fine-tuning.
-        print("[FINETUNE] Starting finetuning on Existing Finetuned Model")
+        print("[FINETUNE] Starting finetuning on \033[92mExisting Finetuned Model\033[0m")
         TOKENIZER_FILE = str(this_dir / base_path / "trainedmodel" / "vocab.json")
         XTTS_CHECKPOINT = str(this_dir / base_path / "trainedmodel" / "model.pth")
         XTTS_CONFIG_FILE = str(this_dir / base_path / "trainedmodel" / "config.json")
@@ -516,8 +549,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     )
     # define audio config
     audio_config = XttsAudioConfig(sample_rate=22050, dvae_sample_rate=22050, output_sample_rate=24000)
-    print("language is:",language)
-    
+
     # Resolve Japanese threading issue
     number_of_workers = 8
     if language == "ja":
@@ -619,6 +651,7 @@ def find_a_speaker_file(folder_path):
 
 XTTS_MODEL = None
 def load_model(xtts_checkpoint, xtts_config, xtts_vocab):
+    pfc_check_fail()
     global XTTS_MODEL
     clear_gpu_cache()
     if not xtts_checkpoint or not xtts_config or not xtts_vocab:
@@ -658,7 +691,6 @@ def run_tts(lang, tts_text, speaker_audio_file):
         torchaudio.save(out_path, out["wav"], 24000)
 
     return "Speech generated !", out_path, speaker_audio_file
-
 
 def get_available_voices(minimum_size_kb=1200):
     voice_files = [
@@ -848,7 +880,6 @@ def compact_legacy_model():
     print("[FINETUNE] model.pth created in '/finetune/'")
     return "model.pth created in '/finetune/'"
 
-
 def delete_training_data():
     # Define the folder to be deleted
     folder_to_delete = Path(this_dir / "finetune" / "tmp-trn")
@@ -873,7 +904,6 @@ def delete_training_data():
         print(f"[FINETUNE] Folder {folder_to_delete} does not exist.")
         return "Folder '/finetune/tmp-trn/' does not exist."
 
-
 def delete_voice_sample_contents():
     # Define the folder to be cleared
     folder_to_clear = Path(this_dir / "finetune" / "put-voice-samples-in-here")
@@ -895,7 +925,6 @@ def delete_voice_sample_contents():
     else:
         print(f"[FINETUNE] Folder {folder_to_clear} does not exist.")
         return f"Folder 'put-voice-samples-in-here' does not exist."
-
 
 #######################
 #### OTHER Generic ####
@@ -922,7 +951,6 @@ class Logger:
 sys.stdout = Logger()
 sys.stderr = sys.stdout
 
-
 # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 import logging
 logging.basicConfig(
@@ -933,18 +961,15 @@ logging.basicConfig(
     ]
 )
 
-
 def read_logs():
     sys.stdout.flush()
     with open(sys.stdout.log_file, "r") as f:
         return f.read()
 
-
 def cleanup_before_exit(signum, frame):
     print("[FINETUNE] Received interrupt signal. Cleaning up and exiting...")
     # Perform cleanup operations here if necessary
     sys.exit(0)
-
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
     """
@@ -970,8 +995,9 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
 pfc_markdown = f"""
     ### 🚀 <u>Pre-flight Checklist for Fine-tuning</u><br>
-    Please review the following checks to confirm your system is configured correctly for the fine-tuning process. Should you encounter any issues, additional guidance is available in the corresponding tabs above.
-    Ensure each criterion is marked with a green check. For an overview of fine-tuning procedures, please refer to the "General info" tab or visit the AllTalk GitHub repository.
+    ◽  <strong>Ensure</strong> each criterion is marked with a green check mark ✅ and a Pass status. <strong>Finetuning will fail otherwise.</strong><br>
+    ◽  The help tabs along the top will assist in resolving issues and you can also find additional help guides on the AllTalk Github page.<br>
+    ◽  For an overview of fine-tuning procedures, please refer to the "General Finetuning info" tab or visit the AllTalk GitHub repository.
     """
 
 custom_css = """
@@ -1100,6 +1126,7 @@ if __name__ == "__main__":
                 ◽ On the PyTorch version the:<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- first few digits are the version of PyTorch e.g. 2.1.0 is PyTorch 2.1.0<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- last few digits refer to the CUDA version e.g. cu118 is Cuda 11.8. cu121 is Cuda 12.1.<br>
+                ◽ Ensure you have started your Python envuronment before running finetuning otherwise you will have failures on the above checks.<br>
                 ◽ If PyTorch does not show a CUDA version, then PyTorch will need reinstalling with CUDA. I would suggest running <span style="color: #3366ff;">pip cache purge</span> before installing PyTorch again.<br>
                 ◽ It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 11.8, CUDA 12.1 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing.<br>
                 ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit called Cublas64_11.<br>
@@ -1113,6 +1140,7 @@ if __name__ == "__main__":
                 ◽ If your basemodel is not being detected, please ensure that <span style="color: #3366ff;">finetune.py</span> is being run from the AllTalk main folder.<br>
                 ◽ Ensure you have started AllTalk normally at least once. You can start it again and it will download any missing files.<br>
                 ◽ Check that there is an XTTS model within the models folder e.g. <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span><br>
+                ◽ The files required are "model.pth", "vocab.json", "config.json", "dvae.pth", "mel_stats.pth", "speakers_xtts.pth".
                 """
             )
             with gr.Tab("🟥 TTS Version Help"):
