@@ -1240,7 +1240,7 @@
         } else {
             // In chunk mode, toggle the chunk play/pause
             if (isPlaying && currentlyPlayingIndex > 0) {
-                let currentSound = audioQueue[currentlyPlayingIndex - 1];
+                let currentSound = audioQueue[currentlyPlayingIndex - 3];
                 if (currentSound.playing()) {
                     currentSound.pause();
                 } else {
@@ -1268,14 +1268,14 @@
     }
 
 
-    function stopPlayback() {
-        Howler.stop();
-        audioQueue = [];
-        // Unload each sound in the queue
-        audioQueue.forEach(sound => sound.unload());
-        currentlyPlayingIndex = 0;
-        isPlaying = false;
-    }
+   // function stopPlayback() {
+   //     Howler.stop();
+   //     audioQueue = [];
+   //     // Unload each sound in the queue
+   //     audioQueue.forEach(sound => sound.unload());
+   //     //currentlyPlayingIndex = 0;
+   //     isPlaying = false;
+   // }
 
     function updatePlaybackButton() {
         const playbackButton = document.querySelector(".toggle-playback");
@@ -1663,10 +1663,10 @@
     function stopPlayback() {
         Howler.stop();
         audioQueue = [];
-        currentlyPlayingIndex = 0;
+        //currentlyPlayingIndex = 0;
         isPlaying = false;
-        highlightPlaying(null);
-        document.getElementById('startFromId').value = '1'; // Reset the startFromId input to 1
+        //highlightPlaying(null);
+        //document.getElementById('startFromId').value = '1'; // Reset the startFromId input to 1
     }
 
     function displayOutput(result) {
