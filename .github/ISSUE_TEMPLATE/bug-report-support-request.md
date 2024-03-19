@@ -1,3 +1,5 @@
+🔴 If you have installed AllTalk in a custom Python environment, I will only be able to provide limited assistance/support. AllTalk draws on a variety of scripts and libraries that are not written or managed by myself, and they may fail, error or give strange results in custom built python environments.
+
 ---
 name: Bug report/Support request
 about: Create a report to help us improve
