@@ -55,6 +55,8 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 ### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
 For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section.
 
+Videos showing the Quick Setup installation process are linked in their instructions.
+
 Click to expand the correct section below:
 <details>
 	<summary>QUICK SETUP - Text-Generation-webui</summary><br>
