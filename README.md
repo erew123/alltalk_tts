@@ -34,7 +34,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - ⬜ [AllTalk TTS Generator](https://github.com/erew123/alltalk_tts?#-alltalk-tts-generator)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
-
+<br><br>
 ### 🆘 Support Requests, Troubleshooting & Feature requests
 I'm thrilled to see the enthusiasm and engagement with AllTalk! Your feedback and questions are invaluable, helping to make this project even better. To ensure everyone gets the help they need efficiently, please consider the following before submitting a support request:
 
@@ -51,6 +51,8 @@ This project is a labor of love, developed and supported in my personal free tim
 
 ### 💖 Showing Your Support
 If AllTalk has been helpful to you, consider showing your support through a donation on my [Ko-fi page](https://ko-fi.com/erew123). Your support is greatly appreciated and helps ensure the continued development and improvement of AllTalk.
+
+<br>
 
 ### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
 For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section.
@@ -237,6 +239,8 @@ Most narrator/character systems switch voices upon encountering an asterisk or q
 
 With improvements to the splitter/processor, I'm confident it's functioning well. You can monitor what AllTalk identifies as Narrator lines on the command line and adjust its behavior if needed (Text Not Inside - Function).
 
+<br>
+
 ### 🟪 Updating
 <details>
 	<summary>UPDATING - I am using Text-Generation-webui</summary><br>
@@ -297,6 +301,7 @@ You can now start text-generation-webui or AllTalk (standalone) and it should st
 
 Assuming its all working fine and you are happy, you can delete the old alltalk_tts.old folder.
 </details>
+<br>
 
 ### 🟨 Help with problems
 
@@ -466,6 +471,8 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 
 </details>
 
+<br>
+
 ### ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
@@ -575,6 +582,8 @@ At the end of the finetune process, you will have an option to `Compact and move
 #### ⚫ Do I need to keep the raw training data/model?
 
 If you've compacted and moved your model, its highly unlikely you would want to keep that data, however the choice is there to keep it if you wish. It will be between 5-10GB in size, so most people will want to delete it.
+
+<br>
 
 ### 🔵🟢🟡 DeepSpeed Installation Options
 **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
@@ -755,6 +764,8 @@ def get_shm_size():
 </details>
 </details>
 
+<br>
+
 ### ⬜ AllTalk TTS Generator
 AllTalk TTS Generator is the solution for converting large volumes of text into speech using the voice of your choice. Whether you're creating audio content or just want to hear text read aloud, the TTS Generator is equipped to handle it all efficiently. Please see here for a quick [demo](https://www.youtube.com/watch?v=hunvXn0mLzc)<br><br>The link to open the TTS generator can be found on the built-in Settings and Documentation page.<br><br>**DeepSpeed** is **highly** recommended to speed up generation. **Low VRAM** would be best turned off and your LLM model unloaded from your GPU VRAM (unload your model). **No Playback** will reduce memory overhead on very large generations (15,000 words or more). Splitting **Export to Wav** into smaller groups will also reduce memory overhead at the point of exporting your wav files (so good for low memory systems). 
 
@@ -791,6 +802,8 @@ For generating **large amounts of TTS**, it's recommended to select the **No Pla
 - For seamless TTS generation, it's advised to keep text chunks under 250 characters, which you can control with the Chunk sizes.
 - Generated audio can be played back from the list, which also highlights the currently playing chunk.
 - The TTS Generator remembers your settings, so you can pick up where you left off even after refreshing the page.
+
+<br>
 
 ### 🟠 API Suite and JSON-CURL
 ### 🟠Overview
