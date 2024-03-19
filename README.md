@@ -47,7 +47,7 @@ I'm thrilled to see the enthusiasm and engagement with AllTalk! Your feedback an
 **Feature Requests:** The current Feature request list can be [found here](https://github.com/erew123/alltalk_tts/discussions/74). I love hearing your ideas for new features! While I can't promise to implement every suggestion, I do consider all feedback carefully. Please share your thoughts in the [Discussions area](https://github.com/erew123/alltalk_tts/discussions) or via a Feature Request in the [Issues section](https://github.com/erew123/alltalk_tts/issues). 
 
 ### 🆘 **Please Note** 
-This project is a labor of love, developed in my personal time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+This project is a labor of love, developed & supported in my personal time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
 
 ### 💖 Showing Your Support
 If AllTalk has been helpful to you, consider showing your support through a donation on my [Ko-fi page](https://ko-fi.com/erew123). Your support is greatly appreciated and helps ensure the continued development and improvement of AllTalk.
