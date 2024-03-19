@@ -8,7 +8,7 @@ assignees: ''
 ---
 🔴 If you have installed AllTalk in a custom Python environment, I will only be able to provide limited assistance/support. AllTalk draws on a variety of scripts and libraries that are not written or managed by myself, and they may fail, error or give strange results in custom built python environments.
 
-Please generate a diagnostics report and upload the "diagnostics.log".
+🔴 Please generate a diagnostics report and upload the "diagnostics.log".
 
 https://github.com/erew123/alltalk_tts/tree/main?#-how-to-make-a-diagnostics-report-file
 
