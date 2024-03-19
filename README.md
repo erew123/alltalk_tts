@@ -35,14 +35,22 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
-### 🔄 Feature requests, Updates & Bug fixes
-Please check the below link to find a list of all recent updates and changes.
-#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Updates list & bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
-#### &nbsp;&nbsp;&nbsp;&nbsp;🔄 **Current Feature request list** can be found [here](https://github.com/erew123/alltalk_tts/discussions/74)
+### 🆘 Support Requests, Troubleshooting & Feature requests
+I'm thrilled to see the enthusiasm and engagement with AllTalk! Your feedback and questions are invaluable, helping to make this project even better. To ensure everyone gets the help they need efficiently, please consider the following before submitting a support request:
 
-I welcome your input and ideas for new features, suggestions, and improvements. Feel free to share your thoughts and collaborate in the discussions area. It's important to note that I am not a company; I've undertaken this project purely out of passion and for fun. As such, while I am always eager to hear ideas and will strive to implement them as time allows, please remember that any work I do on this project is done on my own personal time.
+**Consult the Documentation:** A comprehensive guide and FAQ sections (below) are available to help you navigate AllTalk. Many common questions and troubleshooting steps are covered here.
 
-If you find this project valuable and would like to show your appreciation, you can make a donation on my [Ko-fi](https://ko-fi.com/erew123) page. Your support goes a long way in ensuring that I can continue to deliver even better features and experiences.
+**Search Past Discussions:** Your issue or question might already have been addressed in the discussions area or [closed issues](https://github.com/erew123/alltalk_tts/issues?q=is%3Aissue+is%3Aclosed). Please use the search function to see if there's an existing solution or advice that applies to your situation.
+
+**Bug Reports:** If you've encountered what you believe is a bug, please first check the [Updates & Bug Fixes List](https://github.com/erew123/alltalk_tts/issues/25) to see if it's a known issue or one that's already been resolved. If not, I encourage you to report it by raising a bug report in the [Issues section](https://github.com/erew123/alltalk_tts/issues), providing as much detail as possible to help identify and fix the issue.
+
+**Feature Requests:** The current Feature request list can be [found here](https://github.com/erew123/alltalk_tts/discussions/74). I love hearing your ideas for new features! While I can't promise to implement every suggestion, I do consider all feedback carefully. Please share your thoughts in the [Discussions area](https://github.com/erew123/alltalk_tts/discussions) or via a Feature Request in the [Issues section](https://github.com/erew123/alltalk_tts/issues). 
+
+### 🆘 **Please Note** 
+This project is a labor of love, developed in my personal time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+
+### 💖 Showing Your Support
+If AllTalk has been helpful to you, consider showing your support through a donation on my [Ko-fi page](https://ko-fi.com/erew123). Your support is greatly appreciated and helps ensure the continued development and improvement of AllTalk.
 
 ### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
 For Windows 10/11 and Linux machines there is a quick setup script. Please note, Python on Windows requires you install the C++ development [tools](https://wiki.python.org/moin/WindowsCompilers) to compile packages, further details can be found in the help section.
