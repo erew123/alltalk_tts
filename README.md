@@ -140,6 +140,10 @@ AllTalk will run as a standalone app, as long as you install its requirements fi
 
 Please note, at time of writing, the TTS engine requires Python **3.9.x** to **3.11.x** [TTS Engine details here](https://pypi.org/project/TTS/). AllTalk and its requirements are tested on Python **3.11.x**.
 
+You should avoid path names with SPACES in the path as this can cause issue for scripts. There are other caveats depending on python versions and potentially for the scripts running underneath them.
+
+Because I cannot test out every Python environment and custom configuration, **I will only be able to provide limited assistance/support**. As such, if you are having an issue that **could** be related to having a custom Python environment, its reccommneded you test AllTalk using the quick setup standalone method and allowing AllTalk to build its own environment.
+
 #### 🟩 A very quick understanding of Python Environments.
 Different Python applications have different requirements, some of those requirement’s conflict with other Python applications requirements. To work around this problem, you can create different Python environments that remain separated from one another. A simple way of looking at Python environments, is just like how your house has different rooms for specific purposes (Kitchen, Bathroom, Bedroom etc). You can create a Python environment that is built/customised specifically for your current applications needs/purposes and will **not** interfere with any other Python applications environments/installations. <br><br>If you are adept at managing Python environments, have an existing Python environment and know that you won’t cause any conflicts by installing AllTalk's requirements within that Python environment, then load up your Python environment and install the requirements. For everyone else, here is a basic guide on installing AllTalk in its own custom Python environment (there will be small variations between OS's, but the principle is the same).
 
