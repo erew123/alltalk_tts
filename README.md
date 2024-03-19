@@ -71,8 +71,8 @@ Click to expand the correct section below:
 
  If you wish to see this as a video, please go [here](https://www.youtube.com/watch?v=AQYCccDRbaY)
 1) To download the AllTalk setup you can either:
-   - A) Go to the [Releases page](https://github.com/erew123/alltalk_tts/releases) and download the latest `alltalk_tts.zip` and extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`.<br><br>
-   - B) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
+   - A) Go to a terminal/console, move into the folder of your choice e.g `C:\myfiles\` folder<br>and `git clone https://github.com/erew123/alltalk_tts`<br><br>
+   - B) Go to the [Releases page](https://github.com/erew123/alltalk_tts/releases) and download the latest `alltalk_tts.zip` and extract it to the folder of your choice<br>e.g. `C:\myfiles\alltalk_tts\`.<br><br>
 4) In a terminal/command prompt, move into the AllTalk folder e.g. `cd alltalk_tts`
 5) Start the AllTalk setup script `atsetup.bat` or `./atsetup.sh`
 6) Follow the on-screen prompts and install the correct requirements files that you need. It's recommended to test AllTalk works before installing DeepSpeed.
