@@ -180,7 +180,7 @@ def main():
     
     # Print summary information at the end
     if flagged_ids:
-        print(f"\n  For ID's showm, in the TTS Generator, review and correct any lines by editing & regenerating them. If you")
+        print(f"\n  For ID's shown, in the TTS Generator, review and correct any lines by editing & regenerating them. If you")
         print(f"  want to re-test everthing again after re-generating, you will need to export the JSON list again and re-run")
         print(f"  the script again, against the newly exported JSON list.")
         print("\nSUMMARY: IDs needing review:", ', '.join(map(str, flagged_ids)))
