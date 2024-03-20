@@ -1,7 +1,13 @@
 import json
 import requests
+import argparse
 from pathlib import Path
 # version 0.1
+
+# Set up argument parsing
+parser = argparse.ArgumentParser(description="Compare TTS output with the original text using detailed comparison.")
+parser.add_argument("--threshold", type=int, default=98, help="Similarity threshold for considering a match (default: 98)")
+args = parser.parse_args()
 
 def disclaimer_text():
     print(f"\nDISCLAIMER:")
@@ -20,6 +26,10 @@ def disclaimer_text():
     print(f"    AllTalk is running in.")
     print(f"  - After generating your text in the TTS Generator, you need to `Export List to JSON` and save the file in the")
     print(f"    same folder/directory this script is running from.")
+    print(f"  - You can use `--threshold` with a numerical value from 1 to 100 to set accuracy detection. For example it may")
+    print(f"    detect/transcribe `their` as `there`, which of course, both words sound the same. If you want 100% accuracy")
+    print(f"    you will set 100 as the threshold. You will more than likely want a number in the high 90's. Default is set")
+    print(f"    at 98, which gives a little flexibility.")
     print(f"  - The JSON file must be named \033[93mttsList.json\033[0m")
     print(f"  - When you have your ID list, go back into the TTS Generator, correct any lines and regenerate them. If you")
     print(f"    want to re-test everthing again after re-generating, you will need to export your list again and re-run this")
@@ -107,6 +117,12 @@ def contains_spoken_punctuation(transcribed_text):
             return True
     return False
 
+def detailed_comparison(original_text, transcribed_text, threshold=98):
+    original_clean = normalize_text(original_text)
+    transcribed_clean = normalize_text(transcribed_text)
+    ratio = fuzz.ratio(original_clean, transcribed_clean)
+    return ratio > threshold
+
 def transcribe_and_compare(file_url, original_text, model, item_id, flagged_ids):
     audio_file = Path(file_url.split('/')[-1])
     download_file(file_url, audio_file)
@@ -114,21 +130,24 @@ def transcribe_and_compare(file_url, original_text, model, item_id, flagged_ids)
     segments, info = model.transcribe(str(audio_file), beam_size=5)
     transcribed_text = " ".join([segment.text for segment in segments])
     
+    # Normalize texts for comparison
     original_text_normalized = normalize_text(original_text)
     transcribed_text_normalized = normalize_text(transcribed_text)
     
-    is_match = texts_are_similar(original_text_normalized, transcribed_text_normalized)
+    # Enhanced comparison using detailed fuzzy matching
+    is_detailed_match = detailed_comparison(original_text_normalized, transcribed_text_normalized, args.threshold)
     has_spoken_punctuation = contains_spoken_punctuation(transcribed_text_normalized) and not contains_spoken_punctuation(original_text_normalized)
     
-    if has_spoken_punctuation:
-        is_match = False  # Consider as mismatch if unexpected spoken punctuation is detected
+    # Adjust is_match based on detailed comparison and spoken punctuation check
+    is_match = is_detailed_match and not has_spoken_punctuation
     
-    if not is_match or has_spoken_punctuation:
-        print(f"\033[93mOriginal:\033[0m {original_text}")
-        print(f"\033[91mTranscribed:\033[0m {transcribed_text}")
-        print(f"Match: {is_match}\n")
+    # Only log and flag IDs for review if there's a mismatch or detected issues
+    if not is_match:
+        #print(f"\033[93mMismatch Detected - ID:\033[0m {item_id}")
+        print(f"\033[93mOriginal   :\033[0m {original_text}")
+        print(f"\033[91mTranscribed:\033[0m{transcribed_text}")
         if has_spoken_punctuation:
-            print(f"Note: Potential incorrect spoken punctuation detected in ID: {item_id}.")
+            print(f"Note: Potential incorrect spoken punctuation detected.")
         flagged_ids.append(item_id)  # Track the ID for review
     
     audio_file.unlink()  # Remove the downloaded file after processing
@@ -161,7 +180,7 @@ def main():
     
     # Print summary information at the end
     if flagged_ids:
-        print(f"  For ID's showm, in the TTS Generator, review and correct any lines by editing & regenerating them. If you")
+        print(f"\n  For ID's showm, in the TTS Generator, review and correct any lines by editing & regenerating them. If you")
         print(f"  want to re-test everthing again after re-generating, you will need to export the JSON list again and re-run")
         print(f"  the script again, against the newly exported JSON list.")
         print("\nSUMMARY: IDs needing review:", ', '.join(map(str, flagged_ids)))
