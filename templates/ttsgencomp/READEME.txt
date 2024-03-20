@@ -13,7 +13,7 @@ INSTRUCTIONS:
 
 2) Install the required packages using pip:
 
-pip install faster-whisper fuzzywuzzy spacy
+pip install faster-whisper fuzzywuzzy spacy levenshtein
 
 3) Download the language model en_core_web_md for Spacy:
 
