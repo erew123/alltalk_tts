@@ -771,14 +771,14 @@ If you've compacted and moved your model, its highly unlikely you would want to 
 ### 🔵🟢🟡 DeepSpeed Installation Options
 
 #### 🔵 Linux Installation
-<details>
-	<summary>Click to expand: Linux DeepSpeed installation</summary>
-
 ➡️DeepSpeed requires an Nvidia Graphics card!⬅️
 
 DeepSpeed requires access to the **Nvidia CUDA Development Toolkit** to compile on a Linux system. It's important to note that this toolkit is distinct and unrealted to your graphics card driver or the CUDA version the Python environment uses. 
 
 Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, this version is preferred.
+
+<details>
+	<summary>Linux DeepSpeed - Text-generation-webui</summary>
 
 ### DeepSpeed Installation for Text generation webUI
 
@@ -824,6 +824,9 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 9. **Troubleshooting**:
    - Troubleshooting steps for DeepSpeed installation can be located down below.
    - **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
+</details>
+<details>
+	<summary>Linux DeepSpeed - Standalone Installation</summary>
 
 ### DeepSpeed Installation for Standalone AllTalk
 
