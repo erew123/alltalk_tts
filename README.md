@@ -459,6 +459,10 @@ This command tells pip to read the list of required packages and versions from t
 
 Remember, just as it's important to use the right tools for tasks in different rooms of your house, it's crucial to manage your Python environments and dependencies properly to ensure your applications run as intended.
 
+#### How do I know if I am in a Python environment?:
+When a Python environment starts up, it changes the command prompt to show the Python environment that it currently running within that terminal/console. 
+
+![image](https://github.com/erew123/screenshots/blob/main/pythonenvironment.jpg)
 </details>
 
 #### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.
