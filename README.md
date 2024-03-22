@@ -1053,6 +1053,23 @@ For generating **large amounts of TTS**, it's recommended to select the **No Pla
 #### ⬜ Interface and Accessibility
 - **Dark/Light Mode:** Switch between themes for your visual comfort.
 - **Word Count and Generation Queue:** Keep track of the word count and the generation progress.
+#### ⬜ Tricks to get the model to say things correctly
+Sometimes the AI model won’t say something the way that you want it to. It could be because it’s a new word, an acronym or just something it’s not good at for whatever reason. There are some tricks you can use to improve the chances of it saying something correctly.
+
+**Adding pauses**<br>
+You can use semi-colons ";" and colons ":" to create a pause, similar to a period "." which can be helpful with some splitting issues.
+
+**Acronyms**<br>
+Not all acronyms are going to be pronounced correctly. Let’s work with the word `ChatGPT`. We know it is pronounced `"Chat G P T"` but when presented to the model, it doesn’t know how to break it down correctly. So, there are a few ways we could get it to break out "Chat" and the G P and T. e.g.
+
+`Chat G P T.`
+`Chat G,P,T.`
+`Chat G.P.T.`
+`Chat G-P-T.`
+`Chat gee pee tea`
+
+All bar the last one are using ways within the English language to split out "Chat" into one word being pronounced and then split the G, P and T into individual letters. The final example, which is to use Phonetics will sound perfectly fine, but clearly would look wrong as far as human readable text goes. The phonetics method is very useful in edge cases where pronunciation difficult.
+
 #### ⬜ Notes on Usage
 - For seamless TTS generation, it's advised to keep text chunks under 250 characters, which you can control with the Chunk sizes.
 - Generated audio can be played back from the list, which also highlights the currently playing chunk.
