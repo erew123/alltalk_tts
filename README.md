@@ -330,6 +330,17 @@ Most narrator/character systems switch voices upon encountering an asterisk or q
 With improvements to the splitter/processor, I'm confident it's functioning well. You can monitor what AllTalk identifies as Narrator lines on the command line and adjust its behavior if needed (Text Not Inside - Function).
 </details>
 
+#### 🟩 I want to know more about the XTTS AI model used
+<details>
+	<summary>Click to expand</summary><br>
+	
+Currently the XTTS model is the main model used by AllTalk for TTS generation. If you want to know more details about the XTTS model, its capabilties or its technical features you can look at resources such as:
+- https://docs.coqui.ai/en/latest/models/xtts.html
+- https://github.com/coqui-ai/TTS
+- https://github.com/coqui-ai/TTS/discussions
+
+</details>
+
 ---
 
 ### 🟪 Updating
