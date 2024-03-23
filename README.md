@@ -32,7 +32,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
-- 🔵🟢🟡 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🔵🟢 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
 - ⬜ [AllTalk TTS Generator](https://github.com/erew123/alltalk_tts?#-alltalk-tts-generator)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
@@ -65,18 +65,18 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 Quick setup scripts are available for users on Windows 10/11 and Linux. Instructional videos for both setup processes are linked below.
 
 - Ensure that **Git** is installed on your system as it is required for cloning the repository. If you do not have Git installed, visit [Git's official website](https://git-scm.com/downloads) to download and install it.
-- Windows users must install C++ development tools for Python to compile Python packages. Detailed information and a link to these tools can be found in the help section **Windows & Python requirements for compiling packages**.
+- Windows users must install C++ development tools for Python to compile Python packages. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
 
 <details>
 <summary>QUICK SETUP - Text-Generation-webui</summary>
 <br>
 
-For a visual guide, watch the setup video [here](https://www.youtube.com/watch?v=icn2XS5rUH8).
+For a step-by-step video guide, click [here](https://www.youtube.com/watch?v=icn2XS5rUH8).
 
 To set up AllTalk within Text-generation-webui, follow either method:
 
 1. **Download AllTalk Setup**:
-   - **Via Terminal/Console (Best Method)**:
+   - **Via Terminal/Console (Recommended)**:
      - `cd \text-generation-webui\extensions\`
      - `git clone https://github.com/erew123/alltalk_tts`
    - **Via Releases Page**:
@@ -112,7 +112,7 @@ For a step-by-step video guide, click [here](https://www.youtube.com/watch?v=AQY
 To perform a Standalone installation of AllTalk:
 
 1. **Get AllTalk Setup**:
-   - **Via Terminal/Console (Best Method)**:
+   - **Via Terminal/Console (Recommended)**:
      - Navigate to your preferred directory: `cd C:\myfiles\`
      - Clone the AllTalk repository: `git clone https://github.com/erew123/alltalk_tts`
    - **Via Releases Page**:
@@ -137,101 +137,146 @@ Refer to `🟩 Other installation notes` for further details, including informat
 
 ---
 
-### 🟩 Manual Installation - As part of Text generation web UI
-On Mac's or if you wish to perform a manual installation. Click to expand the correct section below:
+### 🟩 Manual Installation - As part of Text generation web UI (inc. macOSX)
 <details>
-	<summary>MANUAL INSTALLATION - Text-Generation-webui</summary><br>
+	<summary>MANUAL INSTALLATION - Text-Generation-webui</summary>
 
-This has been tested on the current Dec 2023 release of Text generation webUI. If you have not updated it for a while, you may wish to update Text generation webUI, [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
+### Manual Installation for Text Generation Web UI
 
-- If you want to watch a video of how to do the below [link here](https://youtu.be/9BPKuwaav5w)<br>
+If you're using a Mac or prefer a manual installation for any other reason, please follow the steps below. This guide is compatible with the current release of Text Generation Web UI as of December 2023. Consider updating your installation if it's been a while, [update instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install).
 
-1) In a command prompt/terminal window you need to move into your Text generation webUI folder:<br><br>
-`cd text-generation-webui`
+- For a visual guide on the installation process, watch [this video](https://youtu.be/9BPKuwaav5w).
 
-2) Start the Text generation webUI Python environment for your OS with whichever **one** of the below is correct for your OS:<br><br>
-`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`<br><br> Loading Text-generation-webui's Python Environment is $\textcolor{red}{\textsf{VERY IMPORTANT}}$. If you are uncertain what a loaded Python environment looks like, image [here](https://github.com/erew123/alltalk_tts/issues/25#issuecomment-1869344442) and video [here](https://www.youtube.com/watch?v=9BPKuwaav5w)
+1. **Navigate to Text Generation Web UI Folder**:
+   - Open a terminal window and move to your Text Generation Web UI directory with:
+     - `cd text-generation-webui`
 
-3) Move into your extensions folder:<br><br>
-`cd extensions`
+2. **Activate Text Generation Web UI Python Environment**:
+   - Start the appropriate Python environment for your OS using one of the following commands:
+     - For Windows: `cmd_windows.bat`
+     - For Linux: `./cmd_linux.sh`
+     - For macOS: `cmd_macos.sh`
+     - For WSL: `cmd_wsl.bat`
+   
+   - Loading the Text Generation Web UI's Python environment **is crucial**. If unsure about what a loaded Python environment should look like, refer to this [image](https://github.com/erew123/alltalk_tts/issues/25#issuecomment-1869344442) and [video guide](https://www.youtube.com/watch?v=9BPKuwaav5w).
+   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
-4) Once there git clone this repository:<br><br>
-`git clone https://github.com/erew123/alltalk_tts`
+3. **Move to Extensions Folder**:
+   - `cd extensions`
 
-5) Move into the **alltalk_tts** folder:<br><br>
-`cd alltalk_tts`
+4. **Clone the AllTalk TTS Repository**:
+   - `git clone https://github.com/erew123/alltalk_tts`
 
-6) Install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>
-**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
-**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`
+5. **Navigate to the AllTalk TTS Folder**:
+   - `cd alltalk_tts`
 
-7) **(Optional DeepSpeed)** If you have an Nvidia Graphics card on a system running Linux or Windows and wish to use **DeepSpeed** please follow these instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). **However**, I would highly reccommend before you install DeepSpeed, you start text-generation-webui up, confirm AllTalk starts correctly and everything is working, as DeepSpeed can add another layer of complications troubleshooting any potential start-up issues. If necessary you can `pip uninstall deepspeed`.
+6. **Install Required Dependencies**:
+- Install dependencies based on your machine type:
+  - For Nvidia graphics card machines:
+    - `pip install -r requirements_nvidia.txt`
+  - For other machines (mac, AMD, etc.):
+    - `pip install -r requirements_other.txt`
 
-8) You can now start move back to the main Text generation webUI folder `cd ..` (a few times), start Text generation webUI with whichever **one** of the startup scripts is correct for your OS (`start_windows.bat`,`./start_linux.sh`, `start_macos.sh` or `start_wsl.bat`)  and load the AllTalk extension in the Text generation webUI **session** tab.<br><br> Starting Text-generation-webui with its correct start-up script is $\textcolor{red}{\textsf{VERY IMPORTANT}}$.
+7. **Optional DeepSpeed Installation**:
+- If you're using an Nvidia graphics card on Linux or Windows and wish to install **DeepSpeed**, follow the instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). 
+- **Recommendation**: Start Text Generation Web UI and ensure AllTalk functions correctly before installing DeepSpeed.
 
-   Any time you need to make changes to AllTalk, or use Finetuning etc, always start the Text-generation-webui Python environment first.
+8. **Start Text Generation Web UI**:
+- Return to the main Text Generation Web UI folder using `cd ..` (repeat as necessary).
+  - Start the appropriate Python environment for your OS using one of the following commands:
+     - For Windows: `start_windows.bat`
+     - For Linux: `./start_linux.sh`
+     - For macOS: `start_macos.sh`
+     - For WSL: `start_wsl.bat`
 
-   Please read the `🟩 Other installation notes` (also additional voices are available there).
+- Load the AllTalk extension in the Text Generation Web UI **session** tab.
+- For any updates to AllTalk or for tasks like Finetuning, always activate the Text Generation Web UI Python environment first.
 
-   Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
+Refer to `🟩 Other installation notes` for further details, including information on additional voices, changing IP, character card notes etc.
 
 </details>
 
 ### 🟩 Manual Installation - As a Standalone Application
-On Mac's or if you wish to perform a manual installation. Click to expand the correct section below:
+
 <details>
-	<summary>MANUAL INSTALLATION - I want to run AllTalk as a standalone when installed with Text-generation-webui</summary><br>
-	
-If you already have AllTalk as a extension of Text-generation-webui, and wish to run it as standalone, load Text-generation-webui's Python environment `cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`, move into the AllTalk folder `cd extensions` > `cd alltalk_tts` and start AllTalk with `python script.py`. There is nothing beyond this you would need to do.
-</details>
-<details>
-	<summary>MANUAL INSTALLATION - I wish to do a custom install of AllTalk</summary><br>
-	
-AllTalk will run as a standalone app, as long as you install its requirements files into whatever Python environment you are using. You can follow the steps to install the AllTalk's requirements into whatever Python environment you wish. Because I dont know what Python environment you are wanting to use, I can only give you a loose set of installation instructions. 
+	<summary>MANUAL INSTALLATION - Run AllTalk as a Standalone with Text-generation-webui</summary>
 
-Please note, at time of writing, the TTS engine requires Python **3.9.x** to **3.11.x** [TTS Engine details here](https://pypi.org/project/TTS/). AllTalk and its requirements are tested on Python **3.11.x**.
+### Running AllTalk as a Standalone Application alongside Text Generation Web UI
 
-🔴 You should avoid path names with SPACES in the path as this can cause issue for scripts. There are other caveats depending on python versions and potentially for the scripts running underneath them.
+If you have AllTalk installed as an extension of Text Generation Web UI but wish to run it as a standalone application, follow these steps:
 
-🔴 As such, if you are having an issue that **could** be related to having a custom Python environment, its recommended you test AllTalk using the quick setup standalone method and allowing AllTalk to build its own environment.
+1. **Activate Text Generation Web UI Python Environment**:
+   - Use the appropriate command for your operating system to load the Python environment:
+     - Windows: `cmd_windows.bat`
+     - Linux: `./cmd_linux.sh`
+     - macOS: `cmd_macos.sh`
+     - WSL: `cmd_wsl.bat`
 
-#### 🟩 A very quick understanding of Python Environments.
-If you dont understand Python environments and wish to, please look at **Understanding Python Environments Simplified** in the Help section.
+2. **Navigate to the AllTalk Directory**:
+   - Move to the AllTalk folder with the following commands:
+     - `cd extensions`
+     - `cd alltalk_tts`
 
-**Note:** A standard VENV can cause module path issues, hence Conda is the correct method to create a Python environment for AllTalk. 
+3. **Start AllTalk**:
+   - Run AllTalk with the command:
+     - `python script.py`
 
-#### 🟩 Building a custom Python Environment with Miniconda
-🔴 Because I cannot test out every Python environment and custom configuration, **I will only be able to provide limited assistance/support**. AllTalk draws on a variety of scripts and libraries that are not written or managed by myself, and they may fail, error or give strange results in custom python environments.
-
-1) Open a terminal/command prompt, and confirm that both `python --version` and `pip` both work. Neither of them should give an error message. If they do you may need to install Python (and maybe Pip).<br><br>[Python Website](https://www.python.org/downloads/)<br>[Pip Website](https://pip.pypa.io/en/stable/installation/)<br><br>Once you have those working you can now continue on.<br><br>
-
-2) Assuming you don't already have Miniconda installed, we will need to download and install Minoconda as this is what we will use to build our custom Python environment.<br><br>[Miniconda Website](https://docs.conda.io/projects/miniconda/en/latest/)<br><br>Download the Miniconda version that is correct for your OS and then install it. Miniconda will create some items in your Start Menu or Application Launcher called something like `Anaconda Prompt`<br><br> You will start the `Anaconda Prompt` and your prompt in your terminal/command prompt will say something like: <br><br>`(base) C:\users\myaccount\>`<br><br> The important bit is that it has the `(base)`, the location after that doesn't matter. `(base)` signifies we are in the base conda Python environment and can now create custom Python environments with Conda.<br><br>
-  
-3) In your Anaconda Prompt command prompt/terminal, move into the folder where you want to download AllTalk to and then git clone this repository. For simplicity I am going to assume that location is `c:\myfiles\`. So you will:<br><br>`cd myfiles`<br><br>`git clone https://github.com/erew123/alltalk_tts`<br><br>
-
-4) Now we will create our custom Conda Python 3.11.5 environment and give it the name alltalkenv by typing the following at the prompt:<br><br>`conda create --name alltalkenv python=3.11.5`<br><br>You will be prompted if you want to continue and you say yes.<br><br>Once that process has completed, we now need to change from the `(base)` Conda Python environment, to our newly created `(alltalkenv)` environment. So type the following:<br><br>`conda activate alltalkenv`<br><br>Your prompt should now change from `(base) C:\myfiles\>` to `(alltalkenv) C:\myfiles\>`<br><br>
-
-5) **If you are NOT using an Nvidia card and CUDA, skip to step 6**. To force PyTorch to install with CUDA, perform the following:<br><br>`pip cache purge` (Clear the current Pip cache)<br><br>`pip uninstall torch torchaudio` (Uninstall Torch and Torchaudio from the `alltalkenv` environment)<br><br>
-You can now either install the CUDA 11.8 or 12.1 version of Torch and Torchaudio with **one** of the following<br><br>**CUDA 11.8** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`<br><br>**CUDA 12.1** > `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`<br><br>
-
-6) Move into the alltalk_tts folder and install one of the two requirements files. Whichever one of the two is correct for your machine type:<br><br>`cd alltalk_tts`<br><br>
-**Nvidia graphics card machines** - `pip install -r requirements_nvidia.txt`<br><br>
-**Other machines (mac, amd etc)** - `pip install -r requirements_other.txt`<br><br>
-
-7) Start AllTalk with `python script.py`<br><br>
-
-🟩 Anytime you wish to use AllTalk, update its requirements, install some other requirements such as DeepSpeed, you will need to start its Conda Python Environment in the terminal/prompt, which you will do with `conda activate alltalkenv` as long as the Conda executable is accessible at the command prompt/terminal you are in.<br><br>It is fully possible to create a batch file or script file that you can use as a launcher from your Start Menu/Application Launcher that will start the environment and AllTalk for you. 
-
-Deepspeed and other such things can be installed. Please read the relevant instructions for those items, however, make the relevant changes to load your correct Python environment when installing any requirements files and starting AllTalk.<br><br>
-
-   Any time you need to make changes to AllTalk, or use Finetuning etc, always start your Python environment first.
-
-   Please read the `🟩 Other installation notes` (also additional voices are available there).
-
-   Finetuning & DeepSpeed have other installation requirements (depending on your OS) so please read any instructions in the setup utility and refer back here to this page for detailed instructions (as needed).<br><br>
-
+   There are no additional steps required to run AllTalk as a standalone application from this point.
 </details>
 
+<details>
+	<summary>MANUAL INSTALLATION - Custom Install of AllTalk</summary>
+
+### Custom Installation of AllTalk
+
+Support for custom Python environments is limted. Please read **Custom Python environments Limitations Notice** below this section.
+
+To run AllTalk as a standalone application with a custom Python environment, ensure you install AllTalk's requirements into the environment of your choice. The instructions provided are generalized due to the variety of potential Python environments.
+
+- **Python Compatibility**: The TTS engine requires Python **3.9.x** to **3.11.x**. AllTalk is tested with Python **3.11.x**. [See TTS Engine details](https://pypi.org/project/TTS/).
+- **Path Names**: Avoid spaces and dashes `-` in path names as this can cause issues.
+- **Custom Python Environments**: If encountering issues potentially related to a custom environment, consider testing AllTalk with the quick setup standalone method that builds its own environment.
+
+#### Quick Overview of Python Environments
+
+   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
+
+#### Building a Custom Python Environment with Miniconda
+
+1. **Initial Setup**:
+   - Ensure `python --version` and `pip` commands work in your terminal. Install Python and Pip if necessary.
+     - [Python Installation](https://www.python.org/downloads/)
+     - [Pip Installation](https://pip.pypa.io/en/stable/installation/)
+
+2. **Install Miniconda**:
+   - Download and install Miniconda for your OS from the [Miniconda Website](https://docs.conda.io/projects/miniconda/en/latest/). Use the `Anaconda Prompt` from the Start Menu or Application Launcher to access the base Conda environment.
+
+3. **Clone AllTalk Repository**:
+   - Navigate to your desired folder (e.g., `c:\myfiles\`) and clone the AllTalk repository:
+     - `git clone https://github.com/erew123/alltalk_tts`
+   - Move to the AllTalk folder with the following commands:
+     - `cd alltalk_tts`
+
+4. **Create Conda Environment**:
+   - Create a Conda environment named `alltalkenv` with Python 3.11.5:
+     - `conda create --name alltalkenv python=3.11.5`
+   - Activate the new environment:
+     - `conda activate alltalkenv`
+
+5. **Install Requirements**:
+   - Install dependencies based on your machine type:
+     - For Nvidia graphics card machines:
+       - `pip install -r requirements_nvidia.txt`
+     - For other machines (mac, AMD, etc.):
+       - `pip install -r requirements_other.txt`
+
+6. **Start AllTalk**:
+   - Run AllTalk with the following:
+     - `python script.py`
+
+**Note**: For updates, DeepSpeed installations, or other modifications, always activate the `alltalkenv` Conda environment first. Custom scripts or batch files can simplify launching AllTalk.
+
+</details>
 
 🟩 **Custom Python environments Limitations Notice**: Given the vast array of Python environments and custom configurations out there, it's challenging for me to guarantee comprehensive support for each unique setup. AllTalk leverages a wide range of scripts and libraries, many of which are developed and maintained outside of my control. As a result, these components might not always behave as expected in every custom Python environment. I'll do my best to assist where I can, but please understand that my ability to help with issues stemming from these external factors may be limited.
 
@@ -616,7 +661,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
 - An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
-- To install a few portions of the Nvidia CUDA 11.8 Toolkit (this will not impact text-generation-webui's cuda setup.
+- To install a few portions of the Nvidia CUDA Development Toolkit **version 11.8**. Explicitly version 11.8.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
 - As a side note, many people seem to think that the Whisper v2 model (used on Step 1) is giving better results at generating training datasets, so you may prefer to try that, as opposed to the Whisper 3 model.
@@ -682,8 +727,7 @@ Before you start `finetune.py`. You will now be able to finetune offline and no 
 
 #### Additional Note on Torch and Torchaudio:
 - Ensure Torch and Torchaudio are CUDA-enabled (any version), which is separate from the CUDA Toolkit installation. CUDA 11.8 corresponds to `cu118` and CUDA 12.1 to `cu121` in AllTalk diagnostics.
-- Failure to install CUDA for Torch and Torchaudio will result in Step 2 of fine-tuning failing. These requirements are distinct from the CUDA Toolkit installation, so avoid conflating the two.<br><br>
-
+- Failure to install CUDA for Torch and Torchaudio will result in Step 2 of fine-tuning failing. These requirements are distinct from the CUDA Toolkit installation, so avoid conflating the two.<br>
 
 #### ⚫ Starting Fine-tuning
 
@@ -772,14 +816,13 @@ If you've compacted and moved your model, its highly unlikely you would want to 
 
 ---
 
-### 🔵🟢🟡 DeepSpeed Installation Options
+### 🔵🟢 DeepSpeed Installation Options
+**DeepSpeed requires an Nvidia Graphics card**
 
 #### 🔵 Linux Installation
-➡️DeepSpeed requires an Nvidia Graphics card!⬅️
-
 DeepSpeed requires access to the **Nvidia CUDA Development Toolkit** to compile on a Linux system. It's important to note that this toolkit is distinct and unrealted to your graphics card driver or the CUDA version the Python environment uses. 
 
-Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, this version is preferred.
+Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, compiling DeepSpeed with v11.8 will simplify things later down the line.
 
 <details>
 	<summary>Linux DeepSpeed - Text-generation-webui</summary>
@@ -889,134 +932,45 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 
 </details>
 
-#### 🟢🟡 Windows Installation
+#### 🟢 Windows Installation
+You have 2x options for how to setup DeepSpeed on Windows. Pre-compiled wheel files for specific Python, CUDA and Pytorch builds, or manually compiling DeepSpeed.
+
 <details>
-	<summary>Click to Expand: Windows DeepSpeed options</summary><br>
-	
-DeepSpeed v11.2 will work on the current default text-generation-webui Python 3.11 environment! You have 2x options for how to setup DeepSpeed on Windows. A quick way (🟢Option 1) and a long way (🟡Option 2).
+	<summary>Windows DeepSpeed - Pre-Compiled Wheels (Quick and Easy)</summary>
 
-Thanks to [@S95Sedan](https://github.com/S95Sedan) - They managed to get DeepSpeed 11.2 working on Windows via making some edits to the original Microsoft DeepSpeed v11.2 installation. The original post is [here](https://github.com/oobabooga/text-generation-webui/issues/4734#issuecomment-1843984142).
+### DeepSpeed Installation with Pre-compiled Wheels
 
-#### 🟢 OPTION 1 - Quick and easy!
-<details>
-	<summary>Click to expand: Pre-Compiled Wheel Deepspeed v11.2 (Python 3.11 and 3.10)</summary>
-➡️DeepSpeed requires an Nvidia Graphics card!⬅️<br>
+1. **Introduction to Pre-compiled Wheels**:
+   - The `atsetup.bat` utility simplifies the installation of DeepSpeed by automatically downloading and installing pre-compiled wheel files. These files are tailored for **specific** versions of Python, CUDA, and PyTorch, ensuring compatibility with both the **Standalone Installation** and a standard build of **Text-generation-webui**.
 
-1) Download the correct wheel version for your Python/Cuda from [here](https://github.com/erew123/alltalk_tts/releases/tag/deepspeed) and save the file it inside your **text-generation-webui** folder.
+2. **Manual Installation of Pre-compiled Wheels**:
+   - If needed, pre-compiled DeepSpeed wheel files that I have built are available on the [Releases Page](https://github.com/erew123/alltalk_tts/releases). You can manually install or uninstall these wheels using the following commands:
+     - Installation: `pip install {deep-speed-wheel-file-name-here}`
+     - Uninstallation: `pip uninstall deepspeed`
+  
+3. **Using `atsetup.bat` for Simplified Management**:
+   - For those running the Standalone Installation or a standard build of Text-generation-webui, the `atsetup.bat` utility offers the simplest and most efficient way to manage DeepSpeed installations on Windows.
 
-2) Open a command prompt window, move into your **text-generation-webui folder**, you can now start the Python environment for text-generation-webui:<br><br>
-`cmd_windows.bat`
-
-3) With the file that you saved in the **text-generation-webui folder** you now type the following, replacing YOUR-VERSION with the name of the file you have:<br><br>
-`pip install "deepspeed-0.11.2+YOUR-VERSION-win_amd64.whl"`
-   
-5) This should install through cleanly and you should now have DeepSpeed v11.2 installed within the Python 3.11/3.10 environment of text-generation-webui.
-   
-6) When you start up text-generation-webui, and AllTalk starts, you should see **[AllTalk Startup] DeepSpeed Detected**
-    
-7) Within AllTalk, you will now have a checkbox for **Activate DeepSpeed** though remember you can only change **1x setting every 15 or so seconds**, so dont try to activate DeepSpeed **and** LowVRAM/Change your model simultantiously. Do one of those, wait 15-20 seconds until the change is confirmed in the terminal/command prompt, then you can change the other. When you are happy it works, you can set the default start-up settings in the settings page.
-<br><br>
-**Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
 </details>
 
-#### 🟡 OPTION 2 - A bit more complicated!
 <details>
-	<summary>Click to expand: Manual Build DeepSpeed v11.2 (Python 3.11 and 3.10)</summary>
-➡️DeepSpeed requires an Nvidia Graphics card!⬅️<br><br>
+	<summary>Windows DeepSpeed - Manual Compilation</summary>
 
-This will take about 1 hour to complete and about 6GB of disk space.<br>
+### Manual DeepSpeed Wheel Compilation
 
-1. Download the 11.2 release of [DeepSpeed](https://github.com/microsoft/DeepSpeed/releases/tag/v0.11.2) extract it to a folder. 
-2. Install Visual C++ build tools, such as [VS2019 C++ x64/x86](https://learn.microsoft.com/en-us/visualstudio/releases/2019/redistribution#vs2019-download) build tools.
-3. Download and install the [Nvidia Cuda Toolkit 11.8 or 12.1](https://developer.nvidia.com/cuda-toolkit-archive)
-4. **OPTIONAL** If you do not have an python environment already created and you are **not** going to use Text-generation-webui's environment, you can install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html), then at a command prompt, create and activate your environment with:<br><br>
-```conda create -n pythonenv python=3.11```<br>
-```activate pythonenv```<br>
+1. **Preparation for Manual Compilation**:
+   - Manual compilation of DeepSpeed wheels is an advanced process that requires:
+     - **1-2 hours** of your time for initial setup and compilation.
+     - **6-10GB** of disk space on your computer.
+     - A solid technical understanding of Windows environments and Python.
 
-5. Launch the Command Prompt cmd with Administrator privilege as it requires admin to allow creating symlink folders.
-6. If you are using the **Text-generation-webui** python environment, then in the `text-generation-webui` folder you will run `cmd_windows.bat` to start the python evnironment.<br><br>
-Otherwise Install PyTorch, 2.1.0 with CUDA 11.8 or 12.1 into your Python 3.1x.x environment e.g:<br><br>
-```activate pythonenv``` (activate your python environment)<br>
-```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia```<br>
-or<br>
-```conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia```<br>
+2. **Understanding Wheel Compatibility**:
+   - A compiled DeepSpeed wheel is uniquely tied to the specific versions of Python, PyTorch, and CUDA used during its compilation. If any of these versions are changed, you will need to compile a new DeepSpeed wheel to ensure compatibility.
 
-9. Set your CUDA Windows environment variables in the command prompt to ensure that CUDA_HOME and CUDA_PATH are set to your Nvidia Cuda Toolkit path. (The folder above the bin folder that nvcc.exe is installed in). Examples are:<br><br>
-```set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
-```set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1```<br>
-or<br>
-```set CUDA_HOME=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8```<br>
-```set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8```<br>
+3. **Compiling DeepSpee Resources**:
+   - Myself and [@S95Sedan](https://github.com/S95Sedan) have worked to simplify the compilation process. [@S95Sedan](https://github.com/S95Sedan) has notably improved the process for later versions of DeepSpeed, ensuring ease of build on Windows.
+   - Because [@S95Sedan](https://github.com/S95Sedan) is now maintaining the instructions for compiling DeepSpeed on Windows, please visit [@S95Sedan](https://github.com/S95Sedan)'s<br>[DeepSpeed GitHub page](https://github.com/S95Sedan/Deepspeed-Windows).
 
-10. Navigate to wherever you extracted the deepspeed folder in the Command Prompt:<br><br>
-```cd c:\DeepSpeed-0.11.2``` (wherever you extracted it to)
-
-11. Modify the following files:<br>
-**(These modified files are included in the git-pull of AllTalk, in the DeepSpeed Windows folder and so can just be copied over the top of the exsting folders/files, but if you want to modify them yourself, please follow the below)**<br>
-
-deepspeed-0.11.2/build_win.bat - at the top of the file, add:<br><br>
- ```set DS_BUILD_EVOFORMER_ATTN=0```
-
-deepspeed-0.11.2/csrc/quantization/pt_binding.cpp - lines 244-250 - change to:
-```
-    std::vector<int64_t> sz_vector(input_vals.sizes().begin(), input_vals.sizes().end());
-    sz_vector[sz_vector.size() - 1] = sz_vector.back() / devices_per_node;  // num of GPU per nodes
-    at::IntArrayRef sz(sz_vector);
-    auto output = torch::empty(sz, output_options);
-
-    const int elems_per_in_tensor = at::numel(input_vals) / devices_per_node;
-    const int elems_per_in_group = elems_per_in_tensor / (in_groups / devices_per_node);
-    const int elems_per_out_group = elems_per_in_tensor / out_groups;
-```
-
-deepspeed-0.11.2/csrc/transformer/inference/csrc/pt_binding.cpp
-lines 541-542 - change to:
-```
-									 {static_cast<unsigned>(hidden_dim * InferenceContext::Instance().GetMaxTokenLength()),
-									  static_cast<unsigned>(k * InferenceContext::Instance().GetMaxTokenLength()),
-```
-
-lines 550-551 - change to:
-```
-						 {static_cast<unsigned>(hidden_dim * InferenceContext::Instance().GetMaxTokenLength()),
-						  static_cast<unsigned>(k * InferenceContext::Instance().GetMaxTokenLength()),
-```
-line 1581 - change to:
-```
-		at::from_blob(intermediate_ptr, {input.size(0), input.size(1), static_cast<int64_t>(mlp_1_out_neurons)}, options);
-```
-
-deepspeed-0.11.2/deepspeed/env_report.py
-line 10 - add:
-```
-import psutil
-```
-line 83 - 100 - change to:
-```
-def get_shm_size():
-    try:
-        temp_dir = os.getenv('TEMP') or os.getenv('TMP') or os.path.join(os.path.expanduser('~'), 'tmp')
-        shm_stats = psutil.disk_usage(temp_dir)
-        shm_size = shm_stats.total
-        shm_hbytes = human_readable_size(shm_size)
-        warn = []
-        if shm_size < 512 * 1024**2:
-            warn.append(
-                f" {YELLOW} [WARNING] Shared memory size might be too small, consider increasing it. {END}"
-            )
-            # Add additional warnings specific to your use case if needed.
-        return shm_hbytes, warn
-    except Exception as e:
-        return "UNKNOWN", [f"Error getting shared memory size: {e}"]
-```
-
-10. While still in your command line with python environment enabled run:<br>
-```build_win.bat``` and wait 10-20 minutes.
-
-11. Now `cd dist` to go into your dist folder and you can now `pip install deepspeed-YOURFILENAME.whl` (or whatever your WHL file is called).
-<br><br>
-**Removal** - If it became necessary to uninstall DeepSpeed, you can do so with `cmd_windows.bat` and then `pip uninstall deepspeed`<br><br>
-</details>
 </details>
 
 ---
