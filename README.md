@@ -30,28 +30,17 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🟦 [Screenshots](https://github.com/erew123/alltalk_tts#-screenshots)
 - 🟩 [Installation](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation)
 - 🟪 [Updating & problems with updating](https://github.com/erew123/alltalk_tts?#-updating)
+- 🔵🟢 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
+- 🆘 [Support Requests, Troubleshooting & Feature requests](https://github.com/erew123/alltalk_tts#-support-requests-troubleshooting--feature-requests)
 - 🟨 [Help with problems](https://github.com/erew123/alltalk_tts?#-help-with-problems)
 - ⚫ [Finetuning a model](https://github.com/erew123/alltalk_tts?#-finetuning-a-model)
-- 🔵🟢 [DeepSpeed Installation (Windows & Linux)](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options)
 - ⬜ [AllTalk TTS Generator](https://github.com/erew123/alltalk_tts?#-alltalk-tts-generator)
 - 🟠 [API Suite and JSON-CURL](https://github.com/erew123/alltalk_tts?#-api-suite-and-json-curl)
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 ---
-
-### 🆘 Support Requests, Troubleshooting & Feature requests
-I'm thrilled to see the enthusiasm and engagement with AllTalk! Your feedback and questions are invaluable, helping to make this project even better. To ensure everyone gets the help they need efficiently, please consider the following before submitting a support request:
-
-**Consult the Documentation:** A comprehensive guide and FAQ sections (below) are available to help you navigate AllTalk. Many common questions and troubleshooting steps are covered here.
-
-**Search Past Discussions:** Your issue or question might already have been addressed in the discussions area or [closed issues](https://github.com/erew123/alltalk_tts/issues?q=is%3Aissue+is%3Aclosed). Please use the search function to see if there's an existing solution or advice that applies to your situation.
-
-**Bug Reports:** If you've encountered what you believe is a bug, please first check the [Updates & Bug Fixes List](https://github.com/erew123/alltalk_tts/issues/25) to see if it's a known issue or one that's already been resolved. If not, I encourage you to report it by raising a bug report in the [Issues section](https://github.com/erew123/alltalk_tts/issues), providing as much detail as possible to help identify and fix the issue.
-
-**Feature Requests:** The current Feature request list can be [found here](https://github.com/erew123/alltalk_tts/discussions/74). I love hearing your ideas for new features! While I can't promise to implement every suggestion, I do consider all feedback carefully. Please share your thoughts in the [Discussions area](https://github.com/erew123/alltalk_tts/discussions) or via a Feature Request in the [Issues section](https://github.com/erew123/alltalk_tts/issues). 
-
-### 🆘 **Please Note** 
-This project is a labor of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+### 🛠️ **About this project** 
+AllTalk is a labor of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
 
 ---
 
@@ -462,6 +451,178 @@ You're now ready to launch Text-generation-webui. Note that you may need to reap
 - Once you've verified that everything is working as expected and you're satisfied with the setup, feel free to delete the `alltalk_tts.old` directory to free up space.
 
 </details>
+
+---
+
+### 🔵🟢 DeepSpeed Installation Options
+**DeepSpeed requires an Nvidia Graphics card**
+
+#### 🔵 Linux Installation
+DeepSpeed requires access to the **Nvidia CUDA Development Toolkit** to compile on a Linux system. It's important to note that this toolkit is distinct and unrealted to your graphics card driver or the CUDA version the Python environment uses. 
+
+Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, compiling DeepSpeed with v11.8 will simplify things later down the line.
+
+<details>
+	<summary>Linux DeepSpeed - Text-generation-webui</summary>
+
+### DeepSpeed Installation for Text generation webUI
+
+1. **Nvidia CUDA Development Toolkit Installation**:
+   - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
+   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
+   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
+
+2. **Open a Terminal Console**:
+   - After Nvidia CUDA Development Toolkit installation, access your terminal console.
+
+3. **Install libaio-dev**:
+   - Use your Linux distribution's package manager.
+     
+   - - `sudo apt install libaio-dev` for Debian-based systems
+     - `sudo yum install libaio-devel` for RPM-based systems.
+
+4. **Navigate to Text generation webUI Folder**:
+   - Change directory to your Text generation webUI folder with `cd text-generation-webui`.
+   
+5. **Activate Text generation webUI Custom Conda Environment**:
+   - Run `./cmd_linux.sh` to start the environment.<br><br>
+   
+   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
+
+6. **Set `CUDA_HOME` Environment Variable**:
+   - DeepSpeed locates the Nvidia toolkit using the `CUDA_HOME` environment variable.
+   - You will only set this temporarily as Text generation webUI sets up its own CUDA_HOME environment each time you use `./cmd_linux.sh` or `./start_linux.sh`
+
+7. **Temporarily Configuring `CUDA_HOME`**:
+   - When the Text generation webUI Python environment is active **(step 5)**, set `CUDA_HOME`.
+     
+   - - `export CUDA_HOME=/usr/local/cuda`
+     - `export PATH=${CUDA_HOME}/bin:${PATH}`
+     - `export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:$LD_LIBRARY_PATH`
+
+   - You can confirm the path is set correctly and working by running the command `nvcc --version` should confirm `Cuda compilation tools, release 11.8.`.
+   - Incorrect path settings may lead to errors. If you encounter path issues or receive errors like `[Errno 2] No such file or directory` when you run the next step, confirm the path correctness or adjust as necessary.
+
+8. **DeepSpeed Installation**:
+   - Install DeepSpeed using `pip install deepspeed`.
+
+9. **Troubleshooting**:
+   - Troubleshooting steps for DeepSpeed installation can be located down below.
+   - **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
+</details>
+<details>
+	<summary>Linux DeepSpeed - Standalone Installation</summary>
+
+### DeepSpeed Installation for Standalone AllTalk
+
+1. **Nvidia CUDA Development Toolkit Installation**:
+   - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
+   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
+   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
+
+2. **Open a Terminal Console**:
+   - After Nvidia CUDA Development Toolkit installation, access your terminal console.
+  
+3. **Install libaio-dev**:
+   - Use your Linux distribution's package manager.
+     
+   - - `sudo apt install libaio-dev` for Debian-based systems
+     - `sudo yum install libaio-devel` for RPM-based systems.
+
+4. **Navigate to AllTalk TTS Folder**:
+   - Change directory to your AllTalk TTS folder with `cd alltalk_tts`.
+
+5. **Activate AllTalk Custom Conda Environment**:
+   - Run `./start_environment.sh` to start the AllTalk Python environment.
+   - This command will start the custom Python environment that was installed with `./atsetup.sh`.<br><br>
+   
+   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
+
+6. **Set `CUDA_HOME` Environment Variable**:
+   - The DeepSpeed installation routine locates the Nvidia toolkit using the `CUDA_HOME` environment variable. This can be set temporarily for a session or permanently, depending on other requirements you may have for other Python/System environments.
+   - For temporary use, proceed to **step 8**. For a permanent solution, see [Conda's manual on setting environment variables](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars).
+
+7. **(Optional) Permanent `CUDA_HOME` Setup**:
+   - If you choose to set `CUDA_HOME` permanently, follow the instructions in the provided Conda manual link above.
+
+8. **Configuring `CUDA_HOME`**:
+   - When your Python environment is active **(step 5)**, set `CUDA_HOME`.
+     
+   - - `export CUDA_HOME=/usr/local/cuda`
+     - `export PATH=${CUDA_HOME}/bin:${PATH}`
+     - `export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:$LD_LIBRARY_PATH`
+
+   - You can confirm the path is set correctly and working by running the command `nvcc --version` should confirm `Cuda compilation tools, release 11.8.`.
+   - Incorrect path settings may lead to errors. If you encounter path issues or receive errors like `[Errno 2] No such file or directory` when you run the next step, confirm the path correctness or adjust as necessary.
+
+9. **DeepSpeed Installation**:
+   - Install DeepSpeed using `pip install deepspeed`.
+
+10. **Starting AllTalk TTS WebUI**:
+    - Launch the AllTalk TTS interface with `./start_alltalk.sh` and enable DeepSpeed.
+
+### Troubleshooting
+
+- If setting `CUDA_HOME` results in path duplication errors (e.g., `.../bin/bin/nvcc`), you can correct this by unsetting `CUDA_HOME` with `unset CUDA_HOME` and then adding the correct path to your system's PATH variable.
+- Always verify paths and compatibility with other CUDA-dependent applications to avoid conflicts.
+- If you have multiple versions of the Nvidia CUDA Development Toolkit installed, you will have to specify the version number in step 8 for the CUDA_HOME path.
+- If it became necessary to uninstall DeepSpeed, you can do so by start the Python enviroment and then running `pip uninstall deepspeed`<br><br>
+
+</details>
+
+#### 🟢 Windows Installation
+You have 2x options for how to setup DeepSpeed on Windows. Pre-compiled wheel files for specific Python, CUDA and Pytorch builds, or manually compiling DeepSpeed.
+
+<details>
+	<summary>Windows DeepSpeed - Pre-Compiled Wheels (Quick and Easy)</summary>
+
+### DeepSpeed Installation with Pre-compiled Wheels
+
+1. **Introduction to Pre-compiled Wheels**:
+   - The `atsetup.bat` utility simplifies the installation of DeepSpeed by automatically downloading and installing pre-compiled wheel files. These files are tailored for **specific** versions of Python, CUDA, and PyTorch, ensuring compatibility with both the **Standalone Installation** and a standard build of **Text-generation-webui**.
+
+2. **Manual Installation of Pre-compiled Wheels**:
+   - If needed, pre-compiled DeepSpeed wheel files that I have built are available on the [Releases Page](https://github.com/erew123/alltalk_tts/releases). You can manually install or uninstall these wheels using the following commands:
+     - Installation: `pip install {deep-speed-wheel-file-name-here}`
+     - Uninstallation: `pip uninstall deepspeed`
+  
+3. **Using `atsetup.bat` for Simplified Management**:
+   - For those running the Standalone Installation or a standard build of Text-generation-webui, the `atsetup.bat` utility offers the simplest and most efficient way to manage DeepSpeed installations on Windows.
+
+</details>
+
+<details>
+	<summary>Windows DeepSpeed - Manual Compilation</summary>
+
+### Manual DeepSpeed Wheel Compilation
+
+1. **Preparation for Manual Compilation**:
+   - Manual compilation of DeepSpeed wheels is an advanced process that requires:
+     - **1-2 hours** of your time for initial setup and compilation.
+     - **6-10GB** of disk space on your computer.
+     - A solid technical understanding of Windows environments and Python.
+
+2. **Understanding Wheel Compatibility**:
+   - A compiled DeepSpeed wheel is uniquely tied to the specific versions of Python, PyTorch, and CUDA used during its compilation. If any of these versions are changed, you will need to compile a new DeepSpeed wheel to ensure compatibility.
+
+3. **Compiling DeepSpee Resources**:
+   - Myself and [@S95Sedan](https://github.com/S95Sedan) have worked to simplify the compilation process. [@S95Sedan](https://github.com/S95Sedan) has notably improved the process for later versions of DeepSpeed, ensuring ease of build on Windows.
+   - Because [@S95Sedan](https://github.com/S95Sedan) is now maintaining the instructions for compiling DeepSpeed on Windows, please visit [@S95Sedan](https://github.com/S95Sedan)'s<br>[DeepSpeed GitHub page](https://github.com/S95Sedan/Deepspeed-Windows).
+
+</details>
+
+---
+
+### 🆘 Support Requests, Troubleshooting & Feature requests
+I'm thrilled to see the enthusiasm and engagement with AllTalk! Your feedback and questions are invaluable, helping to make this project even better. To ensure everyone gets the help they need efficiently, please consider the following before submitting a support request:
+
+**Consult the Documentation:** A comprehensive guide and FAQ sections (below) are available to help you navigate AllTalk. Many common questions and troubleshooting steps are covered here.
+
+**Search Past Discussions:** Your issue or question might already have been addressed in the discussions area or [closed issues](https://github.com/erew123/alltalk_tts/issues?q=is%3Aissue+is%3Aclosed). Please use the search function to see if there's an existing solution or advice that applies to your situation.
+
+**Bug Reports:** If you've encountered what you believe is a bug, please first check the [Updates & Bug Fixes List](https://github.com/erew123/alltalk_tts/issues/25) to see if it's a known issue or one that's already been resolved. If not, I encourage you to report it by raising a bug report in the [Issues section](https://github.com/erew123/alltalk_tts/issues), providing as much detail as possible to help identify and fix the issue.
+
+**Feature Requests:** The current Feature request list can be [found here](https://github.com/erew123/alltalk_tts/discussions/74). I love hearing your ideas for new features! While I can't promise to implement every suggestion, I do consider all feedback carefully. Please share your thoughts in the [Discussions area](https://github.com/erew123/alltalk_tts/discussions) or via a Feature Request in the [Issues section](https://github.com/erew123/alltalk_tts/issues). 
 
 ---
 
@@ -882,165 +1043,6 @@ At the end of the finetune process, you will have an option to `Compact and move
 #### ⚫ Do I need to keep the raw training data/model?
 
 If you've compacted and moved your model, its highly unlikely you would want to keep that data, however the choice is there to keep it if you wish. It will be between 5-10GB in size, so most people will want to delete it.
-
----
-
-### 🔵🟢 DeepSpeed Installation Options
-**DeepSpeed requires an Nvidia Graphics card**
-
-#### 🔵 Linux Installation
-DeepSpeed requires access to the **Nvidia CUDA Development Toolkit** to compile on a Linux system. It's important to note that this toolkit is distinct and unrealted to your graphics card driver or the CUDA version the Python environment uses. 
-
-Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, compiling DeepSpeed with v11.8 will simplify things later down the line.
-
-<details>
-	<summary>Linux DeepSpeed - Text-generation-webui</summary>
-
-### DeepSpeed Installation for Text generation webUI
-
-1. **Nvidia CUDA Development Toolkit Installation**:
-   - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
-   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
-
-2. **Open a Terminal Console**:
-   - After Nvidia CUDA Development Toolkit installation, access your terminal console.
-
-3. **Install libaio-dev**:
-   - Use your Linux distribution's package manager.
-     
-   - - `sudo apt install libaio-dev` for Debian-based systems
-     - `sudo yum install libaio-devel` for RPM-based systems.
-
-4. **Navigate to Text generation webUI Folder**:
-   - Change directory to your Text generation webUI folder with `cd text-generation-webui`.
-   
-5. **Activate Text generation webUI Custom Conda Environment**:
-   - Run `./cmd_linux.sh` to start the environment.<br><br>
-   
-   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
-
-6. **Set `CUDA_HOME` Environment Variable**:
-   - DeepSpeed locates the Nvidia toolkit using the `CUDA_HOME` environment variable.
-   - You will only set this temporarily as Text generation webUI sets up its own CUDA_HOME environment each time you use `./cmd_linux.sh` or `./start_linux.sh`
-
-7. **Temporarily Configuring `CUDA_HOME`**:
-   - When the Text generation webUI Python environment is active **(step 5)**, set `CUDA_HOME`.
-     
-   - - `export CUDA_HOME=/usr/local/cuda`
-     - `export PATH=${CUDA_HOME}/bin:${PATH}`
-     - `export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:$LD_LIBRARY_PATH`
-
-   - You can confirm the path is set correctly and working by running the command `nvcc --version` should confirm `Cuda compilation tools, release 11.8.`.
-   - Incorrect path settings may lead to errors. If you encounter path issues or receive errors like `[Errno 2] No such file or directory` when you run the next step, confirm the path correctness or adjust as necessary.
-
-8. **DeepSpeed Installation**:
-   - Install DeepSpeed using `pip install deepspeed`.
-
-9. **Troubleshooting**:
-   - Troubleshooting steps for DeepSpeed installation can be located down below.
-   - **NOTE**: You **DO NOT** need to set Text-generation-webUI's **--deepspeed** setting for AllTalk to be able to use DeepSpeed. These are two completely separate things and incorrectly setting that on Text-generation-webUI may cause other complications.
-</details>
-<details>
-	<summary>Linux DeepSpeed - Standalone Installation</summary>
-
-### DeepSpeed Installation for Standalone AllTalk
-
-1. **Nvidia CUDA Development Toolkit Installation**:
-   - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
-   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
-
-2. **Open a Terminal Console**:
-   - After Nvidia CUDA Development Toolkit installation, access your terminal console.
-  
-3. **Install libaio-dev**:
-   - Use your Linux distribution's package manager.
-     
-   - - `sudo apt install libaio-dev` for Debian-based systems
-     - `sudo yum install libaio-devel` for RPM-based systems.
-
-4. **Navigate to AllTalk TTS Folder**:
-   - Change directory to your AllTalk TTS folder with `cd alltalk_tts`.
-
-5. **Activate AllTalk Custom Conda Environment**:
-   - Run `./start_environment.sh` to start the AllTalk Python environment.
-   - This command will start the custom Python environment that was installed with `./atsetup.sh`.<br><br>
-   
-   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
-
-6. **Set `CUDA_HOME` Environment Variable**:
-   - The DeepSpeed installation routine locates the Nvidia toolkit using the `CUDA_HOME` environment variable. This can be set temporarily for a session or permanently, depending on other requirements you may have for other Python/System environments.
-   - For temporary use, proceed to **step 8**. For a permanent solution, see [Conda's manual on setting environment variables](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#set-env-vars).
-
-7. **(Optional) Permanent `CUDA_HOME` Setup**:
-   - If you choose to set `CUDA_HOME` permanently, follow the instructions in the provided Conda manual link above.
-
-8. **Configuring `CUDA_HOME`**:
-   - When your Python environment is active **(step 5)**, set `CUDA_HOME`.
-     
-   - - `export CUDA_HOME=/usr/local/cuda`
-     - `export PATH=${CUDA_HOME}/bin:${PATH}`
-     - `export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:$LD_LIBRARY_PATH`
-
-   - You can confirm the path is set correctly and working by running the command `nvcc --version` should confirm `Cuda compilation tools, release 11.8.`.
-   - Incorrect path settings may lead to errors. If you encounter path issues or receive errors like `[Errno 2] No such file or directory` when you run the next step, confirm the path correctness or adjust as necessary.
-
-9. **DeepSpeed Installation**:
-   - Install DeepSpeed using `pip install deepspeed`.
-
-10. **Starting AllTalk TTS WebUI**:
-    - Launch the AllTalk TTS interface with `./start_alltalk.sh` and enable DeepSpeed.
-
-### Troubleshooting
-
-- If setting `CUDA_HOME` results in path duplication errors (e.g., `.../bin/bin/nvcc`), you can correct this by unsetting `CUDA_HOME` with `unset CUDA_HOME` and then adding the correct path to your system's PATH variable.
-- Always verify paths and compatibility with other CUDA-dependent applications to avoid conflicts.
-- If you have multiple versions of the Nvidia CUDA Development Toolkit installed, you will have to specify the version number in step 8 for the CUDA_HOME path.
-- If it became necessary to uninstall DeepSpeed, you can do so by start the Python enviroment and then running `pip uninstall deepspeed`<br><br>
-
-</details>
-
-#### 🟢 Windows Installation
-You have 2x options for how to setup DeepSpeed on Windows. Pre-compiled wheel files for specific Python, CUDA and Pytorch builds, or manually compiling DeepSpeed.
-
-<details>
-	<summary>Windows DeepSpeed - Pre-Compiled Wheels (Quick and Easy)</summary>
-
-### DeepSpeed Installation with Pre-compiled Wheels
-
-1. **Introduction to Pre-compiled Wheels**:
-   - The `atsetup.bat` utility simplifies the installation of DeepSpeed by automatically downloading and installing pre-compiled wheel files. These files are tailored for **specific** versions of Python, CUDA, and PyTorch, ensuring compatibility with both the **Standalone Installation** and a standard build of **Text-generation-webui**.
-
-2. **Manual Installation of Pre-compiled Wheels**:
-   - If needed, pre-compiled DeepSpeed wheel files that I have built are available on the [Releases Page](https://github.com/erew123/alltalk_tts/releases). You can manually install or uninstall these wheels using the following commands:
-     - Installation: `pip install {deep-speed-wheel-file-name-here}`
-     - Uninstallation: `pip uninstall deepspeed`
-  
-3. **Using `atsetup.bat` for Simplified Management**:
-   - For those running the Standalone Installation or a standard build of Text-generation-webui, the `atsetup.bat` utility offers the simplest and most efficient way to manage DeepSpeed installations on Windows.
-
-</details>
-
-<details>
-	<summary>Windows DeepSpeed - Manual Compilation</summary>
-
-### Manual DeepSpeed Wheel Compilation
-
-1. **Preparation for Manual Compilation**:
-   - Manual compilation of DeepSpeed wheels is an advanced process that requires:
-     - **1-2 hours** of your time for initial setup and compilation.
-     - **6-10GB** of disk space on your computer.
-     - A solid technical understanding of Windows environments and Python.
-
-2. **Understanding Wheel Compatibility**:
-   - A compiled DeepSpeed wheel is uniquely tied to the specific versions of Python, PyTorch, and CUDA used during its compilation. If any of these versions are changed, you will need to compile a new DeepSpeed wheel to ensure compatibility.
-
-3. **Compiling DeepSpee Resources**:
-   - Myself and [@S95Sedan](https://github.com/S95Sedan) have worked to simplify the compilation process. [@S95Sedan](https://github.com/S95Sedan) has notably improved the process for later versions of DeepSpeed, ensuring ease of build on Windows.
-   - Because [@S95Sedan](https://github.com/S95Sedan) is now maintaining the instructions for compiling DeepSpeed on Windows, please visit [@S95Sedan](https://github.com/S95Sedan)'s<br>[DeepSpeed GitHub page](https://github.com/S95Sedan/Deepspeed-Windows).
-
-</details>
 
 ---
 
