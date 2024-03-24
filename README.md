@@ -671,7 +671,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 </details>
 
 <details>
-	<summary>🟨 Streaming Audio doesnt work on Firefox</summary><br>
+	<summary>🟨 Firefox - Streaming Audio doesnt work on Firefox</summary><br>
 	
 This is a long standing issue with Firefox and one I am unable to resolve. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
 </details>
@@ -679,7 +679,7 @@ This is a long standing issue with Firefox and one I am unable to resolve. The s
 ### Application Specific Issues
 
 <details>
-	<summary>🟨 <strong>SillyTavern</strong> I changed my IP address and now ST wont connect</summary><br>
+	<summary>🟨 <strong>SillyTavern</strong> - I changed my IP address and now SillyTavern wont connect with AllTalk</summary><br>
 SillyTavern checks the IP address when loading extensions, saving the IP to its configuration only if the check succeeds. For whatever reason, SillyTavern's checks dont always allow changing its IP address a second time.<br><br>
 
 To manually change the IP address:
@@ -690,6 +690,38 @@ To manually change the IP address:
 3) Replace `localhost` with your desired IP address, for example, `192.168.1.64`.
 
 ![image](https://github.com/SillyTavern/SillyTavern/assets/35898566/144e4ac4-87dc-4a2b-8a73-39314abed1ca)
+</details>
+
+### TTS Generation Issues & Questions
+
+<details>
+	<summary>🟨 XTTS - Does the XTTS AI Model Support Emotion Control or Singing?</summary><br>
+	
+No, the XTTS AI model does not currently support direct control over emotions or singing capabilities. While XTTS infuses generated speech with a degree of emotional intonation based on the context of the text, users cannot explicitly control this aspect. It's worth noting that regenerating the same line of TTS may yield slightly different emotional inflections, but there is no way to directly control it with XTTS.
+</details>
+<details>
+	<summary>🟨 XTTS - Skips, repeats or pronunciation Issues</summary><br>
+	
+Firstly, it's important to clarify that the development and maintenance of the XTTS AI models and core scripts are handled by [Coqui](https://docs.coqui.ai/en/latest/index.html), with additional scripts and libraries from entities like [huggingface](https://huggingface.co/docs/transformers/en/index) among many other Python scripts and libraries used by AllTalk. 
+
+AllTalk is designed to be a straightforward interface that simplifies setup and interaction with AI TTS models like XTTS. Currently, AllTalk supports the XTTS model, with plans to include more models in the future. Please understand that the deep inner workings of XTTS, including reasons why it may skip, repeat, or mispronounce, along with 3rd party scripts and libraries utilized, are ultimately outside my control.
+
+Although I ensure the text processed through AllTalk is accurately relayed to the XTTS model speech generation process, and I have aimed to mitigate as many issues as much as possible; skips, repeats and bad pronounciation can still occur.
+
+Certain aspects I have not been able to investigate due to my own time limitations, are:<br>
+
+- The impact of DeepSpeed on TTS quality. Is this more likely to cause skips or repetition?
+- Comparative performance between different XTTS model versions (e.g., 2.0.3 vs. 2.0.2) regarding audio quality and consistency.
+
+**From my experience and anecdotally gained knowledge:**<br>
+
+- Lower quality voice samples tend to produce more anomalies in generated speech.
+- Model finetuning with high-quality voice samples significantly reduces such issues, enhancing overall speech quality.
+- Unused/Excessive punctuation causes issues e.g. asterisks `*`, hashes `#`, brackets `(` `)` etc. Many of these AllTalk will filter out.
+
+So for example, the `female_01.wav` file that is provided with AllTalk is a studio quality voice sample, which the XTTS model was trained on. Typically you will find it unlikely that anomolies occur with TTS generation when using this voice sample. Hence good quality samples and finetuning, generally improve results with XTTS.
+
+If you wish to try out the XTTS version 2.0.3 model and see if it works better, you can download it from [here](https://huggingface.co/coqui/XTTS-v2/tree/v2.0.3), replacing all the files within your `/alltalk_tts/models/xttsv2_2.0.2` folder. This is on my list to both test version 2.0.3 more, but also build a more flexible TTS models downloader, that will not only accomdating other XTTS models, but also other TTS engines. If you try the XTTS version 2.0.3 model and gleen any insights, please let me know.
 </details>
 
 ---
