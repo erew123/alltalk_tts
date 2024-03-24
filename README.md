@@ -469,29 +469,48 @@ You're now ready to launch Text-generation-webui. Note that you may need to reap
 
 #### &nbsp;&nbsp;&nbsp;&nbsp; 🔄 **Minor updates/bug fixes list** can be found [here](https://github.com/erew123/alltalk_tts/issues/25)
 
-#### 🟨 How to make a diagnostics report file
-If you are on a Windows machine or a Linux machine, you should be able to use the `atsetup.bat` or `./atsetup.sh` utility to create a diagnositcs file. If you are unable to use the `atsetup` utility, please follow the instructions below.
 <details>
-	<summary>Click to expand</summary>
-	
-1) Open a command prompt window, move into your **text-generation-webui** folder, you can now start the Python environment for text-generation-webui:<br><br>
-`cmd_windows.bat`, `./cmd_linux.sh`, `cmd_macos.sh` or `cmd_wsl.bat`
+<summary>🟨 How to make a diagnostics report file</summary><br>
 
-2) Move into the **alltalk_tts** folder:<br><br>
-`cd extensions` and then `cd alltalk_tts`
+If you are on a Windows machine or a Linux machine, you should be able to use the `atsetup.bat` or `./atsetup.sh` utility to create a diagnositcs file. If you are unable to use the `atsetup` utility, please follow the instructions below.
 
-3) Run the diagnostics and select the requirements file name you installed AllTalk with:<br><br>
-`python diagnostics.py`
+<details>
+	<summary><strong>Manually making a diagnostics report file</strong></summary><br>
 
-4) You will have an on screen output showing your environment setttings, file versions request vs whats installed and details of your graphics card (if Nvidia). This will also create a file called `diagnostics.log` in the `alltalk_tts` folder, that you can upload if you need to create a support ticket on here.<br><br>
+1) Open a command prompt window and start the Python environment. Depending on your setup (Text-generation-webui or Standalone AllTalk), the steps to start the Python environment vary:<br>
+
+- **For Text-generation-webui Users**:
+  - Navigate to the Text-generation-webui directory:
+    - `cd text-generation-webui`
+  - Start the Python environment suitable for your OS:
+    - Windows: `cmd_windows.bat`
+    - Linux: `./cmd_linux.sh`
+    - macOS: `cmd_macos.sh`
+    - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`
+  - Move into the AllTalk directory:
+    - `cd extensions/alltalk_tts`
+
+- **For Standalone AllTalk Users**:
+  - Navigate to the `alltalk_tts` folder:
+    - `cd alltalk_tts`
+  - Start the Python environment:
+    - Windows: `start_environment.bat`
+    - Linux: `./start_environment.sh`<br><br>
+    
+   > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
+
+2) Run the diagnostics and select the requirements file name you installed AllTalk with:<br>
+   - `python diagnostics.py`
+
+3) You will have an on screen output showing your environment setttings, file versions request vs whats installed and details of your graphics card (if Nvidia). This will also create a file called `diagnostics.log` in the `alltalk_tts` folder, that you can upload if you need to create a support ticket on here.<br><br>
 
 ![image](https://github.com/erew123/alltalk_tts/assets/35898566/81b9a6e1-c54b-4da0-b85d-3c6fde566d6a)
-<br><br></details>
+<br><br></details></details>
 
-#### 🟨 Understanding Python Environments Simplified
+### Installation and Setup Issues
 
 <details>
-	<summary>Click to expand</summary><br>
+	<summary>🟨 Understanding Python Environments Simplified</summary><br>
 	
 Think of Python environments like different rooms in your house, each designed for a specific purpose. Just as you wouldn't cook in the bathroom or sleep in the kitchen, different Python applications need their own "spaces" or environments because they have unique requirements. Sometimes, these requirements can clash with those of other applications (imagine trying to cook a meal in a bathroom!). To avoid this, you can create separate Python environments.
 
@@ -521,10 +540,85 @@ When a Python environment starts up, it changes the command prompt to show the P
 ![image](https://github.com/erew123/screenshots/blob/main/pythonenvironment.jpg)
 </details>
 
-#### 🟨 [AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.
+<details>
+	<summary>🟨 Windows & Python requirements for compiling packages <strong>(ERROR: Could not build wheels for TTS)</strong></summary><br>
+
+`ERROR: Microsoft Visual C++ 14.0 or greater is required` or `ERROR: Could not build wheels for TTS.` or `ModuleNotFoundError: No module named 'TTS`
+
+ Python requires that you install C++ development tools on Windows. This is detailed on the [Python site here](https://wiki.python.org/moin/WindowsCompilers). You would need to install `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK` from the C++ Build tools section. 
+ 
+ You can get hold of the **Community** edition [here](https://visualstudio.microsoft.com/downloads/) the during installation, selecting `C++ Build tools` and then `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK`. 
+
+![image](https://github.com/erew123/screenshots/raw/main/pythonrequirementswindows.jpg)
+ 
+</details>
+<details>
+	<summary>🟨 Standalone Install - start_{youros}.xx opens and closes instantly and AllTalk doesnt start</summary><br>
+
+This is more than likely caused by having a `-` in your folder path e.g. `c:\myfiles\alltalk_tts-main`. In this circumstance you would be best renaming the folder to remove the `-` from its name e.g. `c:\myfiles\alltalk_tts`, delete the `alltalk_environment` folder and `start_alltalk.bat` or `start_alltalk.sh` and then re-run `atsetup` to re-create the environment and startup files. 
+</details>
+<details>
+	<summary>🟨 I think AllTalks requirements file has installed something another extension doesn't like</summary><br>
+	
+Ive paid very close attention to **not** impact what Text-generation-webui is requesting on a factory install. This is one of the requirements of submitting an extension to Text-generation-webui. If you want to look at a comparison of a factory fresh text-generation-webui installed packages (with cuda 12.1, though AllTalk's requirements were set on cuda 11.8) you can find that comparison [here](https://github.com/erew123/alltalk_tts/issues/23). This comparison shows that AllTalk is requesting the same package version numbers as Text-generation-webui or even lower version numbers (meaning AllTalk will not update them to a later version). What other extensions do, I cant really account for that.
+
+I will note that the TTS engine downgrades Pandas data validator to 1.5.3 though its unlikely to cause any issues. You can upgrade it back to text-generation-webui default (december 2023) with `pip install pandas==2.1.4` when inside of the python environment. I have noticed no ill effects from it being a lower or higher version, as far as AllTalk goes. This is also the same behaviour as the Coqui_tts extension that comes with Text-generation-webui.
+
+Other people are reporting issues with extensions not starting with errors about Pydantic e.g. ```pydantic.errors.PydanticImportError: BaseSettings` has been moved to the pydantic-settings package. See https://docs.pydantic.dev/2.5/migration/#basesettings-has-moved-to-pydantic-settings for more details.```
+
+Im not sure if the Pydantic version has been recently updated by the Text-generation-webui installer, but this is nothing to do with AllTalk. The other extension you are having an issue with, need to be updated to work with Pydantic 2.5.x. AllTalk was updated in mid december to work with 2.5.x. I am not specifically condoning doing this, as it may have other knock on effects, but within the text-gen Python environment, you can use `pip install pydantic==2.5.0` or `pip install pydantic==1.10.13` to change the version of Pydantic installed.
+</details>
+<details>
+	<summary>🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.</summary><br>
+	
+I would suggest following [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
+</details>
+
+### Networking and Access Issues
 
 <details>
-	<summary>Click to expand</summary><br>
+	<summary>🟨 I cannot access AllTalk from another machine on my Network</summary><br>
+
+You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [Changing AllTalks IP address & Accessing AllTalk over your Network](https://github.com/erew123/alltalk_tts/tree/main?tab=readme-ov-file#-changing-alltalks-ip-address--accessing-alltalk-over-your-network) at the top of this page.
+
+You may also need to allow access through your firewall or Antivirus package to AllTalk.
+</details>
+
+<details>
+	<summary>🟨 I am running a Headless system and need to change the IP Address manually as I cannot reach the config page</summary><br>
+	
+To do this you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for `"ip_address": "127.0.0.1",` and change the `127.0.0.1` to your chosen IP address,then save the file and start AllTalk.<br><br>
+
+When doing this, be careful not to impact the formatting of the JSON file. Worst case, you can re-download a fresh copy of `confignew.json` from this website and that will put you back to a factory setting.
+</details>
+
+### Configuration and Usage Issues
+<details>
+	<summary>🟨 I activated DeepSpeed in the settings page, but I didnt install DeepSpeed yet and now I have issues starting up</summary><br>
+	
+You can either follow the [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.
+
+If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options)
+</details>
+
+<details>
+	<summary>🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug</summary><br>
+	
+Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an ticket [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers. Please create a `diagnostics.log` report file to submit with a support request.
+
+Also, is your text-generation-webui up to date? [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
+</details>
+
+<details>
+	<summary>🟨 I see some red "asyncio" messages</summary><br>
+	
+As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
+</details>
+
+### Performance and Compatibility Issues
+
+<details>
+	<summary>🟨 Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.</summary><br>
 	When the subprocess is starting 2x things are occurring:<br><br>
 
 **A)** Its trying to load the voice model into your graphics card VRAM (assuming you have a Nvidia Graphics card, otherwise its your system RAM)<br>
@@ -559,98 +653,8 @@ Other possibilities for this issue are:
 11) You have built yourself a custom Python environment and something is funky with it. This is very hard to diagnose as its not a standard environment. You may want to updating text-generation-webui and re installing its requirements file (whichever one you use that comes down with text-generation-webui).
 </details>
 
-#### 🟨 Windows & Python requirements for compiling packages
-
-`ERROR: Microsoft Visual C++ 14.0 or greater is required` or `ERROR: Could not build wheels for TTS.` or `ModuleNotFoundError: No module named 'TTS`
-
 <details>
-	<summary>Click to expand</summary><br>
-
- Python requires that you install C++ development tools on Windows. This is detailed on the [Python site here](https://wiki.python.org/moin/WindowsCompilers). You would need to install `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK` from the C++ Build tools section. 
- 
- You can get hold of the **Community** edition [here](https://visualstudio.microsoft.com/downloads/) the during installation, selecting `C++ Build tools` and then `MSVCv142 - VS 2019 C++ x64/x86 build tools` and `Windows 10/11 SDK`. 
-
-![image](https://github.com/erew123/screenshots/raw/main/pythonrequirementswindows.jpg)
- 
-</details>
-
-#### 🟨 I think AllTalks requirements file has installed something another extension doesn't like
-<details>
-	<summary>Click to expand</summary><br>
-	
-Ive paid very close attention to **not** impact what Text-generation-webui is requesting on a factory install. This is one of the requirements of submitting an extension to Text-generation-webui. If you want to look at a comparison of a factory fresh text-generation-webui installed packages (with cuda 12.1, though AllTalk's requirements were set on cuda 11.8) you can find that comparison [here](https://github.com/erew123/alltalk_tts/issues/23). This comparison shows that AllTalk is requesting the same package version numbers as Text-generation-webui or even lower version numbers (meaning AllTalk will not update them to a later version). What other extensions do, I cant really account for that.
-
-I will note that the TTS engine downgrades Pandas data validator to 1.5.3 though its unlikely to cause any issues. You can upgrade it back to text-generation-webui default (december 2023) with `pip install pandas==2.1.4` when inside of the python environment. I have noticed no ill effects from it being a lower or higher version, as far as AllTalk goes. This is also the same behaviour as the Coqui_tts extension that comes with Text-generation-webui.
-
-Other people are reporting issues with extensions not starting with errors about Pydantic e.g. ```pydantic.errors.PydanticImportError: BaseSettings` has been moved to the pydantic-settings package. See https://docs.pydantic.dev/2.5/migration/#basesettings-has-moved-to-pydantic-settings for more details.```
-
-Im not sure if the Pydantic version has been recently updated by the Text-generation-webui installer, but this is nothing to do with AllTalk. The other extension you are having an issue with, need to be updated to work with Pydantic 2.5.x. AllTalk was updated in mid december to work with 2.5.x. I am not specifically condoning doing this, as it may have other knock on effects, but within the text-gen Python environment, you can use `pip install pydantic==2.5.0` or `pip install pydantic==1.10.13` to change the version of Pydantic installed.
-</details>
-
-#### 🟨 I activated DeepSpeed in the settings page, but I didnt install DeepSpeed yet and now I have issues starting up
-<details>
-	<summary>Click to expand</summary><br>
-	
-You can either follow the [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and fresh install your config. Or you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for '"deepspeed_activate": true,' and change the word true to false `"deepspeed_activate": false,' ,then save the file and try starting again.<br><br>
-
-If you want to use DeepSpeed, you need an Nvidia Graphics card and to install DeepSpeed on your system. Instructions are [here](https://github.com/erew123/alltalk_tts#-deepspeed-installation-options)
-</details>
-
-#### 🟨 I cannot access AllTalk from another machine on my Network
-<details>
-	<summary>Click to expand</summary><br>
-
-You will need to change the IP address within AllTalk's settings from being 127.0.0.1, which only allows access from the local machine its installed on. To do this, please see [Changing AllTalks IP address & Accessing AllTalk over your Network](https://github.com/erew123/alltalk_tts/tree/main?tab=readme-ov-file#-changing-alltalks-ip-address--accessing-alltalk-over-your-network) at the top of this page.<br><br>
-
-You may also need to allow access through your firewall or Antivirus package to AllTalk.
-</details>
-
-#### 🟨 I am running a Headless system and need to change the IP Address manually as I cannot reach the config page.
-<details>
-	<summary>Click to expand</summary><br>
-	
-To do this you can edit the `confignew.json` file within the `alltalk_tts` folder. You would look for `"ip_address": "127.0.0.1",` and change the `127.0.0.1` to your chosen IP address,then save the file and start AllTalk.<br><br>
-
-When doing this, be careful not to impact the formatting of the JSON file. Worst case, you can re-download a fresh copy of `confignew.json` from this website and that will put you back to a factory setting.
-</details>
-
-#### 🟨 I am having problems updating/some other issue where it wont start up/Im sure this is a bug
-<details>
-	<summary>Click to expand</summary><br>
-	
-Please see [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating). If that doesnt help you can raise an ticket [here](https://github.com/erew123/alltalk_tts/issues). It would be handy to have any log files from the console where your error is being shown. I can only losely support custom built Python environments and give general pointers. Please create a `diagnostics.log` report file to submit with a support request.<br><br>
-
-Also, is your text-generation-webui up to date? [instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install)
-</details>
-
-#### 🟨 Standalone Install - start_{youros}.xx opens and closes instantly and AllTalk doesnt start
-<details>
-	<summary>Click to expand</summary><br>
-
-This is more than likely caused by having a `-` in your folder path e.g. `c:\myfiles\alltalk_tts-main`. In this circumstance you would be best renaming the folder to remove the `-` from its name e.g. `c:\myfiles\alltalk_tts`, delete the `alltalk_environment` folder and `start_alltalk.bat` or `start_alltalk.sh` and then re-run `atsetup` to re-create the environment and startup files. 
-
-</details>
-
-#### 🟨 I am having problems getting AllTalk to start after changing settings or making a custom setup/model setup.
-
-<details>
-	<summary>Click to expand</summary><br>
-	
-I would suggest following [Problems Updating](https://github.com/erew123/alltalk_tts#-problems-updating) and if you still have issues after that, you can raise an issue [here](https://github.com/erew123/alltalk_tts/issues)
-</details>
-
-#### 🟨 I see some red "asyncio" messages
-
-<details>
-	<summary>Click to expand</summary><br>
-	
-As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
-</details>
-
-#### 🟨 I have multiple GPU's and I have problems running Finetuning
-
-<details>
-	<summary>Click to expand</summary><br>
+	<summary>🟨 I have multiple GPU's and I have problems running Finetuning</summary><br>
 	
 Finetuning pulls in various other scripts and some of those scripts can have issues with multiple Nvidia GPU's being present. Until the people that created those other scripts fix up their code, there is a workaround to temporarily tell your system to only use the 1x of your Nvidia GPU's. To do this:
 
@@ -666,12 +670,18 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 
 </details>
 
+<details>
+	<summary>🟨 Streaming Audio doesnt work on Firefox</summary><br>
+	
+This is a long standing issue with Firefox and one I am unable to resolve. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
+</details>
+
 ---
 
 ### ⚫ Finetuning a model
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
-- An Nvidia graphics card. (Please see this [note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning) if you have multiple Nvidia GPU's).
+- An Nvidia graphics card. (Please see the help section [note](https://github.com/erew123/alltalk_tts/edit/main/README.md#performance-and-compatibility-issues) if you have multiple Nvidia GPU's).
 - To install a few portions of the Nvidia CUDA Development Toolkit **version 11.8**. Explicitly version 11.8.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
