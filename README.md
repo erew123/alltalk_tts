@@ -676,6 +676,22 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 This is a long standing issue with Firefox and one I am unable to resolve. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
 </details>
 
+### Application Specific Issues
+
+<details>
+	<summary>🟨 <strong>SillyTavern</strong> I changed my IP address and now ST wont connect</summary><br>
+SillyTavern checks the IP address when loading extensions, saving the IP to its configuration only if the check succeeds. For whatever reason, SillyTavern's checks dont always allow changing its IP address a second time.<br><br>
+
+To manually change the IP address:
+
+1) Navigate to the SillyTavern Public folder located at `/sillytavern/public/`.
+2) Open the `settings.json` file.
+3) Look for the AllTalk section and find the `provider_endpoint` entry.
+3) Replace `localhost` with your desired IP address, for example, `192.168.1.64`.
+
+![image](https://github.com/SillyTavern/SillyTavern/assets/35898566/144e4ac4-87dc-4a2b-8a73-39314abed1ca)
+</details>
+
 ---
 
 ### ⚫ Finetuning a model
