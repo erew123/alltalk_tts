@@ -21,5 +21,6 @@
     "tts_method_api_local": false,
     "tts_method_api_tts": false,
     "tts_method_xtts_local": true,
-    "voice": "female_01.wav"
+    "voice": "female_01.wav",
+    "protocol": "http"
 }
