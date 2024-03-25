@@ -81,12 +81,14 @@ def check_disk_space():
     free_space_gb = disk_usage.free / (1 << 30)
     # Check if the free space is more than 18GB
     is_more_than_18gb = free_space_gb > 18
+    disk_space_icon = "✅"
     if not is_more_than_18gb:
+        disk_space_icon ="❌"
         pfc_status = "fail"  # Update global status if disk space check fails
     # Generating the markdown text for disk space check
     disk_space_markdown = f"""
     ### 🟩 <u>Disk Space Check</u>
-    ◽ **Disk Space (> 18 GB):** {'✅ Pass - ' if is_more_than_18gb else '❌ Fail - '} {free_space_gb:.2f} GB
+    &nbsp;&nbsp;&nbsp;&nbsp; {disk_space_icon} **Disk Space (> 18 GB):** {'' if is_more_than_18gb else 'You have less than 18GB on this disk '} {free_space_gb:.2f} GB
     """
     return disk_space_markdown
 
@@ -98,14 +100,16 @@ def test_cuda():
         try:
             # Attempt to create a tensor on GPU
             torch.tensor([1.0, 2.0]).cuda()
-            cuda_status = "✅ Pass - CUDA is available and working."
+            cuda_status = "CUDA is available and working."
+            cuda_icon = "✅"
         except Exception as e:
-            cuda_status = f"❌ Fail - CUDA is available but not working. Error: {e}"
+            cuda_status = f"CUDA is available but not working. Error: {e}"
+            cuda_icon = "❌"
             pfc_status = "fail"  # Update global status
     else:
-        cuda_status = "❌ Fail - CUDA is not available."
+        cuda_status = "CUDA is not available."
         pfc_status = "fail"  # Update global status
-    return cuda_status, cuda_home
+    return cuda_status, cuda_icon, cuda_home 
 
 def find_files_in_path_with_wildcard(pattern):
     global pfc_status
@@ -122,45 +126,59 @@ def find_files_in_path_with_wildcard(pattern):
 
 def generate_cuda_markdown():
     global pfc_status
-    cuda_status, cuda_home = test_cuda()
+    cuda_status, cuda_icon, cuda_home = test_cuda()
     file_name = 'cublas64_11.*'
     found_paths = find_files_in_path_with_wildcard(file_name)
     if found_paths:
-        found_paths_str = '✅ Pass - ' + ' '.join(found_paths)
+        found_paths_str = ' '.join(found_paths)
+        found_path_icon = '✅'
     else:
-        found_paths_str = "❌ Fail - cublas64_11 is not accessible."
+        found_paths_str = "cublas64_11 is not accessible."
+        found_path_icon = '❌'
         pfc_status = "fail"  # Update global status
         # Check if 'cu118' or 'cu121' is in the PyTorch version string
     pytorch_version = torch.__version__
     if 'cu118' in pytorch_version or 'cu121' in pytorch_version:
-        pytorch_cuda_version_status = '✅ Pass - '
+        pytorch_cuda_version_status = ''
+        pytorch_icon = '✅'
     else:
-        pytorch_cuda_version_status = '❌ Fail - '
+        pytorch_cuda_version_status = 'Pytorch CUDA version problem '
+        pytorch_icon = '❌'
         pfc_status = "fail"  # Update global status
     cuda_markdown = f"""
     ### 🟨 <u>CUDA Information</u><br>
-    ◽ **Cublas64_11 found:** {found_paths_str}  
-    ◽ **CUDA_HOME path:** {cuda_home}
+    &nbsp;&nbsp;&nbsp;&nbsp; {found_path_icon} **Cublas64_11 found:** {found_paths_str}  
+    &nbsp;&nbsp;&nbsp;&nbsp; {pytorch_icon} **CUDA_HOME path:** {cuda_home}
     """
     pytorch_markdown = f"""
     ### 🟦 <u>Python & Pytorch Information</u>  
-    ◽ **PyTorch Version:** {pytorch_cuda_version_status} {torch.__version__}  
-    ◽ **CUDA is working:** {cuda_status}
+    &nbsp;&nbsp;&nbsp;&nbsp; {pytorch_icon} **PyTorch Version:** {pytorch_cuda_version_status} {torch.__version__}  
+    &nbsp;&nbsp;&nbsp;&nbsp; {cuda_icon} **CUDA is working:** {cuda_status}
     """
     return cuda_markdown, pytorch_markdown
 
 def get_system_ram_markdown():
     global pfc_status
     virtual_memory = psutil.virtual_memory()
-    total_ram = f"{virtual_memory.total / (1024 ** 3):.2f} GB"
-    available_ram = f"{virtual_memory.available / (1024 ** 3):.2f} GB"
-    used_ram_percentage = f"{virtual_memory.percent:.2f}%"
+    total_ram_gb = virtual_memory.total / (1024 ** 3)
+    available_ram_gb = virtual_memory.available / (1024 ** 3)
+    used_ram_percentage = virtual_memory.percent
+
+    # Check if the available RAM is less than 8GB
+    warning_if_low_ram = available_ram_gb < 8
+
+    # Decide the message based on the available RAM
+    ram_status_message = "Warning" if warning_if_low_ram else ""
+    ram_status_icon = "⚠️" if warning_if_low_ram else "✅"
+
     system_ram_markdown = f"""
     ### 🟪 <u>System RAM Information</u>  <br>
-    ◽ **Total RAM:** {total_ram}<br>
-    ◽ **Available RAM:** {available_ram} ({used_ram_percentage} used)
+    &nbsp;&nbsp;&nbsp;&nbsp; {ram_status_icon} **Total RAM:** {total_ram_gb:.2f} GB<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {ram_status_icon} **Available RAM:** {ram_status_message + ' - Available RAM is less than 8 GB. You have ' if warning_if_low_ram else ''} {available_ram_gb:.2f} GB available ({used_ram_percentage:.2f}% used)
     """
+
     return system_ram_markdown
+
 
 def check_base_model(base_model_path, files_to_download):
     global pfc_status
@@ -180,10 +198,11 @@ base_model_detected = check_base_model(base_model_path, files_to_download)
 
 def generate_base_model_markdown(base_model_detected):
     global pfc_status
-    base_model_status = '✅ Pass - Base model detected' if base_model_detected else '❌ Fail - Base model not detected'
+    base_model_status = 'Base model detected' if base_model_detected else 'Base model not detected'
+    base_model_icon = '✅' if base_model_detected else '❌'
     base_model_markdown = f"""
     ### ⬛ <u>XTTS Base Model Detection</u>
-    ◽ **Base XTTS Model Status:** {base_model_status}
+    &nbsp;&nbsp;&nbsp;&nbsp; {base_model_icon} **Base XTTS Model Status:** {base_model_status}
     """
     return base_model_markdown
 
@@ -194,17 +213,19 @@ def check_tts_version(required_version="0.22.0"):
         installed_version = metadata.version("tts")
         # Check if the installed version meets the required version
         if version.parse(installed_version) >= version.parse(required_version):
-            tts_status = f"✅ Pass - TTS version {installed_version} is installed and meets the requirement."
+            tts_status = f"TTS version {installed_version} is installed and meets the requirement."
+            tts_status_icon = "✅"
         else:
             tts_status = f"❌ Fail - TTS version {installed_version} is installed but does not meet the required version {required_version}."
+            tts_status_icon = "❌"
             pfc_status = "fail"  # Update global status
     except metadata.PackageNotFoundError:
         # If TTS is not installed
-        tts_status = "❌ Fail - TTS is not installed."
+        tts_status = "TTS is not installed."
         pfc_status = "fail"  # Update global status
     tts_markdown = f"""
     ### 🟥 <u>TTS Information</u><br>
-    ◽ **TTS Version:** {tts_status}
+    &nbsp;&nbsp;&nbsp;&nbsp; {tts_status_icon} **TTS Version:** {tts_status}
     """
     return tts_markdown
 
@@ -971,33 +992,35 @@ def cleanup_before_exit(signum, frame):
     # Perform cleanup operations here if necessary
     sys.exit(0)
 
-def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
-    """
-    Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
-    """
+def create_refresh_button(refresh_components, refresh_methods, elem_class, interactive=True):
     def refresh():
-        refresh_method()
-        args = refreshed_args() if callable(refreshed_args) else refreshed_args
+        updates = {}
+        for component, method in zip(refresh_components, refresh_methods):
+            args = method() if callable(method) else method
+            if args and 'choices' in args:
+                # Select the most recent file (last in the sorted list)
+                args['value'] = args['choices'][-1] if args['choices'] else ""
+            for k, v in args.items():
+                setattr(component, k, v)
+            updates[component] = gr.update(**(args or {}))
+        return updates
 
-        for k, v in args.items():
-            setattr(refresh_component, k, v)
-
-        return gr.update(**(args or {}))
-
-    refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive, scale=0)
+    refresh_button = gr.Button("Refresh Dropdowns", elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
         fn=refresh,
         inputs=[],
-        outputs=[refresh_component]
+        outputs=refresh_components
     )
 
     return refresh_button
 
+
+
 pfc_markdown = f"""
     ### 🚀 <u>Pre-flight Checklist for Fine-tuning</u><br>
     ◽  <strong>Ensure</strong> each criterion is marked with a green check mark ✅ and a Pass status. <strong>Finetuning will fail otherwise.</strong><br>
-    ◽  The help tabs along the top will assist in resolving issues and you can also find additional help guides on the AllTalk Github page.<br>
-    ◽  For an overview of fine-tuning procedures, please refer to the "General Finetuning info" tab or visit the AllTalk GitHub repository.
+    ◽  The help tabs along the top will assist in resolving issues and you can also find additional help guides on the AllTalk [GitHub repository](https://github.com/erew123/alltalk_tts#-finetuning-a-model).<br>
+    ◽  For an overview of fine-tuning procedures, please refer to the "General Finetuning info" tab or visit the AllTalk [GitHub repository](https://github.com/erew123/alltalk_tts#-finetuning-a-model).
     """
 
 custom_css = """
@@ -1159,14 +1182,18 @@ if __name__ == "__main__":
             ◽ <span style="color: #3366ff;">finetune.py</span> needs to be run from the <span style="color: #3366ff;">/alltalk_tts/</span> folder. Don't move the location of this script.
             ### 🟦 <u>What you need to run finetuning</u>
             ◽ An Nvidia GPU.<br>
-            ◽ If you have multiple Nvidia GPU's in your system, please see this [important note](https://github.com/erew123/alltalk_tts#-i-have-multiple-gpus-and-i-have-problems-running-finetuning).<br>
+            ◽ If you have multiple Nvidia GPU's in your system, please see the Github Help section [Multiple GPU's](https://github.com/erew123/alltalk_tts#performance-and-compatibility-issues).<br>
             ◽ Some decent quality audio, multiple files if you like. Minimum of 2 minutes and Ive tested up to 20 minutes of audio.<br>
-            ◽ There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. Ive been testing with 5 minute long clips.<br>
+            ◽ There is no major need to chop down your audio files into small slices as Step 1 will do that for you automatically and prepare the training set. But this can be helpful in cases where:<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Whisper doesnt correctly detect and split down audio files.<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - You do not get a lot of "Speaker Reference Audio" files at the end of training.<br>
             ◽ This process will need access to all your GPU and VRAM, so close any other software that's using your GPU currently.<br>
             ### 🟨 <u>What do I do from here?</u><br>
             ◽ Proceed through Step 1, 2, 3 and onto "What to do next".<br>
             ### 🟩 <u>Additional Information</u><br>
-            ◽ I will add more information/documentation however for now, please visit the AllTalk Github.<br>
+            ◽ Guidance is provided on each step of the process however, if you are after more detailed information please visit:<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ [AllTalk Github Finetuning](https://github.com/erew123/alltalk_tts#-finetuning-a-model)<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ [Coqui XTTS Documentation](https://docs.coqui.ai/en/latest/index.html)<br>
             """
         )
 
@@ -1186,12 +1213,16 @@ if __name__ == "__main__":
                 ◽ Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>          
                 ◽ Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span><br>
                 ◽ You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. 5 to 10 minutes of audio would probably be better, allowing for more varied sample data to be generated.<br>
-                ◽ Very small sample files cause errors, so I would reccommend that the samples are at least 30 seconds and longer.<br>
+                ◽ Very small sample files cause errors, so I would recommend that the samples are at least 30 seconds and longer.<br>
                 ◽ FYI Anecdotal evidence suggests that the Whisper 2 model may yield superior results in audio splitting and dataset creation.<br>
                 ### 🟨 <u>What this step is doing</u><br>
                 ◽ With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for Step 2.<br>
                 ◽ Whisper is making a best effort to find spoken audio and break it down into smaller audio files. The content of these audio files is then transcribed into CSV fles (which you can edit in Excel or similar).<br>
-                ◽ These files (audio and CSV) are used at the next step to train the model "this is what the audio sounds like and these are the words being spoken". Wisper is doing a best effort to pull out the correct audio and generate text. If you wish to manually look at the CSV files before running the next step, you are welcome to do so and ammend them as necessary.<br>
+                ◽ These files (audio and CSV) are used at the next step to train the model "this is what the audio sounds like and these are the words being spoken".<br>
+                ◽ If you wish to manually look at the CSV files before running the next step, you are welcome to do so and edit them as necessary. The greater the accuracy of the text the better the training will be.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/metadata_train.csv</span> Contains the list of wavs to text that will be used. This is what the model is trained with.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/metadata_eval.csv</span> Lists the evaluation wav to text, used to generate TTS while training and evaluate the quality of generated TTS to the original sample.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/wavs/</span> These are the wavs split out from your original training samples and match the contents of the CSV files.<br>
                 ◽ Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. <br>
                 ◽ If and when you have completed training, should you wish to delete this 3GB Whisper model from your system, you are welcome to do so.<br>
                 ### 🟩 <u>How long will this take?</u><br>
@@ -1291,13 +1322,16 @@ if __name__ == "__main__":
                 f"""
                 ### 💻 <u>Training</u><br>                
                 ### 🟦 <u>What you need to do</u>
-                ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click the button again.<br>
-                ◽ If for any reason it crashed, close the app and re-start the finetuning and kick it off again, clicking through setp 1 (it doesnt need to regenerate the data)<br>
+                ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click "Create Dataset" again.<br>
                 ◽ The default settings below are the suggested settings for most purposes, however you may choose to alter them depending on your specific use case.<br>
-                ◽ There are no absolute "correct" settings for training. It will vary based on:<br>
+                ◽ There are no absolute correct settings for training. It will vary based on:<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- What you are training (A human voice, A cartoon voice, A new language entirely etc)<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- How much audio you have (you may want less or more eval or epochs)<br>
-                ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary to achieve the sound quality you're aiming for.<br>
+                ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary.<br>
+                ◽ **Number of epochs:** Defines how many times the entire dataset is passed through the neural network; more epochs can improve learning but increase the risk of memorizing the training data.<br>
+                ◽ **Batch size:** Sets how many training examples are used in one iteration. Larger sizes speed up training but require more computational memory.<br>
+                ◽ **Grad(ient) accumulation steps:** Allows larger batches by spreading the computation across multiple steps, enabling training with limited hardware resources.<br>
+                ◽ **Max permitted audio size in seconds:** Limits the length of audio that the model processes. Any audio exceeding this duration will be truncated to fit the model's input constraints.<br>
                 ### 🟨 <u>What this step is doing</u><br>
                 ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
                 ### 🟩 <u>How long will this take?</u><br>
@@ -1397,9 +1431,11 @@ if __name__ == "__main__":
                 f"""
                 ### ✅ <u>Testing</u><br>
                 ### 🟥 <u>Important Note</u>
-                ◽ Upon successful processing of your speech data, expect to find multiple speaker reference files if your input consisted of over 3 minutes of speech. Please note that audio clips shorter than 7 seconds are automatically excluded from the reference list, as they generally do not provide sufficient length for effective TTS generation.<br>
+                ◽ If you dont believe the dropdown lists are populated correctly, you can use the "Refresh Dropdowns" button to search the finetuning folder path and update the lists. You can also manually edit the path to the listed files.<br>
+                ◽ You can use any config.json or vocab.json, as long as they match the model version you trained on. Only the XTTS checkpoint matters.<br>
+                ◽ Upon successful processing of your speech data, expect to find multiple speaker reference files if your input consisted of over 3 minutes of speech.<br>
+                ◽ Audio clips shorter than 7 seconds are automatically excluded from the reference list, as they generally do not provide sufficient length for effective TTS generation.<br>
                 ◽ Should you find a lower number of reference files than anticipated, it may be due to the initial segmentation performed by Whisper (Step 1), which can occasionally result in clips that are too brief for our criteria or indeed too long. In such cases, consider manually segmenting your audio to give Whisper a better chance at generating training data and repeating the process.<br>
-                ◽ If the vocab.json file isnt listed because you have restarted, you can manually put in the path to the base models vocab file e.g. D:&#92;alltalk_tts&#92;models&#92;xttsv2_2.0.2&#92;vocab.json<br>
                 ### 🟦 <u>What you need to do</u>
                 ◽ The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.<br>
                 ◽ You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.<br>
@@ -1415,21 +1451,21 @@ if __name__ == "__main__":
                 with gr.Column() as col1:
                     xtts_checkpoint = gr.Dropdown(
                         [str(file) for file in xtts_checkpoint_files],
-                        label="XTTS checkpoint path:",
+                        label="XTTS checkpoint path (best_model.pth):",
                         value="",
                         allow_custom_value=True,
                     )
 
                     xtts_config = gr.Dropdown(
                         [str(file) for file in xtts_config_files],
-                        label="XTTS config path:",
+                        label="XTTS config path (config.json):",
                         value="",
                         allow_custom_value=True,
                     )
 
                     xtts_vocab = gr.Dropdown(
                         [str(file) for file in xtts_vocab_files],
-                        label="XTTS vocab path:",
+                        label="XTTS vocab path (vocab.json):",
                         value="",
                         allow_custom_value=True,
                     )
@@ -1451,36 +1487,41 @@ if __name__ == "__main__":
                             allow_custom_value=True,  # Allow custom values
                             scale=1,
                         )
+
+                    with gr.Row():
+                        tts_language = gr.Dropdown(
+                            label="Language",
+                            value="en",
+                            choices=[
+                                "en",
+                                "es",
+                                "fr",
+                                "de",
+                                "it",
+                                "pt",
+                                "pl",
+                                "tr",
+                                "ru",
+                                "nl",
+                                "cs",
+                                "ar",
+                                "zh",
+                                "hu",
+                                "ko",
+                                "ja",
+                            ]
+                        )
                         # Create refresh button
                         refresh_button = create_refresh_button(
-                            speaker_reference_audio,
-                            lambda: None,  # Specify your refresh logic if needed
-                            lambda: {"choices": get_available_voices(), "value": ""},  # Update choices and value
-                            "refresh-button",
+                            [xtts_checkpoint, xtts_config, xtts_vocab, speaker_reference_audio],
+                            [
+                                lambda: {"choices": find_models(main_directory, "pth"), "value": ""},
+                                lambda: {"choices": find_jsons(main_directory, "config.json"), "value": ""},
+                                lambda: {"choices": find_jsons(main_directory, "vocab.json"), "value": ""},
+                                lambda: {"choices": get_available_voices(), "value": ""},
+                            ],
+                            elem_class="refresh-button-class"
                         )
-
-                    tts_language = gr.Dropdown(
-                        label="Language",
-                        value="en",
-                        choices=[
-                            "en",
-                            "es",
-                            "fr",
-                            "de",
-                            "it",
-                            "pt",
-                            "pl",
-                            "tr",
-                            "ru",
-                            "nl",
-                            "cs",
-                            "ar",
-                            "zh",
-                            "hu",
-                            "ko",
-                            "ja",
-                        ]
-                    )
                     tts_text = gr.Textbox(
                         label="Input Text:",
                         value="I've just fine tuned a text to speech language model and this is how it sounds. If it doesn't sound right, I will try a different Speaker Reference Audio file.",
@@ -1501,18 +1542,18 @@ if __name__ == "__main__":
                 ### 🔜 <u>What to do next</u><br>
                 ### 🟦 <u>What you need to do</u>
                 You have a few options below:<br>
-                ◽ Compact &amp; move model. This will compress the raw finetuned model and move it, along with any large enough wav files created to one of two locations (please read text next to the button). You can use the wav files in that location as sample voices with your model. Models moved to <span style="color: #3366ff;">/models/trainedmodel/</span> will be loadable within Text-gen-webui on the <span style="color: #3366ff;">XTTSv2 FT</span> loader.<br>
-                ◽ WAV files/Sample Vocies. The wav files that you can use as sample voices will be moved alongside the model. You will need to MANUALLY copy/move the WAV file(s) you want to use to the AllTalk voices folder, to make them available within the interface.<br>
-                ◽ Delete Generated Training data. This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.<br>
-                ◽ Delete original voice samples. This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).<br>
-                Instructions on using the finetuned model in Text-generation-webui and also further tuning this model you just created are on <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>.<br>
+                ◽ **Compact &amp; move model:** This will compress the raw finetuned model and move it, along with any large enough wav files created to one of two locations (please read text next to the button). You can use the wav files in that location as sample voices with your model. Models moved to <span style="color: #3366ff;">/models/trainedmodel/</span> will be loadable within Text-gen-webui on the <span style="color: #3366ff;">XTTSv2 FT</span> loader.<br>
+                ◽ **Delete Generated Training data:** This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.<br>
+                ◽ **Delete original voice samples:** This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).<br>
+                ◽ **Note:** Sample wav files will be copied into the model folder. You will need to MANUALLY copy/move the WAV file(s) you want to use to the AllTalk voices folder, to make them available within the interface.<br>
+                ◽ **Note:** Text-generation-webui users, <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>. will make the model available for use within Text-gen-webui.<br>
                 ### 🟩 <u>Using your Finetuned model as you main model</u>
                 ◽ If you wish to use the model you have just fintuned as your main model, you will need to MANUALLY copy it over the base model in <span style="color: #3366ff;">/models/trainedmodel/</span> after you have used Option A or B.<br>
                 ◽ Should you ever wish to revert your model back to the base model, you can delete the files in <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> and new copies will be re-downloaded when AllTalk starts up.<br>
                 ### 🟨 <u>Clearing up disk space</u>
                 ◽ If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) <br>
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Linux <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span><br>
-                #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Windows <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Linux:** <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Windows:** <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.<br>
                 ◽ You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.<br>
                 """
             )
