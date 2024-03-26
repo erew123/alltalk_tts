@@ -211,8 +211,8 @@
 
 <body>
     <h1 id="toc">AllTalk TTS for Text generation webUI</h1>
-    <iframe src="http://{{ params.ip_address }}:{{ params.port_number }}/settings" width="100%" height="500"
-        frameborder="0" style="margin: 0; padding: 0;"></iframe>
+    <iframe src="{{ params.protocol }}://{{ params.ip_address }}:{{ params.port_number }}/settings" width="100%"
+        height="500" frameborder="0" style="margin: 0; padding: 0;"></iframe>
     <h2>Table of Contents</h2>
     <ul>
         <li><a href="#getting-started">Getting Started</a></li>
@@ -273,10 +273,12 @@
             here</a><br />Update instructions <a href="https://github.com/erew123/alltalk_tts?#-updating"
             target="_blank" rel="noopener">link here</a><br />Help and issues <a
             href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank" rel="noopener">link
-            here</a><br />TTS Generator <a href="http://{{ params.ip_address }}:{{ params.port_number }}/static/tts_chunk_player/tts_chunk_player.html"
+            here</a><br />TTS Generator <a
+            href="{{ params.protocol }}://{{ params.ip_address }}:{{ params.port_number }}/static/tts_chunk_player/tts_chunk_player.html"
             target="_blank" rel="noopener">link
             here<br /><br /></a><span style="text-decoration: underline;"><strong>Text generation webUI</strong></span>
-        <br />Web interface&nbsp;<a href="http://{{ params.ip_address }}:7860" target="_blank" rel="noopener">link
+        <br />Web interface&nbsp;<a href="{{ params.protocol }}://{{ params.ip_address }}:7860" target="_blank"
+            rel="noopener">link
             here</a> <br />Documentation <a href="https://github.com/oobabooga/text-generation-webui/wiki"
             target="_blank" rel="noopener">link here</a>
     </p>
@@ -284,9 +286,9 @@
 
     <h2 id="server-information">Server Information</h2>
     <ul>
-        <li>Base URL: <code>http://{{ params.ip_address }}:{{ params.port_number }}</code></li>
+        <li>Base URL: <code>{{ params.protocol }}://{{ params.ip_address }}:{{ params.port_number }}</code></li>
         <li>Server Status:
-            <code><a href="http://{{ params.ip_address }}:{{ params.port_number }}/ready">http://{{ params.ip_address }}:{{ params.port_number }}/ready</a></code>
+            <code><a href="{{ params.protocol }}://{{ params.ip_address }}:{{ params.port_number }}/ready">{{ params.protocol }}://{{ params.ip_address }}:{{ params.port_number }}/ready</a></code>
         </li>
     </ul>
     <p style="padding-left: 30px;"><a href="#toc">Back to top of page</a></p>
@@ -350,9 +352,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const protocol = "{{ params.protocol }}";
             const ipAddress = "{{ params.ip_address }}";
             const portNumber = "{{ params.port_number }}";
-            const url = `http://${ipAddress}:${portNumber}/api/voices`;
+
+            const url = `${protocol}://${ipAddress}:${portNumber}/api/voices`;
 
             fetch(url)
                 .then(response => response.json())
@@ -466,8 +470,8 @@
         speech using the voice of your choice. Whether you're creating audio content or just want to hear text read
         aloud, the TTS Generator is equipped to handle it all efficiently.</p>
     <p style="padding-left: 30px;">The TTS Generator is available on this <a
-            href="http://{{ params.ip_address }}:{{ params.port_number }}/static/tts_chunk_player/tts_chunk_player.html" target="_blank"
-            rel="noopener">link</a></p>
+            href="{{ params.protocol }}://{{ params.ip_address }}:{{ params.port_number }}/static/tts_chunk_player/tts_chunk_player.html"
+            target="_blank" rel="noopener">link</a></p>
     <h4>Quick Start</h4>
     <ul>
         <li><strong>Text Input:</strong> Enter the text you wish to convert into speech in the 'Text Input' box.</li>
@@ -585,25 +589,24 @@
     <p style="text-align: justify; padding-left: 30px;">If you need to clean it up, do audio processing, volume level
         changes etc, do this before down-sampling.<br /><br />Using the latest version of Audacity <span
             style="color: #3366ff;">select/highlight</span> your 6 to 30 second clip and:<br /><br />
-        
-        <span> 
-            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
-            Make sure the «Project Rate(Hz)» (lower left corner of the interface) is set to 22050 Hz. 
-        </span> 
+
+        <span>
+            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+            Make sure the «Project Rate(Hz)» (lower left corner of the interface) is set to 22050 Hz.
+        </span>
         <br />
-        
-        <span
-            style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Tracks</span>
+
+        <span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Tracks</span>
         &gt;<span style="color: #3366ff;"> Resample to 22050Hz</span>&nbsp;then<br /><span
             style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Tracks</span> &gt;
         <span style="color: #3366ff;">Mix</span> &gt; <span style="color: #3366ff;">Stereo to
             Mono&nbsp;</span>then<br /><span style="color: #3366ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
             &nbsp; &nbsp; File</span> &gt; <span style="color: #3366ff;">Export Audio</span>&nbsp;saving it as a <span
             style="color: #3366ff;">WAV</span> of <span style="color: #3366ff;">22050Hz</span>.
-        
-           
-            
-        
+
+
+
+
     </p>
     <p style="padding-left: 30px; text-align: justify;">Save your generated wav file in the&nbsp;<span
             style="color: #3366ff;">/alltalk_tts/voices/ <span style="color: #808080;">folder.</span></span></p>

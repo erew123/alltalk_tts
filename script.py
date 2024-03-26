@@ -232,7 +232,7 @@ def history_modifier(history):
 ######################################
 #### SUBPROCESS/WEBSERVER STARTUP ####
 ######################################
-base_url = f"http://{params['ip_address']}:{params['port_number']}"
+base_url = f"{params['protocol']}://{params['ip_address']}:{params['port_number']}"
 script_path = this_dir / "tts_server.py"
 
 
@@ -262,7 +262,7 @@ else:
         print(f"[{params['branding']}Startup]")
         print(
             f"[{params['branding']}Startup] \033[94m {params['branding']}Settings & Documentation:\033[00m",
-            f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
+            f"\033[92m{params['protocol']}://{params['ip_address']}:{params['port_number']}\033[00m",
         )
         print(f"[{params['branding']}Startup]")
     else:
@@ -954,7 +954,7 @@ def ui():
                     value="Character" if non_quoted_text_is else "Narrator",
                 )
                 explanation_text = gr.HTML(
-                    f"<p>⚙️ <a href='http://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='http://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>"
+                    f"<p>⚙️ <a href='{params['protocol']}://{params['ip_address']}:{params['port_number']}'>Settings and Documentation Page</a><a href='{params['protocol']}://{params['ip_address']}:{params['port_number']}'></a>⚙️<br>- Low VRAM Mode and Deepspeed take 15 seconds to be enabled or disabled.<br>- The DeepSpeed checkbox is only visible if DeepSpeed is present.</p>"
                 )
 
         # Preview speech
