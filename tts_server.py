@@ -654,7 +654,7 @@ async def get_settings(request: Request):
     wav_files = list_files(this_dir / "voices")
     # Render the template with the current JSON data and list of WAV files
     return templates.TemplateResponse(
-        "generate_form.html",
+        "/at_admin/at_settings.html",
         {
             "request": request,
             "data": get_json_data(),
