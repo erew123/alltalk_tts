@@ -3,30 +3,34 @@ import argparse
 from pathlib import Path
 import os
 import glob
+import site
+import subprocess
+import sys
 # version 0.5
 
-def find_files_in_path_with_wildcard(pattern):
-    # Split the system's PATH variable into a list of directories
-    search_path = os.environ.get('PATH', '').split(os.pathsep)
+def find_files_in_site_packages_with_wildcard(pattern):
+    # Get the site-packages directory of the current Python environment
+    site_packages_path = site.getsitepackages()
     found_paths = []
-    # Iterate over each directory in the search path
-    for directory in search_path:
+    # Iterate over each site-packages directory (there can be more than one)
+    for directory in site_packages_path:
+        # Construct the search directory path, assuming 'nvidia/cublas' is a sub-directory
+        search_directory = os.path.join(directory, "nvidia", "cublas", "bin")
         # Use glob to find all files matching the pattern in this directory
-        for file_path in glob.glob(os.path.join(directory, pattern)):
+        for file_path in glob.glob(os.path.join(search_directory, pattern)):
             if os.path.isfile(file_path):  # Ensure it's a file
                 found_paths.append(file_path)
     return found_paths
 
 def detect_cublas():
     file_name = 'cublas64_11.*'
-    found_paths = find_files_in_path_with_wildcard(file_name)
+    found_paths = find_files_in_site_packages_with_wildcard(file_name)
     if found_paths:
         print("[AllTalk TTSDiff] \033[94mCublas64_11:\033[0m \033[92mDetected\033[0m", found_paths)
     else:
         print("[AllTalk TTSDiff] \033[94mCublas64_11:\033[0m \033[91mERROR Not Detected\033[0m")
         print("[AllTalk TTSDiff] \033[94mPlease install Cublas64_11 from the Nvidia CUDA Toolkit v11.8 \033[0mhttps://github.com/erew123/alltalk_tts/tree/main\033[0m ")
         exit(1)
-    return 
 
 parser = argparse.ArgumentParser(description="Compare TTS output with the original text using detailed comparison.")
 parser.add_argument("--threshold", type=int, default=98, help="Similarity threshold for considering a match (default: 98)")
@@ -88,12 +92,23 @@ try:
     # Load a medium-sized spaCy model, adjust to "en_core_web_md" or "en_core_web_lg" as needed
     nlp = spacy.load("en_core_web_md")
 except Exception as e:
-    # disclaimer_text()
+    disclaimer_text()
     print(f"[AllTalk TTSDiff] \nERROR STARTING SCRIPT:")
     print("[AllTalk TTSDiff] Failed to load the spaCy language model.")
-    print("[AllTalk TTSDiff] Please ensure the spaCy language model is installed by running:")
-    print("[AllTalk TTSDiff] \033[93mpython -m spacy download en_core_web_md\033[0m")
-    exit(1)
+    
+    # Attempt to download the spaCy model automatically
+    try:
+        print("[AllTalk TTSDiff] Attempting to automatically download the spaCy language model...")
+        subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_md"], check=True)
+        
+        # Try to load the model again after downloading
+        nlp = spacy.load("en_core_web_md")
+        print("[AllTalk TTSDiff] Model downloaded and loaded successfully.")
+    except Exception as download_exception:
+        print("[AllTalk TTSDiff] Automatic download failed.")
+        print("[AllTalk TTSDiff] Please manually install the spaCy language model by running:")
+        print("[AllTalk TTSDiff] \033[93mpython -m spacy download en_core_web_md\033[0m")
+        exit(1)
 
 def texts_are_similar(text1, text2, threshold=0.8):
     # Preliminary check for short texts
