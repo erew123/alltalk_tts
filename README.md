@@ -836,7 +836,7 @@ This is a long standing issue with Firefox and one I am unable to resolve. The s
 ### Application Specific Issues
 
 <details>
-	<summary>🟨 <strong>SillyTavern</strong> - I changed my IP address and now SillyTavern wont connect with AllTalk</summary><br>
+	<summary>🟨 SillyTavern - I changed my IP address and now SillyTavern wont connect with AllTalk</summary><br>
 SillyTavern checks the IP address when loading extensions, saving the IP to its configuration only if the check succeeds. For whatever reason, SillyTavern's checks dont always allow changing its IP address a second time.<br><br>
 
 To manually change the IP address:
