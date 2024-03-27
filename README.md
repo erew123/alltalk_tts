@@ -1075,11 +1075,11 @@ For generating **large amounts of TTS**, it's recommended to select the **No Pla
 #### ⬜ Exporting Subtitles (SRT file)
 - **Export SRT:** This will scan through all wav files in your list and generate a subtitles file that will match your exported wav file.
 #### ⬜ Analyzing generated TTS for errors
-- **Analyze TTS:** This will scan through all wav files comparing each ID's orignal text with the TTS generated for that ID and then flag up inconsistences. Its important to understand this is a best effort process and not 100% perfect, for example:<br><br>
+- **Analyze TTS:** This will scan through all wav files comparing each ID's orignal text with the TTS generated for that ID and then flag up inconsistences. Its important to understand this is a **best effort** process and **not 100% perfect**, for example:<br><br>
    - Your text may have the word `their` and the automated routine that listens to your generated TTS interprets the word as `there`, aka a spelling difference.
    - Your text may have `Examples are:` (note the colon) and the automated routine that listens to your generated TTS interprets the word as "Examples are` (note no colon as you cannot sound out a colon in TTS), aka a punctuation difference.
    - Your text may have `There are 100 items` and the automated routine that listens to your generated TTS interprets the word as `There are one hundred items`, aka numbers vs the number written out in words.
-   - There will be other examples such as double quotes and many more examples.<br>
+   - There will be other examples such as double quotes. As I say, please remember this is a **best effort** to help you identify issues.<br>
 
 As such, there is a `% Accuracy` setting. This uses a couple of methods to try find things that are similar e.g. taking the `their` and `there` example from above, it would identify that they both sound the same, so even if the text says `their` and the AI listening to the generated TTS interprets the word as `there`, it will realise that both sound the same/are similar so there is no need to flag that as an error. However, there are limits to this and some things may slip through or get picked up when you would prefer them not to be flagged.
 
