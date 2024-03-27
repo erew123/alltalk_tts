@@ -74,7 +74,7 @@ To set up AllTalk within Text-generation-webui, follow either method:
 2. **Start Python Environment**:
    - In the text-generation-webui folder, start the environment with the appropriate command:
      - Windows: `cmd_windows.bat`
-     - Linux: `./cmd_linux.sh`
+     - Linux: `./cmd_linux.sh`<br><br>
     
      > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
