@@ -8,6 +8,7 @@ try:
     import re
     import sys
     import glob
+    import site
     import textwrap
     import torch
     import packaging.version
@@ -43,7 +44,7 @@ def get_requirements_file():
 
     print("\033[94m\nSelect a requirements file to check against (or press Enter for default 'requirements.txt'):\033[0m\n")
     for i, file_path in enumerate(requirements_files, start=1):
-        print(f"{i}. {file_path.name}")  # Only print the filename
+        print(f"    {i}. {file_path.name}")  # Only print the filename
 
     choice = input("\nEnter the number of your choice: ")
     try:
@@ -112,17 +113,22 @@ def test_cuda():
         return "Fail - CUDA is not available."
 
 def find_files_in_path_with_wildcard(pattern):
-    # Split the system's PATH variable into a list of directories
-    search_path = os.environ.get('PATH', '').split(os.pathsep)
-    
+    # Get the site-packages directory of the current Python environment
+    site_packages_path = site.getsitepackages()
     found_paths = []
-    # Iterate over each directory in the search path
-    for directory in search_path:
+    # Adjust the sub-directory based on the operating system
+    sub_directory = "nvidia/cublas/bin"
+    if platform.system() == "Linux":
+        sub_directory = os.path.join(sub_directory, "lib")
+    
+    # Iterate over each site-packages directory (there can be more than one)
+    for directory in site_packages_path:
+        # Construct the search directory path
+        search_directory = os.path.join(directory, sub_directory)
         # Use glob to find all files matching the pattern in this directory
-        for file_path in glob.glob(os.path.join(directory, pattern)):
+        for file_path in glob.glob(os.path.join(search_directory, pattern)):
             if os.path.isfile(file_path):  # Ensure it's a file
                 found_paths.append(file_path)
-    
     return found_paths
 
 # Function to log and print system information
@@ -179,7 +185,7 @@ def log_system_info():
     path_env = os.environ.get('PATH', 'N/A')
 
     # Check for cublas
-    file_name = 'cublas64_11.*' 
+    file_name = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
     found_paths = find_files_in_path_with_wildcard(file_name)
 
     # Compare with requirements file
