@@ -1,7 +1,7 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
-- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
+- **Can be run as a** [standalone application](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
    - **Text-generation-webui** [link](https://github.com/oobabooga/text-generation-webui)
    - **SillyTavern** [link](https://github.com/SillyTavern/SillyTavern)
    - **KoboldCPP** [link](https://github.com/LostRuins/koboldcpp)
