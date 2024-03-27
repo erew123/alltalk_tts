@@ -15,12 +15,15 @@ try:
     from packaging.specifiers import SpecifierSet
     from packaging.specifiers import SpecifierSet
     from packaging.version import parse as parse_version
+    from pathlib import Path
 except ImportError as e:
     print(f"\033[91mError importing module: {e}\033[0m\n")
     print("\033[94mPlease ensure you started the Text-generation-webUI Python environment with either\033[0m")
     print("\033[92mcmd_linux.sh\033[0m, \033[92mcmd_windows.bat\033[0m, \033[92mcmd_macos.sh\033[0m, or \033[92mcmd_wsl.bat\033[0m")
     print("\033[94mfrom the text-generation-webui directory, and then try running the diagnostics again.\033[0m")
     exit(1)
+
+this_dir = Path(__file__).parent
 
 try:
     import psutil
@@ -30,21 +33,24 @@ except ImportError:
     import psutil
 
 def get_requirements_file():
-    requirements_files = glob.glob("requirements*.txt")
+    this_dir = Path(__file__).parent  # Assuming 'this_dir' is defined as the script's directory
+    requirements_dir = this_dir / 'system' / 'requirements'
+    requirements_files = list(requirements_dir.glob('requirements*.txt'))  # Using pathlib for globbing
+    
     if not requirements_files:
         print("\033[91mNo requirements files found.\033[0m")
         return None
 
     print("\033[94m\nSelect a requirements file to check against (or press Enter for default 'requirements.txt'):\033[0m\n")
-    for i, file in enumerate(requirements_files, start=1):
-        print(f"{i}. {file}")
+    for i, file_path in enumerate(requirements_files, start=1):
+        print(f"{i}. {file_path.name}")  # Only print the filename
 
     choice = input("\nEnter the number of your choice: ")
     try:
         choice = int(choice) - 1
-        return requirements_files[choice]
+        return str(requirements_files[choice])  # Return the full path as a string
     except (ValueError, IndexError):
-        return "requirements.txt"
+        return str(requirements_dir / "requirements.txt")  # Return the default path as a string
 
 # Set up logging with filemode='w'
 logging.basicConfig(filename='diagnostics.log',

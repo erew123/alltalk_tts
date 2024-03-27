@@ -22,7 +22,7 @@ from tqdm import tqdm
 from faster_whisper import WhisperModel  
 # Use a local Tokenizer to resolve Japanese support
 # from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
-from templates.tokenizer.tokenizer import multilingual_cleaners
+from system.ft_tokenizer.tokenizer import multilingual_cleaners
 import importlib.metadata as metadata
 from packaging import version
 
