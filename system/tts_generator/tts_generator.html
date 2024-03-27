@@ -395,6 +395,13 @@
             font-size: 0.8em;
         }
 
+        /*Disable and enable buttons*/
+        button:disabled {
+            background-color: #919191;
+            color: #666;
+            cursor: not-allowed;
+        }
+
         .edit-input {
             /* Styles for the edit input field */
             margin-top: 5px;
@@ -493,13 +500,6 @@
         #paginationControls1 input[type="number"] {
             /* Apply the input styling */
             margin-top: 15px
-        }
-
-        /*Disable and enable buttons*/
-        button:disabled {
-            background-color: #919191;
-            color: #666;
-            cursor: not-allowed;
         }
     </style>
 
@@ -625,7 +625,6 @@
         <option value="500" selected>500</option>
         <option value="600">600</option>
     </select>
-    <hr>
     <button class="conditional-btn" id="saveAndAnalyzeTTS" style="margin-right: 10px;">Analyze TTS</button>
     <label for="AnalyzeAccuracy">% Accuracy:</label>
     <select id="AnalyzeAccuracy" name="AnalyzeAccuracy" style="margin-right: 10px;">
@@ -644,7 +643,8 @@
         <button class="conditional-btn pagination-btn" id="prevPage">Previous</button>
         <span id="pageIndicator">Page 1 of X</span>
         <button class="conditional-btn pagination-btn" id="nextPage">Next</button>
-        <input type="number" id="jumpToPage" class="pagination-input" min="1" placeholder="Jump to Page">
+        <input type="number" id="jumpToPage" class="conditional-btn pagination-input" min="1"
+            placeholder="Jump to Page">
         <button class="conditional-btn pagination-btn" id="jumpButton">Go</button>
     </div>
     <div id="ttsListDisplay" class="tts-list-display">
@@ -654,7 +654,8 @@
         <button class="conditional-btn pagination-btn" id="prevPage1">Previous</button>
         <span id="pageIndicator1">Page 1 of X</span>
         <button class="conditional-btn pagination-btn" id="nextPage1">Next</button>
-        <input type="number" id="jumpToPage1" class="pagination-input" min="1" placeholder="Jump to Page">
+        <input type="number" id="jumpToPage1" class="conditional-btn pagination-input" min="1"
+            placeholder="Jump to Page">
         <button class="conditional-btn pagination-btn" id="jumpButton1">Go</button>
     </div>
 </div>
@@ -715,8 +716,6 @@
 
 
 </script>
-
-
 
 <script>
 
@@ -817,8 +816,6 @@
                 const accuracy = parseInt(document.getElementById('AnalyzeAccuracy').value) || 98;
                 const analyzeResponse = await fetch(`/api/trigger-analysis?threshold=${accuracy}`);
                 const analyzeData = await analyzeResponse.json();
-                console.log(analyzeData.message);
-                console.log(analyzeData.summary);
                 if (analyzeData.summary.flagged_ids && analyzeData.summary.flagged_ids.length > 0) {
                     // Update the global problematicIds array with the new flagged IDs
                     problematicIds = analyzeData.summary.flagged_ids;
@@ -859,6 +856,56 @@
             }
         });
     }
+
+    /////////////////////////////////
+    //////// Export SRT Subs ////////
+    /////////////////////////////////
+
+    document.getElementById('exportsrttitles').addEventListener('click', async function () {
+    showProgress(); // Call this function to show the progress indicator at the start of the process
+    try {
+        const ttsDataJSON = JSON.stringify(ttsList);
+
+        const saveResponse = await fetch('/api/save-tts-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: ttsDataJSON
+        });
+        const saveData = await saveResponse.json();
+        console.log(saveData.message);
+
+        if (saveData.message === "Data saved successfully") {
+            // Trigger the SRT generation and handle file download
+            const analyzeResponse = await fetch(`/api/srt-generation`);
+            if (analyzeResponse.ok) {
+                // Create a temporary anchor element
+                const a = document.createElement('a');
+                // Create a blob URL from the response
+                const blob = await analyzeResponse.blob();
+                const url = window.URL.createObjectURL(blob);
+                a.href = url;
+                // Set the download name for the file
+                a.download = "subtitles.srt";
+                // Append the anchor to the document
+                document.body.appendChild(a);
+                // Trigger the download
+                a.click();
+                // Clean up by removing the anchor element and revoking the blob URL
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } else {
+                console.log("Error running SRT generation.");
+            }
+        } else {
+            throw new Error('Data save was unsuccessful.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    } finally {
+        hideProgress(); // Hide the progress indicator when the process is complete or if an error occurs
+    }
+});
+
 
     ///////////////////////////////////////////
     //////// TTS Generation Activities ////////
@@ -1164,7 +1211,9 @@
         document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${lastPage}`;
         document.getElementById('pageIndicator1').innerText = `Page ${currentPage} of ${lastPage}`;
         document.getElementById('prevPage').disabled = (currentPage === 1);
+        document.getElementById('prevPage1').disabled = (currentPage === 1);
         document.getElementById('nextPage').disabled = (currentPage === lastPage);
+        document.getElementById('nextPage1').disabled = (currentPage === lastPage);
     }
 
 
@@ -1715,29 +1764,26 @@
 
     function updatePaginationControls() {
         const lastPage = Math.ceil(ttsList.length / itemsPerPage);
-        const pageIndicator = document.getElementById('pageIndicator');
-        if (pageIndicator) {
-            pageIndicator.textContent = `Page ${currentPage} of ${lastPage}`;
-        }
+        const prevPageButtons = document.querySelectorAll('.pagination-btn[id^="prevPage"]');
+        const nextPageButtons = document.querySelectorAll('.pagination-btn[id^="nextPage"]');
 
-        const prevPageButton = document.getElementById('prevPage');
-        if (prevPageButton) {
-            prevPageButton.disabled = (currentPage === 1);
-        }
+        // Update page indicators and buttons
+        prevPageButtons.forEach(btn => btn.disabled = (currentPage === 1));
+        nextPageButtons.forEach(btn => btn.disabled = (currentPage === lastPage));
 
-        const nextPageButton = document.getElementById('nextPage');
-        if (nextPageButton) {
-            nextPageButton.disabled = (currentPage === lastPage);
-        }
+        // Assuming the page indicators are consistent with button IDs
+        document.querySelectorAll('span[id^="pageIndicator"]').forEach(indicator => {
+            indicator.textContent = `Page ${currentPage} of ${lastPage}`;
+        });
 
-        // Similar updates for any additional pagination controls if you have them
-        // ...
+        // Update 'Jump to Page' inputs and 'Go' buttons
+        const jumpToPageInputs = document.querySelectorAll('.pagination-input[id^="jumpToPage"]');
+        const jumpButtons = document.querySelectorAll('.pagination-btn[id^="jumpButton"]');
+        const moreThanOnePage = lastPage > 1;
+
+        jumpToPageInputs.forEach(input => input.disabled = !moreThanOnePage);
+        jumpButtons.forEach(button => button.disabled = !moreThanOnePage);
     }
-
-
-
-
-
 
     //////////////////////////////
     //////// Other Things ////////
@@ -1753,10 +1799,6 @@
             buttons.forEach(button => button.disabled = false); // Enable buttons
         }
     }
-
-
-
-
 
     function updateLanguage(language) {
         // Update the language in your application logic

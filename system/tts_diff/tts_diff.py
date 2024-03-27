@@ -1,7 +1,32 @@
 import json
 import argparse
 from pathlib import Path
-# version 0.3
+import os
+import glob
+# version 0.5
+
+def find_files_in_path_with_wildcard(pattern):
+    # Split the system's PATH variable into a list of directories
+    search_path = os.environ.get('PATH', '').split(os.pathsep)
+    found_paths = []
+    # Iterate over each directory in the search path
+    for directory in search_path:
+        # Use glob to find all files matching the pattern in this directory
+        for file_path in glob.glob(os.path.join(directory, pattern)):
+            if os.path.isfile(file_path):  # Ensure it's a file
+                found_paths.append(file_path)
+    return found_paths
+
+def detect_cublas():
+    file_name = 'cublas64_11.*'
+    found_paths = find_files_in_path_with_wildcard(file_name)
+    if found_paths:
+        print("[AllTalk TTSDiff] \033[94mCublas64_11:\033[0m \033[92mDetected\033[0m", found_paths)
+    else:
+        print("[AllTalk TTSDiff] \033[94mCublas64_11:\033[0m \033[91mERROR Not Detected\033[0m")
+        print("[AllTalk TTSDiff] \033[94mPlease install Cublas64_11 from the Nvidia CUDA Toolkit v11.8 \033[0mhttps://github.com/erew123/alltalk_tts/tree/main\033[0m ")
+        exit(1)
+    return 
 
 parser = argparse.ArgumentParser(description="Compare TTS output with the original text using detailed comparison.")
 parser.add_argument("--threshold", type=int, default=98, help="Similarity threshold for considering a match (default: 98)")
@@ -170,9 +195,14 @@ def transcribe_and_compare(file_url, original_text, model, item_id, flagged_ids)
         flagged_ids.append(item_id)  # Track the ID for review
 
 def main():
-    print("[AllTalk TTSDiff] \033[94mJSON file:\033[0m", json_file_path)
-    print("[AllTalk TTSDiff] \033[94mWAV files:\033[0m", wav_file_path)
-    print("[AllTalk TTSDiff] \033[94mAccuracy :\033[0m", accuracy_threshold, "%")
+    print(f"[AllTalk TTSDiff]")
+    print(f"[AllTalk TTSDiff]")
+    print("[AllTalk TTSDiff] \033[92mStarting Compare of Text vs TTS:\033[0m")
+    print("[AllTalk TTSDiff]")
+    print("[AllTalk TTSDiff] \033[94mJSON file  :\033[92m", json_file_path, "\033[0m")
+    print("[AllTalk TTSDiff] \033[94mWAV files  :\033[92m", wav_file_path, "\033[0m")
+    print("[AllTalk TTSDiff] \033[94mAccuracy   :\033[92m", accuracy_threshold, "%", "\033[0m")
+    detect_cublas()
     model_size = "large-v3"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     #disclaimer_text()
@@ -201,17 +231,17 @@ def main():
     print(f"[AllTalk TTSDiff]")
     # Print summary information at the end
     if flagged_ids:
-        print(f"[AllTalk TTSDiff] \033[94mSummary:\033[0m IDs needing review:", ', '.join(map(str, flagged_ids)))
+        print(f"[AllTalk TTSDiff] \033[94mIDs needing review:\033[0m", ', '.join(map(str, flagged_ids)))
         print(f"[AllTalk TTSDiff]")
         print(f"[AllTalk TTSDiff] For ID's shown, in the TTS Generator, review and correct any lines by editing & regenerating as necessary.")
     else:
-        print("[AllTalk TTSDiff] \033[94mSummary:\033[0m No issues detected.")
+        print("[AllTalk TTSDiff] \033[94mIDs needing review:\033[0m No issues detected.")
     summary_data = {
         "flagged_ids": flagged_ids
     }
     with open(wav_file_path / "analysis_summary.json", "w") as summary_file:
         json.dump(summary_data, summary_file)
-    print(f"[AllTalk TTSDiff]")
+    print("[AllTalk TTSDiff]")
 
 if __name__ == "__main__":
     main()
