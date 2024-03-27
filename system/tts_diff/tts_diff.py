@@ -3,19 +3,25 @@ import argparse
 from pathlib import Path
 import os
 import glob
+import platform
 import site
 import subprocess
 import sys
-# version 0.5
+# version 0.8
 
-def find_files_in_site_packages_with_wildcard(pattern):
+def find_files_in_path_with_wildcard(pattern):
     # Get the site-packages directory of the current Python environment
     site_packages_path = site.getsitepackages()
     found_paths = []
+    # Adjust the sub-directory based on the operating system
+    sub_directory = "nvidia/cublas/bin"
+    if platform.system() == "Linux":
+        sub_directory = os.path.join(sub_directory, "lib")
+    
     # Iterate over each site-packages directory (there can be more than one)
     for directory in site_packages_path:
-        # Construct the search directory path, assuming 'nvidia/cublas' is a sub-directory
-        search_directory = os.path.join(directory, "nvidia", "cublas", "bin")
+        # Construct the search directory path
+        search_directory = os.path.join(directory, sub_directory)
         # Use glob to find all files matching the pattern in this directory
         for file_path in glob.glob(os.path.join(search_directory, pattern)):
             if os.path.isfile(file_path):  # Ensure it's a file
@@ -23,14 +29,16 @@ def find_files_in_site_packages_with_wildcard(pattern):
     return found_paths
 
 def detect_cublas():
-    file_name = 'cublas64_11.*'
-    found_paths = find_files_in_site_packages_with_wildcard(file_name)
+    # Use different file patterns based on the operating system
+    file_name_pattern = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
+    found_paths = find_files_in_site_packages_with_wildcard(file_name_pattern)
     if found_paths:
-        print("[AllTalk TTSDiff] \033[94mCublas64_11:\033[0m \033[92mDetected\033[0m", found_paths)
+        print("[AllTalk TTSDiff] \033[94mCublas:\033[0m \033[92mDetected\033[0m", found_paths)
     else:
-        print("[AllTalk TTSDiff] \033[94mCublas64_11:\033[0m \033[91mERROR Not Detected\033[0m")
-        print("[AllTalk TTSDiff] \033[94mPlease install Cublas64_11 from the Nvidia CUDA Toolkit v11.8 \033[0mhttps://github.com/erew123/alltalk_tts/tree/main\033[0m ")
+        print("[AllTalk TTSDiff] \033[94mCublas:\033[0m \033[91mERROR Not Detected\033[0m")
+        print("[AllTalk TTSDiff] \033[94mPlease install Cublas from the Nvidia CUDA Toolkit \033[0mhttps://developer.nvidia.com/cuda-downloads")
         exit(1)
+        
 
 parser = argparse.ArgumentParser(description="Compare TTS output with the original text using detailed comparison.")
 parser.add_argument("--threshold", type=int, default=98, help="Similarity threshold for considering a match (default: 98)")
@@ -80,7 +88,6 @@ try:
     import torch
     from fuzzywuzzy import fuzz
 except ImportError as e:
-    #disclaimer_text()
     print(f"[AllTalk TTSDiff] ERROR STARTING SCRIPT:")
     print("[AllTalk TTSDiff] An error occurred importing one or more required libraries.")
     print("[AllTalk TTSDiff] Please ensure you have \033[94mactivated your Python environment \033[0mand \033[94minstalled all requirements.\033[0m")
@@ -92,8 +99,7 @@ try:
     # Load a medium-sized spaCy model, adjust to "en_core_web_md" or "en_core_web_lg" as needed
     nlp = spacy.load("en_core_web_md")
 except Exception as e:
-    disclaimer_text()
-    print(f"[AllTalk TTSDiff] \nERROR STARTING SCRIPT:")
+    print(f"[AllTalk TTSDiff] ERROR STARTING SCRIPT:")
     print("[AllTalk TTSDiff] Failed to load the spaCy language model.")
     
     # Attempt to download the spaCy model automatically
@@ -169,7 +175,7 @@ def access_local_file(url):
     file_path = wav_file_path / file_name
     # Check if the file exists
     if not file_path.exists():
-        print(f"File does not exist: {file_path}")
+        print(f"[AllTalk TTSDiff] File does not exist: {file_path}")
         return None
     return file_path
 
@@ -218,9 +224,8 @@ def main():
     print("[AllTalk TTSDiff] \033[94mWAV files  :\033[92m", wav_file_path, "\033[0m")
     print("[AllTalk TTSDiff] \033[94mAccuracy   :\033[92m", accuracy_threshold, "%", "\033[0m")
     detect_cublas()
-    model_size = "large-v3"
+    model_size = "large-v2"
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    #disclaimer_text()
     model = WhisperModel(model_size, device=device, compute_type="float32")
     
     flagged_ids = []  # Initialize the list to track IDs needing review
@@ -248,7 +253,7 @@ def main():
     if flagged_ids:
         print(f"[AllTalk TTSDiff] \033[94mIDs needing review:\033[0m", ', '.join(map(str, flagged_ids)))
         print(f"[AllTalk TTSDiff]")
-        print(f"[AllTalk TTSDiff] For ID's shown, in the TTS Generator, review and correct any lines by editing & regenerating as necessary.")
+        print(f"[AllTalk TTSDiff] Review ID's and correct any lines by editing & regenerating as necessary.")
     else:
         print("[AllTalk TTSDiff] \033[94mIDs needing review:\033[0m No issues detected.")
     summary_data = {
