@@ -1072,6 +1072,23 @@ For generating **large amounts of TTS**, it's recommended to select the **No Pla
 - **Export/Import List:** Save your TTS list as a JSON file or import one. Note: Existing wav files are needed for playback. Exporting is handy if you want to take your files away into another program and have a list of which wav is which, or if you keep your audio files, but want to come back at a later date, edit one or two lines, regenerate the speech and re-combine the wav’s into one new long wav.
 #### ⬜ Exporting Your Audio
 - **Export to WAV:** Combine all generated TTS from the list, into one single WAV file for easy download and distribution. Its always recommended to export your list to a JSON before exporting, so that you have a backup, should something go wrong. You can simply re-import the list and try exporting again.<br><br>When exporting, there is a file size limit of 1GB and as such you have the option to choose how many files to include in each block of audio exported. 600 is just on the limit of 1GB, depending on the average file size, so 500 or less is a good amount to work with. You can combine the generated files after if you wish, in Audacity or similar.<br><br>Additionally, lower export batches will lower the memory requirements, so if your system is low on memory (maybe 8 or 16GB system), you can use smaller export batches to keep the memory requirement down.
+#### ⬜ Exporting Subtitles (SRT file)
+- **Export SRT:** This will scan through all wav files in your list and generate a subtitles file that will match your exported wav file.
+#### ⬜ Analyzing generated TTS for errors
+- **Analyze TTS:** This will scan through all wav files comparing each ID's orignal text with the TTS generated for that ID and then flag up inconsistences. Its important to understand this is a best effort process and not 100% perfect, for example:<br><br>
+   - Your text may have the word `their` and the automated routine that listens to your generated TTS interprets the word as `there`, aka a spelling difference.
+   - Your text may have `Examples are:` (note the colon) and the automated routine that listens to your generated TTS interprets the word as "Examples are` (note no colon as you cannot sound out a colon in TTS), aka a punctuation difference.
+   - Your text may have `There are 100 items` and the automated routine that listens to your generated TTS interprets the word as `There are one hundred items`, aka numbers vs the number written out in words.
+   - There will be other examples such as double quotes and many more examples.<br>
+
+As such, there is a `% Accuracy` setting. This uses a couple of methods to try find things that are similar e.g. taking the `their` and `there` example from above, it would identify that they both sound the same, so even if the text says `their` and the AI listening to the generated TTS interprets the word as `there`, it will realise that both sound the same/are similar so there is no need to flag that as an error. However, there are limits to this and some things may slip through or get picked up when you would prefer them not to be flagged.
+
+The higher the accuracy you choose, the more things it will flag up, however you may get more unwanted detections. The lower the less detections. Based on my few tests, accuracy settings between 96 to 98 seem to generally give the best results. However, I would highly recommend you test out a small 10-20 line text and test out the **Analyze TTS** button to get a feel for how it responds to different settings, as well as things it flags up.
+
+You will be able to see the ID's and Text (orignal and as interpreted) by looking at the terminal/command prompt window.
+
+The Analyze TTS feature uses the Whisper Larger-v2 AI engine, which will download on first use if necessary. This will require about 2.5GB's of disk space and could take a few minutes to download, depending on your internet connection.
+
 #### ⬜ Customization and Preferences
 - **Character Voice:** Choose the voice that will read your text.
 - **Language:** Select the language of your text.
