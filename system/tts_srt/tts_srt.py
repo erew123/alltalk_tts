@@ -9,12 +9,19 @@ parser.add_argument("--wavfilespath", help="Path to the wav outputs folder")
 args = parser.parse_args()
 
 if not args.ttslistpath:
-    parser.error("[AllTalk TTSDiff] Please specify the path to the ttslist.json file using the --ttslistpath argument.")
+    parser.error("[AllTalk TTSSRT] Please specify the path to the ttslist.json file using the --ttslistpath argument.")
 if not args.wavfilespath:
-    parser.error("[AllTalk TTSDiff] Please specify the path to the wavs output folder file using the --wavfilespath argument.")
+    parser.error("[AllTalk TTSSRT] Please specify the path to the wavs output folder file using the --wavfilespath argument.")
 
 json_file_path = Path(args.ttslistpath).resolve()
 audio_files_base_path = Path(args.wavfilespath).resolve()
+
+print(f"[AllTalk TTSSRT]")
+print("[AllTalk TTSSRT] \033[92mStarting SRT Subtitle generation:\033[0m")
+print("[AllTalk TTSSRT]")
+print("[AllTalk TTSSRT] \033[94mJSON file  :\033[92m", json_file_path, "\033[0m")
+print("[AllTalk TTSSRT] \033[94mWAV files  :\033[92m", audio_files_base_path, "\033[0m")
+print("[AllTalk TTSSRT]")
 
 # Function to convert time in seconds to SRT time format
 def format_srt_time(seconds):
@@ -36,10 +43,10 @@ srt_lines = []
 for entry in data:
     file_name = Path(entry['fileUrl']).name  # Get the file name from the URL
     file_path = audio_files_base_path / file_name
-    print(f"Processing file: {file_name}")
+    print(f"[AllTalk TTSSRT] Processing file: {file_name}")
 
     if not file_path.exists():
-        print(f"Audio file does not exist: {file_path}")
+        print(f"[AllTalk TTSSRT] Audio file does not exist: {file_path}")
         continue
 
     try:
@@ -56,7 +63,7 @@ for entry in data:
             # Update the start time for the next entry
             start_time = end_time
     except RuntimeError as e:
-        print(f"Error reading {file_path}: {e}")
+        print(f"[AllTalk TTSSRT] Error reading {file_path}: {e}")
 
 # Join all SRT lines into the final SRT content
 srt_content = "\n".join(srt_lines)
@@ -66,4 +73,5 @@ srt_file_path = audio_files_base_path / "subtitles.srt"
 with open(srt_file_path, "w") as srt_file:
     srt_file.write(srt_content)
 
-print(f"SRT file created at {srt_file_path}")
+print("[AllTalk TTSSRT]")
+print(f"[AllTalk TTSSRT] \033[94mSRT file created at \033[0m{srt_file_path}")
