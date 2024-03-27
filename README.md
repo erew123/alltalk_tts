@@ -469,7 +469,7 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 
 1. **Nvidia CUDA Development Toolkit Installation**:
    - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
+   - Install using your package manager (Recommended) e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
    - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
 
 2. **Open a Terminal Console**:
@@ -906,15 +906,25 @@ I would suggest that if its in an interview format, you cut out the interviewer 
 Yes you can. You would do these as multiple finetuning's, but its absolutely possible and fine to do. Finetuning the XTTS model does not restrict it to only being able to reproduce that 1x voice you trained it on. Finetuning is generally nuding the model in a direction to learn the ability to sound a bit more like a voice its not heard before. 
 
 #### ⚫ A note about anonymous training Telemetry information & disabling it
-Portions of Coqui's TTS trainer scripts gather anonymous training information which you can disable. Their statement on this is listed [here](https://github.com/coqui-ai/Trainer?tab=readme-ov-file#anonymized-telemetry). Although I have tried to pass `TRAINER_TELEMETRY=0` through AllTalk, it appears you will have to set this manually if you wish to finetune on a non-internet enabled computer or disable the anonymous data being sent. You can do this by:
+Portions of Coqui's TTS trainer scripts gather anonymous training information which you can disable. Their statement on this is listed [here](https://github.com/coqui-ai/Trainer?tab=readme-ov-file#anonymized-telemetry). If you start AllTalk Finetuning with `start_finetuning.bat` or `./start_finetuning.sh` telemetry will be disabled. If you manually want to disable it, please expand the below:
+
+<details>
+	<summary>Manually disable telemetry</summary><br>
+	
+Before starting finetuning, run the following in your terminal/command prompt:
 
 - On Windows by typing `set TRAINER_TELEMETRY=0`
 - On Linux & Mac by typing `export TRAINER_TELEMETRY=0`
 
-Before you start `finetune.py`. You will now be able to finetune offline and no anonymous training data will be sent. 
+Before you start `finetune.py`. You will now be able to finetune offline and no anonymous training data will be sent.
+</details>
 
 #### ⚫ Prerequisites for Fine-tuning with Nvidia CUDA Development Toolkit 11.8
 
+All the requirements for Finetuning will be installed by using the atsetup utility and installing your correct requirements (Standalone or for Text-generation-webui). The legacy manual instructions are stored below, however these shouldnt be required.
+
+<details>
+	<summary>Legacy manual instructions for installing Nvidia CUDA Development Toolkit 11.8</summary><br>
 - To perform fine-tuning, a specific portion of the **Nvidia CUDA Development Toolkit v11.8** must be installed. This is crucial for step 1 of fine-tuning. The objective is to minimize the installation footprint by installing only the essential components.
 - The **Nvidia CUDA Development Toolkit v11.8** operates independently from your graphics card drivers and the CUDA version utilized by your Python environment.
 - This installation process aims to keep the download and install size as minimal as possible, however a full install of the tookit requires 3GB's of disk space.
@@ -954,10 +964,12 @@ Before you start `finetune.py`. You will now be able to finetune offline and no 
 
 5. **Troubleshooting**:
    - If the correct version isn't reported, recheck your environment path settings for accuracy and potential conflicts with other CUDA versions.
+</details>
 
 #### Additional Note on Torch and Torchaudio:
 - Ensure Torch and Torchaudio are CUDA-enabled (any version), which is separate from the CUDA Toolkit installation. CUDA 11.8 corresponds to `cu118` and CUDA 12.1 to `cu121` in AllTalk diagnostics.
 - Failure to install CUDA for Torch and Torchaudio will result in Step 2 of fine-tuning failing. These requirements are distinct from the CUDA Toolkit installation, so avoid conflating the two.<br>
+
 
 #### ⚫ Starting Fine-tuning
 
@@ -972,6 +984,13 @@ Before you start `finetune.py`. You will now be able to finetune offline and no 
 
 Depending on your setup (Text-generation-webui or Standalone AllTalk), the steps to start the Python environment vary:
 
+- **For Standalone AllTalk Users**:
+  - Navigate to the `alltalk_tts` folder:
+    - `cd alltalk_tts`
+  - Start the Python environment:
+    - Windows: `start_finetune.bat`
+    - Linux: `./start_finetune.sh`
+    
 - **For Text-generation-webui Users**:
   - Navigate to the Text-generation-webui directory:
     - `cd text-generation-webui`
@@ -982,29 +1001,15 @@ Depending on your setup (Text-generation-webui or Standalone AllTalk), the steps
     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`
   - Move into the AllTalk directory:
     - `cd extensions/alltalk_tts`
+   - Start the fine-tuning process with the command:
+     - `python finetune.py`<br><br>
 
-- **For Standalone AllTalk Users**:
-  - Navigate to the `alltalk_tts` folder:
-    - `cd alltalk_tts`
-  - Start the Python environment:
-    - Windows: `start_environment.bat`
-    - Linux: `./start_environment.sh`<br><br>
-    
    > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
-3. **Install Fine-tuning Requirements**:
-   - If you haven't already, install the fine-tuning requirements:
-     - `pip install -r requirements_finetune.txt`
-
-4. **Initiate Fine-tuning**:
-   - Start the fine-tuning process with the command:
-     - `python finetune.py`
-     - From now on you will only need to start your Python environment, potentially set the CUDA path and run the above command when you want to use Finetuning.
-
-5. **Pre-Flight Checklist**:
+3. **Pre-Flight Checklist**:
    - Go through the pre-flight checklist to ensure readiness. Address any issues flagged as "Fail".
 
-6. **Post Fine-tuning Actions**:
+4. **Post Fine-tuning Actions**:
    - Upon completing fine-tuning, the final tab will guide you on managing your files and relocating your newly trained model to the appropriate directory.
 
 These steps guide you through the initial preparations, starting the Python environment based on your setup, and the fine-tuning process itself. Ensure all prerequisites are met to facilitate a smooth fine-tuning experience.
