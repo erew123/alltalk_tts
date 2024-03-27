@@ -460,8 +460,6 @@ You're now ready to launch Text-generation-webui. Note that you may need to reap
 #### 🔵 Linux Installation
 DeepSpeed requires access to the **Nvidia CUDA Development Toolkit** to compile on a Linux system. It's important to note that this toolkit is distinct and unrealted to your graphics card driver or the CUDA version the Python environment uses. 
 
-Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, compiling DeepSpeed with v11.8 will simplify things later down the line.
-
 <details>
 	<summary>Linux DeepSpeed - Text-generation-webui</summary>
 
@@ -469,8 +467,7 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 
 1. **Nvidia CUDA Development Toolkit Installation**:
    - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager (Recommended) e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
-   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
+   - Install using your package manager **(Recommended)** e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
 
 2. **Open a Terminal Console**:
    - After Nvidia CUDA Development Toolkit installation, access your terminal console.
@@ -517,8 +514,7 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 
 1. **Nvidia CUDA Development Toolkit Installation**:
    - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
-   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
+   - Install using your package manager **(Recommended)** e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
 
 2. **Open a Terminal Console**:
    - After Nvidia CUDA Development Toolkit installation, access your terminal console.
