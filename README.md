@@ -364,11 +364,11 @@ The update process closely mirrors the installation steps. Follow these to ensur
      - `git pull`
 
 5. **Install Updated Requirements**:
-   - Depending on your machine's graphics setup, install the required dependencies using pip:
-     - **For Nvidia Graphics Card Machines**:
-       - `pip install -r requirements_nvidia.txt`
-     - **For Other Machines (Mac, AMD, etc.)**:
-       - `pip install -r requirements_other.txt`
+   - Depending on your machine's OS, install the required dependencies using pip:
+     - **For Windows Machines**:
+       - `pip install -r system\requirements\requirements_textgen.txt`
+     - **For Linux/Mac**:
+       - `pip install -r system/requirements/requirements_textgen.txt`
 
 </details>
 
@@ -395,12 +395,12 @@ For Standalone Application users, here's how to update your setup:
    - Retrieve the latest changes from the repository with:
      - `git pull`
      
-3. **Install Requirements**:
-   - Update your installation by installing the necessary requirements based on your graphics hardware:
-     - **For Nvidia Graphics Card Machines**:
-       - `pip install -r requirements_nvidia.txt`
-     - **For Other Machines (Mac, AMD, etc.)**:
-       - `pip install -r requirements_other.txt`
+3. **Install Updated Requirements**:
+   - Depending on your machine's OS, install the required dependencies using pip:
+     - **For Windows Machines**:
+       - `pip install -r system\requirements\requirements_standalone.txt`
+     - **For Linux/Mac**:
+       - `pip install -r system/requirements/requirements_standalone.txt`
 
 </details>
 
@@ -424,7 +424,7 @@ The process involves renaming your existing `alltalk_tts` directory, setting up 
      - Windows: `cmd_windows.bat`
      - Linux: `./cmd_linux.sh`
      - macOS: `cmd_macos.sh`
-     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`
+     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`<br><br>
      
      > If you're not familiar with Python environments, see **Understanding Python Environments Simplified** in the Help section for more info.
 
@@ -436,11 +436,11 @@ The process involves renaming your existing `alltalk_tts` directory, setting up 
 4. **Install Requirements**:
    - Navigate to the newly cloned `alltalk_tts` directory and install the necessary dependencies for your system:
      - `cd alltalk_tts`
-   - Update your installation by installing the necessary requirements based on your graphics hardware:
-     - **For Nvidia Graphics Card Machines**:
-       - `pip install -r requirements_nvidia.txt`
-     - **For Other Machines (Mac, AMD, etc.)**:
-       - `pip install -r requirements_other.txt`
+   - Depending on your machine's OS, install the required dependencies using pip:
+     - **For Windows Machines**:
+       - `pip install -r system\requirements\requirements_textgen.txt`
+     - **For Linux/Mac**:
+       - `pip install -r system/requirements/requirements_textgen.txt`
 
 5. **Migrate Your Data**:
    - Before starting the application, transfer the `models`, `voices`, and `outputs` folders from `alltalk_tts.old` to the new `alltalk_tts` directory. This action preserves your voice history and prevents the need to re-download the model.
