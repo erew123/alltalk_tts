@@ -1060,6 +1060,13 @@ This will vary by system for a multitude of reasons, however, while generating a
 - **Stop Playback:** This will stop the current audio playing back. It does not stop the text from being generated however. 
 Once you have sent text off to be generated, either as a stream or wav file generation, the TTS server will remain busy until this process has competed. As such, think carefully as to how much you want to send to the server. 
 If you are generating wav files and populating the queue, you can generate one lot of text to speech, then input your next lot of text and it will continue adding to the list.
+#### ⬜ Customization and Preferences
+- **Character Voice:** Choose the voice that will read your text.
+- **Language:** Select the language of your text.
+- **Chunk Sizes:** Decide the size of text chunks for generation. Smaller sizes are recommended for better TTS quality.
+#### ⬜ Interface and Accessibility
+- **Dark/Light Mode:** Switch between themes for your visual comfort.
+- **Word Count and Generation Queue:** Keep track of the word count and the generation progress.
 #### ⬜ TTS Generation Modes
 - **Wav Chunks:** Perfect for creating audio books, or anything you want to keep long term. Breaks down your text into manageable wav files and queues them up. Generation begins automatically, and playback will start after a few chunks have been prepared ahead. You can set the volume to 0 if you don’t want to hear playback. With Wav chunks, you can edit and/or regenerate portions of the TTS as needed.
 - **Streaming:** For immediate playback without the ability to save. Ideal for on-the-fly speech generation and listening. This will not generate wav files and it will play back through your browser. You cannot stop the server generating the TTS once it has been sent.<br><br>
@@ -1089,13 +1096,6 @@ You will be able to see the ID's and Text (orignal and as interpreted) by lookin
 
 The Analyze TTS feature uses the Whisper Larger-v2 AI engine, which will download on first use if necessary. This will require about 2.5GB's of disk space and could take a few minutes to download, depending on your internet connection.
 
-#### ⬜ Customization and Preferences
-- **Character Voice:** Choose the voice that will read your text.
-- **Language:** Select the language of your text.
-- **Chunk Sizes:** Decide the size of text chunks for generation. Smaller sizes are recommended for better TTS quality.
-#### ⬜ Interface and Accessibility
-- **Dark/Light Mode:** Switch between themes for your visual comfort.
-- **Word Count and Generation Queue:** Keep track of the word count and the generation progress.
 #### ⬜ Tricks to get the model to say things correctly
 Sometimes the AI model won’t say something the way that you want it to. It could be because it’s a new word, an acronym or just something it’s not good at for whatever reason. There are some tricks you can use to improve the chances of it saying something correctly.
 
