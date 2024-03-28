@@ -99,17 +99,23 @@ echo    BASE REQUIREMENTS
 echo    1) Install AllTalk as a Standalone Application
 echo.
 echo    OPTIONAL
-echo    2) Delete AllTalk's custom Python environment
+echo    2) Git Pull the latest AllTalk updates from Github
+echo    3) Re-Apply/Update the requirements file
+echo    4) Delete AllTalk's custom Python environment
+echo    5) Purge the PIP cache
 echo.
 echo.   OTHER
-echo    4) Generate a diagnostics file
+echo    8) Generate a diagnostics file
 echo.
 echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p StandaloneOption="Enter your choice: "
 if "%StandaloneOption%"=="1" goto InstallCustomStandalone
-if "%StandaloneOption%"=="2" goto DeleteCustomStandalone
-if "%StandaloneOption%"=="4" goto GenerateDiagsStandalone
+if "%StandaloneOption%"=="2" goto STGitpull
+if "%StandaloneOption%"=="3" goto STReapplyrequirements
+if "%StandaloneOption%"=="4" goto STDeleteCustomStandalone
+if "%StandaloneOption%"=="5" goto STPurgepipcache
+if "%StandaloneOption%"=="8" goto GenerateDiagsStandalone
 if "%StandaloneOption%"=="9" goto End
 goto StandaloneMenu
 
@@ -384,7 +390,6 @@ echo @echo off > start_finetune.bat
 echo cd /D "%~dp0" >> start_finetune.bat
 echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_finetune.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_finetune.bat
-echo set TRAINER_TELEMETRY=0 >> start_finetune.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_finetune.bat
 echo call python finetune.py >> start_finetune.bat
 Echo.
@@ -395,7 +400,7 @@ Echo.
 pause
 goto StandaloneMenu
 
-:DeleteCustomStandalone
+:STDeleteCustomStandalone
 @rem Check if the alltalk_environment directory exists
 if not exist "%cd%\alltalk_environment\" (
     echo.
@@ -465,6 +470,144 @@ if %ERRORLEVEL% neq 0 (
 Echo.
 Echo.
 Echo    Diagnostics.log generated. Please scroll up to look over the log.
+Echo.
+pause
+goto StandaloneMenu
+
+:STReapplyrequirements
+cd /D "%~dp0"
+set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
+set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
+@rem Check if the Conda environment exists
+if not exist "%INSTALL_ENV_DIR%\python.exe" (
+    echo.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
+    echo. 
+    pause
+    goto StandaloneMenu
+)
+@rem Attempt to activate the Conda environment
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
+if errorlevel 1 (
+    echo. 
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+@rem Run Reapply requirements
+echo.
+echo     Downloading and installing PyTorch. This step can take a long time
+echo     depending on your internet connection and hard drive speed. Please
+echo     be patient.
+echo.
+pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+echo Installing other requirements.
+echo.
+pip install -r system\requirements\requirements_standalone.txt
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+echo Installing DeepSpeed...
+pip install deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+del deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+Echo.
+Echo.
+Echo    Requirements have been re-applied/updated.
+Echo.
+pause
+goto StandaloneMenu
+
+:STPurgepipcache
+cd /D "%~dp0"
+set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
+set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
+@rem Check if the Conda environment exists
+if not exist "%INSTALL_ENV_DIR%\python.exe" (
+    echo.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
+    echo. 
+    pause
+    goto StandaloneMenu
+)
+@rem Attempt to activate the Conda environment
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
+if errorlevel 1 (
+    echo. 
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+@rem Clear the PIP cache
+echo.
+echo     Purging the PIP cache of downloaded files.
+echo.
+pip cache purge
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+Echo.
+Echo    The PIP cache has been purged.
+Echo.
+pause
+goto StandaloneMenu
+
+:STGitpull
+cd /D "%~dp0"
+set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
+set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
+@rem Check if the Conda environment exists
+if not exist "%INSTALL_ENV_DIR%\python.exe" (
+    echo.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
+    echo. 
+    pause
+    goto StandaloneMenu
+)
+@rem Attempt to activate the Conda environment
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
+if errorlevel 1 (
+    echo. 
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+@rem Clear the PIP cache
+echo.
+echo     Pulling the latest updates. Please re-apply
+echo     the latest requirements file. (Option 3)
+echo.
+git pull
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error pulling from Github.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+Echo.
+echo     AllTalk Updated from Github. Please re-apply
+echo     the latest requirements file. (Option 3)
 Echo.
 pause
 goto StandaloneMenu
