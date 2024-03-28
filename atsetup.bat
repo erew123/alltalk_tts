@@ -61,7 +61,10 @@ echo    environment. If you have NOT done this, please run %L_GREEN%cmd_windows.
 echo    in the %L_GREEN%text-generation-webui%RESET% folder and then re-run this script.
 echo.
 echo    BASE REQUIREMENTS
-echo    1) Install the requirements for %L_GREEN%Text-generation-webui%RESET%.
+echo    1) Apply/Re-Apply the requirements for %L_GREEN%Text-generation-webui%RESET%.
+echo.
+echo    OPTIONAL
+echo    2) Git Pull the latest AllTalk updates from Github
 echo.
 echo    DEEPSPEED FOR %L_YELLOW=%PyTorch 2.1.x%RESET%
 echo    4) Install DeepSpeed v11.2 for CUDA %L_GREEN%11.8%RESET% and Python-3.11.x and %L_YELLOW%PyTorch 2.1.x%RESET%.
@@ -80,6 +83,7 @@ echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p WebUIOption="Enter your choice: "
 if "%WebUIOption%"=="1" goto InstallNvidiaTextGen
+if "%WebUIOption%"=="1" goto TGGitpull
 if "%WebUIOption%"=="4" goto InstallDeepSpeed118TextGen
 if "%WebUIOption%"=="5" goto InstallDeepSpeed121TextGen
 if "%WebUIOption%"=="6" goto InstallDeepSpeed121TextGenPytorch221
@@ -132,6 +136,23 @@ if %ERRORLEVEL% neq 0 (
 Echo.
 echo.
 Echo    Requirements installed successfully.
+Echo. 
+pause
+goto WebUIMenu
+
+:TGGitpull
+git pull
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error pulling from Github.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto WebUIMenu
+)
+Echo.
+echo     AllTalk Updated from Github. Please re-apply
+echo     the latest requirements file. (Option 1)
 Echo. 
 pause
 goto WebUIMenu
