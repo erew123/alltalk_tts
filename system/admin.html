@@ -212,7 +212,7 @@
 
 <body>
     <h1 id="toc">AllTalk TTS</h1>
-    <iframe src="http://{{ params.ip_address }}:{{ params.port_number }}/settings" width="100%" height="500"
+    <iframe src="http://{{ params.ip_address }}:{{ params.port_number }}/settings" width="100%" height="535"
         frameborder="0" style="margin: 0; padding: 0;"></iframe>
     <hr>
     <div style="display: flex; justify-content: flex-start; align-items: flex-start;">
@@ -2049,6 +2049,10 @@
                 </li>
                 <li>Move into the AllTalk directory:<ul>
                         <li><code>cd extensions/alltalk_tts</code></li>
+                    </ul>
+                </li>
+                <li><strong>Linux</strong> users only need to run this command:<ul>
+                        <li><code> export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`</code></li>
                     </ul>
                 </li>
                 <li>Start the fine-tuning process with the command:<ul>
