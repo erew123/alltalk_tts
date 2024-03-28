@@ -336,6 +336,9 @@ Currently the XTTS model is the main model used by AllTalk for TTS generation. I
 
 Maintaining the latest version of your setup ensures access to new features and improvements. Below are the steps to update your installation, whether you're using Text-Generation-webui or running as a Standalone Application.
 
+**NOTE** Future updates will be handled by using the `atsetup` utility.<br><br>
+**NOTE** If you have an install **prior to 28th March 2024** that you are updating, perform the `git pull` instructions below, then run the `atsetup` utility and select option 1 in either the Standalone ot Text-generation-webui menu (as matches your system). 
+
 <details>
 <summary>UPDATING - Text-Generation-webui</summary>
 <br>
