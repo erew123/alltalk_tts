@@ -94,7 +94,8 @@ nltk==3.8.1
 num2words==0.5.13
 numba==0.59.1
 numpy==1.26.4
-nvidia-cublas-cu11==11.11.3.6
+nvidia-cublas-cu11>=11.11.3.6
+nvidia-cudnn-cu11>=9.0.0.312
 onnxruntime==1.17.1
 orjson==3.9.15
 packaging==24.0
