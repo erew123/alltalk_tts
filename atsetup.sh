@@ -108,8 +108,8 @@ install_nvidia_textgen() {
 }
 
 tg_gitpull() {
-    echo "    Installing Requirements from $requirements_file..."
-    if ! pip install -r "$requirements_file"; then
+    echo
+    if ! git pull; then
         echo "    There was an error installing the requirements."
         echo "    Please check the output for details."
         read -p "    Press any key to return to the menu. " -n 1
@@ -203,6 +203,9 @@ standalone_menu() {
         echo "    4) Delete AllTalk's custom Python environment"
         echo "    5) Purge the PIP cache"
         echo
+        echo "    DEEPSPEED"
+        echo "    6) DeepSpeed Instructions/Install"
+        echo
         echo "    OTHER"        
         echo "    8) Generate a diagnostics file"
         echo
@@ -216,6 +219,7 @@ standalone_menu() {
             3) reapply_standalone ;;
             4) delete_custom_standalone ;;
             5) pippurge_standalone ;;
+            6) install_deepspeed ;;
             8) generate_diagnostics_standalone ;;
             9) exit 0 ;;
             *) echo "Invalid option"; sleep 2 ;;
