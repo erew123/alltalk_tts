@@ -117,10 +117,11 @@ def find_files_in_path_with_wildcard(pattern):
     site_packages_path = site.getsitepackages()
     found_paths = []
     # Adjust the sub-directory based on the operating system
-    sub_directory = "nvidia/cublas/bin"
+    sub_directory = "nvidia/cublas"
     if platform.system() == "Linux":
         sub_directory = os.path.join(sub_directory, "lib")
-    
+    else:
+        sub_directory = os.path.join(sub_directory, "bin")
     # Iterate over each site-packages directory (there can be more than one)
     for directory in site_packages_path:
         # Construct the search directory path
