@@ -96,13 +96,19 @@ install_nvidia_textgen() {
     local requirements_file="system/requirements/requirements_textgen.txt"
     echo "    Installing Requirements from $requirements_file..."
     if ! pip install -r "$requirements_file"; then
+        echo
         echo "    There was an error pulling from Github."
         echo "    Please check the output for details."
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
+    echo
     echo "    Requirements installed successfully."
+    echo
+    echo -e "    To install ${L_YELLOW}DeepSpeed${NC} on Linux, there are additional"
+    echo -e "    steps required. Please see the Github or documentation on DeepSeed."
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
@@ -110,14 +116,18 @@ install_nvidia_textgen() {
 tg_gitpull() {
     echo
     if ! git pull; then
+        echo
         echo "    There was an error installing the requirements."
         echo "    Please check the output for details."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
+    echo
     echo "    AllTalk Updated from Github. Please re-apply"
     echo "    the latest requirements file. (Option 1)"
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
@@ -163,12 +173,16 @@ uninstall_deepspeed() {
     echo "Uninstalling DeepSpeed..."
     pip uninstall -y deepspeed
     if [ $? -ne 0 ]; then
+        echo
         echo "    There was an error uninstalling DeepSpeed."
+        echo
         echo "    Press any key to return to the menu."
         read -n 1
         return
     fi
+    echo
     echo "    DeepSpeed uninstalled successfully."
+    echo
     echo "    Press any key to continue."
     read -n 1
 }
@@ -176,13 +190,17 @@ uninstall_deepspeed() {
 generate_diagnostics_textgen() {
     # Run diagnostics
     if ! python diagnostics.py; then
+        echo
         echo "    There was an error running diagnostics."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
-
-    echo "    Diagnostics completed successfully."
+    echo
+    echo "    Diagnostics log file generated successfully."
+    echo "    Please see diagnostics.log"
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
@@ -321,6 +339,9 @@ EOF
     echo -e "    Run ${L_YELLOW}./start_finetune.sh${NC} to start Finetuning."
     echo -e "    Run ${L_YELLOW}./start_environment.sh${NC} to start the AllTalk Python environment."
     echo
+    echo -e "    To install ${L_YELLOW}DeepSpeed${NC} on Linux, there are additional"
+    echo -e "    steps required. Please see the Github or documentation on DeepSeed."
+    echo
     read -p "    Press any key to continue. " -n 1
 }
 
@@ -355,8 +376,10 @@ generate_diagnostics_standalone() {
     local conda_root_prefix="${env_dir}/conda"
     local install_env_dir="${env_dir}/env"
     if [ ! -d "${install_env_dir}" ]; then
+        echo
         echo "    The Conda environment at '${install_env_dir}' does not exist."
         echo "    Please install the environment before proceeding."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
@@ -364,11 +387,14 @@ generate_diagnostics_standalone() {
     source "${conda_root_prefix}/etc/profile.d/conda.sh"
     conda activate "${install_env_dir}"
     if ! python diagnostics.py; then
+        echo
         echo "    There was an error running diagnostics."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
+    echo
     echo "    Diagnostics completed successfully."
     read -p "    Press any key to continue. " -n 1
     echo
@@ -379,8 +405,10 @@ gitpull_standalone() {
     local conda_root_prefix="${env_dir}/conda"
     local install_env_dir="${env_dir}/env"
     if [ ! -d "${install_env_dir}" ]; then
+        echo
         echo "    The Conda environment at '${install_env_dir}' does not exist."
         echo "    Please install the environment before proceeding."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
@@ -388,37 +416,33 @@ gitpull_standalone() {
     source "${conda_root_prefix}/etc/profile.d/conda.sh"
     conda activate "${install_env_dir}"
     if ! git pull; then
+        echo
         echo "    There was an error pulling from Github."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
+    echo
     echo "    AllTalk Updated from Github. Please re-apply."
     echo "    the latest requirements file. (Option 3)"
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
 
 pippurge_standalone() {
-    local env_dir="$PWD/alltalk_environment"
-    local conda_root_prefix="${env_dir}/conda"
-    local install_env_dir="${env_dir}/env"
-    if [ ! -d "${install_env_dir}" ]; then
-        echo "    The Conda environment at '${install_env_dir}' does not exist."
-        echo "    Please install the environment before proceeding."
-        read -p "    Press any key to return to the menu. " -n 1
-        echo
-        return
-    fi
-    source "${conda_root_prefix}/etc/profile.d/conda.sh"
-    conda activate "${install_env_dir}"
     if ! pip cache purge; then
+        echo
         echo "    There was an error."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
+    echo
     echo "    The PIP cache has been purged."
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
@@ -428,8 +452,10 @@ reapply_standalone() {
     local conda_root_prefix="${env_dir}/conda"
     local install_env_dir="${env_dir}/env"
     if [ ! -d "${install_env_dir}" ]; then
+        echo
         echo "    The Conda environment at '${install_env_dir}' does not exist."
         echo "    Please install the environment before proceeding."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
@@ -445,8 +471,9 @@ reapply_standalone() {
     echo "    Installing additional requirements."
     echo
     pip install -r system/requirements/requirements_standalone.txt
-    echo "    AllTalk Updated from Github. Please re-apply."
-    echo "    the latest requirements file. (Option 3)"
+    echo
+    echo "    Requirements have been re-applied/updated."
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
