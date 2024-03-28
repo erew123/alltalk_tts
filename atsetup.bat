@@ -352,7 +352,9 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
 
 echo.
-echo Downloading and installing Pytorch with CUDA. Please wait.
+echo     Downloading and installing PyTorch. This step can take a long time
+echo     depending on your internet connection and hard drive speed. Please
+echo     be patient.
 echo.
 pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 echo Installing other requirements.
@@ -382,6 +384,7 @@ echo @echo off > start_finetune.bat
 echo cd /D "%~dp0" >> start_finetune.bat
 echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_finetune.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_finetune.bat
+echo set TRAINER_TELEMETRY=0 >> start_finetune.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_finetune.bat
 echo call python finetune.py >> start_finetune.bat
 Echo.
