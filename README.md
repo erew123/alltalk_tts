@@ -996,7 +996,11 @@ Depending on your setup (Text-generation-webui or Standalone AllTalk), the steps
     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`
   - Move into the AllTalk directory:
     - `cd extensions/alltalk_tts`
-   - Start the fine-tuning process with the command:
+  - **Linux** users only need to run this command:
+    ```
+     export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
+    ```
+  - Start the fine-tuning process with the command:
      - `python finetune.py`<br><br>
 
    > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
