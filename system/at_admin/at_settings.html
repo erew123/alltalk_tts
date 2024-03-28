@@ -89,25 +89,25 @@
     <h3>AllTalk Startup Settings</h3><br>
     <form action="/update-settings" method="post">
 
-        <label for="activate" style="color: #33cc33;">Activate TTS:</label>
+        <label for="activate" style="color: #b273fa;">TG-webui Activate TTS:</label>
         <select id="activate" name="activate" required="">
             <option {% if data.activate %}selected{% endif %} value="true">True</option>
             <option {% if not data.activate %}selected{% endif %} value="false">False</option>
         </select>
 
-        <label for="autoplay" style="color: #33cc33;">&nbsp; &nbsp; Autoplay TTS output:</label>
+        <label for="autoplay" style="color: #b273fa;">&nbsp; &nbsp; TG-webui Autoplay TTS:</label>
         <select id="autoplay" name="autoplay" required="">
             <option {% if data.autoplay %}selected{% endif %} value="true">True</option>
             <option {% if not data.autoplay %}selected{% endif %} value="false">False</option>
         </select>
 
-        <label for="show_text" style="color: #33cc33;"> Show Text on generation:</label>
+        <label for="show_text" style="color: #b273fa;">TG-webui Show Text:</label>
         <select id="show_text" name="show_text" required="">
             <option {% if data.show_text %}selected{% endif %} value="true">True</option>
             <option {% if not data.show_text %}selected{% endif %} value="false">False</option>
         </select>
 
-        <label for="voice" style="color: #33cc33;">&nbsp; &nbsp; Default voice:</label>
+        <label for="voice" style="color: #b273fa;">&nbsp; &nbsp;  TG-webui Default voice:</label>
         <select id="voice" name="voice" required="">
             {% for file in wav_files %}
             <option value="{{ file }}" {% if data.voice==file %}selected{% endif %}>{{ file }}</option>
@@ -115,7 +115,7 @@
         </select>
 
 
-        <label for="language" style="color: #33cc33;">Default Language:</label>
+        <label for="language" style="color: #b273fa;">TG-webui Default Language:</label>
         <select id="language" name="language" required="">
             <option value="Arabic" {% if data.language=='Arabic' %}selected{% endif %}>Arabic</option>
             <option value="Chinese" {% if data.language=='Chinese' %}selected{% endif %}>Chinese</option>
@@ -135,20 +135,20 @@
             <option value="Turkish" {% if data.language=='Turkish' %}selected{% endif %}>Turkish</option>
         </select>
 
-        <label for="narrator_voice" style="color: #33cc33;">&nbsp; &nbsp; Narrator voice:</label>
+        <label for="narrator_voice" style="color: #b273fa;">&nbsp; &nbsp; TG-webui Narrator voice:</label>
         <select id="narrator_voice" name="narrator_voice" required="">
             {% for file in wav_files %}
             <option value="{{ file }}" {% if data.narrator_voice==file %}selected{% endif %}>{{ file }}</option>
             {% endfor %}
         </select>
 
-        <label for="remove_trailing_dots" style="color: #33cc33;"> Remove Trailing Dots:</label>
+        <label for="remove_trailing_dots" style="color: #b273fa;">TG-webui Remove Trailing Dots:</label>
         <select id="remove_trailing_dots" name="remove_trailing_dots" required="">
             <option {% if data.remove_trailing_dots %}selected{% endif %} value="true">True</option>
             <option {% if not data.remove_trailing_dots %}selected{% endif %} value="false">False</option>
         </select>
 
-        <label for="narrator_enabled" style="color: #33cc33;">&nbsp; &nbsp; Narrator enabled:</label>
+        <label for="narrator_enabled" style="color: #b273fa;">&nbsp; &nbsp; TG-webui Narrator enabled:</label>
         <select id="narrator_enabled" name="narrator_enabled" required="">
             <option {% if data.narrator_enabled %}selected{% endif %} value="true">True</option>
             <option {% if not data.narrator_enabled %}selected{% endif %} value="false">False</option>
