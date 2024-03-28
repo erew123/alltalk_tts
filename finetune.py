@@ -1492,6 +1492,7 @@ if __name__ == "__main__":
                 ◽ Audio clips shorter than 7 seconds are automatically excluded from the reference list, as they generally do not provide sufficient length for effective TTS generation.<br>
                 ◽ Should you find a lower number of reference files than anticipated, it may be due to the initial segmentation performed by Whisper (Step 1), which can occasionally result in clips that are too brief for our criteria or indeed too long. In such cases, consider manually segmenting your audio to give Whisper a better chance at generating training data and repeating the process.<br>
                 ### 🟦 <u>What you need to do</u>
+                ◽ **Click** the **Refresh Dropdowns** button to correctly populate the **Speaker Reference Audio** with all the available WAV samples.<br>
                 ◽ The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.<br>
                 ◽ You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.<br>
                 ◽ All the <span style="color: #3366ff;">Speaker Reference Audios</span> in the dropdown are ones that are <span style="color: #3366ff;">8 seconds</span> long or more. You can use one of these later for your voice sample in All Talk, so remember the one you like.<br>
