@@ -154,7 +154,6 @@ torchaudio>=2.2.0
 tqdm==4.66.2
 trainer==0.0.36
 transformers==4.39.1
-TTS==0.22.0
 typer==0.9.4
 typing_extensions==4.10.0
 tzdata==2024.1
