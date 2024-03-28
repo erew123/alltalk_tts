@@ -85,7 +85,7 @@ except ModuleNotFoundError:
 #### STARTUP VARIABLES ####
 ###########################
 # STARTUP VARIABLE - Import languges file for Gradio to be able to display them in the interface
-with open(this_dir / "languages.json", encoding="utf8") as f:
+with open(this_dir / "system" / "config" / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
 # Create a global lock
 process_lock = threading.Lock()
@@ -347,26 +347,26 @@ def send_reload_request(tts_method):
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_tts"] = True
                 params["deepspeed_activate"] = False
-                audio_path = this_dir / "templates" / "apitts.wav"
+                audio_path = this_dir / "system" / "at_sounds" / "apitts.wav"
                 tts_method_xtts_ft = False
             elif tts_method == "API Local":
                 params["tts_method_api_tts"] = False
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_local"] = True
                 params["deepspeed_activate"] = False
-                audio_path = this_dir / "templates" / "apilocal.wav"
+                audio_path = this_dir / "system" / "at_sounds" / "apilocal.wav"
                 tts_method_xtts_ft = False
             elif tts_method == "XTTSv2 Local":
                 params["tts_method_api_tts"] = False
                 params["tts_method_api_local"] = False
                 params["tts_method_xtts_local"] = True
-                audio_path = this_dir / "templates" / "xttslocal.wav"
+                audio_path = this_dir / "system" / "at_sounds" / "xttslocal.wav"
                 tts_method_xtts_ft = False
             elif tts_method == "XTTSv2 FT":
                 params["tts_method_api_tts"] = False
                 params["tts_method_api_local"] = False
                 params["tts_method_xtts_local"] = False
-                audio_path = this_dir / "templates" / "xttsfinetuned.wav"
+                audio_path = this_dir / "system" / "at_sounds" / "xttsfinetuned.wav"
                 tts_method_xtts_ft = True
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
@@ -385,9 +385,9 @@ def send_lowvram_request(low_vram):
     try:
         params["tts_model_loaded"] = False
         if low_vram:
-            audio_path = this_dir / "templates" / "lowvramenabled.wav"
+            audio_path = this_dir / "system" / "at_sounds" / "lowvramenabled.wav"
         else:
-            audio_path = this_dir / "templates" / "lowvramdisabled.wav"
+            audio_path = this_dir / "system" / "at_sounds" / "lowvramdisabled.wav"
         url = f"{base_url}/api/lowvramsetting?new_low_vram_value={low_vram}"
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, headers=headers)
@@ -414,9 +414,9 @@ def send_deepspeed_request(deepspeed_param):
     try:
         params["tts_model_loaded"] = False
         if deepspeed_param:
-            audio_path = this_dir / "templates" / "deepspeedenabled.wav"
+            audio_path = this_dir / "system" / "at_sounds" / "deepspeedenabled.wav"
         else:
-            audio_path = this_dir / "templates" / "deepspeeddisabled.wav"
+            audio_path = this_dir / "system" / "at_sounds" / "deepspeeddisabled.wav"
 
         url = f"{base_url}/api/deepspeed?new_deepspeed_value={deepspeed_param}"
         headers = {"Content-Type": "application/json"}
@@ -511,7 +511,7 @@ def combine(audio_files, output_folder, state):
 ################################
 # PREVIEW VOICE - Generate Random Sentence if Voice Preview box is empty
 def random_sentence():
-    with open(this_dir / "harvard_sentences.txt") as f:
+    with open(this_dir / "system" / "config" / "harvard_sentences.txt") as f:
         return random.choice(list(f))
 
 
