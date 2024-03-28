@@ -64,9 +64,12 @@ webui_menu() {
         echo -e "    in the ${L_GREEN}text-generation-webui${NC} folder and then re-run this script."
         echo
         echo "    BASE REQUIREMENTS"
-        echo -e "    1) Install the AllTalk requirements for an ${L_GREEN}Text-generation-webui${NC}"
+        echo -e "    1) Apply/Re-Apply the requirements for an ${L_GREEN}Text-generation-webui${NC}"
         echo
         echo "    OPTIONAL"
+        echo "    2) Git Pull the latest AllTalk updates from Github"
+        echo
+        echo "    DEEPSPEED"
         echo "    4) Install DeepSpeed."
         echo "    5) Uninstall DeepSpeed."
         echo
@@ -79,6 +82,7 @@ webui_menu() {
 
         case $webui_option in
             1) install_nvidia_textgen ;;
+            2) tg_gitpull ;;
             4) install_deepspeed ;;
             5) uninstall_deepspeed ;;
             6) generate_diagnostics_textgen ;;
@@ -89,16 +93,31 @@ webui_menu() {
 }
 
 install_nvidia_textgen() {
-    local requirements_file="requirements_nvidia.txt"
-    echo "    Installing Finetune requirements from $requirements_file..."
+    local requirements_file="system/requirements/requirements_textgen.txt"
+    echo "    Installing Requirements from $requirements_file..."
     if ! pip install -r "$requirements_file"; then
-        echo "    There was an error installing the Nvidia requirements."
+        echo "    There was an error pulling from Github."
         echo "    Please check the output for details."
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
-    echo "    Nvidia requirements installed successfully."
+    echo "    Requirements installed successfully."
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+tg_gitpull() {
+    echo "    Installing Requirements from $requirements_file..."
+    if ! pip install -r "$requirements_file"; then
+        echo "    There was an error installing the requirements."
+        echo "    Please check the output for details."
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    echo "    AllTalk Updated from Github. Please re-apply"
+    echo "    the latest requirements file. (Option 1)"
     read -p "    Press any key to continue. " -n 1
     echo
 }
@@ -179,11 +198,13 @@ standalone_menu() {
         echo "    1) Install AllTalk as a Standalone Application"
         echo
         echo "    OPTIONAL"
-        echo "    2) Delete AllTalk's custom Python environment"
-        echo "    4) Install DeepSpeed."
+        echo "    2) Git Pull the latest AllTalk updates from Github"
+        echo "    3) Re-Apply/Update the requirements file"
+        echo "    4) Delete AllTalk's custom Python environment"
+        echo "    5) Purge the PIP cache"
         echo
         echo "    OTHER"        
-        echo "    5) Generate a diagnostics file"
+        echo "    8) Generate a diagnostics file"
         echo
         echo -e "    9)${L_RED} Exit/Quit${NC}"
         echo
@@ -191,14 +212,17 @@ standalone_menu() {
 
         case $standalone_option in
             1) install_custom_standalone ;;
-            2) delete_custom_standalone ;;
-            4) install_deepspeed ;;
-            5) generate_diagnostics_standalone ;;
+            2) gitpull_standalone ;;
+            3) reapply_standalone ;;
+            4) delete_custom_standalone ;;
+            5) pippurge_standalone ;;
+            8) generate_diagnostics_standalone ;;
             9) exit 0 ;;
             *) echo "Invalid option"; sleep 2 ;;
         esac
     done
 }
+
 
 install_custom_standalone() {
     cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -342,6 +366,83 @@ generate_diagnostics_standalone() {
         return
     fi
     echo "    Diagnostics completed successfully."
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+gitpull_standalone() {
+    local env_dir="$PWD/alltalk_environment"
+    local conda_root_prefix="${env_dir}/conda"
+    local install_env_dir="${env_dir}/env"
+    if [ ! -d "${install_env_dir}" ]; then
+        echo "    The Conda environment at '${install_env_dir}' does not exist."
+        echo "    Please install the environment before proceeding."
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    source "${conda_root_prefix}/etc/profile.d/conda.sh"
+    conda activate "${install_env_dir}"
+    if ! git pull; then
+        echo "    There was an error pulling from Github."
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    echo "    AllTalk Updated from Github. Please re-apply."
+    echo "    the latest requirements file. (Option 3)"
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+pippurge_standalone() {
+    local env_dir="$PWD/alltalk_environment"
+    local conda_root_prefix="${env_dir}/conda"
+    local install_env_dir="${env_dir}/env"
+    if [ ! -d "${install_env_dir}" ]; then
+        echo "    The Conda environment at '${install_env_dir}' does not exist."
+        echo "    Please install the environment before proceeding."
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    source "${conda_root_prefix}/etc/profile.d/conda.sh"
+    conda activate "${install_env_dir}"
+    if ! pip cache purge; then
+        echo "    There was an error."
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    echo "    The PIP cache has been purged."
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+reapply_standalone() {
+    local env_dir="$PWD/alltalk_environment"
+    local conda_root_prefix="${env_dir}/conda"
+    local install_env_dir="${env_dir}/env"
+    if [ ! -d "${install_env_dir}" ]; then
+        echo "    The Conda environment at '${install_env_dir}' does not exist."
+        echo "    Please install the environment before proceeding."
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    source "${conda_root_prefix}/etc/profile.d/conda.sh"
+    conda activate "${install_env_dir}"
+    echo
+    echo "    Downloading and installing PyTorch. This step can take a long time"
+    echo "    depending on your internet connection and hard drive speed. Please"
+    echo "    be patient."
+    pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+    echo
+    echo "    Installing additional requirements."
+    echo
+    pip install -r system/requirements/requirements_standalone.txt
+    echo "    AllTalk Updated from Github. Please re-apply."
+    echo "    the latest requirements file. (Option 3)"
     read -p "    Press any key to continue. " -n 1
     echo
 }

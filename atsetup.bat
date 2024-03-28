@@ -83,7 +83,7 @@ echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p WebUIOption="Enter your choice: "
 if "%WebUIOption%"=="1" goto InstallNvidiaTextGen
-if "%WebUIOption%"=="1" goto TGGitpull
+if "%WebUIOption%"=="2" goto TGGitpull
 if "%WebUIOption%"=="4" goto InstallDeepSpeed118TextGen
 if "%WebUIOption%"=="5" goto InstallDeepSpeed121TextGen
 if "%WebUIOption%"=="6" goto InstallDeepSpeed121TextGenPytorch221
@@ -152,7 +152,7 @@ if %ERRORLEVEL% neq 0 (
 )
 Echo.
 echo     AllTalk Updated from Github. Please re-apply
-echo     the latest requirements file. (Option 1)
+echo     the latest requirements file. Option 1
 Echo. 
 pause
 goto WebUIMenu
@@ -612,10 +612,10 @@ if errorlevel 1 (
     pause
     goto StandaloneMenu
 )
-@rem Clear the PIP cache
+@rem Pull from Github
 echo.
 echo     Pulling the latest updates. Please re-apply
-echo     the latest requirements file. (Option 3)
+echo     the latest requirements file. Option 3
 echo.
 git pull
 if %ERRORLEVEL% neq 0 (
@@ -628,7 +628,7 @@ if %ERRORLEVEL% neq 0 (
 )
 Echo.
 echo     AllTalk Updated from Github. Please re-apply
-echo     the latest requirements file. (Option 3)
+echo     the latest requirements file. Option 3
 Echo.
 pause
 goto StandaloneMenu
