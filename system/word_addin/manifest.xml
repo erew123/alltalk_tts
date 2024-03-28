@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
+  <Id>68b6ad53-4f72-42a8-a971-a9643c2f409a</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>AllTalk</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="AllTalk TTS"/>
+  <Description DefaultValue="Enhance your document creation with AllTalk TTS's advanced text-to-voice functionality. Requires connection to AllTalk server."/>
+  <IconUrl DefaultValue="http://127.0.0.1:7851/api/word_addin/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="http://127.0.0.1:7851/api/word_addin/assets/icon-64.png"/>
+  <SupportUrl DefaultValue="https://github.com/erew123/alltalk_tts/issues"/>
+  <AppDomains>
+    <AppDomain>https://www.contoso.com</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="http://127.0.0.1:7851/api/word_addin/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <!-- You can add GetStarted information here if needed -->
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="AllTalkGroup">
+                <Label resid="AllTalkGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="AllTalkTaskpaneButton">
+                  <Label resid="AllTalkTaskpaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="AllTalkTaskpaneButton.Label"/>
+                    <Description resid="AllTalkTaskpaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>ButtonId1</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="http://127.0.0.1:7851/api/word_addin/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="http://127.0.0.1:7851/api/word_addin/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="http://127.0.0.1:7851/api/word_addin/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <!-- Ensure that these URLs are pointing to valid locations -->
+        <bt:Url id="Commands.Url" DefaultValue="http://127.0.0.1:7851/api/word_addin/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="http://127.0.0.1:7851/api/word_addin/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="AllTalkGroup.Label" DefaultValue="AllTalk Controls"/>
+        <bt:String id="AllTalkTaskpaneButton.Label" DefaultValue="Open AllTalk"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="AllTalkTaskpaneButton.Tooltip" DefaultValue="Open the AllTalk task pane to start using the add-in."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

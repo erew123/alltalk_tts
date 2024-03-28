@@ -64,11 +64,12 @@ webui_menu() {
         echo -e "    in the ${L_GREEN}text-generation-webui${NC} folder and then re-run this script."
         echo
         echo "    BASE REQUIREMENTS"
-        echo -e "    1) Install the AllTalk requirements for an ${L_GREEN}Nvidia GPU machine.${NC}"
-        echo -e "    2) Install the AllTalk requirements for an ${L_GREEN}AMD or MAC machine.${NC}"
+        echo -e "    1) Apply/Re-Apply the requirements for an ${L_GREEN}Text-generation-webui${NC}"
         echo
         echo "    OPTIONAL"
-        echo "    3) Install the Finetuning requirements."
+        echo "    2) Git Pull the latest AllTalk updates from Github"
+        echo
+        echo "    DEEPSPEED"
         echo "    4) Install DeepSpeed."
         echo "    5) Uninstall DeepSpeed."
         echo
@@ -81,8 +82,7 @@ webui_menu() {
 
         case $webui_option in
             1) install_nvidia_textgen ;;
-            2) install_other_textgen ;;
-            3) install_finetune_textgen ;;
+            2) tg_gitpull ;;
             4) install_deepspeed ;;
             5) uninstall_deepspeed ;;
             6) generate_diagnostics_textgen ;;
@@ -93,52 +93,40 @@ webui_menu() {
 }
 
 install_nvidia_textgen() {
-    local requirements_file="requirements_nvidia.txt"
-    echo "    Installing Finetune requirements from $requirements_file..."
+    local requirements_file="system/requirements/requirements_textgen.txt"
+    echo "    Installing Requirements from $requirements_file..."
     if ! pip install -r "$requirements_file"; then
-        echo "    There was an error installing the Nvidia requirements."
+        echo
+        echo "    There was an error pulling from Github."
         echo "    Please check the output for details."
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
-    echo "    Nvidia requirements installed successfully."
+    echo
+    echo "    Requirements installed successfully."
+    echo
+    echo -e "    To install ${L_YELLOW}DeepSpeed${NC} on Linux, there are additional"
+    echo -e "    steps required. Please see the Github or documentation on DeepSeed."
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
 
-install_other_textgen() {
-    local requirements_file="requirements_other.txt"
-    echo "    Installing Other machine requirements from $requirements_file..."
-    if ! pip install -r "$requirements_file"; then
-        echo "    There was an error installing the Other requirements."
-        echo "    Please check the output for details."
-        read -p "    Press any key to return to the menu. " -n 1
-        echo
-        return
-    fi
-    echo "    Other machine requirements installed successfully."
-    read -p "    Press any key to continue. " -n 1
+tg_gitpull() {
     echo
-}
-
-install_finetune_textgen() {
-    local requirements_file="requirements_finetune.txt"
-    echo "    Installing Finetune requirements from $requirements_file..."
-    if ! pip install -r "$requirements_file"; then
-        echo "    There was an error installing the Finetune requirements."
+    if ! git pull; then
+        echo
+        echo "    There was an error installing the requirements."
         echo "    Please check the output for details."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
     echo
-    echo "    Finetune base requirements installed successfully."
-    echo
-    echo -e "    Finetuning requires access to ${GREEN}Cublas${NC} from the ${GREEN}Nvidia CUDA Toolkit${NC}, so will need installing."
-    echo
-    echo -e "    Instructions can be found here:"
-    echo -e "    ${GREEN}https://github.com/erew123/alltalk_tts?#-finetuning-a-model${NC}"
+    echo "    AllTalk Updated from Github. Please re-apply"
+    echo "    the latest requirements file. (Option 1)"
     echo
     read -p "    Press any key to continue. " -n 1
     echo
@@ -185,12 +173,16 @@ uninstall_deepspeed() {
     echo "Uninstalling DeepSpeed..."
     pip uninstall -y deepspeed
     if [ $? -ne 0 ]; then
+        echo
         echo "    There was an error uninstalling DeepSpeed."
+        echo
         echo "    Press any key to return to the menu."
         read -n 1
         return
     fi
+    echo
     echo "    DeepSpeed uninstalled successfully."
+    echo
     echo "    Press any key to continue."
     read -n 1
 }
@@ -198,13 +190,17 @@ uninstall_deepspeed() {
 generate_diagnostics_textgen() {
     # Run diagnostics
     if ! python diagnostics.py; then
+        echo
         echo "    There was an error running diagnostics."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
-
-    echo "    Diagnostics completed successfully."
+    echo
+    echo "    Diagnostics log file generated successfully."
+    echo "    Please see diagnostics.log"
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }
@@ -220,12 +216,16 @@ standalone_menu() {
         echo "    1) Install AllTalk as a Standalone Application"
         echo
         echo "    OPTIONAL"
-        echo "    2) Delete AllTalk's custom Python environment"
-        echo "    3) Install the Finetuning requirements"
-        echo "    4) Install DeepSpeed."
+        echo "    2) Git Pull the latest AllTalk updates from Github"
+        echo "    3) Re-Apply/Update the requirements file"
+        echo "    4) Delete AllTalk's custom Python environment"
+        echo "    5) Purge the PIP cache"
+        echo
+        echo "    DEEPSPEED"
+        echo "    6) DeepSpeed Instructions/Install"
         echo
         echo "    OTHER"        
-        echo "    5) Generate a diagnostics file"
+        echo "    8) Generate a diagnostics file"
         echo
         echo -e "    9)${L_RED} Exit/Quit${NC}"
         echo
@@ -233,15 +233,18 @@ standalone_menu() {
 
         case $standalone_option in
             1) install_custom_standalone ;;
-            2) delete_custom_standalone ;;
-            3) install_finetune_standalone ;;
-            4) install_deepspeed ;;
-            5) generate_diagnostics_standalone ;;
+            2) gitpull_standalone ;;
+            3) reapply_standalone ;;
+            4) delete_custom_standalone ;;
+            5) pippurge_standalone ;;
+            6) install_deepspeed ;;
+            8) generate_diagnostics_standalone ;;
             9) exit 0 ;;
             *) echo "Invalid option"; sleep 2 ;;
         esac
     done
 }
+
 
 install_custom_standalone() {
     cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -284,39 +287,15 @@ install_custom_standalone() {
     # Activate the environment and install requirements
     source "${CONDA_ROOT_PREFIX}/etc/profile.d/conda.sh"
     conda activate "${INSTALL_ENV_DIR}"
-
     echo
-    echo -e "    ${L_BLUE}Choose the type of requirements to install${NC}"
+    echo "    Downloading and installing PyTorch. This step can take a long time"
+    echo "    depending on your internet connection and hard drive speed. Please"
+    echo "    be patient."
+    pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
     echo
-    echo "    1. Nvidia graphics card machines"
-    echo "    2. Other machines (mac, amd, etc)"
+    echo "    Installing additional requirements."
     echo
-    read -p "    Enter your choice (1 or 2): " user_choice
-
-    if [ "$user_choice" == "1" ]; then
-    	pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --upgrade --force-reinstall --index-url https://download.pytorch.org/whl/cu121
-    	pip install numpy==1.24.4
-	pip install typing-extensions>=4.8.0
-	pip install networkx<3.0.0,>=2.5.0
-    	pip install fsspec>=2023.6.0
-	pip install soundfile==0.12.1
-    	pip install uvicorn==0.24.0.post1
-        pip install transformers>=4.37.1
-    	pip install TTS==0.22.0
-    	pip install fastapi==0.104.1
-    	pip install Jinja2==3.1.2
-    	pip install requests==2.31.0
-    	pip install tqdm==4.66.1
-    	pip install importlib-metadata==4.8.1
-    	pip install packaging==23.2
-    	pip install pydantic==1.10.13
-    	pip install sounddevice==0.4.6
-    	pip install python-multipart==0.0.6
-        pip install cutlet>=0.3.0
-    	pip install unidic-lite>=1.0.8
-    else
-        pip install -r requirements_other.txt
-    fi
+    pip install -r system/requirements/requirements_standalone.txt
     # Create start_environment.sh to run AllTalk
     cat << EOF > start_environment.sh
 #!/bin/bash
@@ -333,26 +312,41 @@ unset PYTHONPATH
 unset PYTHONHOME
 export CUDA_PATH="$INSTALL_ENV_DIR"
 export CUDA_HOME="$CUDA_PATH"
+export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
 # activate env
 bash --init-file <(echo "source \"$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh\" && conda activate \"$INSTALL_ENV_DIR\"")
 EOF
     # Create start_alltalk.sh to run AllTalk
     cat << EOF > start_alltalk.sh
 #!/bin/bash
+export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
 source "${CONDA_ROOT_PREFIX}/etc/profile.d/conda.sh"
 conda activate "${INSTALL_ENV_DIR}"
 python script.py
 EOF
+    # Create start_finetune.sh to run AllTalk
+    cat << EOF > start_finetune.sh
+#!/bin/bash
+export TRAINER_TELEMETRY=0
+export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
+source "${CONDA_ROOT_PREFIX}/etc/profile.d/conda.sh"
+conda activate "${INSTALL_ENV_DIR}"
+python finetune.py
+EOF
     chmod +x start_alltalk.sh
     chmod +x start_environment.sh
+    chmod +x start_finetune.sh
     echo
     echo
-    echo -e "    start_alltalk.sh has been created."
-    echo -e "    You can now start AllTalk with ${L_YELLOW}./start_alltalk.sh${NC}"
+    echo -e "    Run ${L_YELLOW}./start_alltalk.sh${NC} to start AllTalk."
+    echo -e "    Run ${L_YELLOW}./start_finetune.sh${NC} to start Finetuning."
+    echo -e "    Run ${L_YELLOW}./start_environment.sh${NC} to start the AllTalk Python environment."
+    echo
+    echo -e "    To install ${L_YELLOW}DeepSpeed${NC} on Linux, there are additional"
+    echo -e "    steps required. Please see the Github or documentation on DeepSeed."
     echo
     read -p "    Press any key to continue. " -n 1
 }
-
 
 delete_custom_standalone() {
     local env_dir="$PWD/alltalk_environment"
@@ -380,47 +374,15 @@ delete_custom_standalone() {
     echo
 }
 
-install_finetune_standalone() {
-    local env_dir="$PWD/alltalk_environment"
-    local conda_root_prefix="${env_dir}/conda"
-    local install_env_dir="${env_dir}/env"
-    if [ ! -d "${install_env_dir}" ]; then
-        echo "    The Conda environment at '${install_env_dir}' does not exist."
-        echo "    Please install the environment before proceeding."
-        read -p "    Press any key to return to the menu. " -n 1
-        echo
-        return
-    fi
-    source "${conda_root_prefix}/etc/profile.d/conda.sh"
-    conda activate "${install_env_dir}"
-    local requirements_file="requirements_finetune.txt"
-    echo "Installing Finetune requirements from $requirements_file..."
-    if ! pip install -r "$requirements_file"; then
-        echo "    There was an error installing the Finetune requirements."
-        echo "    Please check the output for details."
-        read -p "    Press any key to return to the menu. " -n 1
-        echo
-        return
-    fi
-    echo
-    echo "    Finetune base requirements installed successfully."
-    echo
-    echo -e "    Finetuning requires access to ${GREEN}Cublas${NC} from the ${GREEN}Nvidia CUDA Toolkit${NC}, so will need installing."
-    echo
-    echo -e "    Instructions can be found here:"
-    echo -e "    ${GREEN}https://github.com/erew123/alltalk_tts?#-finetuning-a-model${NC}"
-    echo
-    read -p "    Press any key to continue. " -n 1
-    echo
-}
-
 generate_diagnostics_standalone() {
     local env_dir="$PWD/alltalk_environment"
     local conda_root_prefix="${env_dir}/conda"
     local install_env_dir="${env_dir}/env"
     if [ ! -d "${install_env_dir}" ]; then
+        echo
         echo "    The Conda environment at '${install_env_dir}' does not exist."
         echo "    Please install the environment before proceeding."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
@@ -428,12 +390,93 @@ generate_diagnostics_standalone() {
     source "${conda_root_prefix}/etc/profile.d/conda.sh"
     conda activate "${install_env_dir}"
     if ! python diagnostics.py; then
+        echo
         echo "    There was an error running diagnostics."
+        echo
         read -p "    Press any key to return to the menu. " -n 1
         echo
         return
     fi
+    echo
     echo "    Diagnostics completed successfully."
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+gitpull_standalone() {
+    local env_dir="$PWD/alltalk_environment"
+    local conda_root_prefix="${env_dir}/conda"
+    local install_env_dir="${env_dir}/env"
+    if [ ! -d "${install_env_dir}" ]; then
+        echo
+        echo "    The Conda environment at '${install_env_dir}' does not exist."
+        echo "    Please install the environment before proceeding."
+        echo
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    source "${conda_root_prefix}/etc/profile.d/conda.sh"
+    conda activate "${install_env_dir}"
+    if ! git pull; then
+        echo
+        echo "    There was an error pulling from Github."
+        echo
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    echo
+    echo "    AllTalk Updated from Github. Please re-apply."
+    echo "    the latest requirements file. (Option 3)"
+    echo
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+pippurge_standalone() {
+    if ! pip cache purge; then
+        echo
+        echo "    There was an error."
+        echo
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    echo
+    echo "    The PIP cache has been purged."
+    echo
+    read -p "    Press any key to continue. " -n 1
+    echo
+}
+
+reapply_standalone() {
+    local env_dir="$PWD/alltalk_environment"
+    local conda_root_prefix="${env_dir}/conda"
+    local install_env_dir="${env_dir}/env"
+    if [ ! -d "${install_env_dir}" ]; then
+        echo
+        echo "    The Conda environment at '${install_env_dir}' does not exist."
+        echo "    Please install the environment before proceeding."
+        echo
+        read -p "    Press any key to return to the menu. " -n 1
+        echo
+        return
+    fi
+    source "${conda_root_prefix}/etc/profile.d/conda.sh"
+    conda activate "${install_env_dir}"
+    echo
+    echo "    Downloading and installing PyTorch. This step can take a long time"
+    echo "    depending on your internet connection and hard drive speed. Please"
+    echo "    be patient."
+    pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+    echo
+    echo "    Installing additional requirements."
+    echo
+    pip install -r system/requirements/requirements_standalone.txt
+    echo
+    echo "    Requirements have been re-applied/updated."
+    echo
     read -p "    Press any key to continue. " -n 1
     echo
 }

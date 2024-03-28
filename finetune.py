@@ -1,6 +1,8 @@
 import argparse
 import os
 import sys
+import platform
+import site
 import tempfile
 import signal
 import gradio as gr
@@ -22,7 +24,7 @@ from tqdm import tqdm
 from faster_whisper import WhisperModel  
 # Use a local Tokenizer to resolve Japanese support
 # from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
-from templates.tokenizer.tokenizer import multilingual_cleaners
+from system.ft_tokenizer.tokenizer import multilingual_cleaners
 import importlib.metadata as metadata
 from packaging import version
 
@@ -112,14 +114,21 @@ def test_cuda():
     return cuda_status, cuda_icon, cuda_home 
 
 def find_files_in_path_with_wildcard(pattern):
-    global pfc_status
-    # Split the system's PATH variable into a list of directories
-    search_path = os.environ.get('PATH', '').split(os.pathsep)
+    # Get the site-packages directory of the current Python environment
+    site_packages_path = site.getsitepackages()
     found_paths = []
-    # Iterate over each directory in the search path
-    for directory in search_path:
+    # Adjust the sub-directory based on the operating system
+    sub_directory = "nvidia/cublas"
+    if platform.system() == "Linux":
+        sub_directory = os.path.join(sub_directory, "lib")
+    else:
+        sub_directory = os.path.join(sub_directory, "bin")
+    # Iterate over each site-packages directory (there can be more than one)
+    for directory in site_packages_path:
+        # Construct the search directory path
+        search_directory = os.path.join(directory, sub_directory)
         # Use glob to find all files matching the pattern in this directory
-        for file_path in glob.glob(os.path.join(directory, pattern)):
+        for file_path in glob.glob(os.path.join(search_directory, pattern)):
             if os.path.isfile(file_path):  # Ensure it's a file
                 found_paths.append(file_path)
     return found_paths
@@ -127,7 +136,7 @@ def find_files_in_path_with_wildcard(pattern):
 def generate_cuda_markdown():
     global pfc_status
     cuda_status, cuda_icon, cuda_home = test_cuda()
-    file_name = 'cublas64_11.*'
+    file_name = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
     found_paths = find_files_in_path_with_wildcard(file_name)
     if found_paths:
         found_paths_str = ' '.join(found_paths)
@@ -171,12 +180,35 @@ def get_system_ram_markdown():
     ram_status_message = "Warning" if warning_if_low_ram else ""
     ram_status_icon = "⚠️" if warning_if_low_ram else "✅"
 
-    system_ram_markdown = f"""
-    ### 🟪 <u>System RAM Information</u>  <br>
-    &nbsp;&nbsp;&nbsp;&nbsp; {ram_status_icon} **Total RAM:** {total_ram_gb:.2f} GB<br>
-    &nbsp;&nbsp;&nbsp;&nbsp; {ram_status_icon} **Available RAM:** {ram_status_message + ' - Available RAM is less than 8 GB. You have ' if warning_if_low_ram else ''} {available_ram_gb:.2f} GB available ({used_ram_percentage:.2f}% used)
-    """
+    if torch.cuda.is_available():
+        gpu_device_id = torch.cuda.current_device()
+        gpu_device_name = torch.cuda.get_device_name(gpu_device_id) 
+        # Get the total and available memory in bytes, then convert to GB
+        gpu_total_mem_gb = torch.cuda.get_device_properties(gpu_device_id).total_memory / (1024 ** 3)
+        # gpu_available_mem_gb = (torch.cuda.get_device_properties(gpu_device_id).total_memory - torch.cuda.memory_allocated(gpu_device_id)) / (1024 ** 3)
+        # gpu_available_mem_gb = (torch.cuda.get_device_properties(gpu_device_id).total_memory - torch.cuda.memory_reserved(gpu_device_id)) / (1024 ** 3)
+        gpu_reserved_mem_gb = torch.cuda.memory_reserved(gpu_device_id) / (1024 ** 3)
+        gpu_available_mem_gb = gpu_total_mem_gb - gpu_reserved_mem_gb
+        # Check if total or available memory is less than 11 GB and set icons
+        gpu_total_status_icon = "⚠️" if gpu_total_mem_gb < 12 else "✅"
+        gpu_available_status_icon = "⚠️" if gpu_available_mem_gb < 12 else "✅"
+        gpu_status_icon = "✅"
+    else:
+        gpu_status_icon = "⚠️"
+        gpu_device_name = "Cannot detect a CUDA card"
+        gpu_total_mem_gb = "Cannot detect a CUDA card"
+        gpu_available_mem_gb = "Cannot detect a CUDA card"
+        gpu_total_status_icon = gpu_status_icon
+        gpu_available_status_icon = gpu_status_icon
 
+    system_ram_markdown = f"""
+    ### 🟪 <u>System RAM and VRAM Information</u>  <br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {ram_status_icon} **Total RAM:** {total_ram_gb:.2f} GB<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {ram_status_icon} **Available RAM:** {ram_status_message + ' - Available RAM is less than 8 GB. You have ' if warning_if_low_ram else ''} {available_ram_gb:.2f} GB available ({used_ram_percentage:.2f}% used)<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {gpu_status_icon} **GPU Name:** {gpu_device_name}<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {gpu_total_status_icon} **GPU Total RAM:** {gpu_total_mem_gb:.2f} GB<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {gpu_available_status_icon} **GPU Available RAM:** {gpu_available_mem_gb:.2f} GB<br>
+    """
     return system_ram_markdown
 
 
@@ -295,6 +327,7 @@ def format_audio_list(target_language, whisper_model, out_path, eval_split_numbe
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     print("[FINETUNE] Loading Whisper Model:", whisper_model)
+    print("[FINETUNE] Model will be downloaded if its not available, which will take a few minutes.")
     asr_model = WhisperModel(whisper_model, device=device, compute_type="float32")
 
     metadata = {"audio_file": [], "text": [], "speaker_name": []}
@@ -472,6 +505,8 @@ def format_audio_list(target_language, whisper_model, out_path, eval_split_numbe
     # deallocate VRAM and RAM
     del asr_model, final_eval_set, final_training_set, new_data_df, existing_metadata
     gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     existing_train_df = None
     existing_eval_df = None
     print("[FINETUNE] Train CSV:", train_metadata_path)
@@ -512,6 +547,24 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     print(f"[FINETUNE] \033[94mLanguage: \033[92m{language} \033[94mEpochs: \033[92m{num_epochs} \033[94mBatch size: \033[92m{batch_size}\033[0m \033[94mGrad accumulation steps: \033[92m{grad_acumm}\033[0m")
     print(f"[FINETUNE] \033[94mTraining   : \033[92m{train_csv}\033[0m")
     print(f"[FINETUNE] \033[94mEvaluation : \033[92m{eval_csv}\033[0m")
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+		# Get the current device ID
+        gpu_device_id = torch.cuda.current_device()
+        gpu_available_mem_gb = (torch.cuda.get_device_properties(gpu_device_id).total_memory - torch.cuda.memory_allocated(gpu_device_id)) / (1024 ** 3)
+        print(f"[FINETUNE] \033[94mAvailable VRAM: \033[92m{gpu_available_mem_gb:.2f} GB\033[0m")
+        if gpu_available_mem_gb < 12:
+            print(f"[FINETUNE]")
+            print(f"[FINETUNE] \033[91m****** WARNING PRE-FLIGHT CHECKS FAILED ******* WARNING PRE-FLIGHT CHECKS FAILED *****\033[0m")
+            print(f"[FINETUNE] \033[94mAvailable VRAM: \033[92m{gpu_available_mem_gb:.2f} GB\033[0m")
+            print(f"[FINETUNE] \033[94mIf you are running on a Linux system and you have 12GB's or less of VRAM, this step\033[0m")
+            print(f"[FINETUNE] \033[94mmay fail, due to not enough GPU VRAM. Windows systems will use system RAM as extended\033[0m")
+            print(f"[FINETUNE] \033[94mVRAM and so should work ok. However, Windows machines will need enough System RAM\033[0m")
+            print(f"[FINETUNE] \033[94mavailable. Please read the PFC help section available on the first tab of the web\033[0m")
+            print(f"[FINETUNE] \033[94minterface for more information.\033[0m")
+            print(f"[FINETUNE] \033[91m****** WARNING PRE-FLIGHT CHECKS FAILED ******* WARNING PRE-FLIGHT CHECKS FAILED *****\033[0m")
+            print(f"[FINETUNE]")
+
     # Create the directory
     os.makedirs(OUT_PATH, exist_ok=True)
 
@@ -1111,14 +1164,17 @@ if __name__ == "__main__":
             with gr.Tab("🟪 RAM & VRAM Help"):
                 gr.Markdown(
                 f"""
-                {system_ram_results}<br>  
-                ◽ During actual training (Step 2) Finetuning will use around 14GB of VRAM. If your GPU doesnt have 14GB's of VRAM it will attempt to overspill into your System RAM. So if you also have very low or slow System RAM you can expect bad performance or the training to fail.<br>
-                ◽ 12GB cards may need 2GB System RAM.<br>
-                ◽ 8GB cards may need 6GB System RAM.<br>
-                ◽ 6GB cards may need 8GB System RAM.<br>
+                {system_ram_results}<br>
+                ◽ During actual training (Step 2) Finetuning will use around **14GB's** of VRAM. If your GPU doesnt have 14GB's of VRAM:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - **Windows** systems will attempt to extend VRAM into your System RAM, and so should work.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - **Linux** systems can only use the available VRAM, so may fail on 12GB VRAM or smaller GPU's.<br>
+                ◽ For **Windows** users with 12GB or less, if you also have very low or slow System RAM you can expect bad performance or the training to fail.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - 12GB cards may need 2GB System RAM.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - 8GB cards may need 6GB System RAM.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - 6GB cards may need 8GB System RAM.<br>
                 ◽ Its hard to estimate what performance impact this could will have, due to different memory speeds, PCI speeds, GPU speeds etc.<br>
                 ◽ If you have a low VRAM scenario and also are attempting to run on a mechanical hard drive, Finetuning could take ??? amount of time.<br>
-                ◽ On Windows machines, please ensure you have not disabled System Memory Fallback for Stable Diffusion <a href="https://nvidia.custhelp.com/app/answers/detail/a_id/5490/~/system-memory-fallback-for-stable-diffusion" target="_blank">link here</a><br>
+                ◽ On Windows machines, please ensure you have **not** disabled System Memory Fallback for Stable Diffusion <a href="https://nvidia.custhelp.com/app/answers/detail/a_id/5490/~/system-memory-fallback-for-stable-diffusion" target="_blank">link here</a><br>
                 """
             )
             with gr.Tab("🟨 CUDA & Cublas Help"):
@@ -1437,6 +1493,7 @@ if __name__ == "__main__":
                 ◽ Audio clips shorter than 7 seconds are automatically excluded from the reference list, as they generally do not provide sufficient length for effective TTS generation.<br>
                 ◽ Should you find a lower number of reference files than anticipated, it may be due to the initial segmentation performed by Whisper (Step 1), which can occasionally result in clips that are too brief for our criteria or indeed too long. In such cases, consider manually segmenting your audio to give Whisper a better chance at generating training data and repeating the process.<br>
                 ### 🟦 <u>What you need to do</u>
+                ◽ **Click** the **Refresh Dropdowns** button to correctly populate the **Speaker Reference Audio** with all the available WAV samples.<br>
                 ◽ The model is now trained and you are at the testing stage. Hopefully all the dropdowns should be pre-populated now.<br>
                 ◽ You need to <span style="color: #3366ff;">Load Fine-tuned XTTS model</span> and then select your <span style="color: #3366ff;">Speaker Reference Audio</span>. You can choose various <span style="color: #3366ff;">Speaker Reference Audios</span> to see which works best.<br>
                 ◽ All the <span style="color: #3366ff;">Speaker Reference Audios</span> in the dropdown are ones that are <span style="color: #3366ff;">8 seconds</span> long or more. You can use one of these later for your voice sample in All Talk, so remember the one you like.<br>

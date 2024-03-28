@@ -19,6 +19,7 @@ from fastapi import (
     Response,
     Depends,
     HTTPException,
+    Query,
 )
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,7 +35,7 @@ this_dir = Path(__file__).parent.resolve()
 # STARTUP VARIABLE - Set "device" to cuda if exists, otherwise cpu
 device = "cuda" if torch.cuda.is_available() else "cpu"
 # STARTUP VARIABLE - Import languges file for Gradio to be able to display them in the interface
-with open(this_dir / "languages.json", encoding="utf8") as f:
+with open(this_dir / "system" / "config" / "languages.json", encoding="utf8") as f:
     languages = json.load(f)
 # Base setting for a possible FineTuned model existing and the loader being available
 tts_method_xtts_ft = False
@@ -638,7 +639,7 @@ def list_files(directory):
 #############################
 
 # Create an instance of Jinja2Templates for rendering HTML templates
-templates = Jinja2Templates(directory=this_dir / "templates")
+templates = Jinja2Templates(directory=this_dir / "system")
 
 # Create a dependency to get the current JSON data
 def get_json_data():
@@ -653,7 +654,7 @@ async def get_settings(request: Request):
     wav_files = list_files(this_dir / "voices")
     # Render the template with the current JSON data and list of WAV files
     return templates.TemplateResponse(
-        "generate_form.html",
+        "/at_admin/at_settings.html",
         {
             "request": request,
             "data": get_json_data(),
@@ -663,7 +664,7 @@ async def get_settings(request: Request):
     )
 
 # Define an endpoint to serve static files
-app.mount("/static", StaticFiles(directory=str(this_dir / "templates")), name="static")
+app.mount("/static", StaticFiles(directory=str(this_dir / "system")), name="static")
 
 @app.post("/update-settings")
 async def update_settings(
@@ -870,7 +871,7 @@ except OSError:
         print(f"[{params['branding']}Startup] \033[91mInfo\033[0m On Linux, you can use the following command to install PortAudio:")
         print(f"[{params['branding']}Startup] \033[91mInfo\033[0m sudo apt-get install portaudio19-dev")
 
-from typing import Union, Dict
+from typing import Union, Dict, List
 from pydantic import BaseModel, ValidationError, Field
 
 def play_audio(file_path, volume):
@@ -1145,7 +1146,69 @@ def get_current_settings():
 #### Word Add-in Sharing ####
 #############################
 # Mount the static files from the 'word_addin' directory
-app.mount("/api/word_addin", StaticFiles(directory=os.path.join(this_dir / 'templates' / 'word_addin')), name="word_addin")
+app.mount("/api/word_addin", StaticFiles(directory=os.path.join(this_dir / 'system' / 'word_addin')), name="word_addin")
+
+#############################################
+#### TTS Generator Comparision Endpoints ####
+#############################################
+import subprocess
+import aiofiles
+
+class TTSItem(BaseModel):
+    id: int
+    fileUrl: str
+    text: str
+    characterVoice: str
+    language: str
+
+class TTSData(BaseModel):
+    ttsList: List[TTSItem]
+
+@app.post("/api/save-tts-data")
+async def save_tts_data(tts_data: List[TTSItem]):
+    # Convert the list of Pydantic models to a list of dictionaries
+    tts_data_list = [item.dict() for item in tts_data]
+    # Serialize the list of dictionaries to a JSON string
+    tts_data_json = json.dumps(tts_data_list, indent=4)
+    async with aiofiles.open(this_dir / "outputs" / "ttsList.json", 'w') as f:
+        await f.write(tts_data_json)
+    return {"message": "Data saved successfully"}
+
+import sys
+
+@app.get("/api/trigger-analysis")
+async def trigger_analysis(threshold: int = Query(default=98)):
+    venv_path = sys.prefix
+    env = os.environ.copy()
+    env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
+    ttslist_path = this_dir / "outputs" / "ttsList.json"
+    wavfile_path = this_dir / "outputs"
+    subprocess.run(["python", "tts_diff.py", f"--threshold={threshold}", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_diff", env=env)
+    # Read the analysis summary
+    try:
+        with open(this_dir / "outputs" / "analysis_summary.json", "r") as summary_file:
+            summary_data = json.load(summary_file)
+    except FileNotFoundError:
+        summary_data = {"error": "Analysis summary file not found."}
+    return {"message": "Analysis Completed", "summary": summary_data}
+
+#################################################
+#### TTS Generator SRT Subtitiles generation ####
+#################################################
+@app.get("/api/srt-generation")
+async def srt_generation():
+    venv_path = sys.prefix
+    env = os.environ.copy()
+    env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
+    ttslist_path = this_dir / "outputs" / "ttsList.json"
+    wavfile_path = this_dir / "outputs"
+    subprocess.run(["python", "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
+    
+    srt_file_path = this_dir / "outputs" / "subtitles.srt"
+    if not srt_file_path.exists():
+        raise HTTPException(status_code=404, detail="Subtitle file not found.")
+    
+    return FileResponse(path=srt_file_path, filename="subtitles.srt", media_type='application/octet-stream')
 
 ###################################################
 #### Webserver Startup & Initial model Loading ####

@@ -61,11 +61,10 @@ echo    environment. If you have NOT done this, please run %L_GREEN%cmd_windows.
 echo    in the %L_GREEN%text-generation-webui%RESET% folder and then re-run this script.
 echo.
 echo    BASE REQUIREMENTS
-echo    1) Install the requirements for a %L_GREEN%Nvidia machine%RESET%.
-echo    2) Install the requirements for a %L_GREEN%AMD or MAC machine%RESET%.
+echo    1) Apply/Re-Apply the requirements for %L_GREEN%Text-generation-webui%RESET%.
 echo.
 echo    OPTIONAL
-echo    3) Install the Finetuning requirements.
+echo    2) Git Pull the latest AllTalk updates from Github
 echo.
 echo    DEEPSPEED FOR %L_YELLOW=%PyTorch 2.1.x%RESET%
 echo    4) Install DeepSpeed v11.2 for CUDA %L_GREEN%11.8%RESET% and Python-3.11.x and %L_YELLOW%PyTorch 2.1.x%RESET%.
@@ -84,8 +83,7 @@ echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p WebUIOption="Enter your choice: "
 if "%WebUIOption%"=="1" goto InstallNvidiaTextGen
-if "%WebUIOption%"=="2" goto InstallOtherTextGen
-if "%WebUIOption%"=="3" goto InstallFinetuneTextGen
+if "%WebUIOption%"=="2" goto TGGitpull
 if "%WebUIOption%"=="4" goto InstallDeepSpeed118TextGen
 if "%WebUIOption%"=="5" goto InstallDeepSpeed121TextGen
 if "%WebUIOption%"=="6" goto InstallDeepSpeed121TextGenPytorch221
@@ -105,27 +103,31 @@ echo    BASE REQUIREMENTS
 echo    1) Install AllTalk as a Standalone Application
 echo.
 echo    OPTIONAL
-echo    2) Delete AllTalk's custom Python environment
-echo    3) Install the Finetuning requirements
+echo    2) Git Pull the latest AllTalk updates from Github
+echo    3) Re-Apply/Update the requirements file
+echo    4) Delete AllTalk's custom Python environment
+echo    5) Purge the PIP cache
 echo.
 echo.   OTHER
-echo    4) Generate a diagnostics file
+echo    8) Generate a diagnostics file
 echo.
 echo    9) %L_RED%Exit/Quit%RESET%
 echo.
 set /p StandaloneOption="Enter your choice: "
 if "%StandaloneOption%"=="1" goto InstallCustomStandalone
-if "%StandaloneOption%"=="2" goto DeleteCustomStandalone
-if "%StandaloneOption%"=="3" goto InstallFinetuneStandalone
-if "%StandaloneOption%"=="4" goto GenerateDiagsStandalone
+if "%StandaloneOption%"=="2" goto STGitpull
+if "%StandaloneOption%"=="3" goto STReapplyrequirements
+if "%StandaloneOption%"=="4" goto STDeleteCustomStandalone
+if "%StandaloneOption%"=="5" goto STPurgepipcache
+if "%StandaloneOption%"=="8" goto GenerateDiagsStandalone
 if "%StandaloneOption%"=="9" goto End
 goto StandaloneMenu
 
 :InstallNvidiaTextGen
-pip install -r requirements_nvidia.txt
+pip install -r system\requirements\requirements_textgen.txt
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo    There was an error installing the Nvidia requirements.
+    echo    There was an error installing the requirements.
     echo    Press any key to return to the menu.
     echo.
     pause
@@ -133,43 +135,25 @@ if %ERRORLEVEL% neq 0 (
 )
 Echo.
 echo.
-Echo    Nvidia machine requirements installed successfully.
+Echo    Requirements installed successfully.
 Echo. 
 pause
 goto WebUIMenu
 
-:InstallOtherTextGen
-pip install -r requirements_other.txt
+:TGGitpull
+git pull
 if %ERRORLEVEL% neq 0 (
-    echo. 
-    echo    There was an error installing the Other requirements.
+    echo.
+    echo    There was an error pulling from Github.
     echo    Press any key to return to the menu.
     echo.
     pause
     goto WebUIMenu
 )
 Echo.
-echo.
-Echo    Other machine requirements installed successfully.
+echo     AllTalk Updated from Github. Please re-apply
+echo     the latest requirements file. Option 1
 Echo. 
-pause
-goto WebUIMenu
-
-:InstallFinetuneTextGen
-pip install -r requirements_finetune.txt
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo    There was an error installing the Finetune requirements.
-    echo    Press any key to return to the menu.
-    echo.
-    pause
-    goto WebUIMenu
-)
-Echo.
-Echo    Finetune requirements installed successfully. Please ensure you have installed CUDA 11.8.
-Echo    Finetune needs access to %L_GREEN%cublas64_11.dll%RESET% and will error if this is not setup correctly.
-Echo    Please see here for details %L_GREEN%https://github.com/erew123/alltalk_tts#-finetuning-a-model%RESET%
-Echo.
 pause
 goto WebUIMenu
 
@@ -394,49 +378,20 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is
 @rem activate installer env
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
 
-@rem Ask user for the type of requirements to install
 echo.
-echo    %L_BLUE%Choose the type of requirements to install%RESET%
+echo     Downloading and installing PyTorch. This step can take a long time
+echo     depending on your internet connection and hard drive speed. Please
+echo     be patient.
 echo.
-echo    1. Nvidia graphics card machines
-echo    2. Other machines (mac, amd, etc)
+pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+echo Installing other requirements.
 echo.
-set /p UserChoice="Enter your choice (1 or 2): "
+pip install -r system\requirements\requirements_standalone.txt
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+echo Installing DeepSpeed...
+pip install deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+del deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
 
-@rem Install requirements based on user choice
-if "%UserChoice%" == "1" (
-    echo.
-    echo Installing Nvidia requirements...
-    echo Downloading Pytorch with CUDA..
-    pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --upgrade --force-reinstall --index-url https://download.pytorch.org/whl/cu121
-    pip install numpy==1.24.4
-    pip install typing-extensions>=4.8.0
-    pip install networkx<3.0.0,>=2.5.0
-    pip install fsspec>=2023.6.0
-    pip install soundfile==0.12.1
-    pip install uvicorn==0.24.0.post1
-    pip install transformers>=4.37.1
-    pip install TTS==0.22.0
-    pip install fastapi==0.104.1
-    pip install Jinja2==3.1.2
-    pip install requests==2.31.0
-    pip install tqdm==4.66.1
-    pip install importlib-metadata==4.8.1
-    pip install packaging==23.2
-    pip install pydantic==1.10.13
-    pip install sounddevice==0.4.6
-    pip install python-multipart==0.0.6
-    pip install cutlet>=0.3.0
-    pip install unidic-lite>=1.0.8
-    echo Downloading DeepSpeed...
-    curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
-    echo Installing DeepSpeed...
-    pip install deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
-    del deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
-) else (
-    echo Installing requirements for other machines...
-    pip install -r requirements_other.txt
-)
 
 @rem Create start_environment.bat to run AllTalk environment
 echo @echo off > start_environment.bat
@@ -451,14 +406,22 @@ echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_alltalk.bat
 echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_alltalk.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_alltalk.bat
 echo call python script.py >> start_alltalk.bat
+@rem Create start_finetune.bat to run AllTalk
+echo @echo off > start_finetune.bat
+echo cd /D "%~dp0" >> start_finetune.bat
+echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_finetune.bat
+echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_finetune.bat
+echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_finetune.bat
+echo call python finetune.py >> start_finetune.bat
 Echo.
-Echo    start_alltalk.bat has been created.
-Echo    You can now start AllTalk with %L_YELLOW%start_alltalk.bat%RESET%
+Echo    Run %L_YELLOW%start_alltalk.bat%RESET% to start AllTalk.
+Echo    Run %L_YELLOW%start_finetune.bat%RESET% to start Finetuning.
+Echo    Run %L_YELLOW%start_environment.bat%RESET% to start the AllTalk Python environment.
 Echo.
 pause
 goto StandaloneMenu
 
-:DeleteCustomStandalone
+:STDeleteCustomStandalone
 @rem Check if the alltalk_environment directory exists
 if not exist "%cd%\alltalk_environment\" (
     echo.
@@ -488,47 +451,6 @@ if %ERRORLEVEL% neq 0 (
 echo.
 Echo.
 echo    Environment %L_GREEN%alltalk_environment%RESET% deleted. Please set up the environment again.
-Echo.
-pause
-goto StandaloneMenu
-
-:InstallFinetuneStandalone
-cd /D "%~dp0"
-set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
-set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
-@rem Check if the Conda environment exists
-if not exist "%INSTALL_ENV_DIR%\python.exe" (
-    echo.
-    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
-    echo    Please install the environment before proceeding.
-    echo.
-    pause
-    goto StandaloneMenu
-)
-@rem Attempt to activate the Conda environment
-call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
-if errorlevel 1 (
-    echo. 
-    echo    Failed to activate the Conda environment.
-    echo    Please check your installation and try again.
-    echo.
-    pause
-    goto StandaloneMenu
-)
-@rem Proceed with installing requirements
-pip install -r requirements_finetune.txt
-if %ERRORLEVEL% neq 0 (
-    echo. 
-    echo    There was an error installing the Finetune requirements.
-    echo    Press any key to return to the menu.
-    echo.
-    pause
-    goto StandaloneMenu
-)
-Echo.
-Echo    Finetune requirements installed successfully. Please ensure you have installed CUDA 11.8.
-Echo    Finetune needs access to %L_GREEN%cublas64_11.dll%RESET% and will error if this is not setup correctly.
-Echo    Please see here for details %L_GREEN%https://github.com/erew123/alltalk_tts#-finetuning-a-model%RESET%
 Echo.
 pause
 goto StandaloneMenu
@@ -569,6 +491,144 @@ if %ERRORLEVEL% neq 0 (
 Echo.
 Echo.
 Echo    Diagnostics.log generated. Please scroll up to look over the log.
+Echo.
+pause
+goto StandaloneMenu
+
+:STReapplyrequirements
+cd /D "%~dp0"
+set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
+set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
+@rem Check if the Conda environment exists
+if not exist "%INSTALL_ENV_DIR%\python.exe" (
+    echo.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
+    echo. 
+    pause
+    goto StandaloneMenu
+)
+@rem Attempt to activate the Conda environment
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
+if errorlevel 1 (
+    echo. 
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+@rem Run Reapply requirements
+echo.
+echo     Downloading and installing PyTorch. This step can take a long time
+echo     depending on your internet connection and hard drive speed. Please
+echo     be patient.
+echo.
+pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+echo Installing other requirements.
+echo.
+pip install -r system\requirements\requirements_standalone.txt
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+echo Installing DeepSpeed...
+pip install deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+del deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+Echo.
+Echo.
+Echo    Requirements have been re-applied/updated.
+Echo.
+pause
+goto StandaloneMenu
+
+:STPurgepipcache
+cd /D "%~dp0"
+set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
+set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
+@rem Check if the Conda environment exists
+if not exist "%INSTALL_ENV_DIR%\python.exe" (
+    echo.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
+    echo. 
+    pause
+    goto StandaloneMenu
+)
+@rem Attempt to activate the Conda environment
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
+if errorlevel 1 (
+    echo. 
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+@rem Clear the PIP cache
+echo.
+echo     Purging the PIP cache of downloaded files.
+echo.
+pip cache purge
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+Echo.
+Echo    The PIP cache has been purged.
+Echo.
+pause
+goto StandaloneMenu
+
+:STGitpull
+cd /D "%~dp0"
+set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda
+set INSTALL_ENV_DIR=%cd%\alltalk_environment\env
+@rem Check if the Conda environment exists
+if not exist "%INSTALL_ENV_DIR%\python.exe" (
+    echo.
+    echo    The Conda environment at "%INSTALL_ENV_DIR%" does not exist.
+    echo    Please install the environment before proceeding.
+    echo. 
+    pause
+    goto StandaloneMenu
+)
+@rem Attempt to activate the Conda environment
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%"
+if errorlevel 1 (
+    echo. 
+    echo    Failed to activate the Conda environment.
+    echo    Please check your installation and try again.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+@rem Pull from Github
+echo.
+echo     Pulling the latest updates. Please re-apply
+echo     the latest requirements file. Option 3
+echo.
+git pull
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo    There was an error pulling from Github.
+    echo    Press any key to return to the menu.
+    echo.
+    pause
+    goto StandaloneMenu
+)
+Echo.
+echo     AllTalk Updated from Github. Please re-apply
+echo     the latest requirements file. Option 3
 Echo.
 pause
 goto StandaloneMenu

@@ -45,18 +45,18 @@ else:
     )
 
 # Read the version specifier from requirements_nvidia.txt
-with open(this_dir / "requirements_nvidia.txt", "r") as req_file:
+with open(this_dir / "system" / "requirements" / "requirements_standalone.txt", "r") as req_file:
     requirements = req_file.readlines()
 
 tts_version_required = None
 for req in requirements:
-    if req.startswith("TTS>="):
-        tts_version_required = req.strip().split(">=")[1]
+    if req.startswith("TTS=="):
+        tts_version_required = req.strip().split("==")[1]
         break
 
 if tts_version_required is None:
     raise ValueError(
-        f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find TTS version specifier in requirements_nvidia.txt"
+        f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find TTS version specifier in requirements file"
     )
 
 

@@ -1,7 +1,7 @@
 # AllTalk TTS
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
-- **Can be run as a** [standalone](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
+- **Can be run as a** [standalone application](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
    - **Text-generation-webui** [link](https://github.com/oobabooga/text-generation-webui)
    - **SillyTavern** [link](https://github.com/SillyTavern/SillyTavern)
    - **KoboldCPP** [link](https://github.com/LostRuins/koboldcpp)
@@ -40,7 +40,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 
 ---
 ### 🛠️ **About this project** 
-AllTalk is a labor of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+AllTalk is a labour of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
 
 ---
 
@@ -53,7 +53,7 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 
 Quick setup scripts are available for users on Windows 10/11 and Linux. Instructional videos for both setup processes are linked below.
 
-- Ensure that **Git** is installed on your system as it is required for cloning the repository. If you do not have Git installed, visit [Git's official website](https://git-scm.com/downloads) to download and install it.
+- Ensure that **Git** is installed on your system as it is required for cloning the repository. If you do not have Git installed, visit [**Git's official website**](https://git-scm.com/downloads) to download and install it.
 - Windows users must install C++ development tools for Python to compile Python packages. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
 
 <details>
@@ -74,7 +74,7 @@ To set up AllTalk within Text-generation-webui, follow either method:
 2. **Start Python Environment**:
    - In the text-generation-webui folder, start the environment with the appropriate command:
      - Windows: `cmd_windows.bat`
-     - Linux: `./cmd_linux.sh`
+     - Linux: `./cmd_linux.sh`<br><br>
     
      > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
@@ -336,6 +336,9 @@ Currently the XTTS model is the main model used by AllTalk for TTS generation. I
 
 Maintaining the latest version of your setup ensures access to new features and improvements. Below are the steps to update your installation, whether you're using Text-Generation-webui or running as a Standalone Application.
 
+**NOTE** Future updates will be handled by using the `atsetup` utility.<br><br>
+**NOTE** If you have an install **prior to 28th March 2024** that you are updating, perform the `git pull` instructions below, then run the `atsetup` utility and select option 1 in either the Standalone ot Text-generation-webui menu (as matches your system). 
+
 <details>
 <summary>UPDATING - Text-Generation-webui</summary>
 <br>
@@ -364,11 +367,11 @@ The update process closely mirrors the installation steps. Follow these to ensur
      - `git pull`
 
 5. **Install Updated Requirements**:
-   - Depending on your machine's graphics setup, install the required dependencies using pip:
-     - **For Nvidia Graphics Card Machines**:
-       - `pip install -r requirements_nvidia.txt`
-     - **For Other Machines (Mac, AMD, etc.)**:
-       - `pip install -r requirements_other.txt`
+   - Depending on your machine's OS, install the required dependencies using pip:
+     - **For Windows Machines**:
+       - `pip install -r system\requirements\requirements_textgen.txt`
+     - **For Linux/Mac**:
+       - `pip install -r system/requirements/requirements_textgen.txt`
 
 </details>
 
@@ -395,12 +398,12 @@ For Standalone Application users, here's how to update your setup:
    - Retrieve the latest changes from the repository with:
      - `git pull`
      
-3. **Install Requirements**:
-   - Update your installation by installing the necessary requirements based on your graphics hardware:
-     - **For Nvidia Graphics Card Machines**:
-       - `pip install -r requirements_nvidia.txt`
-     - **For Other Machines (Mac, AMD, etc.)**:
-       - `pip install -r requirements_other.txt`
+3. **Install Updated Requirements**:
+   - Depending on your machine's OS, install the required dependencies using pip:
+     - **For Windows Machines**:
+       - `pip install -r system\requirements\requirements_standalone.txt`
+     - **For Linux/Mac**:
+       - `pip install -r system/requirements/requirements_standalone.txt`
 
 </details>
 
@@ -424,7 +427,7 @@ The process involves renaming your existing `alltalk_tts` directory, setting up 
      - Windows: `cmd_windows.bat`
      - Linux: `./cmd_linux.sh`
      - macOS: `cmd_macos.sh`
-     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`
+     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`<br><br>
      
      > If you're not familiar with Python environments, see **Understanding Python Environments Simplified** in the Help section for more info.
 
@@ -436,11 +439,11 @@ The process involves renaming your existing `alltalk_tts` directory, setting up 
 4. **Install Requirements**:
    - Navigate to the newly cloned `alltalk_tts` directory and install the necessary dependencies for your system:
      - `cd alltalk_tts`
-   - Update your installation by installing the necessary requirements based on your graphics hardware:
-     - **For Nvidia Graphics Card Machines**:
-       - `pip install -r requirements_nvidia.txt`
-     - **For Other Machines (Mac, AMD, etc.)**:
-       - `pip install -r requirements_other.txt`
+   - Depending on your machine's OS, install the required dependencies using pip:
+     - **For Windows Machines**:
+       - `pip install -r system\requirements\requirements_textgen.txt`
+     - **For Linux/Mac**:
+       - `pip install -r system/requirements/requirements_textgen.txt`
 
 5. **Migrate Your Data**:
    - Before starting the application, transfer the `models`, `voices`, and `outputs` folders from `alltalk_tts.old` to the new `alltalk_tts` directory. This action preserves your voice history and prevents the need to re-download the model.
@@ -460,8 +463,6 @@ You're now ready to launch Text-generation-webui. Note that you may need to reap
 #### 🔵 Linux Installation
 DeepSpeed requires access to the **Nvidia CUDA Development Toolkit** to compile on a Linux system. It's important to note that this toolkit is distinct and unrealted to your graphics card driver or the CUDA version the Python environment uses. 
 
-Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for AllTalk Finetuning so if you wish to use Finetuning, compiling DeepSpeed with v11.8 will simplify things later down the line.
-
 <details>
 	<summary>Linux DeepSpeed - Text-generation-webui</summary>
 
@@ -469,8 +470,7 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 
 1. **Nvidia CUDA Development Toolkit Installation**:
    - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
-   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
+   - Install using your package manager **(Recommended)** e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
 
 2. **Open a Terminal Console**:
    - After Nvidia CUDA Development Toolkit installation, access your terminal console.
@@ -517,8 +517,7 @@ Finetuning note - The **Nvidia CUDA Development Toolkit v11.8** is essential for
 
 1. **Nvidia CUDA Development Toolkit Installation**:
    - The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires around 3GB's of disk space.
-   - Install using your package manager e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
-   - If you want to use Finetuning with AllTalk, version **11.8** is required; otherwise, any version from 11.8 upwards will suffice.
+   - Install using your package manager **(Recommended)** e.g. **CUDA Toolkit 11.8** or download directly from [Nvidia CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) (choose 11.8 or 12.1 for Linux).
 
 2. **Open a Terminal Console**:
    - After Nvidia CUDA Development Toolkit installation, access your terminal console.
@@ -840,7 +839,7 @@ This is a long standing issue with Firefox and one I am unable to resolve. The s
 ### Application Specific Issues
 
 <details>
-	<summary>🟨 <strong>SillyTavern</strong> - I changed my IP address and now SillyTavern wont connect with AllTalk</summary><br>
+	<summary>🟨 SillyTavern - I changed my IP address and now SillyTavern wont connect with AllTalk</summary><br>
 SillyTavern checks the IP address when loading extensions, saving the IP to its configuration only if the check succeeds. For whatever reason, SillyTavern's checks dont always allow changing its IP address a second time.<br><br>
 
 To manually change the IP address:
@@ -891,7 +890,6 @@ If you wish to try out the XTTS version 2.0.3 model and see if it works better, 
 If you have a voice that the model doesnt quite reproduce correctly, or indeed you just want to improve the reproduced voice, then finetuning is a way to train your "XTTSv2 local" model **(stored in `/alltalk_tts/models/xxxxx/`)** on a specific voice. For this you will need:
 
 - An Nvidia graphics card. (Please see the help section [note](https://github.com/erew123/alltalk_tts/edit/main/README.md#performance-and-compatibility-issues) if you have multiple Nvidia GPU's).
-- To install a few portions of the Nvidia CUDA Development Toolkit **version 11.8**. Explicitly version 11.8.
 - 18GB of disk space free (most of this is used temporarily)
 - At least 2 minutes of good quality speech from your chosen speaker in mp3, wav or flacc format, in one or more files (have tested as far as 20 minutes worth of audio).
 - As a side note, many people seem to think that the Whisper v2 model (used on Step 1) is giving better results at generating training datasets, so you may prefer to try that, as opposed to the Whisper 3 model.
@@ -906,15 +904,25 @@ I would suggest that if its in an interview format, you cut out the interviewer 
 Yes you can. You would do these as multiple finetuning's, but its absolutely possible and fine to do. Finetuning the XTTS model does not restrict it to only being able to reproduce that 1x voice you trained it on. Finetuning is generally nuding the model in a direction to learn the ability to sound a bit more like a voice its not heard before. 
 
 #### ⚫ A note about anonymous training Telemetry information & disabling it
-Portions of Coqui's TTS trainer scripts gather anonymous training information which you can disable. Their statement on this is listed [here](https://github.com/coqui-ai/Trainer?tab=readme-ov-file#anonymized-telemetry). Although I have tried to pass `TRAINER_TELEMETRY=0` through AllTalk, it appears you will have to set this manually if you wish to finetune on a non-internet enabled computer or disable the anonymous data being sent. You can do this by:
+Portions of Coqui's TTS trainer scripts gather anonymous training information which you can disable. Their statement on this is listed [here](https://github.com/coqui-ai/Trainer?tab=readme-ov-file#anonymized-telemetry). If you start AllTalk Finetuning with `start_finetuning.bat` or `./start_finetuning.sh` telemetry will be disabled. If you manually want to disable it, please expand the below:
+
+<details>
+	<summary>Manually disable telemetry</summary><br>
+	
+Before starting finetuning, run the following in your terminal/command prompt:
 
 - On Windows by typing `set TRAINER_TELEMETRY=0`
 - On Linux & Mac by typing `export TRAINER_TELEMETRY=0`
 
-Before you start `finetune.py`. You will now be able to finetune offline and no anonymous training data will be sent. 
+Before you start `finetune.py`. You will now be able to finetune offline and no anonymous training data will be sent.
+</details>
 
 #### ⚫ Prerequisites for Fine-tuning with Nvidia CUDA Development Toolkit 11.8
 
+All the requirements for Finetuning will be installed by using the atsetup utility and installing your correct requirements (Standalone or for Text-generation-webui). The legacy manual instructions are stored below, however these shouldnt be required.
+
+<details>
+	<summary>Legacy manual instructions for installing Nvidia CUDA Development Toolkit 11.8</summary><br>
 - To perform fine-tuning, a specific portion of the **Nvidia CUDA Development Toolkit v11.8** must be installed. This is crucial for step 1 of fine-tuning. The objective is to minimize the installation footprint by installing only the essential components.
 - The **Nvidia CUDA Development Toolkit v11.8** operates independently from your graphics card drivers and the CUDA version utilized by your Python environment.
 - This installation process aims to keep the download and install size as minimal as possible, however a full install of the tookit requires 3GB's of disk space.
@@ -954,10 +962,12 @@ Before you start `finetune.py`. You will now be able to finetune offline and no 
 
 5. **Troubleshooting**:
    - If the correct version isn't reported, recheck your environment path settings for accuracy and potential conflicts with other CUDA versions.
+</details>
 
 #### Additional Note on Torch and Torchaudio:
 - Ensure Torch and Torchaudio are CUDA-enabled (any version), which is separate from the CUDA Toolkit installation. CUDA 11.8 corresponds to `cu118` and CUDA 12.1 to `cu121` in AllTalk diagnostics.
 - Failure to install CUDA for Torch and Torchaudio will result in Step 2 of fine-tuning failing. These requirements are distinct from the CUDA Toolkit installation, so avoid conflating the two.<br>
+
 
 #### ⚫ Starting Fine-tuning
 
@@ -972,6 +982,13 @@ Before you start `finetune.py`. You will now be able to finetune offline and no 
 
 Depending on your setup (Text-generation-webui or Standalone AllTalk), the steps to start the Python environment vary:
 
+- **For Standalone AllTalk Users**:
+  - Navigate to the `alltalk_tts` folder:
+    - `cd alltalk_tts`
+  - Start the Python environment:
+    - Windows: `start_finetune.bat`
+    - Linux: `./start_finetune.sh`
+    
 - **For Text-generation-webui Users**:
   - Navigate to the Text-generation-webui directory:
     - `cd text-generation-webui`
@@ -982,29 +999,19 @@ Depending on your setup (Text-generation-webui or Standalone AllTalk), the steps
     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`
   - Move into the AllTalk directory:
     - `cd extensions/alltalk_tts`
+  - **Linux** users only need to run this command:
+    ```
+     export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
+    ```
+  - Start the fine-tuning process with the command:
+     - `python finetune.py`<br><br>
 
-- **For Standalone AllTalk Users**:
-  - Navigate to the `alltalk_tts` folder:
-    - `cd alltalk_tts`
-  - Start the Python environment:
-    - Windows: `start_environment.bat`
-    - Linux: `./start_environment.sh`<br><br>
-    
    > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
-3. **Install Fine-tuning Requirements**:
-   - If you haven't already, install the fine-tuning requirements:
-     - `pip install -r requirements_finetune.txt`
-
-4. **Initiate Fine-tuning**:
-   - Start the fine-tuning process with the command:
-     - `python finetune.py`
-     - From now on you will only need to start your Python environment, potentially set the CUDA path and run the above command when you want to use Finetuning.
-
-5. **Pre-Flight Checklist**:
+3. **Pre-Flight Checklist**:
    - Go through the pre-flight checklist to ensure readiness. Address any issues flagged as "Fail".
 
-6. **Post Fine-tuning Actions**:
+4. **Post Fine-tuning Actions**:
    - Upon completing fine-tuning, the final tab will guide you on managing your files and relocating your newly trained model to the appropriate directory.
 
 These steps guide you through the initial preparations, starting the Python environment based on your setup, and the fine-tuning process itself. Ensure all prerequisites are met to facilitate a smooth fine-tuning experience.
@@ -1059,6 +1066,13 @@ This will vary by system for a multitude of reasons, however, while generating a
 - **Stop Playback:** This will stop the current audio playing back. It does not stop the text from being generated however. 
 Once you have sent text off to be generated, either as a stream or wav file generation, the TTS server will remain busy until this process has competed. As such, think carefully as to how much you want to send to the server. 
 If you are generating wav files and populating the queue, you can generate one lot of text to speech, then input your next lot of text and it will continue adding to the list.
+#### ⬜ Customization and Preferences
+- **Character Voice:** Choose the voice that will read your text.
+- **Language:** Select the language of your text.
+- **Chunk Sizes:** Decide the size of text chunks for generation. Smaller sizes are recommended for better TTS quality.
+#### ⬜ Interface and Accessibility
+- **Dark/Light Mode:** Switch between themes for your visual comfort.
+- **Word Count and Generation Queue:** Keep track of the word count and the generation progress.
 #### ⬜ TTS Generation Modes
 - **Wav Chunks:** Perfect for creating audio books, or anything you want to keep long term. Breaks down your text into manageable wav files and queues them up. Generation begins automatically, and playback will start after a few chunks have been prepared ahead. You can set the volume to 0 if you don’t want to hear playback. With Wav chunks, you can edit and/or regenerate portions of the TTS as needed.
 - **Streaming:** For immediate playback without the ability to save. Ideal for on-the-fly speech generation and listening. This will not generate wav files and it will play back through your browser. You cannot stop the server generating the TTS once it has been sent.<br><br>
@@ -1071,13 +1085,23 @@ For generating **large amounts of TTS**, it's recommended to select the **No Pla
 - **Export/Import List:** Save your TTS list as a JSON file or import one. Note: Existing wav files are needed for playback. Exporting is handy if you want to take your files away into another program and have a list of which wav is which, or if you keep your audio files, but want to come back at a later date, edit one or two lines, regenerate the speech and re-combine the wav’s into one new long wav.
 #### ⬜ Exporting Your Audio
 - **Export to WAV:** Combine all generated TTS from the list, into one single WAV file for easy download and distribution. Its always recommended to export your list to a JSON before exporting, so that you have a backup, should something go wrong. You can simply re-import the list and try exporting again.<br><br>When exporting, there is a file size limit of 1GB and as such you have the option to choose how many files to include in each block of audio exported. 600 is just on the limit of 1GB, depending on the average file size, so 500 or less is a good amount to work with. You can combine the generated files after if you wish, in Audacity or similar.<br><br>Additionally, lower export batches will lower the memory requirements, so if your system is low on memory (maybe 8 or 16GB system), you can use smaller export batches to keep the memory requirement down.
-#### ⬜ Customization and Preferences
-- **Character Voice:** Choose the voice that will read your text.
-- **Language:** Select the language of your text.
-- **Chunk Sizes:** Decide the size of text chunks for generation. Smaller sizes are recommended for better TTS quality.
-#### ⬜ Interface and Accessibility
-- **Dark/Light Mode:** Switch between themes for your visual comfort.
-- **Word Count and Generation Queue:** Keep track of the word count and the generation progress.
+#### ⬜ Exporting Subtitles (SRT file)
+- **Export SRT:** This will scan through all wav files in your list and generate a subtitles file that will match your exported wav file.
+#### ⬜ Analyzing generated TTS for errors
+- **Analyze TTS:** This will scan through all wav files comparing each ID's orignal text with the TTS generated for that ID and then flag up inconsistences. Its important to understand this is a **best effort** process and **not 100% perfect**, for example:<br><br>
+   - Your text may have the word `their` and the automated routine that listens to your generated TTS interprets the word as `there`, aka a spelling difference.
+   - Your text may have `Examples are:` (note the colon) and the automated routine that listens to your generated TTS interprets the word as "Examples are` (note no colon as you cannot sound out a colon in TTS), aka a punctuation difference.
+   - Your text may have `There are 100 items` and the automated routine that listens to your generated TTS interprets the word as `There are one hundred items`, aka numbers vs the number written out in words.
+   - There will be other examples such as double quotes. As I say, please remember this is a **best effort** to help you identify issues.<br>
+
+As such, there is a `% Accuracy` setting. This uses a couple of methods to try find things that are similar e.g. taking the `their` and `there` example from above, it would identify that they both sound the same, so even if the text says `their` and the AI listening to the generated TTS interprets the word as `there`, it will realise that both sound the same/are similar so there is no need to flag that as an error. However, there are limits to this and some things may slip through or get picked up when you would prefer them not to be flagged.
+
+The higher the accuracy you choose, the more things it will flag up, however you may get more unwanted detections. The lower the less detections. Based on my few tests, accuracy settings between 96 to 98 seem to generally give the best results. However, I would highly recommend you test out a small 10-20 line text and test out the **Analyze TTS** button to get a feel for how it responds to different settings, as well as things it flags up.
+
+You will be able to see the ID's and Text (orignal and as interpreted) by looking at the terminal/command prompt window.
+
+The Analyze TTS feature uses the Whisper Larger-v2 AI engine, which will download on first use if necessary. This will require about 2.5GB's of disk space and could take a few minutes to download, depending on your internet connection.
+
 #### ⬜ Tricks to get the model to say things correctly
 Sometimes the AI model won’t say something the way that you want it to. It could be because it’s a new word, an acronym or just something it’s not good at for whatever reason. There are some tricks you can use to improve the chances of it saying something correctly.
 
