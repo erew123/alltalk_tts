@@ -862,50 +862,49 @@
     /////////////////////////////////
 
     document.getElementById('exportsrttitles').addEventListener('click', async function () {
-    showProgress(); // Call this function to show the progress indicator at the start of the process
-    try {
-        const ttsDataJSON = JSON.stringify(ttsList);
+        showProgress(); // Call this function to show the progress indicator at the start of the process
+        try {
+            const ttsDataJSON = JSON.stringify(ttsList);
 
-        const saveResponse = await fetch('/api/save-tts-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: ttsDataJSON
-        });
-        const saveData = await saveResponse.json();
-        console.log(saveData.message);
+            const saveResponse = await fetch('/api/save-tts-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: ttsDataJSON
+            });
+            const saveData = await saveResponse.json();
+            console.log(saveData.message);
 
-        if (saveData.message === "Data saved successfully") {
-            // Trigger the SRT generation and handle file download
-            const analyzeResponse = await fetch(`/api/srt-generation`);
-            if (analyzeResponse.ok) {
-                // Create a temporary anchor element
-                const a = document.createElement('a');
-                // Create a blob URL from the response
-                const blob = await analyzeResponse.blob();
-                const url = window.URL.createObjectURL(blob);
-                a.href = url;
-                // Set the download name for the file
-                a.download = "subtitles.srt";
-                // Append the anchor to the document
-                document.body.appendChild(a);
-                // Trigger the download
-                a.click();
-                // Clean up by removing the anchor element and revoking the blob URL
-                window.URL.revokeObjectURL(url);
-                a.remove();
+            if (saveData.message === "Data saved successfully") {
+                // Trigger the SRT generation and handle file download
+                const analyzeResponse = await fetch(`/api/srt-generation`);
+                if (analyzeResponse.ok) {
+                    // Create a temporary anchor element
+                    const a = document.createElement('a');
+                    // Create a blob URL from the response
+                    const blob = await analyzeResponse.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    // Set the download name for the file
+                    a.download = "subtitles.srt";
+                    // Append the anchor to the document
+                    document.body.appendChild(a);
+                    // Trigger the download
+                    a.click();
+                    // Clean up by removing the anchor element and revoking the blob URL
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    console.log("Error running SRT generation.");
+                }
             } else {
-                console.log("Error running SRT generation.");
+                throw new Error('Data save was unsuccessful.');
             }
-        } else {
-            throw new Error('Data save was unsuccessful.');
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            hideProgress(); // Hide the progress indicator when the process is complete or if an error occurs
         }
-    } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        hideProgress(); // Hide the progress indicator when the process is complete or if an error occurs
-    }
-});
-
+    });
 
     ///////////////////////////////////////////
     //////// TTS Generation Activities ////////
@@ -925,13 +924,13 @@
             let cleanedText = textInput.replace(/ \- | \– /g, ' ');
             cleanedText = cleanedText.replace(/%/g, " percent");
             cleanedText = cleanedText.replace(/\.\s'/g, ".'");
-            cleanedText = cleanedText.replace(/['"]+/g, '');
+            cleanedText = cleanedText.replace(/(?<!\w)[']+(?!\w)/g, '');
+            cleanedText = cleanedText.replace(/"/g, "'");
             cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171]\$/g, '');
             // Replace dash followed by space with comma and space
             cleanedText = cleanedText.replace(/-\s/g, '; ');
             // Replace double dash "--" with semicolon "; "
             cleanedText = cleanedText.replace(/--/g, '; ');
-
 
             let sentences = cleanedText.split(/(?<=[.!?:])\s+/);
 
@@ -1634,7 +1633,9 @@
     }
 
     function decodeHtmlEntities(text) {
-        return text.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+        var textArea = document.createElement('textarea');
+        textArea.innerHTML = text;
+        return textArea.value;
     }
 
     function editText(id) {
@@ -1655,7 +1656,8 @@
         const textPreviewSpan = entryDiv.querySelector('.text-preview');
         // Retrieve the full text and immediately encode it
         let fullText = textPreviewSpan.getAttribute('data-fulltext');
-        fullText = encodeHtmlEntities(fullText);
+        fullText = decodeHtmlEntities(fullText);
+        //fullText = encodeHtmlEntities(fullText);
         console.log(`Current full text for ID: ${id} is: ${fullText}`);
 
         // Create an input field for editing
