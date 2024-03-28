@@ -124,7 +124,7 @@ if "%StandaloneOption%"=="9" goto End
 goto StandaloneMenu
 
 :InstallNvidiaTextGen
-pip install -r system\requirements\requirements_tg_nvidia.txt
+pip install -r system\requirements\requirements_textgen.txt
 if %ERRORLEVEL% neq 0 (
     echo.
     echo    There was an error installing the requirements.
