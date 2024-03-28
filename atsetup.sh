@@ -314,12 +314,14 @@ export CUDA_PATH="$INSTALL_ENV_DIR"
 export CUDA_HOME="$CUDA_PATH"
 # activate env
 bash --init-file <(echo "source \"$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh\" && conda activate \"$INSTALL_ENV_DIR\"")
+export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
 EOF
     # Create start_alltalk.sh to run AllTalk
     cat << EOF > start_alltalk.sh
 #!/bin/bash
 source "${CONDA_ROOT_PREFIX}/etc/profile.d/conda.sh"
 conda activate "${INSTALL_ENV_DIR}"
+export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
 python script.py
 EOF
     # Create start_finetune.sh to run AllTalk
@@ -328,6 +330,7 @@ EOF
 export TRAINER_TELEMETRY=0
 source "${CONDA_ROOT_PREFIX}/etc/profile.d/conda.sh"
 conda activate "${INSTALL_ENV_DIR}"
+export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))'`
 python finetune.py
 EOF
     chmod +x start_alltalk.sh
