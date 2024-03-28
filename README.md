@@ -40,7 +40,7 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 
 ---
 ### 🛠️ **About this project** 
-AllTalk is a labor of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+AllTalk is a labour of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
 
 ---
 
