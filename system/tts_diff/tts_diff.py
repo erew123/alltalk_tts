@@ -31,7 +31,7 @@ def find_files_in_path_with_wildcard(pattern):
 def detect_cublas():
     # Use different file patterns based on the operating system
     file_name_pattern = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
-    found_paths = find_files_in_site_packages_with_wildcard(file_name_pattern)
+    found_paths = find_files_in_path_with_wildcard(file_name_pattern)
     if found_paths:
         print("[AllTalk TTSDiff] \033[94mCublas:\033[0m \033[92mDetected\033[0m", found_paths)
     else:
