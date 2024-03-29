@@ -63,7 +63,7 @@ echo.
 echo    BASE REQUIREMENTS
 echo    1) Apply/Re-Apply the requirements for %L_GREEN%Text-generation-webui%RESET%.
 echo.
-echo    OPTIONAL (Not required for a base install)
+echo    OPTIONAL
 echo    2) Git Pull the latest AllTalk updates from Github
 echo.
 echo    DEEPSPEED FOR %L_YELLOW=%PyTorch 2.1.x%RESET%
@@ -102,7 +102,7 @@ echo.
 echo    BASE REQUIREMENTS
 echo    1) Install AllTalk as a Standalone Application
 echo.
-echo    OPTIONAL (Not required for a base install)
+echo    OPTIONAL
 echo    2) Git Pull the latest AllTalk updates from Github
 echo    3) Re-Apply/Update the requirements file
 echo    4) Delete AllTalk's custom Python environment
@@ -387,10 +387,10 @@ pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --upgrade --force-reinsta
 echo Installing other requirements.
 echo.
 pip install -r system\requirements\requirements_standalone.txt
-curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 echo Installing DeepSpeed...
-pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+pip install deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
+del deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 
 
 @rem Create start_environment.bat to run AllTalk environment
@@ -528,10 +528,10 @@ pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --upgrade --force-reinsta
 echo Installing other requirements.
 echo.
 pip install -r system\requirements\requirements_standalone.txt
-curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 echo Installing DeepSpeed...
-pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+pip install deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
+del deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 if %ERRORLEVEL% neq 0 (
     echo.
     echo    There was an error.
