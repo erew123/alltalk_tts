@@ -383,7 +383,7 @@ echo     Downloading and installing PyTorch. This step can take a long time
 echo     depending on your internet connection and hard drive speed. Please
 echo     be patient.
 echo.
-pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --upgrade --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu121
 echo Installing other requirements.
 echo.
 pip install -r system\requirements\requirements_standalone.txt
@@ -524,7 +524,7 @@ echo     Downloading and installing PyTorch. This step can take a long time
 echo     depending on your internet connection and hard drive speed. Please
 echo     be patient.
 echo.
-pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --upgrade --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu1
 echo Installing other requirements.
 echo.
 pip install -r system\requirements\requirements_standalone.txt
