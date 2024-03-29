@@ -775,7 +775,28 @@ Also, is your text-generation-webui up to date? [instructions here](https://gith
 As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 </details>
 
-### Performance and Compatibility Issues
+### Startup, Performance and Compatibility Issues
+
+<details>
+	<summary>🟨 RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory</summary><br>
+	
+This error message is caused by the model being corrupted or damaged in some way. This error can occur if Huggingface, where the model is downloaded from, have an error (when the model is downloaded) or potentailly internet issues occuring while the model is downloaded on first start-up. 
+
+```
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory
+
+ERROR: Application startup failed. Exiting.
+[AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait.
+```
+
+To resolve this, first look in your `alltalk_tts/models/xttsv2_2.0.2` (or whichever) model folder and confirm that the file sizes are correct.
+
+![image](https://github.com/erew123/screenshots/raw/main/modelsfiles.jpg)
+
+You can delete one or more suspect files and a factory fresh copy of that file or files will be downloaded on next start-up of AllTalk.
+
+</details>
 
 <details>
 	<summary>🟨 Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.</summary><br>
