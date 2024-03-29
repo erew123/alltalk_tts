@@ -134,6 +134,14 @@ Refer to `🟩 Other installation notes` for further details, including informat
 
 ---
 
+### 🟩 Docker Builds and Google Colab's
+
+While an AllTalk Docker build exists, it's important to note that this version is based on an earlier iteration of AllTalk and was set up by a third party. At some point, my goal is to deepen my understanding of Docker and its compatibility with AllTalk. This exploration may lead to significant updates to AllTalk to ensure a seamless Docker experience. However, as of now, the Docker build should be considered a BETA version and isn't directly supported by me.
+
+As for Google Colab, there is partial compatibility with AllTalk, though with some quirks. I am currently investigating these issues and figuring out the necessary adjustments to enhance the integration. Until I can ensure a smooth experience, I won't be officially releasing any Google Colab implementations of AllTalk.
+
+---
+
 ### 🟩 Manual Installation - As part of Text generation web UI (inc. macOSX)
 <details>
 	<summary>MANUAL INSTALLATION - Text-Generation-webui</summary>
