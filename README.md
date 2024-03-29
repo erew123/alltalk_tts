@@ -801,7 +801,7 @@ You can delete one or more suspect files and a factory fresh copy of that file o
 <details>
 	<summary>🟨 RuntimeError: Found no NVIDIA driver on your system.</summary><br>
 	
-This error message is caused by enablind DeepSpeed when you do not have a Nvidia GPU. To resolve this, edit `confignew.json` and change `"deepspeed_activate": true,` to `"deepspeed_activate": false,` then restart AllTalk.
+This error message is caused by DeepSpeed being enabled when you do not have a Nvidia GPU. To resolve this, edit `confignew.json` and change `"deepspeed_activate": true,` to `"deepspeed_activate": false,` then restart AllTalk.
 
 ```
   File "C:\alltalk_tts\alltalk_environment\env\Lib\site-packages\torch\cuda\__init__.py", line 302, in _lazy_init
@@ -1150,6 +1150,8 @@ The higher the accuracy you choose, the more things it will flag up, however you
 You will be able to see the ID's and Text (orignal and as interpreted) by looking at the terminal/command prompt window.
 
 The Analyze TTS feature uses the Whisper Larger-v2 AI engine, which will download on first use if necessary. This will require about 2.5GB's of disk space and could take a few minutes to download, depending on your internet connection.
+
+You can use this feature on systems that do not have an Nvidia GPU, however, unless you have a very powerful CPU, expect it to be slow.
 
 #### ⬜ Tricks to get the model to say things correctly
 Sometimes the AI model won’t say something the way that you want it to. It could be because it’s a new word, an acronym or just something it’s not good at for whatever reason. There are some tricks you can use to improve the chances of it saying something correctly.
