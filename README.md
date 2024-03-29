@@ -114,7 +114,7 @@ To perform a Standalone installation of AllTalk:
      - Linux: `./atsetup.sh`
 
 3. **Follow the Setup Prompts**:
-   - Comply with the on-screen instructions to install the required files. Verify AllTalk's functionality before proceeding with DeepSpeed installation.
+   - Select Standalone Installation and then Option 1 and follow any on-screen instructions to install the required files. DeepSpeed is automatically installed on **Windows** based system, but will only work on Nvidia GPU's. **Linux** based system users will have to follow the DeepSpeed installation instructions.
 
 > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
