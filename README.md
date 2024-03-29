@@ -799,6 +799,34 @@ You can delete one or more suspect files and a factory fresh copy of that file o
 </details>
 
 <details>
+	<summary>🟨 RuntimeError: Found no NVIDIA driver on your system.</summary><br>
+	
+This error message is caused by enablind DeepSpeed when you do not have a Nvidia GPU. To resolve this, edit `confignew.json` and change `"deepspeed_activate": true,` to `"deepspeed_activate": false,` then restart AllTalk.
+
+```
+  File "C:\alltalk_tts\alltalk_environment\env\Lib\site-packages\torch\cuda\__init__.py", line 302, in _lazy_init
+    torch._C._cuda_init()
+RuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx
+
+ERROR:    Application startup failed. Exiting.
+[AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait.
+```
+
+</details>
+
+<details>
+	<summary>🟨 raise RuntimeError("PyTorch version mismatch! DeepSpeed ops were compiled and installed.</summary><br>
+	
+This error message is caused by having DeepSpeed enabled, but you have a version of DeepSpeed installed that was compiled for a different version of Python, PyTorch or CUDA (or any mix of those). You will need to start your Python environment and run `pip uninstall deepspeed` to remove DeepSpeed from your Python environment and then install the correct version of DeepSpeed.
+
+```
+raise RuntimeError("PyTorch version mismatch! DeepSpeed ops were compiled and installed 
+RuntimeError: PyTorch version mismatch! DeepSpeed ops were compiled and installed with a different version than what is being used at runtime. Please re-install DeepSpeed or switch torch versions. Install torch version=2.1, Runtime torch version=2.2
+```
+
+</details>
+
+<details>
 	<summary>🟨 Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.</summary><br>
 	When the subprocess is starting 2x things are occurring:<br><br>
 
