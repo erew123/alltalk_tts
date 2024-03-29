@@ -39,8 +39,16 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 ---
-### 🛠️ **About this project** 
-AllTalk is a labour of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+### 🛠️ **About this project & me** 
+AllTalk is a labour of love that has been developed, supported and sustained in my personal free time. As a solo enthusiast (not a business or team) my resources are inherently limited. This project has been one of my passions, but I must balance it with other commitments.
+
+To manage AllTalk sustainably, I prioritize support requests based on their overall impact and the number of users affected. I encourage you to utilize the comprehensive documentation and engage with the AllTalk community discussion area. These resources often provide immediate answers and foster a supportive user network.
+
+Should your inquiry extend beyond the documentation, especially if it concerns a bug or feature request, I assure you I’ll offer my best support as my schedule permits. However, please be prepared for varying response times, reflective of the personal dedication I bring to AllTalk. Your understanding and patience in this regard are greatly appreciated.
+
+It's important to note that **I am not** the developer of any TTS models utilized by AllTalk, nor do I claim to be an expert on them, including understanding all their nuances, issues, and quirks. For specific TTS model concerns, I’ve provided links to the original developers in the Help section for direct assistance.
+
+Thank you for your continued support and understanding. 
 
 ---
 
