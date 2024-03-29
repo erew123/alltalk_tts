@@ -76,7 +76,7 @@ To set up AllTalk within Text-generation-webui, follow either method:
    - **Via Terminal/Console (Recommended)**:
      - `cd \text-generation-webui\extensions\`
      - `git clone https://github.com/erew123/alltalk_tts`
-   - **Via Releases Page**:
+   - **Via Releases Page (Cannot be automatically updated after install as its not linked to Github)**:
      - Download the latest `alltalk_tts.zip` from [Releases](https://github.com/erew123/alltalk_tts/releases) and extract it to `\text-generation-webui\extensions\alltalk_tts\`.
 
 2. **Start Python Environment**:
@@ -112,7 +112,7 @@ To perform a Standalone installation of AllTalk:
    - **Via Terminal/Console (Recommended)**:
      - Navigate to your preferred directory: `cd C:\myfiles\`
      - Clone the AllTalk repository: `git clone https://github.com/erew123/alltalk_tts`
-   - **Via Releases Page**:
+   - **Via Releases Page (Cannot be automatically updated after install as its not linked to Github)**:
      - Download `alltalk_tts.zip` from [Releases](https://github.com/erew123/alltalk_tts/releases) and extract it to your chosen directory, for example, `C:\myfiles\alltalk_tts\`.
 
 2. **Start AllTalk Setup**:
