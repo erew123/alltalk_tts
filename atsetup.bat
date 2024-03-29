@@ -387,9 +387,9 @@ pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --upgrade --force-reinsta
 echo Installing other requirements.
 echo.
 pip install -r system\requirements\requirements_standalone.txt
-curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-12.7/deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 echo Installing DeepSpeed...
-pip install deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
+pip install deepspeed-0.14.0+cu118-cp311-cp311-win_amd64.whl
 del deepspeed-0.12.7+d058d4b-cp311-cp311-win_amd64.whl
 
 
