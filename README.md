@@ -911,7 +911,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 <details>
 	<summary>🟨 Firefox - Streaming Audio doesnt work on Firefox</summary><br>
 	
-This is a long standing issue with Firefox and one I am unable to resolve. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
+This is a long standing issue with Mozilla & Firefox and one I am unable to resolve as Mozilla have not resolved the issue with Firefox. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
 </details>
 
 ### Application Specific Issues
