@@ -794,6 +794,19 @@ As far as I am aware, these are to do with the chrome browser the gradio text-ge
 ### Startup, Performance and Compatibility Issues
 
 <details>
+	<summary>🟨 AllTalk is only loading into CPU, but I have an Nvidia GPU so it should be loading into CUDA</summary><br>
+	
+This is caused by Pytorch (Torch) not having the CUDA extensions installed (You can check by running the diagnostics). Typially this happens (on Standalone installations) because when the setup routine goes to install Pytorch with CUDA, it looks in the PIP cache and if a previous application has downloaded a version of Pytorch that **doesn't** have CUDA extensions, it doesnt recognise this fact and just uses it for the installation anyway. To resolve this:
+
+1) On the `atsetup` utility, on the `Standalone menu` select to `Purge the PIP cache`. This will remove cached packages from the PIP cache, meaning it will have to download fresh copies.
+2) As we need to force the upgrade to the Python environment, the easiest way to do this will be to use `atsetup` to `Delete AllTalk's custom Python environment`. This means it will have to rebuild the Python environment. **Note**, you may have to run this step twice, as it has to exit the current Python environment, then you have to re-load `atsetup` and select `Delete AllTalk's custom Python environment` again.
+3) You can now use `atsetup` to `Install AllTalk as a Standalone Application` which will download fresh copies of everything and re-install the Python environment. 
+4) Once this is done you can check if CUDA is now working with the diagnostics or starting AllTalk and checking the model loads into CUDA.
+
+</details>
+
+
+<details>
 	<summary>🟨 RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory</summary><br>
 	
 This error message is caused by the model being corrupted or damaged in some way. This error can occur if Huggingface, where the model is downloaded from, have an error (when the model is downloaded) or potentailly internet issues occuring while the model is downloaded on first start-up. 
