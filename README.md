@@ -796,7 +796,7 @@ As far as I am aware, these are to do with the chrome browser the gradio text-ge
 <details>
 	<summary>🟨 AllTalk is only loading into CPU, but I have an Nvidia GPU so it should be loading into CUDA</summary><br>
 	
-This is caused by Pytorch (Torch) not having the CUDA extensions installed (You can check by running the diagnostics). Typially this happens (on Standalone installations) because when the setup routine goes to install Pytorch with CUDA, it looks in the PIP cache and if a previous application has downloaded a version of Pytorch that **doesn't** have CUDA extensions, it doesnt recognise this fact and just uses it for the installation anyway. To resolve this:
+This is caused by Pytorch (Torch) not having the CUDA extensions installed (You can check by running the diagnostics). Typically this happens (on Standalone installations) because when the setup routine goes to install Pytorch with CUDA, it looks in the PIP cache and if a previous application has downloaded a version of Pytorch that **doesn't** have CUDA extensions, the PIP installer doesnt recognise this fact and just uses the cached version for installation. To resolve this:
 
 1) On the `atsetup` utility, on the `Standalone menu` select to `Purge the PIP cache`. This will remove cached packages from the PIP cache, meaning it will have to download fresh copies.
 2) As we need to force the upgrade to the Python environment, the easiest way to do this will be to use `atsetup` to `Delete AllTalk's custom Python environment`. This means it will have to rebuild the Python environment. **Note**, you may have to run this step twice, as it has to exit the current Python environment, then you have to re-load `atsetup` and select `Delete AllTalk's custom Python environment` again.
