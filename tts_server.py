@@ -8,7 +8,8 @@ from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 import io
 import wave
-
+import logging
+logging.disable(logging.WARNING)
 ##########################
 #### Webserver Imports####
 ##########################
@@ -120,12 +121,6 @@ try:
     deepspeed_available = True
 except ImportError:
     pass
-if deepspeed_available:
-    print(f"[{params['branding']}Startup] DeepSpeed \033[93mDetected\033[0m")
-    print(f"[{params['branding']}Startup] Activate DeepSpeed in {params['branding']}settings")
-else:
-    print(f"[{params['branding']}Startup] DeepSpeed \033[93mNot Detected\033[0m. See https://github.com/microsoft/DeepSpeed")
-
 
 @asynccontextmanager
 async def startup_shutdown(no_actual_value_it_demanded_something_be_here):
@@ -187,9 +182,8 @@ async def setup():
     # Calculate start time minus end time
     generate_elapsed_time = generate_end_time - generate_start_time
     # Print out the result of the load time
-    print(
-        f"[{params['branding']}Model] \033[94mModel Loaded in \033[93m{generate_elapsed_time:.2f} seconds.\033[0m"
-    )
+    print(f"[{params['branding']}Model] \033[94mModel Loaded in \033[93m{generate_elapsed_time:.2f} seconds.\033[0m")
+    print(f"[{params['branding']}Model] Ready")
     # Set "tts_model_loaded" to true
     params["tts_model_loaded"] = True
     # Set the output path for wav files
@@ -223,6 +217,8 @@ async def api_manual_load_model():
             model_path=modeldownload_base_path / modeldownload_model_path,
             config_path=modeldownload_base_path / modeldownload_model_path / "config.json",
         ).to(device)
+        print(f"[{params['branding']}Model] \033[94mCoqui Public Model License\033[0m")
+        print(f"[{params['branding']}Model] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
     return model
 
 
@@ -252,6 +248,8 @@ async def xtts_manual_load_model():
         use_deepspeed=params["deepspeed_activate"],
     )
     model.to(device)
+    print(f"[{params['branding']}Model] \033[94mCoqui Public Model License\033[0m")
+    print(f"[{params['branding']}Model] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
     return model
 
 # MODEL LOADER For "XTTSv2 FT"
@@ -270,6 +268,8 @@ async def xtts_ft_manual_load_model():
         use_deepspeed=params["deepspeed_activate"],
     )
     model.to(device)
+    print(f"[{params['branding']}Model] \033[94mCoqui Public Model License\033[0m")
+    print(f"[{params['branding']}Model] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
     return model
 
 # MODEL UNLOADER

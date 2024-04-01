@@ -9,12 +9,16 @@ import threading
 import signal
 import sys
 import atexit
+import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 import re
 import numpy as np
 import soundfile as sf
 import uuid
+import logging
+# Store the current disable level
+current_disable_level = logging.getLogger().manager.disable
 
 ######################################
 #### ALLTALK ALLOWED STARTUP TIME ####
@@ -30,43 +34,109 @@ startup_wait_time = 120
 # STARTUP VARIABLE - Create "this_dir" variable as the current script directory
 this_dir = Path(__file__).parent.resolve()
 
-
 # load config file in and get settings
 def load_config(file_path):
     with open(file_path, "r") as config_file:
         config = json.load(config_file)
     return config
-
-
+                               
 config_file_path = this_dir / "confignew.json"
 # Load the params dictionary from the confignew.json file
 params = load_config(config_file_path)
 
+print(f"[{params['branding']}Startup]\033[94m     _    _ _ \033[1;35m_____     _ _     \033[0m  _____ _____ ____  ")
+print(f"[{params['branding']}Startup]\033[94m    / \  | | |\033[1;35m_   _|_ _| | | __ \033[0m |_   _|_   _/ ___| ")
+print(f"[{params['branding']}Startup]\033[94m   / _ \ | | |\033[1;35m | |/ _` | | |/ / \033[0m   | |   | | \___ \ ")
+print(f"[{params['branding']}Startup]\033[94m  / ___ \| | |\033[1;35m | | (_| | |   <  \033[0m   | |   | |  ___) |")
+print(f"[{params['branding']}Startup]\033[94m /_/   \_\_|_|\033[1;35m |_|\__,_|_|_|\_\ \033[0m   |_|   |_| |____/ ")
+print(f"[{params['branding']}Startup]")
+
+##############################################
+#### Update any changes to confignew.json ####
+##############################################
+
+update_config_path = this_dir / "system" / "config" / "at_configupdate.json"
+downgrade_config_path = this_dir / "system" / "config" / "at_configdowngrade.json"
+
+def changes_needed(main_config, update_config, downgrade_config):
+    """Check if there are any changes to be made to the main configuration."""
+    for key in downgrade_config.keys():
+        if key in main_config:
+            return True
+    for key, value in update_config.items():
+        if key not in main_config:
+            return True
+    return False
+
+def update_config(config_file_path, update_config_path, downgrade_config_path):
+    try:
+        with open(config_file_path, 'r') as file:
+            main_config = json.load(file)
+        with open(update_config_path, 'r') as file:
+            update_config = json.load(file)
+        with open(downgrade_config_path, 'r') as file:
+            downgrade_config = json.load(file)
+
+        # Determine if changes are needed
+        if changes_needed(main_config, update_config, downgrade_config):
+            # Backup with timestamp to avoid overwriting
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            backup_path = config_file_path.with_suffix(f".{timestamp}.bak")
+            logging.info(f"Creating backup of the main config to {backup_path}")
+            shutil.copy(config_file_path, backup_path)
+
+            # Proceed with updates and downgrades
+            for key, value in update_config.items():
+                if key not in main_config:
+                    main_config[key] = value
+            for key in downgrade_config.keys():
+                if key in main_config:
+                    del main_config[key]
+
+            # Save the updated configuration
+            with open(config_file_path, 'w') as file:
+                json.dump(main_config, file, indent=4)
+
+            print(f"[{params['branding']}Startup] \033[92mConfig file check      : \033[91mUpdates applied\033[0m")
+        else:
+            print(f"[{params['branding']}Startup] \033[92mConfig file check      : \033[93mNo Updates required\033[0m")
+
+    except Exception as e:
+        print(f"[{params['branding']}Startup] \033[92mConfig file check      : \033[91mError updating\033[0m")
+
+# Update the configuration
+update_config(config_file_path, update_config_path, downgrade_config_path)
+# Re-Load the params dictionary from the confignew.json file
+params = load_config(config_file_path)
+
+#########################################
+#### Continue on with Startup Checks ####
+#########################################
+            
 # Required for sentence splitting
 try:
     from TTS.api import TTS
     from TTS.utils.synthesizer import Synthesizer
 except ModuleNotFoundError:
-    logger.error(
-        f"[{params['branding']}]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the {params['branding']} extension."
-        f"[{params['branding']}]\033[91mWarning\033[0m Linux / Mac:\npip install -r /alltalk_tts/requirements.txt\n"
-        f"[{params['branding']}]\033[91mWarning\033[0m Windows:\npip install -r \\alltalk_tts\\requirements.txt\n"
-        f"[{params['branding']}]\033[91mWarning\033[0m If you used the one-click installer, paste the command above in the terminal window launched after running the cmd_ script. On Windows, that's cmd_windows.bat."
-    )
-    raise
+    # Inform the user about the missing module and suggest next steps
+    print(f"[{params['branding']}]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the {params['branding']} extension.")
+    print(f"[{params['branding']}]\033[91mWarning\033[0m Please use the ATSetup utility or check the Github installation instructions.")
+    # Re-raise the ModuleNotFoundError to stop the program and print the traceback
+    raise 
 
-# IMPORT - Attempt Importing DeepSpeed (required for displaying Deepspeed checkbox in gradio)
+# Suppress logging
+logging.disable(logging.ERROR)
 try:
     import deepspeed
-
     deepspeed_installed = True
 except ImportError:
     deepspeed_installed = False
+# Restore previous logging level
+logging.disable(current_disable_level)
 
 # Import gradio if being used within text generation webUI
 try:
     import gradio as gr
-
     from modules import chat, shared, ui_chat
     from modules.logging_colors import logger
     from modules.ui import create_refresh_button
@@ -75,9 +145,10 @@ try:
     # This is set to check if the script is being run within text generation webui or as a standalone script. False is running as part of text gen web ui or a gradio interface
     running_in_standalone = False
     output_folder_wav = params["output_folder_wav"]
+    print(f"[{params['branding']}Startup] \033[92m{params['branding']}startup Mode   : \033[93mText-Gen-webui mode\033[0m")
 except ModuleNotFoundError:
     output_folder_wav = params["output_folder_wav_standalone"]
-    print(f"[{params['branding']}Startup] Running script.py in standalone mode")
+    print(f"[{params['branding']}Startup] \033[92m{params['branding']}startup Mode   : \033[93mStandalone mode\033[0m")
     # This is set to check if the script is being run within text generation webui or as a standalone script. true means standalone
     running_in_standalone = True
 
@@ -98,23 +169,12 @@ def get_available_voices():
     return sorted([voice.name for voice in Path(f"{this_dir}/voices").glob("*.wav")])
 
 
-#########################
-#### LICENSE DISPLAY ####
-#########################
-# STARTUP Display Licence Information
-print(f"[{params['branding']}Startup] \033[94mCoqui Public Model License\033[0m")
-print(f"[{params['branding']}Startup] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
-
-
 ############################################
 #### DELETE OLD OUTPUT WAV FILES IF SET ####
 ############################################
 def delete_old_files(folder_path, days_to_keep):
     current_time = datetime.now()
-    print(
-        f"[{params['branding']}Startup] Deletion of old output folder WAV files is currently enabled and set at",
-        delete_output_wavs_setting,
-    )
+    print(f"[{params['branding']}Startup] \033[92mWAV file deletion      :\033[93m {formatted_date}\033[0m",delete_output_wavs_setting,)
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
@@ -130,20 +190,18 @@ output_folder_wav = os.path.normpath(output_folder_wav)
 
 # Check and perform file deletion
 if delete_output_wavs_setting.lower() == "disabled":
-    print(
-        "["
-        + params["branding"]
-        + "Startup] Old output wav file deletion is set to disabled."
-    )
+    print("["+ params["branding"]+"Startup] \033[92mWAV file deletion      :\033[93m Disabled\033[0m")
 else:
     try:
         days_to_keep = int(delete_output_wavs_setting.split()[0])
         delete_old_files(output_folder_wav, days_to_keep)
     except ValueError:
-        print(
-            f"[{params['branding']}Startup] Invalid setting for deleting old wav files. Please use 'Disabled' or 'X Days' format."
-        )
+        print(f"[{params['branding']}Startup] \033[92mWAV file deletion      :\033[93m Invalid setting for deleting old wav files. Please use 'Disabled' or 'X Days' format\033[0m")
 
+if deepspeed_installed:
+    print(f"[{params['branding']}Startup] \033[92mDeepSpeed version      :\033[93m",deepspeed.__version__,"\033[0m")
+else:
+    print(f"[{params['branding']}Startup] \033[92mDeepSpeed version      :\033[91m Not Detected\033[0m")
 
 ########################
 #### STARTUP CHECKS ####
@@ -153,8 +211,6 @@ def check_required_files():
     this_dir = Path(__file__).parent.resolve()
     download_script_path = this_dir / "modeldownload.py"
     subprocess.run(["python", str(download_script_path)])
-    print(f"[{params['branding']}Startup] All required files are present.")
-
 
 # STARTUP Call Check routine
 check_required_files()
@@ -189,7 +245,6 @@ elif params["tts_method_xtts_local"] == True:
 
 # Set the default for Narrated text without asterisk or quotes to be Narrator
 non_quoted_text_is = True
-
 
 ######################
 #### GRADIO STUFF ####
@@ -237,9 +292,7 @@ script_path = this_dir / "tts_server.py"
 
 
 def signal_handler(sig, frame):
-    print(
-        f"[{params['branding']}Shutdown] \033[94mReceived Ctrl+C, terminating subprocess\033[92m"
-    )
+    print(f"[{params['branding']}Shutdown] \033[94mReceived Ctrl+C, terminating subprocess\033[92m")
     if process.poll() is None:
         process.terminate()
         process.wait()  # Wait for the subprocess to finish
@@ -258,33 +311,20 @@ else:
     process = subprocess.Popen(["python", script_path])
     # Check if the subprocess has started successfully
     if process.poll() is None:
-        print(f"[{params['branding']}Startup] TTS Subprocess starting")
+        print(f"[{params['branding']}Startup] \033[92mTTS Subprocess         :\033[93m Starting up\033[0m")
         print(f"[{params['branding']}Startup]")
         print(
-            f"[{params['branding']}Startup] \033[94m {params['branding']}Settings & Documentation:\033[00m",
+            f"[{params['branding']}Startup] \033[94m{params['branding']}Settings & Documentation:\033[00m",
             f"\033[92mhttp://{params['ip_address']}:{params['port_number']}\033[00m",
         )
         print(f"[{params['branding']}Startup]")
     else:
-        print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process"
-        )
-        print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m It could be that you have something on port:",
-            params["port_number"],
-        )
-        print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m Or you have not started in a Python environement with all the necesssary bits installed"
-        )
-        print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m Check you are starting Text-generation-webui with either the start_xxxxx file or the Python environment with cmd_xxxxx file."
-        )
-        print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m xxxxx is the type of OS you are on e.g. windows, linux or mac."
-        )
-        print(
-            f"[{params['branding']}Startup] \033[91mWarning\033[0m Alternatively, you could check no other Python processes are running that shouldnt be e.g. Restart your computer is the simple way."
-        )
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process")
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m It could be that you have something on port:",params["port_number"],)
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m Or you have not started in a Python environement with all the necesssary bits installed")
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m Check you are starting Text-generation-webui with either the start_xxxxx file or the Python environment with cmd_xxxxx file.")
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m xxxxx is the type of OS you are on e.g. windows, linux or mac.")
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m Alternatively, you could check no other Python processes are running that shouldnt be e.g. Restart your computer is the simple way.")
         # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
         sys.exit(1)
 
@@ -300,26 +340,14 @@ else:
                 break
         except requests.RequestException as e:
             # Print the exception for debugging purposes
-            print(
-                f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for {timeout} seconds maximum. Please wait."
-            )
+            print(f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS Subprocess has NOT started up yet, Will keep trying for {timeout} seconds maximum. Please wait.")
         time.sleep(5)
     else:
-        print(
-            f"\n[{params['branding']}Startup] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m"
-        )
-        print(
-            f"[{params['branding']}Startup] On older system you may wish to open and edit \033[94mscript.py\033[0m with a text editor and changing the"
-        )
-        print(
-            f"[{params['branding']}Startup] \033[94mstartup_wait_time = 120\033[0m setting to something like \033[94mstartup_wait_time = 240\033[0m as this will allow"
-        )
-        print(
-            f"[{params['branding']}Startup] AllTalk more time to try load the model into your VRAM. Otherise please visit the Github for"
-        )
-        print(
-            f"[{params['branding']}Startup] a list of other possible troubleshooting options."
-        )
+        print(f"\n[{params['branding']}Startup] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m")
+        print(f"[{params['branding']}Startup] On older system you may wish to open and edit \033[94mscript.py\033[0m with a text editor and changing the")
+        print(f"[{params['branding']}Startup] \033[94mstartup_wait_time = 120\033[0m setting to something like \033[94mstartup_wait_time = 240\033[0m as this will allow")
+        print(f"[{params['branding']}Startup] AllTalk more time to try load the model into your VRAM. Otherise please visit the Github for")
+        print(f"[{params['branding']}Startup] a list of other possible troubleshooting options.")
         # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
         sys.exit(1)
 
@@ -371,9 +399,7 @@ def send_reload_request(tts_method):
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
-        print(
-            f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}"
-        )
+        print(f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -400,9 +426,7 @@ def send_lowvram_request(low_vram):
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
-        print(
-            f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}"
-        )
+        print(f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -417,7 +441,6 @@ def send_deepspeed_request(deepspeed_param):
             audio_path = this_dir / "system" / "at_sounds" / "deepspeedenabled.wav"
         else:
             audio_path = this_dir / "system" / "at_sounds" / "deepspeeddisabled.wav"
-
         url = f"{base_url}/api/deepspeed?new_deepspeed_value={deepspeed_param}"
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, headers=headers)
@@ -430,9 +453,7 @@ def send_deepspeed_request(deepspeed_param):
         return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     except requests.exceptions.RequestException as e:
         # Handle the HTTP request error
-        print(
-            f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}"
-        )
+        print(f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -465,9 +486,7 @@ Synthesizer.split_into_sentences = new_split_into_sentences
 def before_audio_generation(string, params):
     # Check Model is loaded into cuda or cpu and error if not
     if not params["tts_model_loaded"]:
-        print(
-            f"[{params['branding']}Model] \033[91mWarning\033[0m Model is still loading, please wait before trying to generate TTS"
-        )
+        print(f"[{params['branding']}Model] \033[91mWarning\033[0m Model is still loading, please wait before trying to generate TTS")
         return
     string = html.unescape(string) or random_sentence()
     if string == "":
@@ -491,13 +510,9 @@ def combine(audio_files, output_folder, state):
 
     # Save the combined audio to a file with a specified sample rate
     if "character_menu" in state:
-        output_file_path = os.path.join(
-            output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav'
-        )
+        output_file_path = os.path.join(output_folder, f'{state["character_menu"]}_{int(time.time())}_combined.wav')
     else:
-        output_file_path = os.path.join(
-            output_folder, f"TTSOUT_{int(time.time())}_combined.wav"
-        )
+        output_file_path = os.path.join(output_folder, f"TTSOUT_{int(time.time())}_combined.wav")
     sf.write(output_file_path, audio, samplerate=sample_rate)
     # Clean up unnecessary files
     for audio_file in audio_files:
@@ -544,9 +559,7 @@ def voice_preview(string):
         )
     # Check if lock is already acquired
     if process_lock.locked():
-        print(
-            f"[{params['branding']}Model] \033[91mWarning\033[0m Audio generation is already in progress. Please wait."
-        )
+        print(f"[{params['branding']}Model] \033[91mWarning\033[0m Audio generation is already in progress. Please wait.")
         return
     if generate_response.get("status") == "generate-success":
         # Handle Gradio and playback
@@ -666,14 +679,10 @@ def output_modifier(string, state):
                     # Determine the voice to use based on the part type
                     if part_type == "narrator":
                         voice_to_use = params["narrator_voice"]
-                        print(
-                            f"[{params['branding']}TTSGen] \033[92mNarrator\033[0m"
-                        )  # Green
+                        print(f"[{params['branding']}TTSGen] \033[92mNarrator\033[0m")  # Green
                     elif part_type == "character":
                         voice_to_use = params["voice"]
-                        print(
-                            f"[{params['branding']}TTSGen] \033[36mCharacter\033[0m"
-                        )  # Yellow
+                        print(f"[{params['branding']}TTSGen] \033[36mCharacter\033[0m")  # Yellow
                     else:
                         # Handle ambiguous parts based on user preference
                         voice_to_use = (
