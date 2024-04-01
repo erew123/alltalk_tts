@@ -174,7 +174,7 @@ def get_available_voices():
 ############################################
 def delete_old_files(folder_path, days_to_keep):
     current_time = datetime.now()
-    print(f"[{params['branding']}Startup] \033[92mWAV file deletion      :\033[93m {formatted_date}\033[0m",delete_output_wavs_setting,)
+    print(f"[{params['branding']}Startup] \033[92mWAV file deletion      :\033[93m", delete_output_wavs_setting,"\033[0m")
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
