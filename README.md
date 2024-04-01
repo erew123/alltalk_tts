@@ -39,8 +39,16 @@ AllTalk is an updated version of the Coqui_tts extension for Text Generation web
 - 🔴 [Future to-do list & Upcoming updates](https://github.com/erew123/alltalk_tts?#-future-to-do-list)
 
 ---
-### 🛠️ **About this project** 
-AllTalk is a labour of love, developed and supported in my personal free time. As such, my ability to respond to support requests is limited. I prioritize issues based on their impact and the number of users affected. I appreciate your understanding and patience. If your inquiry isn't covered by the documentation or existing discussions, and it's not related to a bug or feature request, I'll do my best to assist as time allows.
+### 🛠️ **About this project & me** 
+AllTalk is a labour of love that has been developed, supported and sustained in my personal free time. As a solo enthusiast (not a business or team) my resources are inherently limited. This project has been one of my passions, but I must balance it with other commitments.
+
+To manage AllTalk sustainably, I prioritize support requests based on their overall impact and the number of users affected. I encourage you to utilize the comprehensive documentation and engage with the AllTalk community discussion area. These resources often provide immediate answers and foster a supportive user network.
+
+Should your inquiry extend beyond the documentation, especially if it concerns a bug or feature request, I assure you I’ll offer my best support as my schedule permits. However, please be prepared for varying response times, reflective of the personal dedication I bring to AllTalk. Your understanding and patience in this regard are greatly appreciated.
+
+It's important to note that **I am not** the developer of any TTS models utilized by AllTalk, nor do I claim to be an expert on them, including understanding all their nuances, issues, and quirks. For specific TTS model concerns, I’ve provided links to the original developers in the Help section for direct assistance.
+
+Thank you for your continued support and understanding. 
 
 ---
 
@@ -68,7 +76,7 @@ To set up AllTalk within Text-generation-webui, follow either method:
    - **Via Terminal/Console (Recommended)**:
      - `cd \text-generation-webui\extensions\`
      - `git clone https://github.com/erew123/alltalk_tts`
-   - **Via Releases Page**:
+   - **Via Releases Page (Cannot be automatically updated after install as its not linked to Github)**:
      - Download the latest `alltalk_tts.zip` from [Releases](https://github.com/erew123/alltalk_tts/releases) and extract it to `\text-generation-webui\extensions\alltalk_tts\`.
 
 2. **Start Python Environment**:
@@ -104,7 +112,7 @@ To perform a Standalone installation of AllTalk:
    - **Via Terminal/Console (Recommended)**:
      - Navigate to your preferred directory: `cd C:\myfiles\`
      - Clone the AllTalk repository: `git clone https://github.com/erew123/alltalk_tts`
-   - **Via Releases Page**:
+   - **Via Releases Page (Cannot be automatically updated after install as its not linked to Github)**:
      - Download `alltalk_tts.zip` from [Releases](https://github.com/erew123/alltalk_tts/releases) and extract it to your chosen directory, for example, `C:\myfiles\alltalk_tts\`.
 
 2. **Start AllTalk Setup**:
@@ -114,7 +122,7 @@ To perform a Standalone installation of AllTalk:
      - Linux: `./atsetup.sh`
 
 3. **Follow the Setup Prompts**:
-   - Comply with the on-screen instructions to install the required files. Verify AllTalk's functionality before proceeding with DeepSpeed installation.
+   - Select Standalone Installation and then Option 1 and follow any on-screen instructions to install the required files. DeepSpeed is automatically installed on **Windows** based system, but will only work on Nvidia GPU's. **Linux** based system users will have to follow the DeepSpeed installation instructions.
 
 > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
@@ -123,6 +131,14 @@ To perform a Standalone installation of AllTalk:
 </details>
 
 Refer to `🟩 Other installation notes` for further details, including information on additional voices, changing IP, character card notes etc.
+
+---
+
+### 🟩 Docker Builds and Google Colab's
+
+While an AllTalk Docker build exists, it's important to note that this version is based on an earlier iteration of AllTalk and was set up by a third party. At some point, my goal is to deepen my understanding of Docker and its compatibility with AllTalk. This exploration may lead to significant updates to AllTalk to ensure a seamless Docker experience. However, as of now, the Docker build should be considered a BETA version and isn't directly supported by me.
+
+As for Google Colab, there is partial compatibility with AllTalk, though with some quirks. I am currently investigating these issues and figuring out the necessary adjustments to enhance the integration. Until I can ensure a smooth experience, I won't be officially releasing any Google Colab implementations of AllTalk.
 
 ---
 
@@ -775,7 +791,69 @@ Also, is your text-generation-webui up to date? [instructions here](https://gith
 As far as I am aware, these are to do with the chrome browser the gradio text-generation-webui in some way. I raised an issue about this on the text-generation-webui [here](https://github.com/oobabooga/text-generation-webui/issues/4788) where you can see that AllTalk is not loaded and the messages persist. Either way, this is more a warning than an actual issue, so shouldnt affect any functionality of either AllTalk or text-generation-webui, they are more just an annoyance.
 </details>
 
-### Performance and Compatibility Issues
+### Startup, Performance and Compatibility Issues
+
+<details>
+	<summary>🟨 AllTalk is only loading into CPU, but I have an Nvidia GPU so it should be loading into CUDA</summary><br>
+	
+This is caused by Pytorch (Torch) not having the CUDA extensions installed (You can check by running the diagnostics). Typically this happens (on Standalone installations) because when the setup routine goes to install Pytorch with CUDA, it looks in the PIP cache and if a previous application has downloaded a version of Pytorch that **doesn't** have CUDA extensions, the PIP installer doesnt recognise this fact and just uses the cached version for installation. To resolve this:
+
+1) On the `atsetup` utility, on the `Standalone menu` select to `Purge the PIP cache`. This will remove cached packages from the PIP cache, meaning it will have to download fresh copies.
+2) As we need to force the upgrade to the Python environment, the easiest way to do this will be to use `atsetup` to `Delete AllTalk's custom Python environment`. This means it will have to rebuild the Python environment. **Note**, you may have to run this step twice, as it has to exit the current Python environment, then you have to re-load `atsetup` and select `Delete AllTalk's custom Python environment` again.
+3) You can now use `atsetup` to `Install AllTalk as a Standalone Application` which will download fresh copies of everything and re-install the Python environment. 
+4) Once this is done you can check if CUDA is now working with the diagnostics or starting AllTalk and checking the model loads into CUDA.
+
+</details>
+
+
+<details>
+	<summary>🟨 RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory</summary><br>
+	
+This error message is caused by the model being corrupted or damaged in some way. This error can occur if Huggingface, where the model is downloaded from, have an error (when the model is downloaded) or potentailly internet issues occuring while the model is downloaded on first start-up. 
+
+```
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory
+
+ERROR: Application startup failed. Exiting.
+[AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait.
+```
+
+To resolve this, first look in your `alltalk_tts/models/xttsv2_2.0.2` (or whichever) model folder and confirm that the file sizes are correct.
+
+![image](https://github.com/erew123/screenshots/raw/main/modelsfiles.jpg)
+
+You can delete one or more suspect files and a factory fresh copy of that file or files will be downloaded on next start-up of AllTalk.
+
+</details>
+
+<details>
+	<summary>🟨 RuntimeError: Found no NVIDIA driver on your system.</summary><br>
+	
+This error message is caused by DeepSpeed being enabled when you do not have a Nvidia GPU. To resolve this, edit `confignew.json` and change `"deepspeed_activate": true,` to `"deepspeed_activate": false,` then restart AllTalk.
+
+```
+  File "C:\alltalk_tts\alltalk_environment\env\Lib\site-packages\torch\cuda\__init__.py", line 302, in _lazy_init
+    torch._C._cuda_init()
+RuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx
+
+ERROR:    Application startup failed. Exiting.
+[AllTalk Startup] Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait.
+```
+
+</details>
+
+<details>
+	<summary>🟨 raise RuntimeError("PyTorch version mismatch! DeepSpeed ops were compiled and installed.</summary><br>
+	
+This error message is caused by having DeepSpeed enabled, but you have a version of DeepSpeed installed that was compiled for a different version of Python, PyTorch or CUDA (or any mix of those). You will need to start your Python environment and run `pip uninstall deepspeed` to remove DeepSpeed from your Python environment and then install the correct version of DeepSpeed.
+
+```
+raise RuntimeError("PyTorch version mismatch! DeepSpeed ops were compiled and installed 
+RuntimeError: PyTorch version mismatch! DeepSpeed ops were compiled and installed with a different version than what is being used at runtime. Please re-install DeepSpeed or switch torch versions. Install torch version=2.1, Runtime torch version=2.2
+```
+
+</details>
 
 <details>
 	<summary>🟨 Warning TTS Subprocess has NOT started up yet, Will keep trying for 120 seconds maximum. Please wait. It times out after 120 seconds.</summary><br>
@@ -833,7 +911,7 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 <details>
 	<summary>🟨 Firefox - Streaming Audio doesnt work on Firefox</summary><br>
 	
-This is a long standing issue with Firefox and one I am unable to resolve. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
+This is a long standing issue with Mozilla & Firefox and one I am unable to resolve as Mozilla have not resolved the issue with Firefox. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
 </details>
 
 ### Application Specific Issues
@@ -1101,6 +1179,8 @@ The higher the accuracy you choose, the more things it will flag up, however you
 You will be able to see the ID's and Text (orignal and as interpreted) by looking at the terminal/command prompt window.
 
 The Analyze TTS feature uses the Whisper Larger-v2 AI engine, which will download on first use if necessary. This will require about 2.5GB's of disk space and could take a few minutes to download, depending on your internet connection.
+
+You can use this feature on systems that do not have an Nvidia GPU, however, unless you have a very powerful CPU, expect it to be slow.
 
 #### ⬜ Tricks to get the model to say things correctly
 Sometimes the AI model won’t say something the way that you want it to. It could be because it’s a new word, an acronym or just something it’s not good at for whatever reason. There are some tricks you can use to improve the chances of it saying something correctly.
