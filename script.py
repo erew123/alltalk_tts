@@ -230,7 +230,7 @@ if finetuned_model:
         (trained_model_directory / file).exists() for file in required_files
     )
 if finetuned_model:
-    print(f"[{params['branding']}Startup] Finetuned model \033[93mDetected\033[0m")
+    print(f"[{params['branding']}Startup] \033[92mFinetuned model        :\033[93m Detected\033[0m")
 
 ####################################################
 #### SET GRADIO BUTTONS BASED ON confignew.json ####
