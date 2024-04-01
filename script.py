@@ -201,7 +201,7 @@ else:
 if deepspeed_installed:
     print(f"[{params['branding']}Startup] \033[92mDeepSpeed version      :\033[93m",deepspeed.__version__,"\033[0m")
 else:
-    print(f"[{params['branding']}Startup] \033[92mDeepSpeed version      :\033[93m Not Detected\033[0m")
+    print(f"[{params['branding']}Startup] \033[92mDeepSpeed version      :\033[91m Not Detected\033[0m")
 
 ########################
 #### STARTUP CHECKS ####
