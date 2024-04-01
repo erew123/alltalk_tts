@@ -131,6 +131,7 @@ To perform a Standalone installation of AllTalk:
 </details>
 
 Refer to `🟩 Other installation notes` for further details, including information on additional voices, changing IP, character card notes etc.
+> If you wish to understand AllTalks start-up screen, please read **Understanding the AllTalk start-up screen** in the Help section.
 
 ---
 
@@ -792,6 +793,51 @@ As far as I am aware, these are to do with the chrome browser the gradio text-ge
 </details>
 
 ### Startup, Performance and Compatibility Issues
+
+<details>
+	<summary>🟨 Understanding the AllTalk start-up screen</summary><br>
+
+The AllTalk start-up screen provides various bits of information about the detected Python environment and errors.
+ 
+![image](https://github.com/erew123/screenshots/raw/main/alltalkstartup.jpg)
+
+**Config file check**<br>
+- Sometimes I need to add/remove something to your existing configuration file settings. Obviously, I don’t want to impact your existing settings, however any new features may need these settings to be created before AllTalk starts up. Ive added extra code that checks `alltalk_tts/system/config/at_configupdate.json` and `alltalk_tts/system/config/at_configdowngrade.json`, either adding or removing items to your configuration as necessary. If a change is made, you will be notified and a backup of the previous configuration file will be created in the `alltalk_tts` folder.
+
+**AllTalk startup Mode**<br>
+- informational. This will state if AllTalk has detected it is running as part of Text-generation-webui or as a Standalone Application.
+    
+**WAV file deletion**<br>
+- If you have set deletion of old generated WAV files, this will state the time frame after which they are purged.
+
+**DeepSpeed version**<br>
+- What version of DeepSpeed is installed/detected. This will **not** tell you if the version of DeepSpeed is compiled for your Python, PyTorch or CUDA version. Its important to remember that DeepSpeed has to be compiled for the exact version of Python, PyTorch and CUDA that you are using, so please ensure you have the correct DeepSpeed version installed if necessary.
+
+**Model is available**<br>
+- AllTalk is checking if your model files exist. This is not a validity check of the actual model files, they can still be corrupted. If files are missing, AllTalk will attempt to download them from Huggingface, however, if Huggingface has an outage/issue or your internet connection has issues, its possible corrupted or incomplete files will be downloaded. Please read `RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory` if you need to confirm your model files are ok.
+    
+**Current Python Version**<br>
+- Informational. Literally tells you the version of Python running in your Python environment.
+    
+**Current PyTorch Version**<br>
+- Informational. Tell tells you the version of **PyTorch** running in your Python environment, however if you have an Nvidia card, you should be running a CUDA based version of Pytorch. This is indicated with a `+cXXX` after the PyTorch version e.g. `2.2.2+cu121` would be PyTorch version 2.2.2 with CUDA 12.1 extensions. If you don’t have the PyTorch CUDA extensions installed, but you do have an Nvidia card, you may need to re-install PyTorch.
+
+**Current CUDA Version**<br>
+- Informational. This is linked to the Current PyTorch Version, as detailed above.
+
+**Current TTS Version**<br>
+- Informational. The current version of the TTS engine that is running.
+
+**AllTalk Github updated**<br>
+- As long as you have an internet connection, this will tell you last time AllTalk was updated on Github. It is checking the [commit list](https://github.com/erew123/alltalk_tts/commits/main/) to see when the last commit was made. As such, this could be simply a documentation update, a bug fix or new features. Its simply there as a guide to let you know the last time something was changed on AllTalk's Github.
+
+**TTS Subprocess**<br>
+- When AllTalk reaches this stage, the subprocess that loads in the AI model is starting. This is most likely where an error could occur with loading the TTS model, just after the documentation message.
+
+**AllTalk Settings & Documentation: http ://x.x.x.x**<br>
+- The link where you can reach AllTalks built in settings and documentation page. The TTS model will be loading immediately after this is displayed.
+<br><br>
+</details>
 
 <details>
 	<summary>🟨 AllTalk is only loading into CPU, but I have an Nvidia GPU so it should be loading into CUDA</summary><br>
