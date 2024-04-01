@@ -163,7 +163,7 @@ for filename, url in files_to_download.items():
     else:
         destination = Path(base_path) / model_path / filename
     if not destination.exists():
-        print(f"[{params['branding']}Startup] Downloading " + filename + "...")
+        print(f"[{params['branding']}Startup] \033[92mModel Downloading file : \033[93m" + filename + "\033[0m")
         download_file(url, destination)
 print(f"[{params['branding']}Startup] \033[92mModel is available     :\033[93m Checked\033[0m")
 
