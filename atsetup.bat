@@ -33,6 +33,42 @@ if "%ERRORLEVEL%" NEQ "0" (
     goto end
 )
 
+setlocal EnableDelayedExpansion
+
+rem Check if the current directory path contains a space
+set "containsSpace=false"
+set "currentPath=%CD%"
+for /F "delims=" %%a in ('echo "%currentPath%"') do (
+    set "path=%%~a"
+    for %%b in ("!path: =!") do (
+        if "%%~b" neq "!path!" set "containsSpace=true"
+    )
+)
+
+if %containsSpace%==true (
+    echo.
+    echo    %L_BLUE%ALLTALK WINDOWS SETUP UTILITY%RESET%
+    echo.
+    echo.
+    echo    You are trying to install AllTalk in a folder that has a space in the folder path e.g.
+    echo.
+    echo       C:\%L_RED%program files%RESET%\alltalk_tts
+    echo.	
+    echo    This causes errors with Conda and Python scripts. Please follow this link for reference:
+    echo. 
+    echo      %L_CYAN%https://docs.anaconda.com/free/working-with-conda/reference/faq/#installing-anaconda%RESET%
+    echo.
+    echo    Please use a folder path that has no spaces in it e.g. 
+    echo.
+    echo       C:\myfiles\alltalk_tts\
+    echo.
+    echo.
+    pause
+    goto :end
+) else (
+    goto :MainMenu
+)
+
 :MainMenu
 cls
 echo.

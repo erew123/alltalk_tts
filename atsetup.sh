@@ -28,6 +28,40 @@ check_curl() {
     fi
 }
 
+# Check if the current directory path contains a space
+containsSpace=false
+currentPath=$(pwd)
+if echo "$currentPath" | grep -q ' '; then
+    containsSpace=true
+fi
+
+if [ "$containsSpace" = true ]; then
+    echo
+    echo -e "    ${L_BLUE}ALLTALK LINUX SETUP UTILITY${NC}"
+    echo
+    echo
+    echo -e "    You are trying to install AllTalk in a folder that has a space in the"
+    echo -e "    folder path e.g."
+    echo 
+    echo -e "       /home/${L_RED}program files${NC}/alltalk_tts"
+    echo 
+    echo -e "    This causes errors with Conda and Python scripts. Please follow this"
+    echo -e "    link for reference:"
+    echo 
+    echo -e "      ${L_CYAN}https://docs.anaconda.com/free/working-with-conda/reference/faq/#installing-anaconda${NC}"
+    echo 
+    echo -e "    Please use a folder path that has no spaces in it e.g." 
+    echo 
+    echo -e "       /home/myfiles/alltalk_tts/"
+    echo 
+    echo
+    read -p "Press Enter to continue..." 
+    exit 1
+else
+    # Continue with the main menu
+    echo "Continue with the main menu."
+fi
+
 # Main Menu
 main_menu() {
     while true; do

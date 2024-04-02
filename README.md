@@ -126,7 +126,7 @@ To perform a Standalone installation of AllTalk:
 
 > If you're unfamiliar with Python environments and wish to learn more, consider reviewing **Understanding Python Environments Simplified** in the Help section.
 
-> **Important**: Do not use dashes or spaces in your folder path (e.g. avoid `/my folder-is-this/alltalk_tts-main`) as this causes issues with Python.
+> **Important**: Do not use spaces in your folder path (e.g. avoid `/my folder-is-this/alltalk_tts-main`) as this causes issues with Python & Conda.
 
 </details>
 
@@ -240,7 +240,7 @@ Support for custom Python environments is limted. Please read **Custom Python en
 To run AllTalk as a standalone application with a custom Python environment, ensure you install AllTalk's requirements into the environment of your choice. The instructions provided are generalized due to the variety of potential Python environments.
 
 - **Python Compatibility**: The TTS engine requires Python **3.9.x** to **3.11.x**. AllTalk is tested with Python **3.11.x**. [See TTS Engine details](https://pypi.org/project/TTS/).
-- **Path Names**: Avoid spaces and dashes `-` in path names as this can cause issues.
+- **Path Names**: Avoid spaces in path names as this can cause issues.
 - **Custom Python Environments**: If encountering issues potentially related to a custom environment, consider testing AllTalk with the quick setup standalone method that builds its own environment.
 
 #### Quick Overview of Python Environments
@@ -732,7 +732,7 @@ When a Python environment starts up, it changes the command prompt to show the P
 <details>
 	<summary>🟨 Standalone Install - start_{youros}.xx opens and closes instantly and AllTalk doesnt start</summary><br>
 
-This is more than likely caused by having a `-` in your folder path e.g. `c:\myfiles\alltalk_tts-main`. In this circumstance you would be best renaming the folder to remove the `-` from its name e.g. `c:\myfiles\alltalk_tts`, delete the `alltalk_environment` folder and `start_alltalk.bat` or `start_alltalk.sh` and then re-run `atsetup` to re-create the environment and startup files. 
+This is more than likely caused by having a space ` ` in your folder path e.g. `c:\program files\alltalk_tts`. In this circumstance you would be best moving the folder to a path without a space e.g. `c:\myfiles\alltalk_tts`. You would have to delete the `alltalk_environment` folder and `start_alltalk.bat` or `start_alltalk.sh` and then re-run `atsetup` to re-create the environment and startup files. 
 </details>
 <details>
 	<summary>🟨 I think AllTalks requirements file has installed something another extension doesn't like</summary><br>

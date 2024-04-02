@@ -1264,6 +1264,9 @@ if __name__ == "__main__":
                 ### 🟥 <u>Important Note - Windows - "UserWarning: huggingface_hub cache-system uses symlinks."</u>
                 ◽ This error is caused by Huggingfaces download software downloading the Whisper model. If you get this error, please restart your Windows command prompt with "Run as Administrator" and restart finetuning.<br>
                 ◽ This should only occur the 1st time it downloads the Whisper model. [Huggingface Reference here](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache#limitations)
+                ### 🟥 <u>Important Note - Language support.</u>
+                ◽ Although I have done my best to help automate this step, the Whisper model is not great with all languages and may fail to build your training data correctly. The Large-v3 may be better at certain languages.<br>
+                ◽ You can find information about the Whisper model [here](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages) and you can find data about manually building training data [here](https://docs.coqui.ai/en/latest/formatting_your_dataset.html), as well as details below about the file structure this step performs.<br>
                 ### 🟦 <u>What you need to do</u>
                 ◽ Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)<br>
                 ◽ Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>          
@@ -1276,6 +1279,7 @@ if __name__ == "__main__":
                 ◽ Whisper is making a best effort to find spoken audio and break it down into smaller audio files. The content of these audio files is then transcribed into CSV fles (which you can edit in Excel or similar).<br>
                 ◽ These files (audio and CSV) are used at the next step to train the model "this is what the audio sounds like and these are the words being spoken".<br>
                 ◽ If you wish to manually look at the CSV files before running the next step, you are welcome to do so and edit them as necessary. The greater the accuracy of the text the better the training will be.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/lang.txt</span> Contains a two digit langauage code e.g. `en`, `fr` etc.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/metadata_train.csv</span> Contains the list of wavs to text that will be used. This is what the model is trained with.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/metadata_eval.csv</span> Lists the evaluation wav to text, used to generate TTS while training and evaluate the quality of generated TTS to the original sample.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/wavs/</span> These are the wavs split out from your original training samples and match the contents of the CSV files.<br>
@@ -1376,7 +1380,9 @@ if __name__ == "__main__":
 
             gr.Markdown(
                 f"""
-                ### 💻 <u>Training</u><br>                
+                ### 💻 <u>Training</u><br>
+                ### 🟥 <u>Important Note - Language support.</u>
+                ◽ If this step is failing/erroring you may wish to check your training data was created correctly (Detailed in Step 1), confirming that wav files have been generated and your `metadata_train.csv` and `metadata_eval.csv` files have been populated.<br>             
                 ### 🟦 <u>What you need to do</u>
                 ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click "Create Dataset" again.<br>
                 ◽ The default settings below are the suggested settings for most purposes, however you may choose to alter them depending on your specific use case.<br>
@@ -1605,7 +1611,8 @@ if __name__ == "__main__":
                 ◽ **Note:** Sample wav files will be copied into the model folder. You will need to MANUALLY copy/move the WAV file(s) you want to use to the AllTalk voices folder, to make them available within the interface.<br>
                 ◽ **Note:** Text-generation-webui users, <span style="color: #3366ff;">OPTION A - Compact and move model to '/trainedmodel/'</span>. will make the model available for use within Text-gen-webui.<br>
                 ### 🟩 <u>Using your Finetuned model as you main model</u>
-                ◽ If you wish to use the model you have just fintuned as your main model, you will need to MANUALLY copy it over the base model in <span style="color: #3366ff;">/models/trainedmodel/</span> after you have used Option A or B.<br>
+                ◽ **Currently** only Text-gen-webui and SillyTavern have loaders built for loading models in the <span style="color: #3366ff;">'/finetuned/'</span> folder. So if you wish to use your finetuned model as elsewhere in AllTalk please copy it over your base model e.g. copy your model over the top of <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span><br>
+                ◽ If you wish to use the model you have just fintuned as your main model, you will need to MANUALLY copy it over the base model e.g copy it over <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> after you have used Option A or B.<br>
                 ◽ Should you ever wish to revert your model back to the base model, you can delete the files in <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span> and new copies will be re-downloaded when AllTalk starts up.<br>
                 ### 🟨 <u>Clearing up disk space</u>
                 ◽ If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) <br>
