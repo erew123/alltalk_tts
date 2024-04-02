@@ -1,6 +1,6 @@
 ---
-name: Support request OR Bug report
-about: Create a report to help us improve
+name: Support Request/Issue
+about: Use this to create a support request or report a bug/issue
 title: ''
 labels: ''
 assignees: ''
