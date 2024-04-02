@@ -390,11 +390,17 @@ The update process closely mirrors the installation steps. Follow these to ensur
      - **For Linux/Mac**:
        - `pip install -r system/requirements/requirements_textgen.txt`
 
+5. **DeepSpeed Requirements**:
+   - If Text-gen-webui is using a new version of PyTorch, you may need to uninstall and update your DeepSpeed version.
+   - Use AllTalks diagnostics or start-up menu to identify your version of PyTorch.
+<br><br>
 </details>
 
 <details>
 <summary>UPDATING - Standalone Application</summary>
 <br>
+
+If you installed from a ZIP file, you cannot use a `git pull` to update, as noted in the Quick Setup instructions.
 
 For Standalone Application users, here's how to update your setup:
 
@@ -421,7 +427,7 @@ For Standalone Application users, here's how to update your setup:
        - `pip install -r system\requirements\requirements_standalone.txt`
      - **For Linux/Mac**:
        - `pip install -r system/requirements/requirements_standalone.txt`
-
+<br><br>
 </details>
 
 ### 🟪 Resolving Update Issues
@@ -429,46 +435,26 @@ For Standalone Application users, here's how to update your setup:
 If you encounter problems during or after an update, following these steps can help resolve the issue by refreshing your installation while preserving your data:
 
 <details>
-<summary>RESOLVING - Text-Generation-webui</summary><br>
+<summary>RESOLVING - Updates</summary><br>
 
 The process involves renaming your existing `alltalk_tts` directory, setting up a fresh instance, and then migrating your data:
 
 1. **Rename Existing Directory**:
-   - First, rename your current `alltalk_tts` folder to back it up, e.g., `alltalk_tts.old`. This preserves any existing data.
+   - First, rename your current `alltalk_tts` folder to keep it safe e.g. `alltalk_tts.old`. This preserves any existing data.
 
-2. **Open a Console/Terminal**:
-   - Navigate to the Text-generation-webui directory and start the Python environment appropriate for your operating system:
-     - `cd text-generation-webui`
-
-   - Then use one of the following commands based on your OS:
-     - Windows: `cmd_windows.bat`
-     - Linux: `./cmd_linux.sh`
-     - macOS: `cmd_macos.sh`
-     - WSL (Windows Subsystem for Linux): `cmd_wsl.bat`<br><br>
+2. **Follow the Quick Setup instructions**:
+   - You will now follow the **Quick Setup** instructions, performing the `git clone https://github.com/erew123/alltalk_tts` to pull down a new copy of AllTalk and install the requirements.
      
      > If you're not familiar with Python environments, see **Understanding Python Environments Simplified** in the Help section for more info.
 
-3. **Clone the AllTalk TTS Repository**:
-   - Move into the `extensions` directory and clone a fresh copy of `alltalk_tts`:
-     - `cd extensions`
-     - `git clone https://github.com/erew123/alltalk_tts`
+3. **Migrate Your Data**:
+   - **Before** starting the AllTalk, transfer the `models`, `voices`, `outputs` folders and also `confignew.json` from `alltalk_tts.old` to the new `alltalk_tts` directory. This action preserves your voice history and prevents the need to re-download the model.
 
-4. **Install Requirements**:
-   - Navigate to the newly cloned `alltalk_tts` directory and install the necessary dependencies for your system:
-     - `cd alltalk_tts`
-   - Depending on your machine's OS, install the required dependencies using pip:
-     - **For Windows Machines**:
-       - `pip install -r system\requirements\requirements_textgen.txt`
-     - **For Linux/Mac**:
-       - `pip install -r system/requirements/requirements_textgen.txt`
-
-5. **Migrate Your Data**:
-   - Before starting the application, transfer the `models`, `voices`, and `outputs` folders from `alltalk_tts.old` to the new `alltalk_tts` directory. This action preserves your voice history and prevents the need to re-download the model.
-
-You're now ready to launch Text-generation-webui. Note that you may need to reapply any previously saved configuration changes through the configuration page.
+4) **Launch AllTalk**
+   - You're now ready to launch AllTalk and check it works correctly.
 
 6. **Final Step**:
-- Once you've verified that everything is working as expected and you're satisfied with the setup, feel free to delete the `alltalk_tts.old` directory to free up space.
+    - Once you've verified that everything is working as expected and you're satisfied with the setup, feel free to delete the `alltalk_tts.old` directory to free up space.
 
 </details>
 
