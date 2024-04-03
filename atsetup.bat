@@ -156,7 +156,7 @@ if "%StandaloneOption%"=="3" goto STReapplyrequirements
 if "%StandaloneOption%"=="4" goto STDeleteCustomStandalone
 if "%StandaloneOption%"=="5" goto STPurgepipcache
 if "%StandaloneOption%"=="8" goto GenerateDiagsStandalone
-if "%StandaloneOption%"=="9" goto End
+if "%StandaloneOption%"=="9" goto EndStandalone
 goto StandaloneMenu
 
 :InstallNvidiaTextGen
@@ -668,6 +668,16 @@ echo     the latest requirements file. Option 3
 Echo.
 pause
 goto StandaloneMenu
+
+:EndStandalone
+echo Exiting AllTalk Setup Utility...
+echo.
+Echo    Remember, after installation you can....
+Echo    Run %L_YELLOW%start_alltalk.bat%RESET% to start AllTalk.
+Echo    Run %L_YELLOW%start_finetune.bat%RESET% to start Finetuning.
+Echo    Run %L_YELLOW%start_environment.bat%RESET% to start the AllTalk Python environment.
+Echo.
+exit /b
 
 :End
 echo Exiting AllTalk Setup Utility...
