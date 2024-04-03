@@ -1161,6 +1161,14 @@ At the end of the finetune process, you will have an option to `Compact and move
 
 If you've compacted and moved your model, its highly unlikely you would want to keep that data, however the choice is there to keep it if you wish. It will be between 5-10GB in size, so most people will want to delete it.
 
+#### ⚫ I have deeper questions about training the XTTS model, where can I find more information?
+
+If you have deeper questions about the XTTS model, its capabilites, the training process etc, anything thats not covered within the above text or the interface of `finetune.py`, please use the following links to research Coqui's documentation on the XTTS model. 
+
+- https://docs.coqui.ai/en/latest/models/xtts.html
+- https://github.com/coqui-ai/TTS
+- https://github.com/coqui-ai/TTS/discussions
+
 ---
 
 ### ⬜ AllTalk TTS Generator
