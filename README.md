@@ -178,10 +178,8 @@ If you're using a Mac or prefer a manual installation for any other reason, plea
 
 6. **Install Required Dependencies**:
 - Install dependencies based on your machine type:
-  - For Nvidia graphics card machines:
-    - `pip install -r requirements_nvidia.txt`
-  - For other machines (mac, AMD, etc.):
-    - `pip install -r requirements_other.txt`
+  - For Windows: `pip install -r system\requirements\requirements_textgen.txt`
+  - For Linux/Mac: `pip install -r system/requirements/requirements_textgen.txt`
 
 7. **Optional DeepSpeed Installation**:
 - If you're using an Nvidia graphics card on Linux or Windows and wish to install **DeepSpeed**, follow the instructions [here](https://github.com/erew123/alltalk_tts?#-deepspeed-installation-options). 
