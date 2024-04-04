@@ -14,7 +14,7 @@ ENV PIP_CACHE_DIR=/app/pip_cache
 WORKDIR /app
 COPY . .
 ENV CUDA_DOCKER_ARCH=all
-RUN pip install --no-cache-dir -r system/requirements/requirements_standalone.txt --cache-dir=/app/pip_cache && \
+RUN pip install --no-cache-dir --no-deps -r system/requirements/requirements_standalone.txt --cache-dir=/app/pip_cache && \
     pip install --no-cache-dir deepspeed --cache-dir=/app/pip_cache
 
 EXPOSE 7851
