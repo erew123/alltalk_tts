@@ -11,9 +11,7 @@ WORKDIR /app
 COPY . .
 ENV CUDA_DOCKER_ARCH=all
 
-RUN pip install --no-cache-dir -r requirements_nvidia.txt && \
-    pip install --no-cache-dir -r requirements_finetune.txt && \
-    pip install --no-cache-dir -r requirements_other.txt && \
+RUN pip install --no-cache-dir -r system/requirements/requirements_standalone.txt && \
     pip install --no-cache-dir deepspeed
 EXPOSE 7851
 RUN chmod +x launch.sh

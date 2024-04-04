@@ -6,7 +6,7 @@ RUN apt-get update && apt-get upgrade -y \
     && ln -s /usr/bin/python3 /usr/bin/python
 WORKDIR /app
 COPY . .
-RUN pip install --no-cache-dir -r requirements_other.txt
+RUN pip install --no-cache-dir -r system/requirements/requirements_standalone.txt
 EXPOSE 7851
 RUN chmod +x launch.sh
 ENTRYPOINT ["sh", "-c", "./launch.sh"]
