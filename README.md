@@ -269,8 +269,8 @@ To run AllTalk as a standalone application with a custom Python environment, ens
 
 5. **Install Requirements**:
    - Install dependencies based on your machine type:
-     - For Windows: `pip install -r system\requirements\requirements_textgen.txt`
-     - For Linux/Mac: `pip install -r system/requirements/requirements_textgen.txt`
+     - For Windows: `pip install -r system\requirements\requirements_standalone.txt`
+     - For Linux/Mac: `pip install -r system/requirements/requirements_standalone.txt`
 
 6. **Start AllTalk**:
    - Run AllTalk with the following:
