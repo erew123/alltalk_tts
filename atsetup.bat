@@ -1,7 +1,7 @@
 @echo off
 cd /D "%~dp0"
 
-set PATH=%PATH%;%SystemRoot%\system32
+set "PATH=%PATH%;%SystemRoot%\system32"
 
 :: Generate the ESC character
 for /F %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
