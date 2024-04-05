@@ -1,7 +1,7 @@
 @echo off
 cd /D "%~dp0"
-
-set "PATH=%PATH%;%SystemRoot%\system32"
+setlocal enabledelayedexpansion
+@set "PATH=%PATH%;%SystemRoot%\system32"
 
 :: Generate the ESC character
 for /F %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
@@ -25,48 +25,21 @@ set "L_CYAN=%ESC%[96m"
 set "L_WHITE=%ESC%[97m"
 set "RESET=%ESC%[0m"
 
+echo "%CD%"| findstr /C:" " >nul &&  echo. && echo    %L_BLUE%ALLTALK WINDOWS SETUP UTILITY%RESET% && echo. &&  echo. &&  echo    You are trying to install AllTalk in a folder that has a space in the folder path e.g. && echo. && echo       C:\%L_RED%program files%RESET%\alltalk_tts && echo.	&& echo    This causes errors with Conda and Python scripts. Please follow this link for reference: &&  echo. && echo      %L_CYAN%https://docs.anaconda.com/free/working-with-conda/reference/faq/#installing-anaconda%RESET% && echo. && echo    Please use a folder path that has no spaces in it e.g. && echo. && echo       C:\myfiles\alltalk_tts\ && echo. && echo. && pause && goto :end
+
+@rem Check for special characters in installation path
+set "SPCHARMESSAGE="WARNING: Special characters were detected in the installation path!" "         This can cause the installation to fail!""
+echo "%CD%"| findstr /R /C:"[!#\$%&()\*+,;<=>?@\[\]\^`{|}~]" >nul && (
+	call :PrintBigMessage %SPCHARMESSAGE%
+)
+set SPCHARMESSAGE=
+
 @rem Check if curl is available
 curl --version >nul 2>&1
 if "%ERRORLEVEL%" NEQ "0" (
     echo curl is not available on this system. Please install curl then re-run the script https://curl.se/ 
 	echo or perform a manual installation of a Conda Python environment.
     goto end
-)
-
-setlocal EnableDelayedExpansion
-
-rem Check if the current directory path contains a space
-set "containsSpace=false"
-set "currentPath=%CD%"
-for /F "delims=" %%a in ('echo "%currentPath%"') do (
-    set "path=%%~a"
-    for %%b in ("!path: =!") do (
-        if "%%~b" neq "!path!" set "containsSpace=true"
-    )
-)
-
-if %containsSpace%==true (
-    echo.
-    echo    %L_BLUE%ALLTALK WINDOWS SETUP UTILITY%RESET%
-    echo.
-    echo.
-    echo    You are trying to install AllTalk in a folder that has a space in the folder path e.g.
-    echo.
-    echo       C:\%L_RED%program files%RESET%\alltalk_tts
-    echo.	
-    echo    This causes errors with Conda and Python scripts. Please follow this link for reference:
-    echo. 
-    echo      %L_CYAN%https://docs.anaconda.com/free/working-with-conda/reference/faq/#installing-anaconda%RESET%
-    echo.
-    echo    Please use a folder path that has no spaces in it e.g. 
-    echo.
-    echo       C:\myfiles\alltalk_tts\
-    echo.
-    echo.
-    pause
-    goto :end
-) else (
-    goto :MainMenu
 )
 
 :MainMenu
@@ -164,6 +137,8 @@ pip install -r system\requirements\requirements_textgen.txt
 if %ERRORLEVEL% neq 0 (
     echo.
     echo    There was an error installing the requirements.
+    echo    Have you started your Text-gen-webui Python environment
+    echo    with cmd_{yourOS} before running atsetup.bat?
     echo    Press any key to return to the menu.
     echo.
     pause
