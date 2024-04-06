@@ -1033,6 +1033,7 @@ async def tts_generate(
         if JSONresult is None:
             pass
         else:
+            print(f"[{params['branding']}API] \033[91mError with API request:\033[0m", JSONresult)
             return JSONResponse(content={"error": JSONresult}, status_code=400)
         if narrator_enabled:
             processed_parts = process_text(text_input)
