@@ -281,7 +281,7 @@ class AllTalkTtsProvider {
             if (narratorVoiceSelect) narratorVoiceSelect.disabled = !this.settings.narrator_enabled;
         }
         const modelSelect = document.getElementById('switch_model');
-        if (this.settings.finetuned_model === 'true') {
+        if (this.settings.finetuned_model === true) {
             const ftOption = document.createElement('option');
             ftOption.value = 'XTTSv2 FT';
             ftOption.textContent = 'XTTSv2 FT';
