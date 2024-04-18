@@ -1560,6 +1560,7 @@ if __name__ == "__main__":
                                 "es",
                                 "fr",
                                 "de",
+				"hi",
                                 "it",
                                 "pt",
                                 "pl",
