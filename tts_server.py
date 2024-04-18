@@ -890,7 +890,7 @@ class JSONInput(BaseModel):
     narrator_enabled: bool = Field(..., description="narrator_enabled needs to be true or false.")
     narrator_voice_gen: str = Field(..., pattern="^.*\.wav$", description="narrator_voice_gen needs to be the name of a wav file e.g. mysample.wav.")
     text_not_inside: str = Field(..., pattern="^(character|narrator)$", description="text_not_inside needs to be 'character' or 'narrator'.")
-    language: str = Field(..., pattern="^(ar|zh-cn|cs|nl|en|fr|de|hu|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following ar|zh-cn|cs|nl|en|fr|de|hu|it|ja|ko|pl|pt|ru|es|tr.")
+    language: str = Field(..., pattern="^(ar|zh-cn|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following ar|zh-cn|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr.")
     output_file_name: str = Field(..., pattern="^[a-zA-Z0-9_]+$", description="output_file_name needs to be the name without any special characters or file extension e.g. 'filename'")
     output_file_timestamp: bool = Field(..., description="output_file_timestamp needs to be true or false.")
     autoplay: bool = Field(..., description="autoplay needs to be a true or false value.")

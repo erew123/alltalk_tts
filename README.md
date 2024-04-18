@@ -1391,6 +1391,7 @@ Example:
 `en` English<br>
 `fr` French<br>
 `de` German<br>
+`hi` Hindi<br>
 `hu` Hungarian<br>
 `it` Italian<br>
 `ja` Japanese<br>
