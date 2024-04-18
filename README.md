@@ -942,6 +942,12 @@ Depending on which of your Nvidia GPU's is the more powerful one, you can change
 This is a long standing issue with Mozilla & Firefox and one I am unable to resolve as Mozilla have not resolved the issue with Firefox. The solution is to use another web browser if you want to use Streaming audio. For details of my prior invesitigation please look at this [ticket](https://github.com/erew123/alltalk_tts/issues/143)
 </details>
 
+<details>
+	<summary>🟨 Hindi Support - Not working or issues</summary><br>
+	
+Hindi support does not officially exist according to Coqui. Ive added a limited Hindi support at this time, however, It only works with API TTS method and Im sure there will be issues. [ticket](https://github.com/erew123/alltalk_tts/issues/178)
+</details>
+
 ### Application Specific Issues
 
 <details>
@@ -1391,7 +1397,7 @@ Example:
 `en` English<br>
 `fr` French<br>
 `de` German<br>
-`hi` Hindi<br>
+`hi` Hindi (Please see this re Hindi support, which is very limited https://github.com/erew123/alltalk_tts/issues/178) <br>
 `hu` Hungarian<br>
 `it` Italian<br>
 `ja` Japanese<br>
