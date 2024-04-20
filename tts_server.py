@@ -1088,13 +1088,13 @@ async def tts_generate(
                 cleaned_string = html.unescape(standard_filtering(text_input))
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\u0900-\u097F\$]', '', cleaned_part)
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\u0900-\u097F\$]', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             elif text_filtering == "standard":
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\u0900-\u097F\$]', '', cleaned_part)
+                cleaned_string = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\u0900-\u097F\$]', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             else:
