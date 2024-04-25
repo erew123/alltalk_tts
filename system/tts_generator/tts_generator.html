@@ -922,19 +922,15 @@
             const playType = document.getElementById('playType').value; // Play type (chunk or stream)
             playModeValue = document.getElementById('playMode').value;
 
-            let cleanedText = textInput.replace(/ \- | \– /g, ' ');
+            let cleanedText = textInput.replace(/ \\- | \\– /g, ' ');
             cleanedText = cleanedText.replace(/%/g, " percent");
-            cleanedText = cleanedText.replace(/\.\s'/g, ".'");
-            cleanedText = cleanedText.replace(/(?<!\w)[']+(?!\w)/g, '');
+            cleanedText = cleanedText.replace(/\\.\\s'/g, ".'");
+            cleanedText = cleanedText.replace(/(?<!\\w)\['\]+(?!\\w)/g, '');
             cleanedText = cleanedText.replace(/"/g, "'");
-            //cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171]\$/g, '');
-            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s.,;:!?\-'"À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171\u0900-\u097F\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF$]/g, '');
-            // Replace dash followed by space with comma and space
-            cleanedText = cleanedText.replace(/-\s/g, '; ');
-            // Replace double dash "--" with semicolon "; "
+            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s.,;:!?\-'"$À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171\u0900-\u097F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/g, '');
+            cleanedText = cleanedText.replace(/-\\s/g, '; ');
             cleanedText = cleanedText.replace(/--/g, '; ');
-
-            let sentences = cleanedText.split(/(?<=[.!?:])\s+/);
+            let sentences = cleanedText.split(/(?<=\[.!?:\])\\s+/);
 
             if (!sentences) {
                 console.error("No sentences found in the input text.");
