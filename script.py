@@ -700,7 +700,7 @@ def output_modifier(string, state):
                     # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
                     cleaned_part = re.sub(r"([!?.])\1+", r"\1", part)
                     # Further clean to remove any other unwanted characters
-                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0100-\u017F\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\u4E00-\u9FFF\u3400-\u4DBF\u20000-\u2A6DF\u3000-\u303F\u0900-\u097F\$]', '', cleaned_part)
+                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]', '', cleaned_part)
                     # Remove all newline characters (single or multiple)
                     cleaned_part = re.sub(r"\n+", " ", cleaned_part)
 
@@ -727,7 +727,7 @@ def output_modifier(string, state):
                 # Replace multiple instances of certain punctuation marks with a single instance
                 cleaned_part = re.sub(r"([!?.])\1+", r"\1", cleaned_part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(r'[^a-zA-Z0-9\s\.,;:!?\-\'"\u0100-\u017F\u0400-\u04FFÀ-ÿ\u0150\u0151\u0170\u0171\u4E00-\u9FFF\u3400-\u4DBF\u20000-\u2A6DF\u3000-\u303F\u0900-\u097F\$]', '', cleaned_part)
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r"\n+", " ", cleaned_part)
                 # Process the part and give it a non-character name if being used vai API or standalone.
