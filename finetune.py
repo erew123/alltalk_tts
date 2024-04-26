@@ -1485,8 +1485,8 @@ if __name__ == "__main__":
                     )
                     grad_acumm = gr.Slider(
                         label="Grad accumulation steps:",
-                        minimum=2,
-                        maximum=128,
+                        minimum=1,
+                        maximum=32,
                         step=1,
                         value=args.grad_acumm,
                     )
