@@ -533,7 +533,7 @@ def basemodel_or_finetunedmodel_choice(value):
     elif value == "Existing finetuned model":
         basemodel_or_finetunedmodel = False
 
-def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, output_path, max_audio_length=255995):
+def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, output_path, max_audio_length=255995):
     pfc_check_fail()
     #  Logging parameters
     RUN_NAME = "XTTS_FT"
@@ -657,7 +657,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         optimizer="AdamW",
         optimizer_wd_only_on_weights=OPTIMIZER_WD_ONLY_ON_WEIGHTS,
         optimizer_params={"betas": [0.9, 0.96], "eps": 1e-8, "weight_decay": 1e-2},
-        lr=5e-06,  # learning rate
+        lr=learning_rate,  # learning rate
         lr_scheduler="MultiStepLR",
         # it was adjusted accordly for the new step scheme
         lr_scheduler_params={"milestones": [50000 * 18, 150000 * 18, 300000 * 18], "gamma": 0.5, "last_epoch": -1},
@@ -735,6 +735,9 @@ def load_model(xtts_checkpoint, xtts_config, xtts_vocab):
     config.load_json(xtts_config)
     XTTS_MODEL = Xtts.init_from_config(config)
     print("[FINETUNE] \033[94mStarting Step 3\033[0m Loading XTTS model!")
+    print(xtts_checkpoint)
+    print(xtts_vocab)
+    print(xtts_speakers_pth)
     XTTS_MODEL.load_checkpoint(config, checkpoint_path=xtts_checkpoint, vocab_path=xtts_vocab, use_deepspeed=False, speaker_file_path=xtts_speakers_pth)
     if torch.cuda.is_available():
         XTTS_MODEL.cuda()
@@ -773,6 +776,10 @@ def get_available_voices(minimum_size_kb=1200):
     ]
     return sorted([str(file) for file in voice_files])  # Return full path as string
 
+def find_best_models(directory):
+    """Find files named 'best_model.pth' in the given directory."""
+    return [file for file in Path(directory).rglob("best_model.pth")]
+
 def find_models(directory, extension):
     """Find files with a specific extension in the given directory."""
     return [file for file in Path(directory).rglob(f"*.{extension}")]
@@ -783,8 +790,8 @@ def find_jsons(directory, filename):
 
 # Your main directory
 main_directory = Path(this_dir) / "finetune" / "tmp-trn"
-# XTTS checkpoint files (*.pth)
-xtts_checkpoint_files = find_models(main_directory, "pth")
+# XTTS checkpoint files (best_model.pth)
+xtts_checkpoint_files = find_best_models(main_directory)
 # XTTS config files (config.json)
 xtts_config_files = find_jsons(main_directory, "config.json")
 # XTTS vocab files (vocab.json)
@@ -800,53 +807,60 @@ def find_latest_best_model(folder_path):
     latest_file = max(files, key=os.path.getctime, default=None)
     return latest_file
 
-def compact_model():
+def compact_model(xtts_checkpoint_copy):
     this_dir = Path(__file__).parent.resolve()
-
-    best_model_path_str = find_latest_best_model(this_dir / "finetune" / "tmp-trn" / "training")
-
+    best_model_path_str = xtts_checkpoint_copy
+    
     # Check if the best model file exists
     if best_model_path_str is None:
         print("[FINETUNE] No trained model was found.")
         return "No trained model was found."
-
+    
+    print(f"[FINETUNE] Best model path: {best_model_path_str}")
+    
     # Convert model_path_str to Path
     best_model_path = Path(best_model_path_str)
-
+    
     # Attempt to load the model
     try:
         checkpoint = torch.load(best_model_path, map_location=torch.device("cpu"))
+        print(f"[FINETUNE] Checkpoint loaded: {best_model_path}")
     except Exception as e:
         print("[FINETUNE] Error loading checkpoint:", e)
         raise
-
-    del checkpoint["optimizer"]
-
-    for key in list(checkpoint["model"].keys()):
-        if "dvae" in key:
-            del checkpoint["model"][key]
-
+    
     # Define the target directory
     target_dir = this_dir / "models" / "trainedmodel"
-
+    
     # Create the target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
 
+    del checkpoint["optimizer"]
+
+    # Extract and save the fine-tuned DVAE weights
+    dvae_state_dict = {key: value for key, value in checkpoint["model"].items() if "dvae" in key}
+    dvae_path = this_dir / "models" / "trainedmodel" / "dvae.pth"
+    torch.save(dvae_state_dict, dvae_path)
+    
+    for key in list(checkpoint["model"].keys()):
+        if "dvae" in key:
+            del checkpoint["model"][key]
+    
     # Save the modified checkpoint in the target directory
     torch.save(checkpoint, target_dir / "model.pth")
-
+    
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth","speakers_xtts.pth", ]
-
+    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth"]
+    
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
         dest_path = target_dir / file_name
         shutil.copy(str(src_path), str(dest_path))
-
+    
     source_wavs_dir = this_dir / "finetune" / "tmp-trn" / "wavs"
     target_wavs_dir = target_dir / "wavs"
     target_wavs_dir.mkdir(parents=True, exist_ok=True)
-
+    
     # Iterate through files in the source directory
     for file_path in source_wavs_dir.iterdir():
         # Check if it's a file and larger than 1000 KB
@@ -858,10 +872,11 @@ def compact_model():
     return "Model copied to '/models/trainedmodel/'"
 
 
-def compact_lastfinetuned_model():
+def compact_lastfinetuned_model(xtts_checkpoint_copy):
     this_dir = Path(__file__).parent.resolve()
 
-    best_model_path_str = find_latest_best_model(this_dir / "finetune" / "tmp-trn" / "training")
+    best_model_path_str = xtts_checkpoint_copy
+    print(f"[FINETUNE] Best model path: {best_model_path_str}")
 
     # Check if the best model file exists
     if best_model_path_str is None:
@@ -880,21 +895,26 @@ def compact_lastfinetuned_model():
 
     del checkpoint["optimizer"]
 
-    for key in list(checkpoint["model"].keys()):
-        if "dvae" in key:
-            del checkpoint["model"][key]
-
     # Define the target directory
     target_dir = this_dir / "models" / "lastfinetuned"
 
     # Create the target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
 
+    # Extract and save the fine-tuned DVAE weights
+    dvae_state_dict = {key: value for key, value in checkpoint["model"].items() if "dvae" in key}
+    dvae_path = this_dir / "models" / "lastfinetuned" / "dvae.pth"
+    torch.save(dvae_state_dict, dvae_path)
+
+    for key in list(checkpoint["model"].keys()):
+        if "dvae" in key:
+            del checkpoint["model"][key]
+
     # Save the modified checkpoint in the target directory
     torch.save(checkpoint, target_dir / "model.pth")
 
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "dvae.pth", "mel_stats.pth", "speakers_xtts.pth",]
+    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth"]
 
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
@@ -916,15 +936,16 @@ def compact_lastfinetuned_model():
     return "Model copied to '/models/lastfinetuned/'"
 
 
-def compact_legacy_model():
+def compact_custom_model(xtts_checkpoint_copy, folder_path):
     this_dir = Path(__file__).parent.resolve()
 
-    best_model_path_str = os.path.join(this_dir, "finetune", "best_model.pth")
+    best_model_path_str = xtts_checkpoint_copy
+    print(f"[FINETUNE] Best model path: {best_model_path_str}")
 
     # Check if the best model file exists
-    if not os.path.exists(best_model_path_str):
-        print("[FINETUNE] No model called best_model.pth was found in /finetune/")
-        return "No model called best_model.pth was found in /finetune/"
+    if best_model_path_str is None:
+        print("[FINETUNE] No trained model was found.")
+        return "No trained model was found."
 
     # Convert model_path_str to Path
     best_model_path = Path(best_model_path_str)
@@ -938,21 +959,46 @@ def compact_legacy_model():
 
     del checkpoint["optimizer"]
 
-    for key in list(checkpoint["model"].keys()):
-        if "dvae" in key:
-            del checkpoint["model"][key]
-
     # Define the target directory
-    target_dir = this_dir / "finetune"
+    target_dir = this_dir / "models" / folder_path
 
     # Create the target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
 
+    # Extract and save the fine-tuned DVAE weights
+    dvae_state_dict = {key: value for key, value in checkpoint["model"].items() if "dvae" in key}
+    dvae_path = this_dir / "models" / folder_path / "dvae.pth"
+    torch.save(dvae_state_dict, dvae_path)
+
+    for key in list(checkpoint["model"].keys()):
+        if "dvae" in key:
+            del checkpoint["model"][key]
+
     # Save the modified checkpoint in the target directory
     torch.save(checkpoint, target_dir / "model.pth")
 
-    print("[FINETUNE] model.pth created in '/finetune/'")
-    return "model.pth created in '/finetune/'"
+    # Specify the files you want to copy
+    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth"]
+
+    for file_name in files_to_copy:
+        src_path = this_dir / base_path / base_model_path / file_name
+        dest_path = target_dir / file_name
+        shutil.copy(str(src_path), str(dest_path))
+
+    source_wavs_dir = this_dir / "finetune" / "tmp-trn" / "wavs"
+    target_wavs_dir = target_dir / "wavs"
+    target_wavs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Iterate through files in the source directory
+    for file_path in source_wavs_dir.iterdir():
+        # Check if it's a file and larger than 1000 KB
+        if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:
+            # Copy the file to the target directory
+            shutil.copy(str(file_path), str(target_wavs_dir / file_path.name))
+    
+    print("[FINETUNE] Model copied to '/models/",folder_path,"/")
+    return f"Model copied to '/models/{folder_path}/'"
+
 
 def delete_training_data():
     # Define the folder to be deleted
@@ -1377,113 +1423,206 @@ if __name__ == "__main__":
 #### GRADIO STEP 2 ####
 #######################
         with gr.Tab("💻 Step 2 - Training"):
-
-            gr.Markdown(
-                f"""
-                ### 💻 <u>Training</u><br>
-                ### 🟥 <u>Important Note - Language support.</u>
-                ◽ If this step is failing/erroring you may wish to check your training data was created correctly (Detailed in Step 1), confirming that wav files have been generated and your `metadata_train.csv` and `metadata_eval.csv` files have been populated.<br>             
-                ### 🟦 <u>What you need to do</u>
-                ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click "Create Dataset" again.<br>
-                ◽ The default settings below are the suggested settings for most purposes, however you may choose to alter them depending on your specific use case.<br>
-                ◽ There are no absolute correct settings for training. It will vary based on:<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- What you are training (A human voice, A cartoon voice, A new language entirely etc)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- How much audio you have (you may want less or more eval or epochs)<br>
-                ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary.<br>
-                ◽ **Number of epochs:** Defines how many times the entire dataset is passed through the neural network; more epochs can improve learning but increase the risk of memorizing the training data.<br>
-                ◽ **Batch size:** Sets how many training examples are used in one iteration. Larger sizes speed up training but require more computational memory.<br>
-                ◽ **Grad(ient) accumulation steps:** Allows larger batches by spreading the computation across multiple steps, enabling training with limited hardware resources.<br>
-                ◽ **Max permitted audio size in seconds:** Limits the length of audio that the model processes. Any audio exceeding this duration will be truncated to fit the model's input constraints.<br>
-                ### 🟨 <u>What this step is doing</u><br>
-                ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
-                ### 🟩 <u>How long will this take?</u><br>
-                ◽ On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.<br>
-                ◽ Look at your command prompt/terminal window if you want to see what it is doing.<br>
-                """
-            )
-            with gr.Row():
-                train_csv = gr.Textbox(
-                    label="Train CSV:",
-                )
-                eval_csv = gr.Textbox(
-                    label="Eval CSV:",
-                )
-            with gr.Row():
-                num_epochs =  gr.Slider(
-                    label="Number of epochs:",
-                    minimum=1,
-                    maximum=100,
-                    step=1,
-                    value=args.num_epochs,
-                )
-                batch_size = gr.Slider(
-                    label="Batch size:",
-                    minimum=2,
-                    maximum=512,
-                    step=1,
-                    value=args.batch_size,
-                )
-                grad_acumm = gr.Slider(
-                    label="Grad accumulation steps:",
-                    minimum=2,
-                    maximum=128,
-                    step=1,
-                    value=args.grad_acumm,
-                )
-                max_audio_length = gr.Slider(
-                    label="Max permitted audio size in seconds:",
-                    minimum=2,
-                    maximum=20,
-                    step=1,
-                    value=args.max_audio_length,
-                )
-            with gr.Row():
-                model_to_train_choices = ["Base Model"]
-                if finetuned_model:
-                    model_to_train_choices.append("Existing finetuned model")
-                model_to_train = gr.Radio(
-                    choices=model_to_train_choices,
-                    label="Which model do you want to train?",
-                    value="Base Model"
-                )
+            with gr.Tab("Training"):
                 gr.Markdown(
-                f"""
-                If you have an existing finetuned model in <span style="color: #3366ff;">/models/trainedmodel/</span> you will have an option to select <span style="color: #3366ff;">Existing finetuned model</span>, allowing you to further train it. Otherwise, you will only have Base Model as an option.
-                """
+                    f"""
+                    ### 💻 <u>Training</u><br>
+                    ### 🟥 <u>Important Note - Language support.</u>
+                    ◽ If this step is failing/erroring you may wish to check your training data was created correctly (Detailed in Step 1), confirming that wav files have been generated and your `metadata_train.csv` and `metadata_eval.csv` files have been populated.<br>             
+                    ### 🟦 <u>What you need to do</u>
+                    ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click "Create Dataset" again.<br>
+                    ◽ The default settings below are the suggested settings for most purposes, however you may choose to alter them depending on your specific use case.<br>
+                    ◽ There are no absolute correct settings for training. It will vary based on:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- What you are training (A human voice, A cartoon voice, A new language entirely etc)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- How much audio you have (you may want less or more eval or epochs)<br>
+                    ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary.<br>
+                    ### 🟨 <u>What this step is doing</u><br>
+                    ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
+                    ### 🟩 <u>How long will this take?</u><br>
+                    ◽ On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.<br>
+                    ◽ Look at your command prompt/terminal window if you want to see what it is doing.<br>
+                    """
+                )
+                with gr.Row():
+                    train_csv = gr.Textbox(
+                        label="Train CSV:",
+                        scale=2,
+                    )
+                    eval_csv = gr.Textbox(
+                        label="Eval CSV:",
+                        scale=2,
+                    )
+                    learning_rates = gr.Dropdown(
+                        value=5e-6,
+                        label="Learning Rate",
+                        choices=[
+                            ("1e-6", 1e-6),
+                            ("5e-6", 5e-6),
+                            ("1e-5", 1e-5),
+                            ("5e-5", 5e-5),
+                            ("1e-4", 1e-4),
+                            ("5e-4", 5e-4),
+                            ("1e-3", 1e-3),
+                        ],
+                        type="value",
+                        allow_custom_value=True,
+                        scale=0,
+                    )
+                with gr.Row():
+                    num_epochs =  gr.Slider(
+                        label="Number of epochs:",
+                        minimum=1,
+                        maximum=100,
+                        step=1,
+                        value=args.num_epochs,
+                    )
+                    batch_size = gr.Slider(
+                        label="Batch size:",
+                        minimum=2,
+                        maximum=512,
+                        step=1,
+                        value=args.batch_size,
+                    )
+                    grad_acumm = gr.Slider(
+                        label="Grad accumulation steps:",
+                        minimum=2,
+                        maximum=128,
+                        step=1,
+                        value=args.grad_acumm,
+                    )
+                    max_audio_length = gr.Slider(
+                        label="Max permitted audio size in seconds:",
+                        minimum=2,
+                        maximum=20,
+                        step=1,
+                        value=args.max_audio_length,
+                    )
+                with gr.Row():
+                    model_to_train_choices = ["Base Model"]
+                    if finetuned_model:
+                        model_to_train_choices.append("Existing finetuned model")
+                    model_to_train = gr.Radio(
+                        choices=model_to_train_choices,
+                        label="Which model do you want to train?",
+                        value="Base Model"
+                    )
+                    gr.Markdown(
+                    f"""
+                    If you have an existing finetuned model in <span style="color: #3366ff;">/models/trainedmodel/</span> you will have an option to select <span style="color: #3366ff;">Existing finetuned model</span>, allowing you to further train it. Otherwise, you will only have Base Model as an option.
+                    """
+                    )
+
+                progress_train = gr.Label(
+                    label="Progress:"
+                )
+                logs_tts_train = gr.Textbox(
+                    label="Logs:",
+                    interactive=False,
+                )
+                demo.load(read_logs, None, logs_tts_train, every=1)
+                train_btn = gr.Button(value="Step 2 - Run the training")
+
+                def train_model(language, train_csv, eval_csv, learning_rates, num_epochs, batch_size, grad_acumm, output_path, max_audio_length):
+                    clear_gpu_cache()
+                    if not train_csv or not eval_csv:
+                        return "You need to run the data processing step or manually set `Train CSV` and `Eval CSV` fields !", "", "", "", ""
+                    try:
+                        # convert seconds to waveform frames
+                        max_audio_length = int(max_audio_length * 22050)
+                        learning_rate = float(learning_rates)  # Convert the learning rate value to a float
+                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, output_path=str(output_path), max_audio_length=max_audio_length)
+                    except:
+                        traceback.print_exc()
+                        error = traceback.format_exc()
+                        return f"The training was interrupted due an error !! Please check the console to check the full error message! \n Error summary: {error}", "", "", "", ""
+
+                    # copy original files to avoid parameters changes issues
+                    shutil.copy(config_path, exp_path)
+                    shutil.copy(vocab_file, exp_path)
+
+                    ft_xtts_checkpoint = os.path.join(exp_path, "best_model.pth")
+                    print("[FINETUNE] Model training done. Move to Step 3")
+                    clear_gpu_cache()
+                    return "Model training done. Move to Step 3", config_path, vocab_file, ft_xtts_checkpoint, speaker_wav
+            with gr.Tab("Info - Grad Accumulation"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Grad Accumulation</u><br>
+                    ◽ Gradient accumulation is a technique that allows you to simulate a larger batch size without actually increasing the memory consumption. Here's how it works:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ Instead of updating the model's parameters after every batch, gradient accumulation enables you to process multiple batches and accumulate their gradients.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ By setting steps greater than 1, you can process multiple batches before a single optimization step e.g if steps is set to 4, the gradients will be accumulated over 4 batches before updating the model's parameters.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ This means that you can effectively use a larger batch size while keeping the actual batch size per iteration smaller, thereby reducing the memory footprint.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ Increasing the steps allows you to find a balance between memory consumption and computational efficiency. You can process more examples per optimization step without exceeding the available memory.<br><br>
+                    ◽ However, it's important to note that increasing the gradient accumulation steps does have an impact on the training process:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ Since the model's parameters are updated less frequently (every grad_accum_steps batches), the training dynamics may be slightly different compared to updating the model after every batch.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ You may need to adjust the learning rate and other hyperparameters accordingly to compensate for the less frequent updates. Typically, you can increase the learning rate slightly when using gradient accumulation.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ The training progress will be slower in terms of the number of optimization steps per epoch, as the model updates occur less frequently.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ However, the overall training time may still be reduced compared to using a smaller batch size without gradient accumulation, as it allows for better utilization of GPU resources.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ To start, you can try setting steps to a value like 4 and see if it resolves the OOM error. If the error persists, you can experiment with higher values until you find a balance that works for your specific setup.
+                    """
+                )
+            with gr.Tab("Info - Batch Size"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Batch Size</u><br>
+                    ◽ Batch size refers to the number of training examples processed in a single iteration (forward and backward pass) before updating the model's parameters.<br>
+                    ◽ A larger batch size allows for more efficient computation and utilization of hardware resources, especially when using GPUs.<br>
+                    ◽ However, increasing the batch size also increases the memory consumption during training, as more examples need to be stored in memory.<br>
+                    ◽ If the batch size is too large, it can lead to out-of-memory (OOM) errors, especially when training on GPUs with limited memory.<br>
+                    ◽ On the other hand, using a smaller batch size can result in slower training and may require more iterations to converge.<br>
+                    ◽ The optimal batch size depends on various factors, such as the model architecture, available hardware resources, and the specific problem being solved.<br>
+                    ◽ It's common to experiment with different batch sizes to find a balance between training speed and memory efficiency.<br>
+                    ◽ If you encounter OOM errors, try reducing the batch size until the training can proceed without memory issues.<br>
+                    ◽ Keep in mind that the batch size also affects the model's generalization and convergence behavior, so it's important to monitor the model's performance while adjusting the batch size.
+                    """
+                )
+            with gr.Tab("Info - Learning Rate"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Learning Rate</u><br>
+                    ◽ 1e-6: Very small learning rate, slow but stable learning.<br>
+                    ◽ 5e-6: Small learning rate, slow but stable learning.<br>
+                    ◽ 1e-5: Moderate learning rate, balanced between stability and convergence speed.<br>
+                    ◽ 5e-5: Higher learning rate, faster convergence but potential instability.<br>
+                    ◽ 1e-4: High learning rate, faster convergence but increased risk of instability.<br>
+                    ◽ 5e-4: Very high learning rate, fast convergence but higher risk of instability.<br>
+                    ◽ 1e-3: Extremely high learning rate, very fast convergence but high risk of instability.<br><br>
+                    The optimal learning rate depends on the model architecture, dataset, and other hyperparameters.
+                    """
+                )
+            with gr.Tab("Info - Epochs"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Epochs</u><br>
+                    ◽ An epoch represents a single pass through the entire training dataset during the training process.<br>
+                    ◽ In each epoch, the model sees and learns from all the training examples once.<br>
+                    ◽ The number of epochs determines how many times the model will iterate over the complete training dataset.<br>
+                    ◽ Increasing the number of epochs allows the model to learn more from the data and potentially improve its performance.<br>
+                    ◽ However, training for too many epochs can lead to overfitting, where the model becomes too specialized to the training data and fails to generalize well to unseen data.<br>
+                    ◽ The optimal number of epochs depends on factors such as the complexity of the problem, the size of the dataset, and the model's capacity.<br>
+                    ◽ It's common to use techniques like early stopping or validation monitoring to determine the appropriate number of epochs.<br>
+                    ◽ Early stopping involves monitoring the model's performance on a validation set and stopping the training when the performance starts to degrade, indicating potential overfitting.<br>
+                    ◽ Validation monitoring involves evaluating the model's performance on a separate validation set after each epoch and selecting the model checkpoint that performs best on the validation set.<br>
+                    ◽ It's recommended to start with a reasonable number of epochs and monitor the model's performance to determine if more epochs are needed or if early stopping should be applied
+                    """
+                )
+            with gr.Tab("Info - Max Audio"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Max Permitted Audio Size (in seconds)</u><br>
+                    ◽ The max permitted audio size determines the maximum duration of audio files that can be used as input to the model during training and inference.<br>
+                    ◽ It is specified in seconds and represents the longest audio clip that the model can process.<br>
+                    ◽ Limiting the audio size helps to control the memory usage and computational requirements of the model.<br>
+                    ◽ If the audio files in your dataset vary in length, it's important to consider the max permitted audio size to ensure that all files can be processed effectively.<br>
+                    ◽ Audio files longer than the max permitted size will typically be truncated or split into smaller segments before being fed into the model.<br>
+                    ◽ The choice of max permitted audio size depends on the specific requirements of your application and the available hardware resources.<br>
+                    ◽ Increasing the max permitted audio size allows the model to handle longer audio clips but also increases the memory consumption and computational burden.<br>
+                    ◽ If you encounter memory issues or slow processing times, you may need to reduce the max permitted audio size to find a suitable balance.<br>
+                    ◽ It's important to consider the nature of your audio data and choose a max permitted audio size that captures the relevant information while being computationally feasible.
+                    """
                 )
 
-            progress_train = gr.Label(
-                label="Progress:"
-            )
-            logs_tts_train = gr.Textbox(
-                label="Logs:",
-                interactive=False,
-            )
-            demo.load(read_logs, None, logs_tts_train, every=1)
-            train_btn = gr.Button(value="Step 2 - Run the training")
-
-            def train_model(language, train_csv, eval_csv, num_epochs, batch_size, grad_acumm, output_path, max_audio_length):
-                clear_gpu_cache()
-                if not train_csv or not eval_csv:
-                    return "You need to run the data processing step or manually set `Train CSV` and `Eval CSV` fields !", "", "", "", ""
-                try:
-                    # convert seconds to waveform frames
-                    max_audio_length = int(max_audio_length * 22050)
-                    config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, output_path=str(output_path), max_audio_length=max_audio_length)
-                except:
-                    traceback.print_exc()
-                    error = traceback.format_exc()
-                    return f"The training was interrupted due an error !! Please check the console to check the full error message! \n Error summary: {error}", "", "", "", ""
-
-                # copy original files to avoid parameters changes issues
-                shutil.copy(config_path, exp_path)
-                shutil.copy(vocab_file, exp_path)
-
-                ft_xtts_checkpoint = os.path.join(exp_path, "best_model.pth")
-                print("[FINETUNE] Model training done. Move to Step 3")
-                clear_gpu_cache()
-                return "Model training done. Move to Step 3", config_path, vocab_file, ft_xtts_checkpoint, speaker_wav
-            
+                
 #######################
 #### GRADIO STEP 3 ####
 #######################
@@ -1560,7 +1699,6 @@ if __name__ == "__main__":
                                 "es",
                                 "fr",
                                 "de",
-				"hi",
                                 "it",
                                 "pt",
                                 "pl",
@@ -1579,7 +1717,7 @@ if __name__ == "__main__":
                         refresh_button = create_refresh_button(
                             [xtts_checkpoint, xtts_config, xtts_vocab, speaker_reference_audio],
                             [
-                                lambda: {"choices": find_models(main_directory, "pth"), "value": ""},
+                                lambda: {"choices": find_best_models(main_directory), "value": ""},
                                 lambda: {"choices": find_jsons(main_directory, "config.json"), "value": ""},
                                 lambda: {"choices": find_jsons(main_directory, "vocab.json"), "value": ""},
                                 lambda: {"choices": get_available_voices(), "value": ""},
@@ -1626,6 +1764,21 @@ if __name__ == "__main__":
                 label="Progress:"
             )
             with gr.Row():
+                xtts_checkpoint_copy = gr.Dropdown(
+                    [str(file) for file in xtts_checkpoint_files],
+                    label="XTTS checkpoint path (Select the model you want to copy over):",
+                    value="",
+                    allow_custom_value=True,
+                    scale=3,
+                )
+                # Create refresh button
+                refresh_button = create_refresh_button(
+                    [xtts_checkpoint,],
+                    [
+                        lambda: {"choices": find_best_models(main_directory), "value": ""},
+                    ],
+                    elem_class="refresh-button-class")
+            with gr.Row():
                 compact_btn = gr.Button(value="OPTION A - Compact and move model to '/trainedmodel/'")
                 gr.Markdown(
                 f"""
@@ -1639,6 +1792,9 @@ if __name__ == "__main__":
                 This will compact the model and move it, along with the reference wav's to <span style="color: #3366ff;">/models/lastfinetuned/</span> and will <span style="color: red;">OVERWRITE</span> any model in that location. This will just leave you a finetuned model that you can do with as you please. It will <span style="color: red;">NOT</span> be available in Text-gen-webui unless you copy it over one of the other model loader locations.
                 """
                 )
+            with gr.Row():
+                compact_custom_btn = gr.Button(value="OPTION C - Compact and move model to a folder name of your choosing")
+                folder_path = gr.Textbox(label="Enter a new folder name (will be sub the models folder)", lines=1, value="mycustomfolder")
             with gr.Row():
                 delete_training_btn = gr.Button(value="Delete generated training data")
                 gr.Markdown(
@@ -1676,6 +1832,7 @@ if __name__ == "__main__":
                     lang,
                     train_csv,
                     eval_csv,
+                    learning_rates,
                     num_epochs,
                     batch_size,
                     grad_acumm,
@@ -1703,14 +1860,20 @@ if __name__ == "__main__":
                     speaker_reference_audio,
                 ],
                 outputs=[progress_gen, tts_output_audio, reference_audio],
-            )
-            
+            )    
             compact_btn.click(
                 fn=compact_model,
+                inputs=[xtts_checkpoint_copy],
                 outputs=[final_progress_data],
             )
             compact_lastfinetuned_btn.click(
                 fn=compact_lastfinetuned_model,
+                inputs=[xtts_checkpoint_copy],
+                outputs=[final_progress_data],
+            )
+            compact_custom_btn.click(
+                fn=compact_custom_model,
+                inputs=[xtts_checkpoint_copy, folder_path],
                 outputs=[final_progress_data],
             )
             delete_training_btn.click(
