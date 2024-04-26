@@ -1055,7 +1055,9 @@ async def tts_generate(
                     voice_description = "\033[36mCharacter (Text-not-inside)\033[0m" if text_not_inside == "character" else "\033[92mNarrator (Text-not-inside)\033[0m"
                     print(f"[{params['branding']}TTSGen] {voice_description}")
                 # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
-                cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
+                cleaned_part = re.sub(r'([!?.\u3002\uFF1F\uFF01\uFF0C])\1+', r'\1', part)
+                # Replace "Chinese ellipsis" with a single dot
+                cleaned_part = re.sub(r"\u2026{1,2}", ". ", cleaned_part)
                 # Further clean to remove any other unwanted characters
                 cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
@@ -1086,13 +1088,17 @@ async def tts_generate(
                 output_cache_url = f'http://{params["ip_address"]}:{params["port_number"]}/audiocache/{output_file_name}.wav'
             if text_filtering == "html":
                 cleaned_string = html.unescape(standard_filtering(text_input))
-                cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
+                cleaned_string = re.sub(r'([!?.\u3002\uFF1F\uFF01\uFF0C])\1+', r'\1', text_input)
+                # Replace "Chinese ellipsis" with a single dot
+                cleaned_string = re.sub(r"\u2026{1,2}", ". ", cleaned_string)
                 # Further clean to remove any other unwanted characters
                 cleaned_string = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             elif text_filtering == "standard":
-                cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
+                cleaned_string = re.sub(r'([!?.\u3002\uFF1F\uFF01\uFF0C])\1+', r'\1', text_input)
+                # Replace "Chinese ellipsis" with a single dot
+                cleaned_string = re.sub(r"\u2026{1,2}", ". ", cleaned_string)
                 # Further clean to remove any other unwanted characters
                 cleaned_string = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]', '', cleaned_string)
                 # Remove all newline characters (single or multiple)
