@@ -935,7 +935,7 @@
             // (?<=[.!?:])\s+ instead of 
             // (?<=\[.!?:\])\\s+ 
             // so I don't know whats going on here
-            let sentences = cleanedText.split(/(?<=\[.!?:\])\\s+|(?<=\[\u3002\uFF01\uFF1A\uFF1F\])/);
+            let sentences = cleanedText.split(/(?<=[\[.!?:\]])\s+|(?<=[\u3002\uFF01\uFF1A\uFF1F])/);
 
             if (!sentences) {
                 console.error("No sentences found in the input text.");
