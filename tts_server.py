@@ -486,9 +486,12 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
         return response
     async for _ in response:
         pass
-    
+
+stop_generation = False
+ 
 async def generate_audio_internal(text, voice, language, temperature, repetition_penalty, output_file, streaming):
     global model
+    global stop_generation
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
@@ -539,6 +542,11 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
             yield wav_buf.read()
 
             for i, chunk in enumerate(output):
+                if stop_generation:
+                    print(f"[{params['branding']}TTSGen] Stopping audio generation.")
+                    file_chunks.clear()  # Clear the file_chunks list
+                    stop_generation = False
+                    break
                 file_chunks.append(chunk)
                 if isinstance(chunk, list):
                     chunk = torch.cat(chunk, dim=0)
@@ -547,6 +555,8 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
                 chunk = np.clip(chunk, -1, 1)
                 chunk = (chunk * 32767).astype(np.int16)
                 yield chunk.tobytes()
+                #if streaming_debug:
+                    # print(f"Stream audio generation: Yielded audio chunk {i}.")   
         else:
             # Non-streaming-specific operation
             torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
@@ -853,6 +863,12 @@ async def tts_generate_streaming(request: Request, text: str = Form(...), voice:
     except Exception as e:
         print(f"An error occurred: {e}")
         return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
+@app.put("/api/stop-generation")
+async def stop_generation_endpoint():
+    global stop_generation
+    stop_generation = True
+    return {"message": "Generation stopped"}
 
 ##############################
 #### Standard Generation ####
