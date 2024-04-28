@@ -698,9 +698,11 @@ def output_modifier(string, state):
                         print(f"[{params['branding']}TTSGen] {voice_description}")
 
                     # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
-                    cleaned_part = re.sub(r"([!?.])\1+", r"\1", part)
+                    cleaned_part = re.sub(r"([!?.\u3002\uFF1F\uFF01\uFF0C])\1+", r"\1", part)
+                    # Replace "Chinese ellipsis" with a single dot
+                    cleaned_part = re.sub(r"\u2026{1,2}", ". ", cleaned_part)
                     # Further clean to remove any other unwanted characters
-                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]', '', cleaned_part)
+                    cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]', '', cleaned_part)
                     # Remove all newline characters (single or multiple)
                     cleaned_part = re.sub(r"\n+", " ", cleaned_part)
 
@@ -725,9 +727,11 @@ def output_modifier(string, state):
                 # Decode HTML entities first
                 cleaned_part = html.unescape(cleaned_string)
                 # Replace multiple instances of certain punctuation marks with a single instance
-                cleaned_part = re.sub(r"([!?.])\1+", r"\1", cleaned_part)
+                cleaned_part = re.sub(r"([!?.\u3002\uFF1F\uFF01\uFF0C])\1+", r"\1", cleaned_part)
+                # Replace "Chinese ellipsis" with a single dot
+                cleaned_part = re.sub(r"\u2026{1,2}", ". ", cleaned_part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]', '', cleaned_part)
+                cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r"\n+", " ", cleaned_part)
                 # Process the part and give it a non-character name if being used vai API or standalone.
