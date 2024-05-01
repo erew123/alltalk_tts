@@ -291,12 +291,12 @@ def create_temporary_file(folder, suffix=".wav"):
     unique_filename = f"custom_tempfile_{int(time.time())}_{random.randint(1, 1000)}{suffix}"
     return os.path.join(folder, unique_filename)
 
-def format_audio_list(target_language, whisper_model, out_path, eval_split_number, gradio_progress=progress):
+def format_audio_list(target_language, whisper_model, out_path, eval_split_number, speaker_name_input, gradio_progress=progress):
     pfc_check_fail()
     audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith(('.mp3', '.flac', '.wav'))]
     buffer=0.2
     eval_percentage = eval_split_number / 100.0
-    speaker_name="coqui"
+    speaker_name=speaker_name_input
     audio_total_size = 0
     os.makedirs(out_path, exist_ok=True)
     temp_folder = os.path.join(out_path, "temp")  # Update with your folder name
@@ -837,20 +837,15 @@ def compact_model(xtts_checkpoint_copy):
 
     del checkpoint["optimizer"]
 
-    # Extract and save the fine-tuned DVAE weights
-    dvae_state_dict = {key: value for key, value in checkpoint["model"].items() if "dvae" in key}
-    dvae_path = this_dir / "models" / "trainedmodel" / "dvae.pth"
-    torch.save(dvae_state_dict, dvae_path)
-    
     for key in list(checkpoint["model"].keys()):
         if "dvae" in key:
             del checkpoint["model"][key]
     
     # Save the modified checkpoint in the target directory
     torch.save(checkpoint, target_dir / "model.pth")
-    
+
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth"]
+    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth", "dvae.pth",]
     
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
@@ -901,11 +896,6 @@ def compact_lastfinetuned_model(xtts_checkpoint_copy):
     # Create the target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Extract and save the fine-tuned DVAE weights
-    dvae_state_dict = {key: value for key, value in checkpoint["model"].items() if "dvae" in key}
-    dvae_path = this_dir / "models" / "lastfinetuned" / "dvae.pth"
-    torch.save(dvae_state_dict, dvae_path)
-
     for key in list(checkpoint["model"].keys()):
         if "dvae" in key:
             del checkpoint["model"][key]
@@ -914,7 +904,7 @@ def compact_lastfinetuned_model(xtts_checkpoint_copy):
     torch.save(checkpoint, target_dir / "model.pth")
 
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth"]
+    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth", "dvae.pth",]
 
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
@@ -965,11 +955,6 @@ def compact_custom_model(xtts_checkpoint_copy, folder_path):
     # Create the target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Extract and save the fine-tuned DVAE weights
-    dvae_state_dict = {key: value for key, value in checkpoint["model"].items() if "dvae" in key}
-    dvae_path = this_dir / "models" / folder_path / "dvae.pth"
-    torch.save(dvae_state_dict, dvae_path)
-
     for key in list(checkpoint["model"].keys()):
         if "dvae" in key:
             del checkpoint["model"][key]
@@ -978,7 +963,7 @@ def compact_custom_model(xtts_checkpoint_copy, folder_path):
     torch.save(checkpoint, target_dir / "model.pth")
 
     # Specify the files you want to copy
-    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth"]
+    files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth", "dvae.pth",]
 
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
@@ -1384,6 +1369,11 @@ if __name__ == "__main__":
                     maximum=95,  # Maximum value
                     step=1,  # Increment step
                 )
+                speaker_name_input = gr.Textbox(
+                label="The name of the speaker/person you are training",
+                value="personsname",
+                visible=True,
+            )
             progress_data = gr.Label(
                 label="Progress:"
             )
@@ -1395,14 +1385,15 @@ if __name__ == "__main__":
 
             prompt_compute_btn = gr.Button(value="Step 1 - Create dataset")
         
-            def preprocess_dataset(language,  whisper_model, out_path, eval_split_number, progress=gr.Progress(track_tqdm=True)):
+            def preprocess_dataset(language, whisper_model, out_path, eval_split_number, speaker_name_input, progress=gr.Progress(track_tqdm=True)):
                 clear_gpu_cache()
                 test_for_audio_files = [file for file in os.listdir(audio_folder) if any(file.lower().endswith(ext) for ext in ['.wav', '.mp3', '.flac'])]
                 if not test_for_audio_files:
                     return "I cannot find any mp3, wav or flac files in the folder called 'put-voice-samples-in-here'", "", ""
                 else:
                     try:
-                        train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model, out_path=out_path, eval_split_number=eval_split_number, gradio_progress=progress)
+
+                        train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model, out_path=out_path, eval_split_number=eval_split_number, speaker_name_input=speaker_name_input, gradio_progress=progress)
                     except:
                         traceback.print_exc()
                         error = traceback.format_exc()
@@ -1817,6 +1808,7 @@ if __name__ == "__main__":
                     whisper_model,
                     out_path,
                     eval_split_number,
+                    speaker_name_input,
                 ],
                 outputs=[
                     progress_data,
