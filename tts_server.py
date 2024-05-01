@@ -476,6 +476,11 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
 ########################
 #### TTS GENERATION ####
 ########################
+debug_generate_audio = False
+tts_stop_generation = False # Called to stop generation of the current text at whatever stage its at. currently only set for streaming.
+tts_generation_lock = False # Tracks locking of the generaetion process.
+tts_narrator_generatingtts = False # Tracks if the current tts processes are narrator based, to avoid moving model on each chunk of text generated.
+# Not in use tts_queue_behaviour = False # True is to queue the current generation request. False is to cancel the current generation and start a new one.
 
 # TTS VOICE GENERATION METHODS (called from voice_preview and output_modifer)
 async def generate_audio(text, voice, language, temperature, repetition_penalty, output_file, streaming=False):
@@ -487,11 +492,10 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
     async for _ in response:
         pass
 
-stop_generation = False
- 
+
 async def generate_audio_internal(text, voice, language, temperature, repetition_penalty, output_file, streaming):
-    global model
-    global stop_generation
+    global model, tts_stop_generation, tts_generation_lock
+    tts_generation_lock = True
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
@@ -542,10 +546,11 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
             yield wav_buf.read()
 
             for i, chunk in enumerate(output):
-                if stop_generation:
+                if tts_stop_generation:
                     print(f"[{params['branding']}TTSGen] Stopping audio generation.")
                     file_chunks.clear()  # Clear the file_chunks list
-                    stop_generation = False
+                    tts_stop_generation = False
+                    tts_generation_lock = False
                     break
                 file_chunks.append(chunk)
                 if isinstance(chunk, list):
@@ -555,8 +560,7 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
                 chunk = np.clip(chunk, -1, 1)
                 chunk = (chunk * 32767).astype(np.int16)
                 yield chunk.tobytes()
-                #if streaming_debug:
-                    # print(f"Stream audio generation: Yielded audio chunk {i}.")   
+                print(f"[{params['branding']}Debug] Stream audio generation: Yielded audio chunk {i}.") if debug_generate_audio else None   
         else:
             # Non-streaming-specific operation
             torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
@@ -599,12 +603,11 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
     # Print Generation time and settings
     generate_end_time = time.time()  # Record the end time to generate TTS
     generate_elapsed_time = generate_end_time - generate_start_time
-    print(
-        f"[{params['branding']}TTSGen] \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{params['low_vram']} \033[94mDeepSpeed: \033[33m{params['deepspeed_activate']}\033[0m"
-    )
+    print(f"[{params['branding']}TTSGen] \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{params['low_vram']} \033[94mDeepSpeed: \033[33m{params['deepspeed_activate']}\033[0m")
     # Move model back to cpu system ram if needed.
-    if params["low_vram"] and device == "cuda":
+    if params["low_vram"] and device == "cuda" and tts_narrator_generatingtts == False:
         await switch_device()
+    tts_generation_lock = False
     return
 
 
@@ -866,8 +869,9 @@ async def tts_generate_streaming(request: Request, text: str = Form(...), voice:
 
 @app.put("/api/stop-generation")
 async def stop_generation_endpoint():
-    global stop_generation
-    stop_generation = True
+    global tts_stop_generation, tts_generation_lock
+    if tts_generation_lock and not tts_stop_generation:
+        tts_stop_generation = True
     return {"message": "Generation stopped"}
 
 ##############################
@@ -1045,6 +1049,7 @@ async def tts_generate(
             "autoplay_volume": autoplay_volume,
             "streaming": streaming,
         }
+        global tts_narrator_generatingtts
         JSONresult = TTSGenerator.validate_json_input(json_input_data)
         if JSONresult is None:
             pass
@@ -1052,6 +1057,9 @@ async def tts_generate(
             print(f"[{params['branding']}API] \033[91mError with API request:\033[0m", JSONresult)
             return JSONResponse(content={"error": JSONresult}, status_code=400)
         if narrator_enabled:
+            if params["low_vram"] and device == "cpu":
+                await switch_device()
+            tts_narrator_generatingtts = True
             processed_parts = process_text(text_input)
             audio_files_all_paragraphs = []
             for part_type, part in processed_parts:
@@ -1085,6 +1093,10 @@ async def tts_generate(
                 audio_files_all_paragraphs.append(audio_path)
             # Combine audio files across paragraphs
             output_file_path, output_file_url, output_cache_url = combine(output_file_timestamp, output_file_name, audio_files_all_paragraphs)
+            tts_narrator_generatingtts = False
+            # Move model back to cpu system ram if needed.
+            if params["low_vram"] and device == "cuda":
+                await switch_device()
         else:
             if output_file_timestamp:
                 timestamp = int(time.time())
