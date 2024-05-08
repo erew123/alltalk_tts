@@ -27,6 +27,7 @@ class AllTalkTtsProvider {
             currentModel: '',
             deepspeed_available: false,
             deepSpeedEnabled: false,
+            streaming: "off",
             lowVramEnabled: false,
         };
     }
@@ -136,6 +137,14 @@ class AllTalkTtsProvider {
     <div class="at-settings-option">
         <label for="deepspeed">DeepSpeed</label>
         <input id="deepspeed" type="checkbox"/>
+    </div>
+    <div class="at-streaming-option">
+        <label for="streaming">Streaming</label>
+        <select id="streaming">
+            <option value="off">Off</option>
+            <option value="whole">Whole</option>
+            <option value="sentences">Sentences</option>
+        </select>
     </div>
     <div class="at-settings-option status-option">
         <span>Status: <span id="status_info">Ready</span></span>
@@ -356,10 +365,11 @@ class AllTalkTtsProvider {
             this.settings.currentModel = currentSettings.current_model_loaded;
             this.settings.deepspeed_available = currentSettings.deepspeed_available;
             this.settings.deepSpeedEnabled = currentSettings.deepspeed_status;
+            this.settings.streaming = currentSettings.streaming_status;
             this.settings.lowVramEnabled = currentSettings.low_vram_status;
             this.settings.finetuned_model = currentSettings.finetuned_model
             // Update HTML elements
-            this.updateModelDropdown();
+            this.updateDropdowns();
             this.updateCheckboxes();
         } catch (error) {
             console.error(`Error updating settings from server: ${error}`);
@@ -370,7 +380,7 @@ class AllTalkTtsProvider {
     // Get Current AT Server Config & Update ST (Models) //
     //###################################################//
 
-    updateModelDropdown() {
+    updateDropdowns() {
         const modelSelect = document.getElementById('switch_model');
         if (modelSelect) {
             modelSelect.innerHTML = ''; // Clear existing options
@@ -380,6 +390,20 @@ class AllTalkTtsProvider {
                 option.textContent = model.model_name; // Use model_name instead of name
                 option.selected = model.model_name === this.settings.currentModel;
                 modelSelect.appendChild(option);
+            });
+        }
+
+        const streamingSelect = document.getElementById('streaming');
+        if (streamingSelect) {
+            streamingSelect.innerHTML = ''; // Clear existing options
+            [["off", "Off"], ["whole", "Whole"], ["sentences", "Sentences"]].forEach(streaming_opt => {
+                const value = streaming_opt[0];
+                const text = streaming_opt[1];
+                const option = document.createElement('option');
+                option.value = value
+                option.textContent = text;
+                option.selected = (value === this.settings.streaming);
+                streamingSelect.appendChild(option);
             });
         }
     }
@@ -501,6 +525,32 @@ class AllTalkTtsProvider {
                 updateStatus('Processing');
                 try {
                     const response = await fetch(`${this.settings.provider_endpoint}/api/deepspeed?new_deepspeed_value=${deepSpeedValue}`, {
+                        method: 'POST'
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log("POST response data:", data); // Debugging statement
+                    // Set status to Ready if successful
+                    updateStatus('Ready');
+                } catch (error) {
+                    console.error("POST request error:", error); // Debugging statement
+                    // Set status to Error in case of failure
+                    updateStatus('Error');
+                }
+            });
+        }
+
+        // Streaming mode Listener
+        const streamingSelect = document.getElementById('streaming');
+        if (streamingSelect) {
+            streamingSelect.addEventListener('change', async (event) => {
+                const streamingValue = event.target.value;
+                // Set status to Processing
+                updateStatus('Processing');
+                try {
+                    const response = await fetch(`${this.settings.provider_endpoint}/api/streaming_set?new_streaming_value=${streamingValue}`, {
                         method: 'POST'
                     });
                     if (!response.ok) {

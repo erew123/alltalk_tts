@@ -6,8 +6,8 @@ import torch
 import torchaudio
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
-import io
-import wave
+import asyncio
+
 import logging
 logging.disable(logging.WARNING)
 ##########################
@@ -28,6 +28,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
+from system.tts_stream.tts_stream import TTSStream
+
 ###########################
 #### STARTUP VARIABLES ####
 ###########################
@@ -40,6 +42,8 @@ with open(this_dir / "system" / "config" / "languages.json", encoding="utf8") as
     languages = json.load(f)
 # Base setting for a possible FineTuned model existing and the loader being available
 tts_method_xtts_ft = False
+bg_streams: dict[str, TTSStream] = {}
+xttsv2_inference_lock = asyncio.Lock()
 
 #################################################################
 #### LOAD PARAMS FROM confignew.json - REQUIRED FOR BRANDING ####
@@ -296,12 +300,14 @@ async def handle_tts_method_change(tts_method):
         params["tts_method_xtts_local"] = False
         params["tts_method_api_tts"] = True
         params["deepspeed_activate"] = False
+        params["streaming"] = "off"
         tts_method_xtts_ft = False
     elif tts_method == "API Local":
         params["tts_method_api_tts"] = False
         params["tts_method_xtts_local"] = False
         params["tts_method_api_local"] = True
         params["deepspeed_activate"] = False
+        params["streaming"] = "off"
         tts_method_xtts_ft = False
     elif tts_method == "XTTSv2 Local":
         params["tts_method_api_tts"] = False
@@ -472,6 +478,28 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
     except Exception as e:
         return Response(content=json.dumps({"status": "error", "message": str(e)}))
 
+# STREAMING WEBSERVER- API Enable/Disable Streaming mode
+@app.post("/api/streaming_set")
+async def streaming_set(request: Request, new_streaming_value: str):
+    try:
+        if new_streaming_value is None:
+            raise ValueError("Missing 'streaming' parameter")
+        valid_values = ["off", "whole", "sentences"]
+        if new_streaming_value not in valid_values:
+            raise ValueError(f"Invalid 'streaming' parameter, must be one of {valid_values}")
+        if params["streaming"] == new_streaming_value:
+            return Response(
+                content=json.dumps(
+                    {
+                        "status": "success",
+                        "message": f"Streaming is already \"{new_streaming_value}\".",
+                    }
+                )
+            )
+        params["streaming"] = new_streaming_value
+        return Response(content=json.dumps({"status": "streaming-success"}))
+    except Exception as e:
+        return Response(content=json.dumps({"status": "error", "message": str(e)}))
 
 ########################
 #### TTS GENERATION ####
@@ -486,23 +514,46 @@ tts_narrator_generatingtts = False # Tracks if the current tts processes are nar
 async def generate_audio(text, voice, language, temperature, repetition_penalty, output_file, streaming=False):
     # Get the async generator from the internal function
     response = generate_audio_internal(text, voice, language, temperature, repetition_penalty, output_file, streaming)
-    # If streaming, then return the generator as-is, otherwise just exhaust it and return
-    if streaming:
+    # If we're streaming in non-background mode, then return the generator as-is,
+    # otherwise just exhaust it and return
+    if streaming and (text is not None):
         return response
     async for _ in response:
         pass
 
 
 async def generate_audio_internal(text, voice, language, temperature, repetition_penalty, output_file, streaming):
-    global model, tts_stop_generation, tts_generation_lock
+    global model, tts_stop_generation, tts_generation_lock, bg_streams, xttsv2_inference_lock
+
+    # Streaming only allowed for XTTSv2 local
+    use_local_tts = (params["tts_method_xtts_local"] or tts_method_xtts_ft)
+    if streaming and not use_local_tts:
+        raise ValueError("Streaming is only supported in XTTSv2 local")
+
+    # Text can only be unset when streaming is on, in which case background streaming is enabled
+    background_streaming = (text is None)
+    if background_streaming and not streaming:
+        raise ValueError("Text not provided, only allowed when streaming is enabled")
+
+    # Ensure non-duplicate background stream creation
+    if background_streaming and output_file in bg_streams:
+        raise ValueError(f"Background stream already initiated for: {output_file}")
+
     tts_generation_lock = True
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
-    
+
     # XTTSv2 LOCAL & Xttsv2 FT Method
-    if params["tts_method_xtts_local"] or tts_method_xtts_ft:
-        print(f"[{params['branding']}TTSGen] {text}")
+    if use_local_tts:
+        if background_streaming:
+            # Create a background stream for this file
+            tts_bg_stream = bg_streams[output_file] = TTSStream(output_file)
+            log_str = f"<background streaming for {output_file}>"
+        else:
+            tts_bg_stream, log_str = None, text
+
+        print(f"[{params['branding']}TTSGen] {log_str}")
         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(
             audio_path=[f"{this_dir}/voices/{voice}"],
             gpt_cond_len=model.config.gpt_cond_len,
@@ -511,8 +562,7 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
         )
 
         # Common arguments for both functions
-        common_args = {
-            "text": text,
+        inference_args = {
             "language": language,
             "gpt_cond_latent": gpt_cond_latent,
             "speaker_embedding": speaker_embedding,
@@ -523,93 +573,132 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
             "top_p": float(model.config.top_p),
             "enable_text_splitting": True
         }
-
-        # Determine the correct inference function and add streaming specific argument if needed
-        inference_func = model.inference_stream if streaming else model.inference
-        if streaming:
-            common_args["stream_chunk_size"] = 20
-
-        # Call the appropriate function
-        output = inference_func(**common_args)
+        if not background_streaming:
+            inference_args["text"] = text
 
         # Process the output based on streaming or non-streaming
         if streaming:
-            # Streaming-specific operations
-            file_chunks = []
-            wav_buf = io.BytesIO()
-            with wave.open(wav_buf, "wb") as vfout:
-                vfout.setnchannels(1)
-                vfout.setsampwidth(2)
-                vfout.setframerate(24000)
-                vfout.writeframes(b"")
-            wav_buf.seek(0)
-            yield wav_buf.read()
+            async def stream_func(tts_bg_stream: TTSStream, model: Xtts, inference_args,
+                                  params, inference_lock):
+                global tts_stop_generation, tts_generation_lock
 
-            for i, chunk in enumerate(output):
-                if tts_stop_generation:
-                    print(f"[{params['branding']}TTSGen] Stopping audio generation.")
-                    file_chunks.clear()  # Clear the file_chunks list
-                    tts_stop_generation = False
-                    tts_generation_lock = False
-                    break
-                file_chunks.append(chunk)
-                if isinstance(chunk, list):
-                    chunk = torch.cat(chunk, dim=0)
-                chunk = chunk.clone().detach().cpu().numpy()
-                chunk = chunk[None, : int(chunk.shape[0])]
-                chunk = np.clip(chunk, -1, 1)
-                chunk = (chunk * 32767).astype(np.int16)
-                yield chunk.tobytes()
-                print(f"[{params['branding']}Debug] Stream audio generation: Yielded audio chunk {i}.") if debug_generate_audio else None   
+                # Yield the WAV header chunk first
+                header_chunk = TTSStream.get_streaming_header_chunk()
+                if tts_bg_stream is not None:
+                    await tts_bg_stream.add_chunk(header_chunk)
+                else:
+                    yield header_chunk
+
+                # Create the text generator
+                if tts_bg_stream is not None:
+                    text_generator = tts_bg_stream.stream_text()
+                else:
+                    async def dummy_gen_full_text(full_text):
+                        yield (full_text, False)
+                    text_generator = dummy_gen_full_text(inference_args["text"])
+                    del inference_args["text"]
+
+                # Create the inference generator
+                del inference_args["enable_text_splitting"]
+                use_newer_xtts_if = hasattr(model, "inference_stream_text")
+                if use_newer_xtts_if:
+                    inference_generator = model.inference_stream_text(**inference_args)
+
+                async with inference_lock:
+                    async for text, is_single_sentence in text_generator:
+                        if use_newer_xtts_if:
+                            model.inference_add_text(text, enable_text_splitting=not is_single_sentence)
+                        else:
+                            inference_args["text"] = text
+                            inference_args["enable_text_splitting"] = not is_single_sentence
+                            inference_generator = model.inference_stream(**inference_args)
+                        for i, chunk in enumerate(inference_generator):
+                            if use_newer_xtts_if and chunk is None:
+                                break
+                            if tts_stop_generation:
+                                print(f"[{params['branding']}TTSGen] Stopping audio generation.")
+                                tts_stop_generation = False
+                                tts_generation_lock = False
+                                break
+                            if isinstance(chunk, list):
+                                chunk = torch.cat(chunk, dim=0)
+                            chunk = chunk.clone().detach().cpu().numpy()
+                            chunk = chunk[None, : int(chunk.shape[0])]
+                            chunk = np.clip(chunk, -1, 1)
+                            chunk = (chunk * 32767).astype(np.int16)
+                            chunk_bytes = chunk.tobytes()
+                            if tts_bg_stream is not None:
+                                await tts_bg_stream.add_chunk(chunk_bytes)
+                            else:
+                                yield chunk_bytes
+                            print(f"[{params['branding']}Debug] Stream audio generation: "
+                                  f"Yielded audio chunk {i}.") if debug_generate_audio else None
+                            if tts_bg_stream is not None:
+                                await asyncio.sleep(0)
+                # Finalize text streaming
+                if use_newer_xtts_if:
+                    model.inference_finalize_text()
+                # Finalize the background stream
+                if tts_bg_stream is not None:
+                    await tts_bg_stream.finalize()
+
+            # Create the generator:
+            #   if we're not streaming in the background just consume it,
+            #   otherwise run it as a background task
+            inference_args["stream_chunk_size"] = 20
+            generator = stream_func(tts_bg_stream, model, inference_args, params,
+                                    xttsv2_inference_lock)
+            if not background_streaming:
+                async for chunk in generator:
+                    yield chunk
+            else:
+                async def stream_task(generator):
+                    async for _ in generator:
+                        pass
+                loop = asyncio.get_event_loop()
+                loop.create_task(stream_task(generator))
         else:
             # Non-streaming-specific operation
+            async with xttsv2_inference_lock:
+                output = model.inference(**inference_args)
             torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
 
-    
-    # API LOCAL Methods
-    elif params["tts_method_api_local"]:
-        # Streaming only allowed for XTTSv2 local
-        if streaming:
-            raise ValueError("Streaming is only supported in XTTSv2 local")
+    # API methods
+    else:
+        # API LOCAL Methods
+        if params["tts_method_api_local"]:
+            # Set the correct output path (different from the if statement)
+            print(f"[{params['branding']}TTSGen] Using API Local")
+            model.tts_to_file(
+                text=text,
+                file_path=output_file,
+                speaker_wav=[f"{this_dir}/voices/{voice}"],
+                language=language,
+                temperature=temperature,
+                length_penalty=model.config.length_penalty,
+                repetition_penalty=repetition_penalty,
+                top_k=model.config.top_k,
+                top_p=model.config.top_p,
+            )
 
-        # Set the correct output path (different from the if statement)
-        print(f"[{params['branding']}TTSGen] Using API Local")
-        model.tts_to_file(
-            text=text,
-            file_path=output_file,
-            speaker_wav=[f"{this_dir}/voices/{voice}"],
-            language=language,
-            temperature=temperature,
-            length_penalty=model.config.length_penalty,
-            repetition_penalty=repetition_penalty,
-            top_k=model.config.top_k,
-            top_p=model.config.top_p,
-        )
-
-    # API TTS
-    elif params["tts_method_api_tts"]:
-        # Streaming only allowed for XTTSv2 local
-        if streaming:
-            raise ValueError("Streaming is only supported in XTTSv2 local")
-
-        print(f"[{params['branding']}TTSGen] Using API TTS")
-        model.tts_to_file(
-            text=text,
-            file_path=output_file,
-            speaker_wav=[f"{this_dir}/voices/{voice}"],
-            language=language,
-        )
+        # API TTS
+        elif params["tts_method_api_tts"]:
+            print(f"[{params['branding']}TTSGen] Using API TTS")
+            model.tts_to_file(
+                text=text,
+                file_path=output_file,
+                speaker_wav=[f"{this_dir}/voices/{voice}"],
+                language=language,
+            )
 
     # Print Generation time and settings
     generate_end_time = time.time()  # Record the end time to generate TTS
     generate_elapsed_time = generate_end_time - generate_start_time
-    print(f"[{params['branding']}TTSGen] \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{params['low_vram']} \033[94mDeepSpeed: \033[33m{params['deepspeed_activate']}\033[0m")
+    print(f"[{params['branding']}TTSGen] \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{params['low_vram']} \033[94mStreaming: \033[33m{params['streaming']} \033[94mDeepSpeed: \033[33m{params['deepspeed_activate']}\033[0m")
     # Move model back to cpu system ram if needed.
     if params["low_vram"] and device == "cuda" and tts_narrator_generatingtts == False:
         await switch_device()
     tts_generation_lock = False
-    return
-
 
 # TTS VOICE GENERATION METHODS - generate TTS API
 @app.route("/api/generate", methods=["POST"])
@@ -623,17 +712,53 @@ async def generate(request: Request):
         temperature = data["temperature"]
         repetition_penalty = data["repetition_penalty"]
         output_file = data["output_file"]
-        streaming = False
+        background_streaming = (text is None)
         # Generation logic
-        response = await generate_audio(text, voice, language, temperature, repetition_penalty, output_file, streaming)
-        if streaming:
-            return StreamingResponse(response, media_type="audio/wav")
+        await generate_audio(text, voice, language, temperature, repetition_penalty, output_file,
+                             background_streaming)
         return JSONResponse(
             content={"status": "generate-success", "data": {"audio_path": output_file}}
         )
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)})
 
+@app.get("/stream")
+async def stream(output_file: str,
+                 text: str = None,
+                 index: int = None,
+                 is_last: bool = False,
+                 is_single_sentence: bool = True):
+    # Get the background stream, return an error if it doesn't exist
+    tts_bg_stream = bg_streams.get(output_file)
+    if tts_bg_stream is None:
+        print(f"Error, stream for '{output_file}' doesn't exist")
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+
+    if text is not None:
+        # If the stream was already committed to
+        # the output file, no text can be queued anymore
+        if os.path.isfile(output_file):
+            print(f"Error, stream was already committed for '{output_file}', "
+                  f"cannot stream additional text '{text}' to it")
+            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+        # Add the text to the stream
+        try:
+            await tts_bg_stream.add_text(text, index, is_last, is_single_sentence)
+            return JSONResponse(content={"status": "stream-success"})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+    else:
+        try:
+            # If the stream was already committed to the output file, return it directly
+            if os.path.isfile(output_file):
+                return FileResponse(output_file)
+            # Otherwise stream the chunks
+            stream = tts_bg_stream.stream_chunks()
+            return StreamingResponse(stream, media_type="audio/wav")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
 
 ###################################################
 #### POPULATE FILES LIST FROM VOICES DIRECTORY ####
@@ -685,6 +810,7 @@ async def update_settings(
     activate: bool = Form(...),
     autoplay: bool = Form(...),
     deepspeed_activate: bool = Form(...),
+    streaming: str = Form(...),
     delete_output_wavs: str = Form(...),
     ip_address: str = Form(...),
     language: str = Form(...),
@@ -707,6 +833,7 @@ async def update_settings(
     data["activate"] = activate
     data["autoplay"] = autoplay
     data["deepspeed_activate"] = deepspeed_activate
+    data["streaming"] = streaming
     data["delete_output_wavs"] = delete_output_wavs
     data["ip_address"] = ip_address
     data["language"] = language
@@ -1172,6 +1299,7 @@ def get_current_settings():
         "current_model_loaded": current_model_loaded,
         "deepspeed_available": deepspeed_available,
         "deepspeed_status": params["deepspeed_activate"],
+        "streaming_status": params["streaming"],
         "low_vram_status": params["low_vram"],
         "finetuned_model": finetuned_model
     }
