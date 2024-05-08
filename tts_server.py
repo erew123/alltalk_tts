@@ -728,37 +728,36 @@ async def stream(output_file: str,
                  index: int = None,
                  is_last: bool = False,
                  is_single_sentence: bool = True):
-    # Get the background stream, return an error if it doesn't exist
+    # Stream already committed to the output file case
+    if os.path.isfile(output_file):
+        # No text can be added after the stream is committed
+        if text is not None:
+            print(f"Error, stream was already committed to '{output_file}', "
+                  f"cannot add text '{text}' to it")
+            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+        else:
+            # Directly return the file we committed the stream to
+            return FileResponse(output_file)
+
+    # Retrieve the background stream
     tts_bg_stream = bg_streams.get(output_file)
     if tts_bg_stream is None:
         print(f"Error, stream for '{output_file}' doesn't exist")
         return JSONResponse(content={"error": "An error occurred"}, status_code=500)
 
-    if text is not None:
-        # If the stream was already committed to
-        # the output file, no text can be queued anymore
-        if os.path.isfile(output_file):
-            print(f"Error, stream was already committed for '{output_file}', "
-                  f"cannot stream additional text '{text}' to it")
-            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
-        # Add the text to the stream
-        try:
+    # Add text or stream the audio chunks
+    try:
+        if text is not None:
+            # Add text to the stream
             await tts_bg_stream.add_text(text, index, is_last, is_single_sentence)
             return JSONResponse(content={"status": "stream-success"})
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
-    else:
-        try:
-            # If the stream was already committed to the output file, return it directly
-            if os.path.isfile(output_file):
-                return FileResponse(output_file)
-            # Otherwise stream the chunks
+        else:
+            # Stream the chunks
             stream = tts_bg_stream.stream_chunks()
             return StreamingResponse(stream, media_type="audio/wav")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return JSONResponse(content={"error": "An error occurred"}, status_code=500)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse(content={"error": "An error occurred"}, status_code=500)
 
 ###################################################
 #### POPULATE FILES LIST FROM VOICES DIRECTORY ####
