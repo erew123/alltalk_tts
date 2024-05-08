@@ -616,9 +616,6 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
                             if use_newer_xtts_if and chunk is None:
                                 break
                             if tts_stop_generation:
-                                print(f"[{params['branding']}TTSGen] Stopping audio generation.")
-                                tts_stop_generation = False
-                                tts_generation_lock = False
                                 break
                             if isinstance(chunk, list):
                                 chunk = torch.cat(chunk, dim=0)
@@ -636,6 +633,9 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
                             if tts_bg_stream is not None:
                                 await asyncio.sleep(0)
                         if tts_stop_generation:
+                            print(f"[{params['branding']}TTSGen] Stopping audio generation.")
+                            tts_stop_generation = False
+                            tts_generation_lock = False
                             break
                 # Finalize text streaming
                 if use_newer_xtts_if:
