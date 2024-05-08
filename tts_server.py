@@ -635,6 +635,8 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
                                   f"Yielded audio chunk {i}.") if debug_generate_audio else None
                             if tts_bg_stream is not None:
                                 await asyncio.sleep(0)
+                        if tts_stop_generation:
+                            break
                 # Finalize text streaming
                 if use_newer_xtts_if:
                     model.inference_finalize_text()
