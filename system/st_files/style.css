@@ -144,7 +144,7 @@
     width: 100%;
 }
 
-.at-model-option, .endpoint-option {
+.at-model-option, .endpoint-option, .at-streaming-option {
     flex: 1;
     margin: 0 10px;
     margin-left: 10px; 

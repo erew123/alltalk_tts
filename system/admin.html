@@ -2370,12 +2370,13 @@
             <p>URL: <code>http://127.0.0.1:7851/api/currentsettings</code><br> - Method: <code>GET</code><br></p>
             <p> <code>curl -X GET &quot;http://127.0.0.1:7851/api/currentsettings&quot;</code></p>
             <p> JSON return:
-                <code>{&quot;models_available&quot;:[{&quot;name&quot;:&quot;Coqui&quot;,&quot;model_name&quot;:&quot;API TTS&quot;},{&quot;name&quot;:&quot;Coqui&quot;,&quot;model_name&quot;:&quot;API Local&quot;},{&quot;name&quot;:&quot;Coqui&quot;,&quot;model_name&quot;:&quot;XTTSv2 Local&quot;}],&quot;current_model_loaded&quot;:&quot;XTTSv2 Local&quot;,&quot;deepspeed_available&quot;:true,&quot;deepspeed_status&quot;:true,&quot;low_vram_status&quot;:true,&quot;finetuned_model&quot;:false}</code>
+                <code>{&quot;models_available&quot;:[{&quot;name&quot;:&quot;Coqui&quot;,&quot;model_name&quot;:&quot;API TTS&quot;},{&quot;name&quot;:&quot;Coqui&quot;,&quot;model_name&quot;:&quot;API Local&quot;},{&quot;name&quot;:&quot;Coqui&quot;,&quot;model_name&quot;:&quot;XTTSv2 Local&quot;}],&quot;current_model_loaded&quot;:&quot;XTTSv2 Local&quot;,&quot;deepspeed_available&quot;:true,&quot;deepspeed_status&quot;:true,&quot;streaming_status&quot;:&quot;off&quot;,&quot;low_vram_status&quot;:true,&quot;finetuned_model&quot;:false}</code>
             </p>
             <p><code>name &amp; model_name</code> = listing the currently available models.<br>
                 <code>current_model_loaded</code> = what model is currently loaded into VRAM.<br>
                 <code>deepspeed_available</code> = was DeepSpeed detected on startup and available to be activated.<br>
                 <code>deepspeed_status</code> = If DeepSpeed was detected, is it currently activated.<br>
+                <code>streaming_status</code> = Streaming mode (off/whole/sentences).<br>
                 <code>low_vram_status</code> = Is Low VRAM currently enabled.<br>
                 <code>finetuned_model</code> = Was a finetuned model detected. (XTTSv2 FT).<br>
             </p>

@@ -17,6 +17,8 @@ import numpy as np
 import soundfile as sf
 import uuid
 import logging
+import urllib.parse
+import pysbd
 # Store the current disable level
 current_disable_level = logging.getLogger().manager.disable
 
@@ -162,6 +164,12 @@ with open(this_dir / "system" / "config" / "languages.json", encoding="utf8") as
 process_lock = threading.Lock()
 # Base setting for a possible FineTuned model existing and the loader being available
 tts_method_xtts_ft = False
+sentences_seg = pysbd.Segmenter(language="en", clean=False, char_span=True)
+sentstream_started = False
+sentstream_processed_len = 0
+sentstream_output_file = None
+sentstream_index = 0
+stream_modifier_detected = False
 
 
 # Gather the voice files
@@ -357,7 +365,7 @@ else:
 #####################################
 # MODEL - Swap model based on Gradio selection API TTS, API Local, XTTSv2 Local
 def send_reload_request(tts_method):
-    global tts_method_xtts_ft
+    global tts_method_xtts_ft, sentstream_started
     try:
         params["tts_model_loaded"] = False
         url = f"{base_url}/api/reload"
@@ -375,6 +383,8 @@ def send_reload_request(tts_method):
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_tts"] = True
                 params["deepspeed_activate"] = False
+                params["streaming"] = "off"
+                sentstream_started = False
                 audio_path = this_dir / "system" / "at_sounds" / "apitts.wav"
                 tts_method_xtts_ft = False
             elif tts_method == "API Local":
@@ -382,6 +392,8 @@ def send_reload_request(tts_method):
                 params["tts_method_xtts_local"] = False
                 params["tts_method_api_local"] = True
                 params["deepspeed_activate"] = False
+                params["streaming"] = "off"
+                sentstream_started = False
                 audio_path = this_dir / "system" / "at_sounds" / "apilocal.wav"
                 tts_method_xtts_ft = False
             elif tts_method == "XTTSv2 Local":
@@ -460,6 +472,25 @@ def send_deepspeed_request(deepspeed_param):
 # DEEPSPEED - Display DeepSpeed Checkbox Yes or No
 deepspeed_condition = params["tts_method_xtts_local"] == "True" and deepspeed_installed
 
+##################
+#### STREAMING ####
+##################
+# STREAMING - Gradio Checkbox handling
+def send_streaming_request(streaming_param):
+    global sentstream_started
+    params["streaming"] = streaming_param
+    if streaming_param != "sentences":
+        sentstream_started = False
+    try:
+        url = f"{base_url}/api/streaming_set?new_streaming_value={streaming_param}"
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url, headers=headers)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return ''
+    except requests.exceptions.RequestException as e:
+        # Handle the HTTP request error
+        print(f"[{params['branding']}Server] \033[91mWarning\033[0m Error during request to webserver process: {e}")
+        return {"status": "error", "message": str(e)}
 
 #############################################################
 #### TTS STRING CLEANING & PROCESSING PRE SENDING TO TTS ####
@@ -652,24 +683,59 @@ def reinsert_images(text, img_info):
 #################################
 # STANDARD VOICE - Generate TTS Function
 def output_modifier(string, state):
+    global stream_modifier_detected
     if not params["activate"]:
         return string
+    if params["streaming"] == "sentences":
+        if not stream_modifier_detected:
+            print(f"[{params['branding']}TTSGen] \033[91mWarning\033[0m "
+                  f"Sentences-Streaming activated but `output_stream_modifier` was never called. "
+                  f"A Text-Generation WebUI version that supports it must be used.")
+        return string
+    return on_bot_reply(string, state)
+
+def output_stream_modifier(string, state, is_finalized):
+    global stream_modifier_detected
+    if not params["activate"] or params["streaming"] != "sentences":
+        return string
+    stream_modifier_detected = True
+    return on_bot_reply(string, state, is_finalized=is_finalized)
+
+def on_bot_reply(string: str, state, is_finalized=True):
+    global sentences_seg
+    global sentstream_started, sentstream_processed_len, sentstream_output_file, sentstream_index
+    streaming = (params["streaming"] != "off")
+    sentences_streaming = (params["streaming"] == "sentences")
+    sentstream_starting = (sentences_streaming and not sentstream_started)
     img_info = ""
-    cleaned_text, img_info = extract_and_remove_images(string)
-    # print("Cleaned STRING IS:", cleaned_text)
-    cleaned_string = before_audio_generation(cleaned_text, params)
+
+    # Continuation case: audio element will be included, manually remove it
+    cleaned_string = string
+    if cleaned_string.startswith("<audio src=\""):
+        end_str = "></audio>"
+        end_idx = cleaned_string.find(end_str)
+        if end_idx != -1:
+            cleaned_string = cleaned_string[end_idx + len(end_str):]
+
+    # Clean images
+    cleaned_string, img_info = extract_and_remove_images(cleaned_string)
+    # print("Cleaned STRING IS:", cleaned_string)
+    cleaned_string = before_audio_generation(cleaned_string, params)
     if cleaned_string is None:
-        return
+        return string
+
     language_code = languages.get(params["language"])
     temperature = params["local_temperature"]
     repetition_penalty = params["local_repetition_penalty"]
-    # Create a list to store generated audio paths
-    audio_files = []
+
     if process_lock.acquire(blocking=False):
         try:
             if params["narrator_enabled"]:
+                if streaming:
+                    print(f"[{params['branding']}TTSGen] \033[91mWarning\033[0m "
+                          f"Streaming activated but not supported with narrator enabled. ")
+                    return string
                 processed_parts = process_text(cleaned_string)
-
                 audio_files_all_paragraphs = []
                 for part_type, part in processed_parts:
                     # Skip parts that are too short
@@ -716,13 +782,23 @@ def output_modifier(string, state):
                         repetition_penalty,
                         output_filename,
                     )
-                    audio_path = generate_response.get("data", {}).get("audio_path")
-                    audio_files_all_paragraphs.append(audio_path)
+                    if generate_response.get("status") == "generate-success":
+                        audio_path = generate_response.get("data", {}).get("audio_path")
+                        if not audio_path:
+                            print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                                  f"No audio path in the response.")
+                            return string
+                        audio_files_all_paragraphs.append(audio_path)
+                    else:
+                        print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                              f"Audio generation failed. Status:", generate_response.get("message"))
+                        return string
 
                 # Combine audio files across paragraphs
                 final_output_file = combine(
                     audio_files_all_paragraphs, params["output_folder_wav"], state
                 )
+                audio_src = f'file/{final_output_file}'
             else:
                 # Decode HTML entities first
                 cleaned_part = html.unescape(cleaned_string)
@@ -734,27 +810,121 @@ def output_modifier(string, state):
                 cleaned_part = re.sub(r'[^a-zA-Z0-9\s.,;:!?\-\'"$\u0400-\u04FF\u00C0-\u00FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]', '', cleaned_part)
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r"\n+", " ", cleaned_part)
-                # Process the part and give it a non-character name if being used vai API or standalone.
-                if "character_menu" in state:
-                    output_file = Path(
-                        f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav'
-                    )
+
+                if not sentences_streaming or sentstream_starting:
+                    # Process the part and give it a non-character name if being used via API or standalone.
+                    if "character_menu" in state:
+                        output_file = Path(f'{params["output_folder_wav"]}/'
+                                           f'{state["character_menu"]}_{int(time.time())}.wav')
+                    else:
+                        output_file = Path(f'{params["output_folder_wav"]}/'
+                                           f'TTSOUT_{int(time.time())}.wav')
+                    output_file = output_file.as_posix()
                 else:
-                    output_file = Path(
-                        f'{params["output_folder_wav"]}/TTSOUT_{int(time.time())}.wav'
+                    # If we're in sentences-streaming mode,
+                    # after the initial iteration, the name was already established
+                    output_file = sentstream_output_file
+
+                if not streaming:
+                    generate_response = send_generate_request(
+                        cleaned_part,
+                        params["voice"],
+                        language_code,
+                        temperature,
+                        repetition_penalty,
+                        output_file,
                     )
-                output_file_str = output_file.as_posix()
-                output_file = get_output_filename(state)
-                generate_response = send_generate_request(
-                    cleaned_part,
-                    params["voice"],
-                    language_code,
-                    temperature,
-                    repetition_penalty,
-                    output_file_str,
-                )
-                audio_path = generate_response.get("data", {}).get("audio_path")
-                final_output_file = audio_path
+                    if generate_response.get("status") == "generate-success":
+                        audio_path = generate_response.get("data", {}).get("audio_path")
+                        if not audio_path:
+                            print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                                  f"No audio path in the response.")
+                            return string
+                        audio_src = f"file/{audio_path}"
+                    else:
+                        print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                              f"Audio generation failed. Status:", generate_response.get("message"))
+                        return string
+                else:
+                    # Request stream creation first (for sentences-streaming make sure to request it only once)
+                    if not sentences_streaming or sentstream_starting:
+                        generate_response = send_generate_request(
+                            None,
+                            params["voice"],
+                            language_code,
+                            temperature,
+                            repetition_penalty,
+                            output_file
+                        )
+                        if generate_response.get("status") != "generate-success":
+                            print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                                  f"Audio generation failed. Status:", generate_response.get("message"))
+                            return string
+
+                    # Sentences streaming: at each iteration:
+                    #   1) If the text-stream is finalized, just stream all the sentences, else:
+                    #   2) Try to find at least 2 sentences in the incremental text:
+                    #       2.1) If none or 1 was found, we don't have any sentences to stream this time, else:
+                    #       2.2) Stream all sentences besides the last one (which might be incomplete)
+                    if sentences_streaming:
+                        # Sentence-streaming started, let's set the state accordingly
+                        sentstream_started = True
+                        if sentstream_starting:
+                            sentstream_output_file = output_file
+                            sentstream_processed_len = 0
+                            sentstream_index = 0
+
+                        # Manually extra clean the part using pysbd, split in sentences the unprocessed part
+                        text_without_processed = sentences_seg.cleaner(cleaned_part).clean()
+                        if sentstream_processed_len != 0:
+                            text_without_processed = text_without_processed[sentstream_processed_len:]
+                        sentences_with_spans = sentences_seg.segment(text_without_processed)
+
+                        if not is_finalized:
+                            # Try to find at least 2 sentences
+                            if len(sentences_with_spans) >= 2:
+                                # Remove the last one
+                                sentences_with_spans.pop()
+                                # Mark as processed the part of the text with the sentences we'll send to streaming
+                                processed_len = sentences_with_spans[-1].end
+                                sentstream_processed_len += processed_len
+                                sentences_to_stream = [(sent.sent, sentstream_index + i)
+                                                       for i, sent in enumerate(sentences_with_spans)]
+                            else:
+                                sentences_to_stream = []
+                        else:
+                            # Finalized! Send all sentences for streaming and mark sentence-streaming end
+                            sentences_to_stream = [(sent.sent, sentstream_index + i)
+                                                   for i, sent in enumerate(sentences_with_spans)]
+                            sentstream_started = False
+
+                        # Sentence streaming!
+                        sentstream_index += len(sentences_to_stream)
+                        for i, (sentence, index) in enumerate(sentences_to_stream):
+                            kwargs = dict(text=sentence, index=index)
+                            is_last = (i == len(sentences_to_stream) - 1 and is_finalized)
+                            if is_last:
+                                kwargs["is_last"] = True
+                            stream_response = send_stream_request(output_file, **kwargs)
+                            if stream_response.get("status") != "stream-success":
+                                print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                                      f"Audio streaming failed. Status:", stream_response.get("message"))
+                                # intentionally don't "return string" here
+                    else:
+                        # Send the full text for streaming
+                        stream_response = send_stream_request(output_file,
+                                                              text=cleaned_part,
+                                                              index=0,
+                                                              is_last=True,
+                                                              is_single_sentence=False)
+                        if stream_response.get("status") != "stream-success":
+                            print(f"[{params['branding']}Server] \033[91mWarning\033[0m "
+                                  f"Audio streaming failed. Status:", stream_response.get("message"))
+                            return string
+
+                    # Generate streaming URL
+                    stream_query = urllib.parse.urlencode(dict(output_file=output_file))
+                    audio_src = f"{base_url}/stream?{stream_query}"
         finally:
             # Always release the lock, whether an exception occurs or not
             process_lock.release()
@@ -763,22 +933,15 @@ def output_modifier(string, state):
         print(
             f"[{params['branding']}Model] \033[91mWarning\033[0m Audio generation is already in progress. Please wait."
         )
-        return
+        return string
 
-    if generate_response.get("status") == "generate-success":
-        audio_path = generate_response.get("data", {}).get("audio_path")
-        if audio_path:
-            # Handle Gradio and playback
-            autoplay = "autoplay" if params["autoplay"] else ""
-            string = (f'<audio src="file/{final_output_file}" controls {autoplay}></audio>')
-            if params["show_text"]:
-                string += reinsert_images(cleaned_string, img_info)
-                shared.processing_message = "*Is typing...*"
-            return string
-        else:
-            print(f"[{params['branding']}Server] \033[91mWarning\033[0m No audio path in the response.")
-    else:
-        print(f"[{params['branding']}Server] \033[91mWarning\033[0m Audio generation failed. Status:", generate_response.get("message"),)
+    # Handle Gradio and playback
+    autoplay = "autoplay" if params["autoplay"] else ""
+    string = (f'<audio src="{audio_src}" controls {autoplay}></audio>')
+    if params["show_text"]:
+        string += reinsert_images(cleaned_string, img_info)
+        shared.processing_message = "*Is typing...*"
+    return string
 
 def get_output_filename(state):
     if "character_menu" in state:
@@ -805,14 +968,32 @@ def send_generate_request(
         "temperature": temperature,
         "repetition_penalty": repetition_penalty,
         "output_file": output_file,
+        "streaming": (text is None)
     }
     headers = {"Content-Type": "application/json"}
     response = requests.post(url, json=payload, headers=headers)
     return response.json()
 
+def send_stream_request(output_file,
+                        text: str = None,
+                        index: int = None,
+                        is_last: bool = None,
+                        is_single_sentence: bool = None):
+    url = f"{base_url}/stream"
+    params = {"output_file": output_file}
+    if text is not None:
+        params["text"] = text
+    if index is not None:
+        params["index"] = index
+    if is_last is not None:
+        params["is_last"] = is_last
+    if is_single_sentence is not None:
+        params["is_single_sentence"] = is_single_sentence
+    response = requests.get(url, params=params)
+    return response.json()
 
 ################################
-#### SUBPORCESS TERMINATION ####
+#### SUBPROCESS TERMINATION ####
 ################################
 # Register the termination code to be executed at exit
 atexit.register(lambda: process.terminate() if process.poll() is None else None)
@@ -825,7 +1006,7 @@ def state_modifier(state):
     if not params["activate"]:
         return state
 
-    state["stream"] = False
+    state["stream"] = (params["streaming"] == "sentences")
     return state
 
 
@@ -875,6 +1056,14 @@ def ui():
             remove_trailing_dots = gr.Checkbox(
                 value=params["remove_trailing_dots"], label='Remove trailing "."'
             )
+
+        # Streaming - off/whole/sentences
+        streaming_radio_buttons = gr.Radio(
+            choices=["off", "whole", "sentences"],
+            label="Streaming",
+            value=params["streaming"]
+        )
+        streaming_radio_buttons_play = gr.HTML(visible=False)
 
         # TTS method, Character voice selection
         with gr.Row():
@@ -1040,6 +1229,9 @@ def ui():
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
     low_vram.change(lambda x: params.update({"low_vram": x}), low_vram, None)
     low_vram.change(lambda x: send_lowvram_request(x), low_vram, low_vram_play, None)
+    streaming_radio_buttons.change(
+        send_streaming_request, streaming_radio_buttons, streaming_radio_buttons_play, None
+    )
     tts_radio_buttons.change(
         send_reload_request, tts_radio_buttons, tts_radio_buttons_play, None
     )

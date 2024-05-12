@@ -197,6 +197,13 @@
             <option {% if not data.deepspeed_activate %}selected{% endif %} value="false">False</option>
         </select>
 
+        <label for="streaming" style="color: red;">Streaming:</label>
+        <select id="streaming" name="streaming" required="">
+            <option {% if data.streaming == "off" %}selected{% endif %} value="off">Off</option>
+            <option {% if data.streaming == "whole" %}selected{% endif %} value="whole">Whole</option>
+            <option {% if data.streaming == "sentences" %}selected{% endif %} value="sentences">Sentences</option>
+        </select>
+
         <label for="output_folder_wav" style="color: red;">&nbsp; &nbsp; WAV Output Folder:</label>
         <input id="output_folder_wav" name="output_folder_wav" required="" type="text"
             value="{{ data.output_folder_wav }}" />
