@@ -579,9 +579,9 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
             file_path=output_file,
             speaker_wav=[f"{this_dir}/voices/{voice}"],
             language=language,
-            temperature=temperature,
-            length_penalty=model.config.length_penalty,
-            repetition_penalty=repetition_penalty,
+            temperature=float(temperature),
+            length_penalty=float(model.config.length_penalty),
+            repetition_penalty=float(repetition_penalty),
             top_k=model.config.top_k,
             top_p=model.config.top_p,
         )
