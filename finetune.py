@@ -725,7 +725,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
                                    'last_epoch': -1}
         elif lr_scheduler == "CosineAnnealingWarmRestarts":
             #Set 4 learning rate restarts
-            lr_scheduler_params = {'T_0': (num_epochs / 4), 'T_mult': 2, 'eta_min': 1e-7, 'last_epoch': -1}
+            lr_scheduler_params = {'T_0': int(num_epochs / 4), 'T_mult': 2, 'eta_min': 1e-7, 'last_epoch': -1}
 
     print(f"[FINETUNE] Learning Scheduler {lr_scheduler}, params {lr_scheduler_params}")
 
