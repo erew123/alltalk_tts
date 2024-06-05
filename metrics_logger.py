@@ -112,13 +112,13 @@ class MetricsLogger(ConsoleLogger):
     def plot_metrics(self, show_loss_mel_ce=False, show_loss_text_ce=False, show_loss=True):
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(24, 18))
 
-        ax1.set_title('Steps')
-        ax1.set_xlabel('Steps')
-        ax1.set_ylabel('Value')
-
-        ax2.set_title('Epochs')
-        ax2.set_xlabel('Epoch')
+        ax2.set_title('Steps')
+        ax2.set_xlabel('Steps')
         ax2.set_ylabel('Value')
+
+        ax1.set_title('Epochs')
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Value')
 
         ax3.set_title('Learning Rates')
         ax3.set_xlabel('Steps')
@@ -126,15 +126,15 @@ class MetricsLogger(ConsoleLogger):
 
         if self.loss and self.loss_text_ce and self.loss_mel_ce:
             if show_loss:
-                ax1.plot(*zip(*self.loss), color='green', linestyle='-', label='Loss')
-                ax1.fill_between(*zip(*self.loss), color='lightgreen', alpha=0.1)
+                ax2.plot(*zip(*self.loss), color='green', linestyle='-', label='Loss')
+                ax2.fill_between(*zip(*self.loss), color='lightgreen', alpha=0.1)
             if show_loss_text_ce:
-                ax1.plot(*zip(*self.loss_text_ce), color='red', linestyle='-', label='Loss Text')
-                ax1.fill_between(*zip(*self.loss_text_ce), color='lightcoral', alpha=0.1)
+                ax2.plot(*zip(*self.loss_text_ce), color='red', linestyle='-', label='Loss Text')
+                ax2.fill_between(*zip(*self.loss_text_ce), color='lightcoral', alpha=0.1)
             if show_loss_mel_ce:
-                ax1.plot(*zip(*self.loss_mel_ce), color='blue', linestyle='-', label='Loss MEL')
-                ax1.fill_between(*zip(*self.loss_mel_ce), color='lightblue', alpha=0.1)
-            ax1.legend()
+                ax2.plot(*zip(*self.loss_mel_ce), color='blue', linestyle='-', label='Loss MEL')
+                ax2.fill_between(*zip(*self.loss_mel_ce), color='lightblue', alpha=0.1)
+            ax2.legend()
 
         if self.learning_rates:
             ax3.plot(*zip(*self.learning_rates), linestyle='-', color='blue', label='Learning Rate')
@@ -143,16 +143,16 @@ class MetricsLogger(ConsoleLogger):
 
         if self.avg_loss and self.avg_loss_text_ce and self.avg_loss_mel_ce:
             if show_loss:
-                ax2.plot(*zip(*self.avg_loss), color='green', linestyle='-', label='Avg Loss')
-                ax2.fill_between(*zip(*self.avg_loss), color='lightgreen', alpha=0.1)
+                ax1.plot(*zip(*self.avg_loss), color='green', linestyle='-', label='Avg Loss')
+                ax1.fill_between(*zip(*self.avg_loss), color='lightgreen', alpha=0.1)
             if show_loss_text_ce:
-                ax2.plot(*zip(*self.avg_loss_text_ce), color='red', linestyle='-', label='Avg Loss Text')
-                ax2.fill_between(*zip(*self.avg_loss_text_ce), color='lightcoral', alpha=0.1)
+                ax1.plot(*zip(*self.avg_loss_text_ce), color='red', linestyle='-', label='Avg Loss Text')
+                ax1.fill_between(*zip(*self.avg_loss_text_ce), color='lightcoral', alpha=0.1)
             if show_loss_mel_ce:
-                ax2.plot(*zip(*self.avg_loss_mel_ce), color='blue', linestyle='-', label='Avg Loss MEL')
-                ax2.fill_between(*zip(*self.avg_loss_mel_ce), color='lightblue', alpha=0.1)
-            ax2.set_xlim(left=0)
-            ax2.legend()
+                ax1.plot(*zip(*self.avg_loss_mel_ce), color='blue', linestyle='-', label='Avg Loss MEL')
+                ax1.fill_between(*zip(*self.avg_loss_mel_ce), color='lightblue', alpha=0.1)
+            ax1.set_xlim(left=0)
+            ax1.legend()
 
         plt.style.use('dark_background')
         plt.tight_layout()
