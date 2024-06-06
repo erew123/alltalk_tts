@@ -71,7 +71,7 @@ Quick setup scripts are available for users on Windows 10/11 and Linux. Instruct
 - **Important**: Do not use dashes or spaces in your folder path (e.g. avoid `/my folder-is-this/alltalk_tts-main`) as this causes issues with Python.
 
 ### **NOTE. IF YOU HAVE AN EXISTING ALLTALK INSTALL** this will want to create a folder called `alltalk_tts` so you will need to re-name your old `alltalk_tts` to something else OR put this in a different folder/location. 
-### **NOTE. I am not saying this is a over-the-top of an old alltalk upgrade ATM. It needs the Python environment rebuilding, hence a fresh install is needed for now. 
+### **NOTE**. I am not saying this is a over-the-top of an old alltalk upgrade ATM. It needs the Python environment rebuilding, hence a fresh install is needed for now. 
 
 <details>
 <summary>QUICK SETUP - Text-Generation-webui</summary>
