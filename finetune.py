@@ -1636,7 +1636,7 @@ if __name__ == "__main__":
                         scale=1,
                     )
                     learning_rate_scheduler = gr.Dropdown(
-                        value="CosineAnnealingLR",
+                        value="None",
                         label="Learning Rate Scheduler",
                         choices=[
                             ("None", "None"),
