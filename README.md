@@ -1,4 +1,8 @@
 # AllTalk TTS
+
+### For those interested, the AllTalk v2 BETA is out. See [here](https://github.com/erew123/alltalk_tts/discussions/245)
+
+### AllTalk V1 Below
 AllTalk is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
 - **Can be run as a** [standalone application](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
