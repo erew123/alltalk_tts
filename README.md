@@ -36,6 +36,8 @@ Please go see [here](https://github.com/erew123/alltalk_tts/discussions/237)
 
 There is a welcome screen that covers a few other bits, along with the built in documentation.
 
+### To install the BETA build, read the notes below for the type of system you have, the read the Quick Setup section to perform the install.
+
 ---
 
 ### Windows Systems
