@@ -1,0 +1,1 @@
+{"engine_loaded": "piper", "selected_model": "piper", "engines_available": [{"name": "parler", "selected_model": "parler - parler_tts_mini_v0.1"}, {"name": "piper", "selected_model": "piper"}, {"name": "vits", "selected_model": "vits - tts_models--en--vctk--vits"}, {"name": "xtts", "selected_model": "xtts - myxttsmodel"}]}
