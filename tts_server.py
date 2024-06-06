@@ -583,9 +583,9 @@ def run_voice2rvc(input_tts_path, output_rvc_path, pth_path):
 # Transcode between file formats #
 ##################################
 async def transcode_audio(input_file, output_format):
-    print(f"[{branding}Debug] *************************************************",)
-    print(f"[{branding}Debug] transcode_audio function called (debug_transcode)",)
-    print(f"[{branding}Debug] *************************************************",)
+    print(f"[{branding}Debug] *************************************************",) if debug_transcode else None
+    print(f"[{branding}Debug] transcode_audio function called (debug_transcode)",) if debug_transcode else None
+    print(f"[{branding}Debug] *************************************************",) if debug_transcode else None
     print(f"[{branding}Debug] Input file    : {input_file}") if debug_transcode else None
     print(f"[{branding}Debug] Output format : {output_format}") if debug_transcode else None
     if output_format == "Disabled":
