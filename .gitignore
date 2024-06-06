@@ -1,8 +1,0 @@
-voices/*.*
-models/*.*
-outputs/*.*
-finetune/*.*
-config.json
-confignew.json
-models.json
-diagnostics.log
