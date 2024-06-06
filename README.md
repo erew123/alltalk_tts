@@ -9,6 +9,9 @@ The BETA has been tested on Windows 11 and Lunux (Ubuntu). The Standalone instal
 
 Seperate from Standalone installations, installation within the Text-generation-webui Python environment should also work, however, I have had to various bits of code last minute and not had an opportuninty to deeply test this yet.
 
+### Screenshots
+Please go see [here](https://github.com/erew123/alltalk_tts/discussions/237)
+
 ### New Features include
 
 - Multiple TTS engines. Currently XTTS, Piper, Parler and VITS. New engines are easy to install with some coding experience. In time I will add in all engine Coqui supports as they should be easy.
@@ -57,9 +60,6 @@ When I say general requirements, this is what I have tested it on. If you vary o
 - **PyTorch version** 2.2.1 with CUDA 12.1<br>
 - **Standalone Installation Disk space** Used **during** installation may go as high as **23GB** of space. This is cleared down at the end of installation. Windows users can expect about 12GB of disk space before you install any models. Linux users can expect about 16GB of space, due to the extra need for the CUDA Toolkit.<br>
 - **TGWUI Installation Disk Space** Will add about 2-3 GB onto the TGWUI Python environment.<br>
-
-### 🟦 Screenshots
-Please go see [here](https://github.com/erew123/alltalk_tts/discussions/237)
 
 ---
 
