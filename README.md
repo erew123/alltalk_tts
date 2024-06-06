@@ -1,5 +1,7 @@
-# AllTalk TTS v2 BETA (ITS NOT UPLOADED YET SO DONT TRY TO DO ANY OF THIS)
-This is the BETA of v2. To be clear, that means they may well be bugs, issues, missing/incomplete documentation, a variety of potential problems etc (This is what BETA refers to in the software world for those whom dont know). This means you may need a bit of technical know how to deal with things that could come up.
+# AllTalk TTS v2 BETA
+This is the BETA of v2. To be clear, that means they may well be bugs, issues, missing/incomplete documentation, a variety of potential problems etc (This is what BETA refers to in the software world for those whom dont know). This means you may need a bit of technical know how to deal with things that could come up and should only continue if you feel comfortable with that.
+
+Github discussions on the BETA are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
 
 #### If you are going to run the BETA, please read all the info below....
 
@@ -18,16 +20,18 @@ Seperate from Standalone installations, installation within the Text-generation-
 - Gradio web interface (see the screenshots)
 - Retrieval based Voice Conversion, AKA, RVC voice Pipeline, re-written to work on Python 3.11.
 - TTS Generator will now use any TTS engine.
-- Vastly updated API Suite. **V2 is not 100% compatable with v1.**. New SillyTavern extension is included in the `/system/` folder. See here for an explanation https://github.com/erew123/alltalk_tts/issues/166
+- Vastly updated API Suite. **V2 is not 100% compatable with v1. (See here for an explanation https://github.com/erew123/alltalk_tts/issues/166)**. 
+  - New SillyTavern extension is included in the `/system/` folder.
+  - New remote TGWUI extension if you want to run your TTS elsewhere from the AllTalk server.
 - OpenAI compatable endpoint/API. Meaning this should work as an alternative endpoint with any software that can send a TTS generation request to OpenAI.
 - Fully customisable API Settings. I have **NOT** tested any limits of any TTS engines.
 - Updated Finetuning for XTTS models
 - Audio Transcoding to about 6x formats (mp3, opus, etc)
 - About 50 gradio interface themes if you arent happy with the standard Gradio one.
 - Documentaton has been about 80% updated. Its built into the interface.
+- Lots and lots of other things too numerous to mention.
 
 There is a welcome screen that covers a few other bits, along with the built in documentation.
-
 
 ---
 
