@@ -1,0 +1,42 @@
+{
+    "model_details": {
+        "manufacturer_name": "Coqui",
+        "manufacturer_website": "https://github.com/coqui-ai/TTS    and also updated engine    https://github.com/idiap/coqui-ai-TTS/",
+        "model_description": "VITS models come in single and multi-speaker variants. VITS (Conditional Variational Autoencoder with Adversarial Learning for End-to-End Text-to-Speech ) is an End-to-End (encoder -> vocoder together) TTS model that takes advantage of SOTA DL techniques like GANs, VAE, Normalizing Flows. It does not require external alignment annotations and learns the text-to-audio alignment using MAS, as explained in the paper. The model architecture is a combination of GlowTTS encoder and HiFiGAN vocoder. It is a feed-forward model with x67.12 real-time factor on a GPU. \n\ntts_models--en--vctk--vits is a good example of a multi speaker VITS model."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": false,
+        "languages_capable": false,
+        "lowvram_capable": true,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": false,
+        "streaming_capable": false,
+        "temperature_capable": false,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "p225",
+        "def_narrator_voice": "p226",
+        "deepspeed_enabled": false,
+        "engine_installed": true,
+        "generationspeed_set": 1,
+        "lowvram_enabled": true,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 10,
+        "temperature_set": 0.75
+    },
+    "openai_voices": {
+        "alloy": "p225",
+        "echo": "p225",
+        "fable": "p225",
+        "nova": "p225",
+        "onyx": "p225",
+        "shimmer": "p225"
+    }
+}

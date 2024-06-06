@@ -1,0 +1,4 @@
+jsonlines>=4.0.0
+networkx>=3.0.0
+protobuf==4.25.3
+typing_extensions>=4.9.0

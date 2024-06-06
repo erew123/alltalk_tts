@@ -1,0 +1,13 @@
+find {addpathheretoscan}/alltalk_environment/env/lib -xtype l
+
+here are the list on Cuda-Toolkit 12.1, others vary
+
+.../alltalk_environment/env/lib/libcufile.so
+.../alltalk_environment/env/lib/libcudart.so
+.../alltalk_environment/env/lib/libcufile_rdma.so
+.../alltalk_environment/env/lib/libnvjpeg.so
+.../alltalk_environment/env/lib/libcurand.so
+.../alltalk_environment/env/lib/libnvJitLink.so
+.../alltalk_environment/env/lib/libnvrtc-builtins.so
+.../alltalk_environment/env/lib/libnvrtc.so
+

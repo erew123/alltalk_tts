@@ -1,0 +1,12 @@
+{
+    "engines_available": [
+        {
+            "name": "parler",
+            "selected_model": "these are examples of how you add new engines into the list here. You would put a model name in this line"
+        },
+        {
+            "name": "xtts",
+            "selected_model": "xtts - xttsv2_2.0.3"
+        }
+    ]
+}

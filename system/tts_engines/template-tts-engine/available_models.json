@@ -1,0 +1,40 @@
+{
+  "first_start_model": "en_GB-jenny_dioco-medium",
+  "models": [
+    {
+      "model_name": "ar_JO-kareem-low",
+      "files_to_download": [
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx?download=true",
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx.json?download=true"
+      ]
+    },
+    {
+      "model_name": "ar_JO-kareem-medium",
+      "files_to_download": [
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/medium/ar_JO-kareem-medium.onnx?download=true",
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/medium/ar_JO-kareem-medium.onnx.json?download=true"
+      ]
+    },
+    {
+      "model_name": "vi_VN-vivos-x_low",
+      "files_to_download": [
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/x_low/vi_VN-vivos-x_low.onnx?download=true",
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/x_low/vi_VN-vivos-x_low.onnx.json?download=true"
+      ]
+    },
+    {
+      "model_name": "zh_CN-huayan-medium",
+      "files_to_download": [
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx?download=true",
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx.json?download=true"
+      ]
+    },
+    {
+      "model_name": "zh_CN-huayan-x_low",
+      "files_to_download": [
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/zh/zh_CN/huayan/x_low/zh_CN-huayan-x_low.onnx?download=true",
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/zh/zh_CN/huayan/x_low/zh_CN-huayan-x_low.onnx.json?download=true"
+      ]
+    }
+  ]
+}

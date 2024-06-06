@@ -1,0 +1,42 @@
+{
+    "model_details": {
+        "manufacturer_name": "Coqui",
+        "manufacturer_website": "https://github.com/coqui-ai/TTS    and also updated engine    https://github.com/idiap/coqui-ai-TTS/",
+        "model_description": "XTTS is a multi-speaker, voice cloning model. XTTS-v2 by Coqui AI is a voice generation model that lets you clone voices into a multitude of languages by using just a mere 6+ second audio sample. It is licenced under Coqui AI's Coqui Public Model License 1.0.0 which allows for `non-commercial use of a machine learning model and its outputs.`"
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": true,
+        "generationspeed_capable": true,
+        "languages_capable": true,
+        "lowvram_capable": true,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": true,
+        "streaming_capable": true,
+        "temperature_capable": true,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "female_01.wav",
+        "def_narrator_voice": "male_01.wav",
+        "deepspeed_enabled": false,
+        "engine_installed": true,
+        "generationspeed_set": 1,
+        "lowvram_enabled": false,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 10,
+        "temperature_set": 0.75
+    },
+    "openai_voices": {
+        "alloy": "female_01.wav",
+        "echo": "female_01.wav",
+        "fable": "female_01.wav",
+        "nova": "female_01.wav",
+        "onyx": "female_01.wav",
+        "shimmer": "female_01.wav"
+    }
+}

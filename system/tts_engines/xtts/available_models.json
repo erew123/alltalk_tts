@@ -1,0 +1,61 @@
+{
+    "first_start_model": "xttsv2_2.0.3",
+    "models": [
+      {
+        "model_name": "xttsv2_2.0.3",
+        "folder_path": "xttsv2_2.0.3",
+        "files_to_download": {
+          "LICENSE.txt": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/LICENSE.txt?download=true",
+          "README.md": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/README.md?download=true",
+          "config.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/config.json?download=true",
+          "model.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/model.pth?download=true",
+          "dvae.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/dvae.pth?download=true",
+          "mel_stats.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/mel_stats.pth?download=true",
+          "speakers_xtts.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/speakers_xtts.pth?download=true",
+          "vocab.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/vocab.json?download=true"
+        }
+      },
+      {
+        "model_name": "xttsv2_2.0.2",
+        "folder_path": "xttsv2_2.0.2",
+        "files_to_download": {
+          "LICENSE.txt": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true",
+          "README.md": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true",
+          "config.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true",
+          "model.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true",
+          "dvae.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/dvae.pth?download=true",
+          "mel_stats.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/mel_stats.pth?download=true",
+          "speakers_xtts.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/speakers_xtts.pth?download=true",
+          "vocab.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true"
+        }
+      },
+      {
+        "model_name": "xttsv2_2.0.1",
+        "folder_path": "xttsv2_2.0.1",
+        "files_to_download": {
+          "LICENSE.txt": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/LICENSE.txt?download=true",
+          "README.md": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/README.md?download=true",
+          "config.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/config.json?download=true",
+          "model.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/model.pth?download=true",
+          "dvae.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/dvae.pth?download=true",
+          "mel_stats.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/mel_stats.pth?download=true",
+          "speakers_xtts.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/speakers_xtts.pth?download=true",
+          "vocab.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.1/vocab.json?download=true"
+        }
+      },
+      {
+        "model_name": "xttsv2_2.0.0",
+        "folder_path": "xttsv2_2.0.0",
+        "files_to_download": {
+          "LICENSE.txt": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/LICENSE.txt?download=true",
+          "README.md": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/README.md?download=true",
+          "config.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/config.json?download=true",
+          "model.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/model.pth?download=true",
+          "dvae.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/dvae.pth?download=true",
+          "mel_stats.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/mel_stats.pth?download=true",
+          "speakers_xtts.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/speakers_xtts.pth?download=true",
+          "vocab.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.0/vocab.json?download=true"
+        }
+      }
+    ]
+  }

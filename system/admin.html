@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="./static/favicon.ico" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllTalk TTS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: black;
+            text-decoration: underline;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+            margin-right: 10px;
+            min-width: 220px;
+            /* Ensure a minimum width for the form groups */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group select,
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            /* Include padding and border in the element's total width and height */
+        }
+
+        .button-group {
+            flex-basis: 100%;
+            /* Ensure button groups take up the full width */
+            display: flex;
+            justify-content: flex-start;
+            /* Align buttons to the start */
+            align-items: center;
+            /* Adjusted to center align buttons */
+            gap: 10px;
+            /* Add space between buttons */
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: white;
+            transition: background-color 0.3s;
+            flex: 1;
+            /* Allow buttons to take up equal space */
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #refreshSettingsBtn {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        #submit {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            /* Make the submit button take the full width */
+            margin-top: 10px;
+        }
+
+        #outputFile,
+        #modelSelect {
+            width: 100%;
+            /* Set to full width */
+            box-sizing: border-box;
+            /* Include padding and border in the element's total width and height */
+        }
+
+        #outputFile {
+            margin-right: 10px;
+        }
+
+        p,
+        span {
+            color: #555;
+            font-size: 16px;
+            margin-top: 0;
+        }
+
+        code {
+            font-family: Arial, sans-serif;
+            background-color: #e9e9e9;
+            border: none;
+            box-shadow: none;
+            outline: none;
+            color: #3366ff;
+            font-size: 16px;
+        }
+
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+
+        ul {
+            color: #555;
+            list-style-type: square;
+            margin-left: 2px;
+        }
+
+        li {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        a {
+            color: #0077cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        #container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        #outputFileContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 2px;
+        }
+
+        textarea,
+        input,
+        select,
+        button {
+            padding: 4px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        p {
+            margin-top: 20px;
+        }
+
+        #outputFilePath {
+            font-weight: bold;
+        }
+
+        #audioSource {
+            display: block;
+            margin: auto;
+        }
+
+        #outputFilePath {
+            display: none;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            .form-group {
+                flex: 1 1 100%;
+                /* Make each form group take full width on small screens */
+                margin-right: 0;
+            }
+
+            .button-group {
+                flex-direction: column;
+                /* Stack buttons vertically on small screens */
+                align-items: stretch;
+            }
+
+            .button-group button {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script>
+        // Declare variables in the global scope
+        let protocol, host, port, cleanedBaseUrl, currentUrl;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Use URL constructor for robust parsing
+            currentUrl = new URL(window.location.href);
+            console.log('CurrentURL', currentUrl.href);
+
+            protocol = currentUrl.protocol; // "http:" or "https:"
+            host = currentUrl.hostname; // "127.0.0.1"
+            port = currentUrl.port || (protocol === 'https:' ? '443' : '80'); // "7851" or default ports
+            const basePath = currentUrl.pathname.split('/')[1] ? `/${currentUrl.pathname.split('/')[1]}` : '';
+
+            console.log('Protocol:', protocol);
+            console.log('Host:', host);
+            console.log('Port:', port);
+            console.log('Base Path:', basePath);
+
+            cleanedBaseUrl = `${protocol}//${host}:${port}${basePath}`;
+            console.log('CleanedBaseURL', cleanedBaseUrl);
+
+            // Fetch settings and populate the form, then set the URLs
+            fetchSettings().then(() => {
+                setUrls();
+            }).catch(console.error);
+        });
+
+        async function fetchSettings() {
+            try {
+                const response = await fetch('/settings-json');
+                console.log("Response is:", response);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                const data = await response.json();
+                console.log("Data is:", data);
+                populateForm(data);
+            } catch (error) {
+                console.error('Failed to fetch settings:', error);
+                throw error;
+            }
+        }
+
+        function populateForm(data) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const deleteOutputWavsElem = document.getElementById('delete_output_wavs');
+                    const gradioInterfaceElem = document.getElementById('gradio_interface');
+                    const gradioPortNumberElem = document.getElementById('gradio_port_number');
+                    const apiPortNumberElem = document.getElementById('api_port_number');
+                    if (deleteOutputWavsElem) {
+                        deleteOutputWavsElem.value = data.delete_output_wavs;
+                    }
+                    if (gradioInterfaceElem) {
+                        gradioInterfaceElem.value = data.gradio_interface ? 'true' : 'false';
+                    }
+                    if (gradioPortNumberElem) {
+                        gradioPortNumberElem.value = data.gradio_port_number;
+                        console.log("Populated gradioPortNumberElem.value:", gradioPortNumberElem.value); // Add logging here
+                    }
+                    if (apiPortNumberElem) {
+                        apiPortNumberElem.value = data.api_def.api_port_number;
+                    }
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        // Function to set the URLs
+        function setUrls() {
+            const ttsGeneratorLink = document.getElementById('ttsGeneratorLink');
+            ttsGeneratorLink.href = `${cleanedBaseUrl}/static/tts_generator/tts_generator.html`;
+            ttsGeneratorLink.textContent = 'TTS Generator';
+            const GradioLink = document.getElementById('GradioLink');
+            const GradioLinkDark = document.getElementById('GradioLinkDark');
+            const gradioPortNumberElem = document.getElementById('gradio_port_number');
+            if (gradioPortNumberElem && gradioPortNumberElem.value) {
+                GradioLink.href = `${protocol}//${host}:${gradioPortNumberElem.value}`;
+                GradioLinkDark.href = `${protocol}//${host}:${gradioPortNumberElem.value}?__theme=dark`;
+            } else {
+                GradioLink.href = `${protocol}//${host}:7852/gradio`;
+                GradioLinkDark.href = `${protocol}//${host}:7852/gradio?__theme=dark`;
+                console.error('Gradio port number element not found or empty.');
+            }
+            GradioLink.textContent = 'Gradio (Light theme)';
+            GradioLinkDark.textContent = 'Gradio (Dark theme)';
+        }
+    </script>
+</head>
+
+<body>
+    <h1 id="toc">AllTalk TTS</h1>
+    <hr>
+    <div style="display: flex; justify-content: flex-start; align-items: flex-start;">
+        <div style="flex: 1; padding-left: 20px;">
+            <h3>Useful links</h3>
+            <ul>
+                <li><a href="" id="ttsGeneratorLink" target="_blank" rel="noopener">TTS Generator</a></li>
+                <li><a href="" id="GradioLink" target="_blank" rel="noopener">Gradio (Light theme)</a></li>
+                <li><a href="" id="GradioLinkDark" target="_blank" rel="noopener">Gradio (Dark theme)</a></li>
+                <li>Documentation is inside the Gradio interface</li>
+                </li>
+            </ul>
+        </div>
+        <div style="flex: 1; padding-right: 20px;">
+            <h3 id="index">Support Links</h3>
+            <ul>
+                <li><a href="https://github.com/erew123/alltalk_tts" target="_blank" rel="noopener">Github</a>
+                </li>
+                <li><a href="https://github.com/erew123/alltalk_tts/issues/25" target="_blank"
+                        rel="noopener">Changelog</a></li>
+                <li><a href="https://github.com/erew123/alltalk_tts/issues/74" target="_blank" rel="noopener">Feature
+                        Requests</a></li>
+                <li><a href="https://github.com/erew123/alltalk_tts?#-help-with-problems" target="_blank"
+                        rel="noopener">Help Documents</a></li>
+            </ul>
+        </div>
+    </div>
+    <hr>
+
+
+    <div id="container">
+        <form method="post" action="/tts-demo-request" id="ttsForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="text">Text:</label>
+                    <textarea id="text" name="text" rows="4" required></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="voice">Voice:</label>
+                    <select id="voice" name="voice" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="rvcvoice">RVC Voice:</label>
+                    <select id="rvcvoice" name="rvccharacter_voice_gen" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="language">Language:</label>
+                    <select id="language" name="language" value="English" required>
+                        <option value="en" selected>English</option>
+                        <option value="ar">Arabic</option>
+                        <option value="zh-cn">Chinese</option>
+                        <option value="cs">Czech</option>
+                        <option value="nl">Dutch</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="hu">Hungarian</option>
+                        <option value="it">Italian</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="pl">Polish</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="es">Spanish</option>
+                        <option value="tr">Turkish</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="streaming">Streaming:</label>
+                    <select id="streaming" name="streaming" required>
+                        <option value="false" selected>No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="outputFile">Output Filename:</label>
+                    <input type="text" id="outputFile" name="output_file" value="demo_output" required>
+                </div>
+                <div class="form-group">
+                    <label for="engineSelect">Available Engines:</label>
+                    <select id="engineSelect" name="engineSelect" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="modelSelect">Available Models:</label>
+                    <select id="modelSelect" name="modelSelect" required></select>
+                </div>
+            </div>
+            <div class="form-row button-group">
+                <button id="refreshSettingsBtn" type="button">Refresh Settings</button>
+                <button id="changeEngineBtn" type="button">Change Engine</button>
+                <button id="changeModelBtn" type="button">Change Model</button>
+            </div>
+            <div class="form-row">
+                <button id="submit" type="submit">Generate TTS</button>
+            </div>
+            <audio controls autoplay id="audioSource">
+                <source type="audio/wav" />
+                Your browser does not support the audio element.
+            </audio>
+            <span id="outputFilePath">{{ output_file_path }}</span>
+        </form>
+    </div>
+
+    <div id="container">
+        <form method="post" action="/update-settings" id="settingsForm" enctype="application/x-www-form-urlencoded">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="delete_output_wavs"">Del WAV's older than:</label>
+                    <select id=" delete_output_wavs" name="delete_output_wavs" required>
+                        <option value="Disabled">Disabled</option>
+                        <option value="1 Day">1 Day</option>
+                        <option value="2 Days">2 Days</option>
+                        <option value="3 Days">3 Days</option>
+                        <option value="4 Days">4 Days</option>
+                        <option value="5 Days">5 Days</option>
+                        <option value="6 Days">6 Days</option>
+                        <option value="7 Days">7 Days</option>
+                        <option value="14 Days">14 Days</option>
+                        <option value="21 Days">21 Days</option>
+                        <option value="28 Days">28 Days</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="api_port_number">API Port Number:</label>
+                    <input type="number" id="api_port_number" name="api_port_number" required
+                        style="width: 228px; height: 20px;">
+                </div>
+                <div class="form-group">
+                    <label for="gradio_interface">Gradio Interface:</label>
+                    <select id="gradio_interface" name="gradio_interface" required>
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="gradio_port_number">Gradio Port Number:</label>
+                    <input type="number" id="gradio_port_number" name="gradio_port_number" required
+                        style="width: 228px; height: 20px;">
+                </div>
+            </div>
+            <div class="form-row">
+                <button id="submit" type="submit">Update Settings</button>
+            </div>
+        </form>
+    </div>
+    <hr>
+    <h3 id="🛠️-about-this-project">🛠️ <strong>About this project</strong></h3>
+    <p>AllTalk is a labour of love, developed and supported in my personal free time. As such, my ability to respond to
+        support requests is limited. I prioritize issues based on their impact and the number of users affected. I
+        appreciate your understanding and patience. If your inquiry isn&#39;t covered by the documentation or existing
+        discussions, and it&#39;s not related to a bug or feature request, I&#39;ll do my best to assist as time allows.
+    </p>
+    <hr>
+    <h3 id="💖-showing-your-support">💖 Showing Your Support</h3>
+    <p>If AllTalk has been helpful to you, consider showing your support through a donation on my <a
+            href="https://ko-fi.com/erew123">Ko-fi page</a>. Your support is greatly appreciated and helps ensure the
+        continued development and improvement of AllTalk.</p>
+    <hr>
+    <h3 id="⚠️-showing-your-support">⚠️ Changing Available Engine</h3>
+    <div>
+        <p>Changing the <b>Available Engine</b> on this web page will cause the Gradio interface to become
+            unsynchronized with the TTS Engine process <b>until</b> AllTalk is restarted. This may result in issues with
+            the Gradio interface, including warnings such as <b><i>[Errno 10048] error while attempting to bind on
+                    address</i></b> or <b><i>runner</i></b> errors when exiting AllTalk. For best results, please use
+            the Gradio interface to change and manage your <b>Available Engine</b>"
+        </p>
+    </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Use URL constructor for robust parsing
+            const currentUrl = new URL(window.location.href);
+            console.log('CurrentURL', currentUrl.href);
+
+            protocol = currentUrl.protocol; // "http:" or "https:"
+            host = currentUrl.hostname; // "127.0.0.1"
+            port = currentUrl.port || (protocol === 'https:' ? '443' : '80'); // "7851" or default ports
+
+            // Determine the base path by taking only the first part of the path
+            const pathParts = currentUrl.pathname.split('/');
+            const basePath = pathParts.length > 1 && pathParts[1] ? `/${pathParts[1]}` : '';
+
+            console.log('Protocol:', protocol);
+            console.log('Host:', host);
+            console.log('Port:', port);
+            console.log('Base Path:', basePath);
+
+            cleanedBaseUrl = `${protocol}//${host}:${port}`;
+            console.log('CleanedBaseURL', cleanedBaseUrl);
+
+            setUrls();
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const engineSelect = document.getElementById('engineSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const changeEngineBtn = document.getElementById('changeEngineBtn');
+            const changeModelBtn = document.getElementById('changeModelBtn');
+            const refreshSettingsBtn = document.getElementById('refreshSettingsBtn');
+            console.log('Protocol:', protocol);
+            console.log('Host:', host);
+            console.log('Port:', port);
+
+            // Function to dynamically construct the URL for fetching voices
+            function getVoicesUrl() {
+                return `${cleanedBaseUrl}/api/voices`;
+            }
+
+            // Function to dynamically construct the URL for fetching RVC voices
+            function getrvcVoicesUrl() {
+                return `${cleanedBaseUrl}/api/rvcvoices`;
+            }
+
+            // Function to fetch current settings and populate the dropdown
+            function fetchAndPopulateSettings() {
+                fetch(`${cleanedBaseUrl}/api/currentsettings`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Clear existing options
+                        engineSelect.innerHTML = '';
+                        modelSelect.innerHTML = '';
+
+                        // Populate the dropdown with available engines
+                        data.engines_available.forEach(engine => {
+                            const option = document.createElement('option');
+                            option.value = engine;
+                            option.textContent = engine;
+                            engineSelect.appendChild(option);
+                        });
+
+                        // Populate the dropdown with available models
+                        data.models_available.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model.name;
+                            option.textContent = model.name;
+                            modelSelect.appendChild(option);
+                        });
+
+                        // Set the current loaded engine and model as selected
+                        engineSelect.value = data.current_engine_loaded;
+                        modelSelect.value = data.current_model_loaded;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching current settings:', error);
+                        // Retry fetching settings after 5 seconds on error
+                        setTimeout(fetchAndPopulateSettings, 5000);
+                    });
+            }
+
+            // Function to reload voices
+            function reloadVoices() {
+                // Clear existing options
+                document.getElementById('voice').innerHTML = '';
+                document.getElementById('rvcvoice').innerHTML = '';
+
+                // Fetch voices and populate the dropdown
+                fetch(getVoicesUrl())
+                    .then(response => response.json())
+                    .then(data => {
+                        const voiceSelect = document.getElementById('voice');
+                        data.voices.forEach(voice => {
+                            const option = document.createElement('option');
+                            option.value = voice;
+                            option.textContent = voice;
+                            voiceSelect.appendChild(option);
+                        });
+                        resetChangeEngineBtn();
+                    })
+                    .catch(error => console.error('Error fetching voices:', error));
+
+                // Fetch RVC voices and populate the dropdown
+                fetch(getrvcVoicesUrl())
+                    .then(response => response.json())
+                    .then(data => {
+                        const rvcVoiceSelect = document.getElementById('rvcvoice');
+                        data.rvcvoices.forEach(rvcvoice => {
+                            const option = document.createElement('option');
+                            option.value = rvcvoice;
+                            option.textContent = rvcvoice;
+                            rvcVoiceSelect.appendChild(option);
+                        });
+                        resetChangeEngineBtn();
+                    })
+                    .catch(error => console.error('Error fetching RVC voices:', error));
+            }
+
+            // Function to check if engine is ready
+            function checkEngineReady() {
+                fetch(`${cleanedBaseUrl}/api/ready`, {
+                    method: 'GET'
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        if (data === 'Ready') {
+                            console.log('Engine is ready');
+                            reloadVoices(); // Call the reloadVoices function
+                            fetchAndPopulateSettings(); // Refresh settings when engine is ready
+                        } else {
+                            console.log('Engine not ready yet, rechecking...');
+                            setTimeout(() => checkEngineReady(), 1000); // Recheck after 1 second
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking engine readiness:', error);
+                        setTimeout(() => checkEngineReady(), 1000); // Recheck after 1 second even on error
+                    });
+            }
+
+            // Function to change the engine button to "Changing Engine" state
+            function setChangeEngineBtnChanging() {
+                changeEngineBtn.style.backgroundColor = 'gray';
+                changeEngineBtn.textContent = 'Changing Engine';
+                changeEngineBtn.disabled = true;
+            }
+
+            // Function to reset the engine button to its original state
+            function resetChangeEngineBtn() {
+                changeEngineBtn.style.backgroundColor = '#4caf50';
+                changeEngineBtn.textContent = 'Change Engine';
+                changeEngineBtn.disabled = false;
+            }
+
+            // Function to change the model button to "Changing Model" state
+            function setChangeModelBtnChanging() {
+                changeModelBtn.style.backgroundColor = 'gray';
+                changeModelBtn.textContent = 'Changing Model';
+                changeModelBtn.disabled = true;
+            }
+
+            // Function to reset the model button to its original state
+            function resetChangeModelBtn() {
+                changeModelBtn.style.backgroundColor = '#4caf50';
+                changeModelBtn.textContent = 'Change Model';
+                changeModelBtn.disabled = false;
+            }
+
+            // Event listener for the "Change Engine" button
+            changeEngineBtn.addEventListener('click', function () {
+                const selectedEngine = engineSelect.value;
+
+                setChangeEngineBtnChanging(); // Set button to "Changing Engine" state
+
+                fetch(`${cleanedBaseUrl}/api/enginereload?engine=${encodeURIComponent(selectedEngine)}`, {
+                    method: 'POST'
+                })
+                    .catch(error => console.error('Error sending engine reload request:', error));
+
+                console.log('Engine reload request sent, waiting 15 seconds before checking readiness...');
+                setTimeout(() => {
+                    checkEngineReady();
+                }, 15000); // Wait 15 seconds before starting to check
+            });
+
+            // Event listener for the "Change Model" button
+            changeModelBtn.addEventListener('click', function () {
+                const selectedModel = modelSelect.value;
+
+                setChangeModelBtnChanging(); // Set button to "Changing Model" state
+                fetch(`${cleanedBaseUrl}/api/reload?tts_method=${encodeURIComponent(selectedModel)}`, {
+                    method: 'POST'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'model-success') {
+                            console.log('Model changed successfully');
+                            setTimeout(() => {
+                                reloadVoices(); // Call the reloadVoices function after a delay
+                                fetchAndPopulateSettings(); // Refresh settings
+                            }, 12000); // Wait 12 second before refreshing settings and voices
+                        } else {
+                            console.error('Failed to change model');
+                            resetChangeModelBtn(); // Reset button to original state
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error changing model:', error);
+                        resetChangeModelBtn(); // Reset button to original state
+                    });
+            });
+
+            // Event listener for the "Refresh Settings" button
+            refreshSettingsBtn.addEventListener('click', function () {
+                fetchAndPopulateSettings();
+                reloadVoices();
+                resetChangeEngineBtn(); // Reset button to original state
+                resetChangeModelBtn(); // Reset button to original state
+            });
+
+            // Fetch settings and populate the dropdown on page load
+            fetchAndPopulateSettings();
+            reloadVoices();
+        });
+    </script>
+
+    <script>
+        // Audio player
+        const audioPlayer = document.getElementById('audioSource');
+        function enableLoader(enable) {
+            // Change the submit button text and disable it while loading
+            const submit = document.getElementById('submit');
+            submit.disabled = enable ? true : false;
+            submit.style.opacity = enable ? 0.7 : 1.0;
+            submit.innerText = enable ? 'Generating...' : 'Generate TTS';
+            // Disable the audio player while loading
+            audioPlayer.disabled = enable ? true : false;
+            audioPlayer.style.opacity = enable ? 0.7 : 1.0;
+            audioPlayer.style.pointerEvents = enable ? 'none' : 'auto';
+        }
+        audioPlayer.addEventListener('canplay', () => {
+            enableLoader(false);
+            audioPlayer.play();
+        });
+        audioPlayer.addEventListener('abort', () => {
+            enableLoader(false);
+        });
+        audioPlayer.addEventListener('error', (e) => {
+            enableLoader(false);
+        });
+
+        // Streaming selector
+        const streaming = document.getElementById('streaming');
+        streaming.addEventListener('change', (event) => {
+            const outputFileContainer = document.getElementById('outputFileContainer');
+            if (event.target.value === 'true') {
+                outputFileContainer.style.display = 'none';
+            } else {
+                outputFileContainer.style.display = 'flex';
+            }
+        });
+
+        // Form submit event listener
+        const form = document.getElementById('ttsForm');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            enableLoader(true);
+            audioPlayer.pause();
+
+            const formData = new FormData(form);
+
+            // Get and clean the text input from the textarea
+            let textInput = formData.get('text');
+            let cleanedText = textInput.replace(/ \- | \– /g, ' '); // Replace hyphens
+            cleanedText = cleanedText.replace(/%/g, " percent");
+            //cleanedText = cleanedText.replace(/([!?.])\1+/g, '$1');
+            //cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF]/g, '');
+            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s\.,;:!?\-\'"À-ÿ\u0400-\u04FF]\$/g, '')
+            cleanedText = cleanedText.replace(/\n+/g, ' ');
+            cleanedText = cleanedText.replace(/\.\s'/g, ".'"); // Remove space between period and single quote
+            //cleanedText = cleanedText.replace(/'/g, ""); // Remove all single quotes
+
+            // Set the cleaned text back to the form data
+            formData.set('text', cleanedText);
+
+            // Check if streaming or not and handle accordingly
+            if (formData.get('streaming') === 'true') {
+                // For streaming, update the audio player src
+                const searchParams = new URLSearchParams(formData).toString();
+                audioPlayer.src = `${cleanedBaseUrl}/api/tts-generate-streaming?${searchParams}`;
+                audioPlayer.load(); // Reload the audio player
+            } else {
+                // Add hard-coded settings to the formData object
+                formData.append('text_filtering', 'standard');
+                formData.append('narrator_enabled', false);
+                formData.append('autoplay', false);
+                formData.append('autoplay_volume', '0.1');
+                // Change the field name from "voice" to "character_voice_gen"
+                const voice = formData.get('voice');
+                formData.delete('voice');
+                formData.append('character_voice_gen', voice);
+                // Update the field name from "output_file" to "output_file_name"
+                const outputFile = formData.get('output_file');
+                formData.delete('output_file');
+                formData.append('output_file_name', outputFile);
+                formData.delete('text');
+                formData.set('text_input', cleanedText);
+                // Convert "output_file_timestamp" value to boolean
+                formData.append('output_file_timestamp', false);
+
+                console.log('Form Data:');
+                for (const [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+
+                // Send the POST request to the API endpoint
+                try {
+                    const response = await fetch(`${cleanedBaseUrl}/api/tts-generate`, {
+                        method: 'POST',
+                        body: formData,
+                        cache: "no-store"
+                    });
+
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    // Process the response
+                    const result = await response.json();
+                    console.log('Response:', result);
+
+                    // Update output file path and audio player source using the response data
+                    const outputFilePath = document.getElementById('outputFilePath');
+                    outputFilePath.textContent = result.output_file_path;
+                    audioPlayer.src = cleanedBaseUrl + result.output_file_url;
+                    audioPlayer.load();
+                } catch (error) {
+                    console.error('Error:', error);
+                    // Handle the error (e.g., display an error message to the user)
+                }
+            }
+        });
+    </script>
+    <hr>
+</body>
+
+</html>

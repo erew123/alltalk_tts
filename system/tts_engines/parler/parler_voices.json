@@ -1,0 +1,96 @@
+{
+  "voices": [
+    {
+      "voice_name": "soothing_female",
+      "description": "A female speaker with a soft, soothing voice. Her tone is gentle and calming, with a slight reverb as if she is in a small, cozy room. She speaks slowly and clearly."
+    },
+    {
+      "voice_name": "authoritative_male",
+      "description": "A male speaker with a strong, authoritative voice. His tone is firm and commanding, with a slight bass boost that adds to the depth. He speaks at a moderate pace."
+    },
+    {
+      "voice_name": "friendly_young_male",
+      "description": "A young male speaker with a friendly, approachable voice. He has a slightly high-pitched tone and speaks with enthusiasm. The audio is clear and bright."
+    },
+    {
+      "voice_name": "whispering_female",
+      "description": "A female speaker who whispers softly, creating an intimate and personal feel. The audio has a slight breathy quality, adding to the whispering effect."
+    },
+    {
+      "voice_name": "robotic_male",
+      "description": "A male speaker with a robotic, synthetic voice. The tone is monotone and slightly mechanical, with clear and precise pronunciation."
+    },
+    {
+      "voice_name": "dramatic_female",
+      "description": "A female speaker with a dramatic and expressive voice. She speaks with varying pitch and intensity, in a high-quality audio environment. Her pace varies to add emphasis."
+    },
+    {
+      "voice_name": "casual_male",
+      "description": "A male speaker with a casual, conversational tone. He speaks in a relaxed manner, with natural pauses and inflections. The audio is clear and slightly ambient."
+    },
+    {
+      "voice_name": "bright_young_female",
+      "description": "A young female speaker with a bright, cheerful voice. She speaks with a lot of enthusiasm and a slightly fast pace, in a clear and vibrant audio environment."
+    },
+    {
+      "voice_name": "calm_older_male",
+      "description": "An older male speaker with a calm, soothing voice. His tone is deep and steady, with a slight reverb suggesting a large, quiet room. He speaks slowly and deliberately."
+    },
+    {
+      "voice_name": "energetic_child",
+      "description": "A child speaker with a high-pitched, energetic voice. The tone is playful and lively, with clear and crisp audio quality. The speech pace is fast."
+    },
+    {
+      "voice_name": "mysterious_female",
+      "description": "A female speaker with a low, mysterious voice. Her tone is hushed and slightly breathy, creating an air of secrecy. The audio has a slight echo effect."
+    },
+    {
+      "voice_name": "confident_male",
+      "description": "A male speaker with a confident and assertive voice. His tone is strong and clear, with a moderate pace and slight emphasis on certain words to convey assurance."
+    },
+    {
+      "voice_name": "gentle_young_female",
+      "description": "A young female speaker with a gentle, kind voice. Her tone is soft and sweet, with clear audio quality. She speaks at a slow and soothing pace."
+    },
+    {
+      "voice_name": "excited_male",
+      "description": "A male speaker with an excited, enthusiastic voice. His tone is lively and energetic, with a fast pace and a lot of inflection. The audio is clear and vibrant."
+    },
+    {
+      "voice_name": "professional_female",
+      "description": "A female speaker with a professional and articulate voice. Her tone is clear and measured, with precise pronunciation and a moderate pace. The audio is high-quality."
+    },
+    {
+      "voice_name": "relaxed_male",
+      "description": "A male speaker with a relaxed and laid-back voice. His tone is warm and soothing, with a slight drawl. The audio has a comfortable and intimate feel."
+    },
+    {
+      "voice_name": "melancholic_female",
+      "description": "A female speaker with a melancholic and introspective voice. Her tone is soft and slightly sad, with a slow and deliberate pace. The audio has a gentle reverb effect."
+    },
+    {
+      "voice_name": "cheerful_child",
+      "description": "A child speaker with a cheerful and happy voice. The tone is high-pitched and playful, with a fast pace and clear audio quality. The speech is lively and energetic."
+    },
+    {
+      "voice_name": "serious_male",
+      "description": "A male speaker with a serious and formal voice. His tone is deep and authoritative, with a slow and deliberate pace. The audio is clear and slightly reverberant."
+    },
+    {
+      "voice_name": "enthusiastic_female",
+      "description": "A female speaker with an enthusiastic and lively voice. Her tone is bright and energetic, with a fast pace and a lot of inflection. The audio is clear and vibrant."
+    },
+    {
+      "voice_name": "soft_spoken_male",
+      "description": "A male speaker with a soft-spoken and gentle voice. His tone is warm and soothing, with a slow and measured pace. The audio has a slight ambient quality."
+    },
+    {
+      "voice_name": "deep_female",
+      "description": "A female speaker with a deep and resonant voice. Her tone is strong and authoritative, with a slow and deliberate pace. The audio is clear and slightly reverberant."
+    },
+    {
+      "voice_name": "lighthearted_male",
+      "description": "A male speaker with a lighthearted and cheerful voice. His tone is warm and friendly, with a moderate pace and natural inflection. The audio is clear and bright."
+    }
+  ]
+}

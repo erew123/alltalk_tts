@@ -1,0 +1,42 @@
+{
+    "model_details": {
+        "manufacturer_name": "Parler-TTS",
+        "manufacturer_website": "https://github.com/huggingface/parler-tts",
+        "model_description": "Parler-TTS is a lightweight text-to-speech (TTS) model that can generate high-quality, natural sounding speech in the style of a given speaker (gender, pitch, speaking style, etc). It is a reproduction of work from the paper Natural language guidance of high-fidelity text-to-speech with synthetic annotations by Dan Lyth and Simon King, from Stability AI and Edinburgh University respectively. Contrarily to other TTS models, Parler-TTS is a fully open-source release. All of the datasets, pre-processing, training code and weights are released publicly under permissive license, enabling the community to build on our work and develop their own powerful TTS models. \n\nParler's unique party trick is that like Stable Diffusion, you can describe the voice you want in a text entry; however, this means you are unlikely to get the same voice reproduced each time. Please see the Voice Editor tab."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": true,
+        "languages_capable": false,
+        "lowvram_capable": true,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": false,
+        "streaming_capable": false,
+        "temperature_capable": false,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "enthusiastic_female",
+        "def_narrator_voice": "enthusiastic_female",
+        "deepspeed_enabled": false,
+        "engine_installed": true,
+        "generationspeed_set": 1,
+        "lowvram_enabled": true,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 10,
+        "temperature_set": 0.75
+    },
+    "openai_voices": {
+        "alloy": "enthusiastic_female",
+        "echo": "enthusiastic_female",
+        "fable": "enthusiastic_female",
+        "nova": "enthusiastic_female",
+        "onyx": "enthusiastic_female",
+        "shimmer": "enthusiastic_female"
+    }
+}

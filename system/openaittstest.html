@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI API/AllTalk TTS API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #c7c7c7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            background-color: #2b2b2b;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
+            width: 100%;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+            color: #ffffff;
+        }
+        input[type="text"], input[type="number"], textarea, select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #3b3b3b;
+            color: #ffffff;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .config, .response {
+            background-color: #3b3b3b;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        .form-group > div {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .form-group > div:last-child {
+            margin-right: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OpenAI API/AllTalk TTS API Test</h1>
+        <div class="config form-group">
+            <div>
+                <label for="ip">IP Address:</label>
+                <input type="text" id="ip" name="ip" value="localhost" required>
+            </div>
+            <div>
+                <label for="port">Port Number:</label>
+                <input type="number" id="port" name="port" value="7851" required>
+            </div>
+        </div>
+        <form id="ttsForm">
+            <label for="model">Model:</label>
+            <input type="text" id="model" name="model" value="some-model" required><br>
+
+            <label for="input">Input Text:</label>
+            <textarea id="input" name="input" rows="4" required>Hello, this is a test.</textarea><br>
+
+            <div class="form-group">
+                <div>
+                    <label for="voice">Voice:</label>
+                    <select id="voice" name="voice" required>
+                        <option value="alloy">Alloy</option>
+                        <option value="echo">Echo</option>
+                        <option value="fable">Fable</option>
+                        <option value="nova">Nova</option>
+                        <option value="onyx">Onyx</option>
+                        <option value="shimmer">Shimmer</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="response_format">Response Format:</label>
+                    <select id="response_format" name="response_format" required>
+                        <option value="wav">WAV</option>
+                        <option value="mp3">MP3</option>
+                        <option value="ogg">OGG</option>
+                        <option value="flac">FLAC</option>
+                        <option value="aac">AAC</option>
+                        <option value="m4a">M4A</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="speed">Speed:</label>
+                    <input type="number" id="speed" name="speed" value="1.0" step="0.1" required><br>
+                </div>
+            </div>
+
+            <label for="autoplay">Auto-play:</label>
+            <input type="checkbox" id="autoplay" name="autoplay"><br><br>
+
+            <input type="submit" value="Submit"><br><br>
+        </form>
+        <div id="response" class="response"></div>
+    </div>
+
+    <script>
+        document.getElementById('ttsForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = key === 'speed' ? parseFloat(value) : value;
+            });
+
+            const ip = document.getElementById('ip').value;
+            const port = document.getElementById('port').value;
+            const url = `http://${ip}:${port}/v1/audio/speech`;
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = 'Sending request...';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonData),
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const audio = new Audio(url);
+                    audio.controls = true;
+                    if (document.getElementById('autoplay').checked) {
+                        audio.autoplay = true;
+                    }
+                    responseDiv.innerHTML = '';
+                    responseDiv.appendChild(audio);
+                } else {
+                    const errorText = await response.text();
+                    responseDiv.innerHTML = 'Error: ' + errorText;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

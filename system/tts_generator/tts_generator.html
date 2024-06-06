@@ -1,0 +1,2295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <title>AllTalk TTS Generator</title>
+    <style>
+        body,
+        textarea,
+        select,
+        input[type="range"],
+        input[type="number"],
+        button {
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        h1 {
+            color: #838383;
+            text-align: center;
+        }
+
+        .form-container {
+            max-width: 80%;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+        }
+
+        .settings-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            /* Align items to the start */
+            align-items: center;
+            /* Align items vertically */
+            gap: 20px;
+            /* This creates a consistent gap between all child elements */
+        }
+
+        .setting {
+            margin-bottom: 10px;
+            /* Space from bottom if wrapped */
+            display: flex;
+            flex-direction: column;
+            /* Removed flex property to stop forcing them to grow */
+        }
+
+
+        label {
+            font-size: 0.9em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        textarea {
+            resize: vertical;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Ensure select and input elements do not exceed the width of their parent */
+        select,
+        input[type="range"],
+        input[type="number"] {
+            width: 100%;
+            /* They will fill the width of their .setting container */
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        @media (min-width: 768px) {
+
+            select,
+            input[type="range"],
+            input[type="number"] {
+                width: auto;
+                /* Only auto width for larger screens */
+            }
+        }
+
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        button:hover {
+            background-color: #337436;
+        }
+
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+            /* Text color for dark mode background */
+        }
+
+        .dark-mode .form-container {
+            background-color: #1e1e1e;
+        }
+
+        /* Modify the text color for elements within dark mode */
+        .dark-mode label,
+        .dark-mode textarea,
+        .dark-mode select,
+        .dark-mode input[type="range"],
+        .dark-mode input[type="number"],
+        .dark-mode button,
+        .dark-mode .error {
+            color: #ffffff;
+            /* Text color for dark mode elements */
+        }
+
+        /* Modify text color for input elements, textarea, and dropdowns in dark mode */
+        .dark-mode input,
+        .dark-mode textarea,
+        .dark-mode select {
+            color: #000000;
+            /* Text color for input elements, textarea, and dropdowns in dark mode */
+        }
+
+        .dark-mode input[type="number"] {
+            color: #000000;
+            /* Text color for inputs in dark mode */
+            background-color: #C0C0C0;
+            /* Light grey background color for inputs in dark mode */
+        }
+
+        /* Set a default color for the input placeholder to ensure it's visible */
+        .dark-mode input::placeholder {
+            color: #666;
+            /* Light grey color for placeholder text */
+        }
+
+
+
+        /* Set background color for textarea in dark mode */
+        .dark-mode textarea {
+            background-color: #C0C0C0;
+            /* Light grey background color for textarea in dark mode */
+        }
+
+        /* Set background color for option elements within select in dark mode */
+        .dark-mode select {
+            background-color: #C0C0C0;
+            /* Light grey background color for options in dark mode */
+        }
+
+        /* Additional styles if needed for fixed-width dropdowns */
+        .fixed-size-dropdown {
+            width: 130px;
+            /* Adjust the width as needed */
+        }
+
+        .progress-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            /* Stack items vertically */
+            align-items: center;
+            /* Center items horizontally within the container */
+            justify-content: center;
+            /* Center items vertically within the container */
+            z-index: 10;
+        }
+
+        /* Ensure the text is wrapped in a container with a class, e.g., .progress-text */
+        .progress-text {
+            text-align: right;
+            /* Center the text horizontally */
+            margin-top: 10px;
+            /* Add space between the spinner and the text */
+        }
+
+
+        #progressIndicator {
+            /* Adjust this if you want to position the spinning disk differently */
+            display: inline-block;
+            margin-left: 20px;
+            /* Give some space between the text and the spinner */
+        }
+
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #ff0000;
+        }
+
+
+        .slider-setting-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            /* Allows the slider and the value to fill the space */
+            margin-left: 10px;
+            /* Adjust spacing as needed */
+        }
+
+        #chunkSizeValue,
+        #volumeValue {
+            margin-left: 10px;
+            /* Space between slider and value */
+            white-space: nowrap;
+            /* Prevents the value from wrapping */
+            line-height: normal;
+            position: relative;
+            bottom: 8px;
+            /* Nudge the label up */
+            display: inline-block;
+            /* Ensure it respects top/bottom positioning */
+            line-height: normal;
+            /* Adjust line height for vertical centering */
+        }
+
+        /* ... rest of your existing styles ... */
+
+        /* Responsive design adjustments */
+        @media (min-width: 768px) {
+            .slider-setting-wrapper {
+                flex-wrap: nowrap;
+                /* Prevents wrapping on larger screens */
+            }
+        }
+
+        .ttsListItem {
+            display: flex;
+            /* Use flexbox for alignment */
+            align-items: center;
+            /* Align items vertically */
+            gap: 10px;
+            /* This creates a consistent gap between all child elements */
+            margin-bottom: 0px;
+            /* Space between each ttsListItem */
+            font-size: 0.8em;
+            /* Adjust the font size as needed */
+        }
+
+        .item-field {
+            margin-right: 10px;
+            /* Add space between fields if needed */
+            white-space: nowrap;
+            /* Prevent wrapping of text */
+            overflow: hidden;
+            /* Hide overflow */
+            text-overflow: ellipsis;
+            /* Add ellipsis for overflow */
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            /* This will align the buttons and dropdown vertically */
+            gap: 10px;
+            /* Adjust the space between buttons and dropdown */
+            /* Add any additional styling for spacing, background, etc. */
+        }
+
+        /* If the select box still isn't aligning properly, you may need to adjust the line-height */
+        .action-buttons select {
+            line-height: normal;
+            /* Reset line-height */
+        }
+
+        /* Make sure to reset the margin and padding that might be causing misalignment */
+        .action-buttons select,
+        .action-buttons button {
+            margin: 0;
+        }
+
+        /* If you want to have different widths for different fields, you can add more specific classes */
+        .item-field.id {
+            width: 16px;
+        }
+
+        .item-field.voice {
+            width: 20px;
+        }
+
+        .item-field.language {
+            width: 16px;
+        }
+
+        .item-field.wav {
+            width: 20px;
+            flex-grow: 1;
+            /* Allow the wav field to take up remaining space */
+        }
+
+        /* Style buttons a bit smaller */
+        .ttsListItem button {
+            padding: 5px 10px;
+            /* Smaller padding */
+            font-size: 0.9em;
+            /* Smaller text size */
+            margin-left: 0;
+        }
+
+        .tts-list-section {
+            background: #353535;
+            padding: 20px;
+            margin-top: 20px;
+            margin-right: auto;
+            /* Centers the box on the right */
+            margin-left: auto;
+            /* Centers the box on the left */
+            color: white;
+            max-width: 80%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+            border-radius: 8px;
+        }
+
+        .highlight {
+            background-color: #545454;
+            /* Or any color you prefer */
+            color: white;
+            /* Other styles for highlighting */
+        }
+
+        .problematic {
+            background-color: rgb(179, 104, 104);
+            /* Or any light red color of your choice */
+        }
+
+        .highlight-count {
+            color: #ff7300;
+            /* Change to the color you want */
+        }
+
+        .label {
+            font-weight: bold;
+            /* Makes the text bold */
+            color: #d8d8d8;
+            /* A lighter grey to distinguish labels from values */
+        }
+
+        .value {
+            color: #bbbbbb;
+            /* Keeps the values in white for contrast and readability */
+        }
+
+        .edit-btn {
+            /* Styles for the edit button */
+            margin-left: 5px;
+            padding: 3px 6px;
+            font-size: 0.8em;
+        }
+
+        /*Disable and enable buttons*/
+        button:disabled {
+            background-color: #919191;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .edit-input {
+            /* Styles for the edit input field */
+            margin-top: 5px;
+            font-size: 0.9em;
+            width: 100%;
+            /* or adjust as needed */
+        }
+
+        #ttsProgressInfo {
+            position: absolute;
+            /* Or position it according to your layout */
+            top: 10px;
+            /* Adjust as needed */
+            right: 10px;
+            /* Adjust as needed */
+            background: #fff;
+            /* Or any other color that fits your design */
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+            /* Ensure it's above other page content but below overlays */
+        }
+
+        .progress-text-inline {
+            margin-left: 45px;
+            /* Adjust the value as needed */
+        }
+
+        /* Pagination Buttons Styling */
+        .pagination-btn {
+            padding: 5px 10px;
+            /* Adjust padding to reduce height */
+            font-size: 0.8em;
+            /* Adjust font size for smaller buttons */
+            line-height: 1;
+            /* Adjust line height to match the smaller size */
+            margin: 2px;
+            /* Optional: adjust spacing between buttons */
+        }
+
+        /* Smaller input field for jump-to-page */
+        .pagination-input {
+            height: 20px;
+            /* Adjust height for smaller input field */
+            padding: 2px 5px;
+            /* Adjust padding for smaller input field */
+            font-size: 0.8em;
+            /* Adjust font size for smaller input field */
+            line-height: 1;
+            /* Adjust line height to match the smaller size */
+            vertical-align: middle;
+            /* Align with buttons if necessary */
+        }
+
+        /* Apply the styles to your pagination controls */
+        #paginationControls button {
+            /* Apply the button styling */
+            height: auto;
+            /* Let padding control the height */
+            min-height: 20px;
+            /* Set a minimum height if needed */
+        }
+
+        #paginationControls input[type="number"] {
+            /* Apply the input styling */
+        }
+
+        /* Smaller input field for jump-to-page */
+        .pagination-input {
+            height: 2px;
+            /* Reduce the height */
+            padding: 0px 0px;
+            /* Reduce the padding to decrease overall height */
+            font-size: 0.8em;
+            /* Optionally reduce the font size */
+            margin-bottom: 13px;
+            margin-top: 2px;
+            border: 0px solid #ccc;
+            /* Adjust border styling if needed */
+            line-height: normal;
+            /* Adjust line height to match the new size */
+            vertical-align: top;
+            /* Align vertically with buttons */
+        }
+
+        /* Apply the styles to your pagination controls */
+        #paginationControls1 button {
+            /* Apply the button styling */
+            height: auto;
+            /* Let padding control the height */
+            min-height: 20px;
+            /* Set a minimum height if needed */
+            margin-top: 15px
+        }
+
+        #paginationControls1 input[type="number"] {
+            /* Apply the input styling */
+            margin-top: 15px
+        }
+
+        #customFileName {
+            width: 130px;
+            /* Adjust the width as needed */
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f1f1f1;
+            /* Set the background color to match the other inputs */
+            color: #000;
+            /* Set the text color */
+        }
+
+        .dark-mode #customFileName {
+            background-color: #C0C0C0;
+            /* Set the background color for dark mode */
+            color: #000;
+            /* Set the text color for dark mode */
+        }
+    </style>
+
+
+    </style>
+
+</head>
+<h1>AllTalk TTS Generator</h1>
+
+<div class="form-container">
+    <div class="input-section">
+        <label for="text_input">Text Input:</label>
+        <textarea id="text_input" rows="8"></textarea> <!-- Removed cols attribute -->
+    </div>
+
+    <div class="settings-section">
+
+        <div class="setting voice-setting">
+            <label for="character_voice_gen">Character Voice:</label>
+            <select id="character_voice_gen"></select>
+        </div>
+
+        <div class="setting language-setting">
+            <label for="language">Language:</label>
+            <select id="language" name="language" class="fixed-size-dropdown">
+                <option value="ar">Arabic</option>
+                <option value="zh-cn">Chinese (Simplified)</option>
+                <option value="cs">Czech</option>
+                <option value="nl">Dutch</option>
+                <option value="en" selected>English</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="hi">Hindi</option>
+                <option value="hu">Hungarian</option>
+                <option value="it">Italian</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="pl">Polish</option>
+                <option value="pt">Portuguese</option>
+                <option value="ru">Russian</option>
+                <option value="es">Spanish</option>
+                <option value="tr">Turkish</option>
+            </select>
+        </div>
+
+        <div class="setting play-mode-type">
+            <label for="playType">Play Type:</label>
+            <select id="playType" name="playType" class="fixed-size-dropdown">
+                <option value="chunk" selected>Wav Chunks</option>
+                <option value="stream">Streaming</option>
+            </select>
+        </div>
+
+        <div class="setting play-mode-setting">
+            <label for="playMode">Playback:</label>
+            <select id="playMode" name="playMode" class="fixed-size-dropdown">
+                <option value="local" selected>In Browser</option>
+                <option value="remote">On Server</option>
+                <option value="none">No Playback</option>
+            </select>
+        </div>
+
+        <div class="setting">
+            <label for="customFileName">Custom File Name:</label>
+            <input type="text" id="customFileName" name="customFileName" value="TTS">
+        </div>
+
+        <div class="setting slider-setting-wrapper">
+            <label for="chunkSize">Chunk Sizes:</label>
+            <div class="slider-container">
+                <input type="range" id="chunkSize" name="chunkSize" class="slider-setting" min="1" max="8" value="2"
+                    oninput="updateChunkSizeValue(this.value)">
+                <span id="chunkSizeValue">2</span>
+            </div>
+        </div>
+
+        <div class="setting slider-setting-wrapper">
+            <label for="volume">Volume:</label>
+            <div class="slider-container">
+                <input type="range" id="volume" name="volume" class="slider-setting" min="0.1" max="1.0" step="0.1"
+                    value="0.8" oninput="updateVolumeValue(this.value)">
+                <span id="volumeValue">0.8</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <!-- Your existing buttons -->
+        <button onclick="generateTTS()">Generate TTS</button>
+        <button class="toggle-playback" onclick="togglePausePlayback()">Pause/Resume</button>
+        <button onclick="stopPlayback()">Stop Playback</button>
+        <button onclick="previewVoice()">Preview Voice</button>
+        <select id="themeMode" name="themeMode">
+            <option value="light">Light Mode</option>
+            <option value="dark">Dark Mode</option>
+        </select>
+
+        <!-- Progress information -->
+        <p id="wordCount" class="progress-text-inline">Word Count: 0</p>
+        <p id="generationProgress" class="progress-text-inline">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspIdle</p>
+    </div>
+
+
+    <div id="progressIndicator" class="progress-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p id="progressText"></p> <!-- Text to display progress information -->
+    </div>
+</div>
+
+<div id="ttsListSection" class="tts-list-section">
+    <h2>Generated TTS List</h2>
+    <input type="number" id="startFromId" value="1" min="1" autocomplete="off" style="width: 60px; margin-right: 10px;">
+    <button class="conditional-btn" id="playPauseList" onclick="togglePlayPauseList()" style="margin-right: 10px;">Play
+        List</button>
+    <button class="conditional-btn" onclick="stopPlayback()" style="margin-right: 10px;">Stop Playback</button>
+    <button class="conditional-btn" id="clearList" onclick="clearTTSList()" style="margin-right: 40px;">Clear
+        List</button>
+    <button onclick="importFromJSON()" style="margin-right: 10px;">Import JSON</button>
+    <button class="conditional-btn" onclick="exportToJSON()" style="margin-right: 10px;">Export JSON</button>
+    <button class="conditional-btn" id="exportsrttitles" style="margin-right: 10px;">Export SRT</button>
+    <button class="conditional-btn" onclick="exportMP3()" style="margin-right: 10px;">Export to WAV</button>
+    <label for="splitEvery">Export Split:</label>
+    <select id="splitEvery" name="splitEvery" style="margin-right: 40px;">
+        <option value="100">100</option>
+        <option value="200">200</option>
+        <option value="300">300</option>
+        <option value="400">400</option>
+        <option value="500" selected>500</option>
+        <option value="600">600</option>
+    </select>
+    <button class="conditional-btn" id="saveAndAnalyzeTTS" style="margin-right: 10px;">Analyze TTS</button>
+    <label for="AnalyzeAccuracy">% Accuracy:</label>
+    <select id="AnalyzeAccuracy" name="AnalyzeAccuracy" style="margin-right: 10px;">
+        <option value="99">99</option>
+        <option value="98" selected>98</option>
+        <option value="97">97</option>
+        <option value="96">96</option>
+        <option value="95">95</option>
+        <option value="94">94</option>
+        <option value="93">93</option>
+        <option value="92">92</option>
+        <option value="91">91</option>
+        <option value="90">90</option>
+    </select>
+    <div id="paginationControls">
+        <button class="conditional-btn pagination-btn" id="prevPage">Previous</button>
+        <span id="pageIndicator">Page 1 of X</span>
+        <button class="conditional-btn pagination-btn" id="nextPage">Next</button>
+        <input type="number" id="jumpToPage" class="conditional-btn pagination-input" min="1"
+            placeholder="Jump to Page">
+        <button class="conditional-btn pagination-btn" id="jumpButton">Go</button>
+    </div>
+    <div id="ttsListDisplay" class="tts-list-display">
+        <!-- Dynamically populated TTS details will go here -->
+    </div>
+    <div id="paginationControls1">
+        <button class="conditional-btn pagination-btn" id="prevPage1">Previous</button>
+        <span id="pageIndicator1">Page 1 of X</span>
+        <button class="conditional-btn pagination-btn" id="nextPage1">Next</button>
+        <input type="number" id="jumpToPage1" class="conditional-btn pagination-input" min="1"
+            placeholder="Jump to Page">
+        <button class="conditional-btn pagination-btn" id="jumpButton1">Go</button>
+    </div>
+</div>
+</div>
+
+<!-- Howler.js script inclusion -->
+<script src="./howler.min.js"></script>
+<script type="module">
+    import Crunker from './crunker.esm.js';
+
+    async function exportMP3() {
+        const crunker = new Crunker();
+        const fileUrls = ttsList.map(item => item.fileUrl);
+        const splitEvery = parseInt(document.getElementById('splitEvery').value) || 500;
+        const progressIndicator = document.getElementById('progressIndicator');
+        const progressText = document.getElementById('progressText');
+
+        if (progressIndicator && progressText) {
+            progressIndicator.style.display = 'block';
+            progressText.textContent = 'Starting export...';
+        }
+
+        try {
+            for (let i = 0; i < fileUrls.length; i += splitEvery) {
+                const currentBatch = Math.floor(i / splitEvery) + 1;
+                const totalBatches = Math.ceil(fileUrls.length / splitEvery);
+                if (progressText) {
+                    progressText.textContent = `Processing batch ${currentBatch} of ${totalBatches}`;
+                    progressText.style.color = 'black'; // Set the text color to black
+                }
+
+                const batchUrls = fileUrls.slice(i, Math.min(i + splitEvery, fileUrls.length));
+                const audioBuffers = await crunker.fetchAudio(...batchUrls);
+                const combined = crunker.concatAudio(audioBuffers);
+                const output = crunker.export(combined, "audio/wav");
+                crunker.download(output.blob, `combined_audio_part_${currentBatch}.wav`);
+
+                // Clear audioBuffers array to free up memory
+                audioBuffers.length = 0;
+
+                console.log(`Exported batch ${currentBatch} of ${totalBatches}`);
+            }
+        } catch (error) {
+            console.error('Error combining files:', error);
+            if (progressText) {
+                progressText.textContent = 'Error during export!';
+            }
+        } finally {
+            if (progressIndicator && progressText) {
+                progressIndicator.style.display = 'none';
+                progressText.textContent = ''; // Reset progress text
+            }
+        }
+    }
+
+    window.exportMP3 = exportMP3;
+
+
+
+</script>
+
+<script>
+
+    /////////////////////////////////////////
+    //////// Base Settings/variables ////////
+    /////////////////////////////////////////
+
+    let stopTTSGeneration = false;
+    let audioQueue = [];
+    let currentlyPlayingIndex = 0;
+    let isPlaying = false;
+    let playModeValue = localStorage.getItem('playMode') || 'local';
+    let currentSound = null;
+    let preloadThreshold = 2; // Number of files to preload before starting playback
+    let isStreamInitialized = false;
+    let characterVoice = document.getElementById("character_voice_gen").value;
+    let ttsList = []; // Global list to store TTS details
+    let problematicIds = []; // Global list to store ProblematicIDs
+    const howlInstances = {};
+    let listPlaying = false;
+    let listPlayIndex = 0;
+    let currentPage = 1;
+    let itemsPerPage = 100; // Adjust as needed
+    var protocol = window.location.protocol;
+    var host = window.location.hostname;
+    var port = window.location.port;
+    var baseUrl = protocol + "//" + host + (port ? ':' + port : '');
+    let currentGenerationId = 0;
+
+    ////////////////////////////////////
+    //////// Progress Indicator ////////
+    ////////////////////////////////////
+
+    function showProgress(currentChunk, totalChunks, playType) {
+        const progressIndicator = document.getElementById('progressIndicator');
+        const generationProgress = document.getElementById('generationProgress');
+
+        if (progressIndicator && generationProgress) {
+            let message = '';
+            //console.log("PlayType is:", playType);
+            if (playType === 'stream') {
+                // When streaming, display a different message
+                message = '<span class="highlight-count">&nbsp&nbsp&nbsp&nbsp&nbsp&nbspStreaming...</span>';
+            } else {
+                // When generating chunks, show the progress of chunks
+                message = `&nbsp&nbsp&nbsp&nbsp&nbsp&nbspGenerating chunk <span class="highlight-count">${currentChunk}</span> of <span class="highlight-count">${totalChunks}</span>`;
+            }
+
+            generationProgress.innerHTML = message;
+            progressIndicator.style.display = 'block'; // Show progress overlay
+            progressText.textContent = 'Running';
+            progressText.style.color = 'black'; // Set the text color to black
+        } else {
+            console.error("Progress elements not found!");
+        }
+    }
+
+
+    function hideProgress() {
+        const progressIndicator = document.getElementById('progressIndicator');
+        if (progressIndicator) {
+            progressIndicator.style.display = 'none'; // Hide progress overlay
+        }
+    }
+
+    function updateWordCount(wordCount) {
+        document.getElementById('wordCount').innerHTML = `Word Count: <span class="highlight-count">${wordCount}</span>`;
+    }
+
+    function updateGenerationProgress(current, total) {
+        document.getElementById('generationProgress').innerHTML = `&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspIdle">${total}</span>`;
+    }
+
+
+    //////////////////////////////////
+    //////// Compare TTS list ////////
+    //////////////////////////////////
+
+    document.getElementById('saveAndAnalyzeTTS').addEventListener('click', async function () {
+        showProgress(); // Call this function to show the progress indicator at the start of the process
+        try {
+            // Serialize the ttsList data structure to a JSON string
+            const ttsDataJSON = JSON.stringify(ttsList);
+
+            // Send the serialized ttsList to the '/save-tts-data' endpoint
+            const saveResponse = await fetch('/api/save-tts-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: ttsDataJSON  // Use the serialized JSON string as the request body
+            });
+
+            const saveData = await saveResponse.json();
+
+            // Log the server's response
+            console.log(saveData.message);
+
+            // If the server confirms the data was saved successfully, trigger analysis
+            if (saveData.message === "Data saved successfully") {
+                const accuracy = parseInt(document.getElementById('AnalyzeAccuracy').value) || 98;
+                const analyzeResponse = await fetch(`/api/trigger-analysis?threshold=${accuracy}`);
+                const analyzeData = await analyzeResponse.json();
+                if (analyzeData.summary.flagged_ids && analyzeData.summary.flagged_ids.length > 0) {
+                    // Update the global problematicIds array with the new flagged IDs
+                    problematicIds = analyzeData.summary.flagged_ids;
+                    console.log("Initial problematicIds from analysis:", problematicIds); // Debugging: Check the initial array after receiving analysis results
+
+                    // Call highlightProblems with the array of flagged IDs
+                    highlightProblems(problematicIds);
+                } else {
+                    console.log("No problematic IDs or error retrieving data.");
+
+                    // Clear the problematicIds array since there are no problematic IDs
+                    problematicIds = [];
+                    highlightProblems(problematicIds);
+                }
+                // Optionally, you might want to provide feedback in the UI about the analysis status
+            } else {
+                throw new Error('Data save was unsuccessful.');
+            }
+        } catch (error) {
+            // Handle any errors that occurred during the fetch process
+            console.error('Error:', error);
+        } finally {
+            hideProgress(); // Hide the progress indicator when the process is complete or if an error occurs
+        }
+    });
+
+    function highlightProblems(idsToHighlight) {
+        // First, clear all previous 'problematic' highlights
+        document.querySelectorAll('.problematic').forEach(item => {
+            item.classList.remove('problematic');
+        });
+
+        // Now, highlight all the IDs that should still be problematic
+        idsToHighlight.forEach(id => {
+            const itemElement = document.getElementById(`item-${id}`);
+            if (itemElement) {
+                itemElement.classList.add('problematic');
+            }
+        });
+    }
+
+    /////////////////////////////////
+    //////// Export SRT Subs ////////
+    /////////////////////////////////
+
+    document.getElementById('exportsrttitles').addEventListener('click', async function () {
+        showProgress(); // Call this function to show the progress indicator at the start of the process
+        try {
+            const ttsDataJSON = JSON.stringify(ttsList);
+
+            const saveResponse = await fetch('/api/save-tts-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: ttsDataJSON
+            });
+            const saveData = await saveResponse.json();
+            console.log(saveData.message);
+
+            if (saveData.message === "Data saved successfully") {
+                // Trigger the SRT generation and handle file download
+                const analyzeResponse = await fetch(`/api/srt-generation`);
+                if (analyzeResponse.ok) {
+                    // Create a temporary anchor element
+                    const a = document.createElement('a');
+                    // Create a blob URL from the response
+                    const blob = await analyzeResponse.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    // Set the download name for the file
+                    a.download = "subtitles.srt";
+                    // Append the anchor to the document
+                    document.body.appendChild(a);
+                    // Trigger the download
+                    a.click();
+                    // Clean up by removing the anchor element and revoking the blob URL
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    console.log("Error running SRT generation.");
+                }
+            } else {
+                throw new Error('Data save was unsuccessful.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            hideProgress(); // Hide the progress indicator when the process is complete or if an error occurs
+        }
+    });
+
+    ///////////////////////////////////////////
+    //////// TTS Generation Activities ////////
+    ///////////////////////////////////////////
+
+    async function generateTTS() {
+        try {
+            stopTTSGeneration = false;
+            const textInput = document.getElementById("text_input").value;
+            const language = document.getElementById("language").value;
+            const characterVoice = document.getElementById("character_voice_gen").value;
+            const volume = parseFloat(document.getElementById("volume").value);
+            const chunkSize = parseInt(document.getElementById("chunkSize").value);
+            const playType = document.getElementById('playType').value; // Play type (chunk or stream)
+            const customFileName = document.getElementById("customFileName").value; // Get the custom file name
+            playModeValue = document.getElementById('playMode').value;
+
+            let cleanedText = textInput.replace(/ \\- | \\– /g, ' ');
+            cleanedText = cleanedText.replace(/%/g, " percent");
+            cleanedText = cleanedText.replace(/\\.\\s'/g, ".'");
+            cleanedText = cleanedText.replace(/(?<!\\w)\['\]+(?!\\w)/g, '');
+            cleanedText = cleanedText.replace(/"/g, "'");
+            cleanedText = cleanedText.replace(/[^a-zA-Z0-9\s.,;:!?\-'"$À-ÿ\u0400-\u04FF\u0150\u0151\u0170\u0171\u0900-\u097F\u2018\u2019\u201C\u201D\u2026\u3001\u3002\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F\uFF01\uFF0c\uFF1A\uFF1B\uFF1F]/g, '');
+            cleanedText = cleanedText.replace(/-\\s/g, '; ');
+            cleanedText = cleanedText.replace(/--/g, '; ');
+            // Split by Fullwidth/CJK punctuation regardless of if there are spaces behind them
+            // Please test if it works properly. In my test they it should be 
+            // (?<=[.!?:])\s+ instead of 
+            // (?<=\[.!?:\])\\s+ 
+            // so I don't know whats going on here
+            // let sentences = cleanedText.split(/(?<=[\[.!?:\]])\s+|(?<=[\u3002\uFF01\uFF1A\uFF1F])/);
+            let sentences = cleanedText.split(/(?<=[\[.!?:\]]['"\u2018\u2019\u201C\u201D]*)\s+|(?<=[\u3002\uFF01\uFF1A\uFF1F])/);
+
+            if (!sentences) {
+                console.error("No sentences found in the input text.");
+                return; // Exit the function if no sentences are found
+            }
+
+            // Calculate total chunks and word count
+            let totalChunks = Math.ceil(sentences.length / chunkSize);
+            let wordCount = cleanedText.split(/\s+/).length;
+
+            // Update word count and initial progress information
+            updateWordCount(wordCount);
+
+            if (playType === 'stream') {
+                console.log("Starting stream...");
+                showProgress(null, null, playType);
+                await generateAndStream(cleanedText, language, characterVoice, volume);
+            } else {
+                const chunks = [];
+                for (let i = 0; i < sentences.length; i += chunkSize) {
+                    let chunk = sentences.slice(i, i + chunkSize).map(s => s.trim()).join(' ');
+                    chunks.push(chunk);
+                }
+
+                // Process each chunk
+                for (let i = 0; i < chunks.length; i++) {
+                    if (stopTTSGeneration) break;
+                    showProgress(i + 1, totalChunks, playType);
+                    if (playModeValue === 'local') {
+                        // Generate the chunk and play it locally
+                        await generateAndCache(chunks[i], language, characterVoice, volume, customFileName);
+                    } else if (playModeValue === 'remote') {
+                        // Generate the chunk and play it remotely
+                        await generateAndPlayRemote(chunks[i], language, characterVoice, volume, customFileName);
+                    } else if (playModeValue === 'none') {
+                        // Generate the chunk but do not play it
+                        await generateWithoutPlayback(chunks[i], language, characterVoice, customFileName);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error in generateTTS:", error);
+        } finally {
+            // Hide progress when done or on error
+            hideProgress();
+        }
+    }
+
+    async function processChunks(chunks, language, characterVoice, volume, customFileName) {
+        for (let i = 0; i < chunks.length; i++) {
+            if (stopTTSGeneration) break;
+            await generateAndCache(chunks[i], language, characterVoice, volume, customFileName, i + 1); // Pass custom file name and chunk index
+            if (audioQueue.length >= preloadThreshold && !isPlaying) {
+                playNextLocalChunk();
+            }
+        }
+    }
+
+    // Function to generate a 4-character UUID
+    function generateUUID() {
+        return 'xxxx'.replace(/[x]/g, function (c) {
+            var r = Math.random() * 16 | 0;
+            return r.toString(16);
+        });
+    }
+
+    async function generateAndCache(chunk, language, characterVoice, volume, customFileName, chunkIndex = null, id = null) {
+        try {
+            let paddedChunkIndex;
+
+            if (chunkIndex === null) {
+                // If chunkIndex is not provided, increment the current generation ID
+                currentGenerationId++;
+                paddedChunkIndex = String(currentGenerationId).padStart(5, '0');
+            } else {
+                // If chunkIndex is provided (during regeneration), use it as is
+                paddedChunkIndex = String(chunkIndex).padStart(5, '0');
+            }
+
+            // Generate a 4-character UUID
+            const uuid = generateUUID();
+
+            const data = new URLSearchParams({
+                text_input: chunk.trim(),
+                text_filtering: "standard",
+                character_voice_gen: characterVoice,
+                narrator_enabled: "false",
+                narrator_voice_gen: characterVoice,
+                text_not_inside: "character",
+                language: language,
+                output_file_name: `${customFileName}_${paddedChunkIndex}_${uuid}`, // Include the UUID in the file name
+                output_file_timestamp: "false",
+                autoplay: "false",
+                autoplay_volume: volume
+            });
+
+            const response = await fetch(baseUrl + "/api/tts-generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: data,
+            });
+
+            const result = await response.json();
+            if (result.output_file_url) {
+                //console.log('TTS Generation Result:', result);
+                // If an ID was passed in, we're regenerating an existing item
+                if (id !== null) {
+                    let itemIndex = ttsList.findIndex(item => item.id === id);
+                    if (itemIndex !== -1) {
+                        ttsList[itemIndex].fileUrl = result.output_file_url;
+                        // Other properties can be updated as needed, e.g., in case the language or voice has changed
+                        ttsList[itemIndex].language = language;
+                        ttsList[itemIndex].characterVoice = characterVoice;
+                    }
+                } else {
+                    // No ID was passed in, so we add a new item to the list
+                    addToTTSList(result.output_file_url, chunk, characterVoice, language);
+                }
+                const newPage = Math.ceil(ttsList.length / itemsPerPage);
+                //console.log('New Page Calculated:', newPage);
+                if (currentPage !== newPage) {
+                    currentPage = newPage; // Move to the new page where the item was added
+                    //console.log('Updating Current Page to:', currentPage);
+                }
+
+                // Refresh the list display to reflect the new pagination state
+                updateUIList();
+                updateButtonStyles()
+
+                // Update the audio queue and UI
+                const sound = new Howl({
+                    src: [result.output_file_url],
+                    volume: volume,
+                    onend: function () {
+                        isPlaying = false;
+                        playNextLocalChunk();
+                    }
+                });
+                audioQueue.push(sound);
+                updateUIList(); // Refresh the list display
+                if (audioQueue.length >= preloadThreshold && !isPlaying) {
+                    playNextLocalChunk();
+                }
+            }
+            return result
+        } catch (error) {
+            console.error("Error in generateAndCache:", error);
+        }
+    }
+
+    async function regenerateTTS(id) {
+        console.log("Before regeneration:", problematicIds); // Debugging: Check the array before regeneration
+
+        // Find the details of the TTS to regenerate
+        const ttsDetails = ttsList.find(item => item.id === id);
+        if (!ttsDetails) return;
+
+        // Retrieve the current volume setting from the HTML input
+        const currentVolume = parseFloat(document.getElementById("volume").value);
+
+        // Extract the file name from the fileUrl
+        const fileName = ttsDetails.fileUrl.split('/').pop();
+
+        // Extract the custom file name and chunk index from the file name
+        const fileNameParts = fileName.split('_');
+        const customFileName = fileNameParts[0];
+        const chunkIndex = parseInt(fileNameParts[1], 10);
+
+        // Call the TTS generation with the same details, current volume, and existing file name
+        const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice, currentVolume, customFileName, chunkIndex, id);
+
+        // Call the TTS generation with the same details and current volume
+        //const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice, currentVolume, id);
+
+        if (result && result.status === "generate-success") {
+            const index = problematicIds.indexOf(id);
+            if (index !== -1) {
+                problematicIds.splice(index, 1); // Remove the id from problematicIds
+                console.log(`ID ${id} removed from problematicIds. Updated array:`, problematicIds); // Debugging: Check the array after removing an ID
+            }
+
+            // Find the element for this ID and remove the 'problematic' class
+            const problemItemElement = document.getElementById(`item-${id}`);
+            if (problemItemElement) {
+                problemItemElement.classList.remove('problematic');
+            }
+        } else {
+            console.log(`Regeneration failed for ID ${id}.`, result); // If regeneration fails, log the result
+        }
+
+        // Refresh the UI list to reflect the new data
+        updateUIList(); // Assume this function exists and it updates the display list
+        // Reapply highlighting to the items still in problematicIds
+        highlightProblems(problematicIds);
+        console.log("After regeneration and re-highlighting:", problematicIds); // Debugging: Check the array after re-highlighting
+    }
+
+
+
+    async function generateWithoutPlayback(chunk, language, characterVoice, customFileName, chunkIndex = null) {
+        // Perform the generation process as usual but do not play the audio
+        try {
+            let paddedChunkIndex;
+            if (chunkIndex === null) {
+                // If chunkIndex is not provided, increment the current generation ID
+                currentGenerationId++;
+                paddedChunkIndex = String(currentGenerationId).padStart(5, '0');
+            } else {
+                // If chunkIndex is provided (during regeneration), use it as is
+                paddedChunkIndex = String(chunkIndex).padStart(5, '0');
+            }
+
+            const uuid = generateUUID();
+            const data = new URLSearchParams({
+                text_input: chunk.trim(),
+                text_filtering: "standard",
+                character_voice_gen: characterVoice,
+                narrator_enabled: "false",
+                narrator_voice_gen: characterVoice,
+                text_not_inside: "character",
+                language: language,
+                output_file_name: `${customFileName}_${paddedChunkIndex}_${uuid}`, // Use the custom file name with padded chunk index
+                output_file_timestamp: "false",
+                autoplay: "false",
+                autoplay_volume: "0.1"
+            });
+            const response = await fetch(baseUrl + "/api/tts-generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: data,
+            });
+            const result = await response.json();
+            if (result.output_file_url) {
+                // Add the new item to the list
+                addToTTSList(result.output_file_url, chunk, characterVoice, language);
+
+                const newPage = Math.ceil(ttsList.length / itemsPerPage);
+                if (currentPage !== newPage) {
+                    currentPage = newPage; // Move to the new page where the item was added
+                }
+                updateUIList();
+            }
+        } catch (error) {
+            console.error("Error in generateWithoutPlayback:", error);
+        }
+    }
+
+
+    function addToTTSList(fileUrl, text, characterVoice, language) {
+        try {
+            ttsList.push({
+                id: ttsList.length + 1,
+                fileUrl,
+                text,
+                characterVoice,
+                language
+            });
+            updateUIList();
+        } catch (e) {
+            console.error('Error inside addToTTSList:', e);
+        }
+    }
+
+    function updateUIList() {
+        const listDisplay = document.getElementById('ttsListDisplay');
+        if (!listDisplay) {
+            console.error('TTS list display element not found.');
+            return;
+        }
+        listDisplay.innerHTML = ''; // Clear the current list
+
+        // Determine the range of items to display for pagination
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedItems = ttsList.slice(start, end);
+
+        // Add items to the display for the current page
+        paginatedItems.forEach(item => {
+            // Extract just the file name from the URL
+            const wavFileName = item.fileUrl.split('/').pop();
+
+            // Display only the first 50 characters of the text
+            const displayText = item.text.length > 175 ? item.text.substring(0, 175) + '...' : item.text;
+
+            const entryDiv = document.createElement('div');
+            entryDiv.id = `item-${item.id}`; // Assign an ID to the div for highlighting
+            entryDiv.classList.add('ttsListItem'); // Add a class for styling
+
+            // Update the Play/Stop button's onclick to call a function that handles playing and highlighting
+            entryDiv.innerHTML = `
+        <button onclick="regenerateTTS(${item.id})">Regenerate</button>
+        <button onclick="playSound('${item.fileUrl}', ${item.id})">Play/Stop</button>
+        <span class="label">ID:</span> <span class="value">${item.id}</span>
+        <span class="label">Voice:</span> <span class="value">${item.characterVoice}</span>
+        <span class="label">Language:</span> <span class="value">${item.language}</span>
+        <span class="label">Wav:</span> <span class="value">${wavFileName}</span>
+        <button id="edit-btn-${item.id}" class="edit-btn" onclick="editText(${item.id})">Edit</button>
+        <span class="item-field text-preview value" title="${item.text}" data-fulltext="${item.text}">${displayText}</span>
+        `;
+            listDisplay.appendChild(entryDiv);
+        });
+
+        // Update pagination controls
+        const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${lastPage}`;
+        document.getElementById('pageIndicator1').innerText = `Page ${currentPage} of ${lastPage}`;
+        document.getElementById('prevPage').disabled = (currentPage === 1);
+        document.getElementById('prevPage1').disabled = (currentPage === 1);
+        document.getElementById('nextPage').disabled = (currentPage === lastPage);
+        document.getElementById('nextPage1').disabled = (currentPage === lastPage);
+    }
+
+
+    async function generateAndPlayRemote(chunk, language, characterVoice, volume, customFileName, chunkIndex = null) {
+        try {
+            if (stopTTSGeneration) {
+                console.log("TTS generation stopped.");
+                return; // Early return if stop flag is set
+            }
+
+            let paddedChunkIndex;
+            if (chunkIndex === null) {
+                // If chunkIndex is not provided, increment the current generation ID
+                currentGenerationId++;
+                paddedChunkIndex = String(currentGenerationId).padStart(5, '0');
+            } else {
+                // If chunkIndex is provided (during regeneration), use it as is
+                paddedChunkIndex = String(chunkIndex).padStart(5, '0');
+            }
+
+            const uuid = generateUUID();
+            const data = new URLSearchParams({
+                text_input: chunk.trim(),
+                text_filtering: "standard",
+                character_voice_gen: characterVoice,
+                narrator_enabled: "false",
+                narrator_voice_gen: characterVoice,
+                text_not_inside: "character",
+                language: language,
+                output_file_name: `${customFileName}_${paddedChunkIndex}_${uuid}`, // Use the custom file name with padded chunk index
+                output_file_timestamp: "false",
+                autoplay: "true",
+                autoplay_volume: volume,
+            });
+            const response = await fetch(baseUrl + "/api/tts-generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: data,
+            });
+            const result = await response.json();
+            if (response.ok) {
+                // Add the new item to the list
+                addToTTSList(result.output_file_url, chunk, characterVoice, language);
+
+                const newPage = Math.ceil(ttsList.length / itemsPerPage);
+                if (currentPage !== newPage) {
+                    currentPage = newPage; // Move to the new page where the item was added
+                }
+                updateUIList();
+
+                console.log("TTS generation complete for chunk:", chunk);
+            } else {
+                throw new Error(`API error: ${result.detail || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error("Error in generateAndPlayRemote:", error);
+        }
+    }
+
+    async function generateAndStream(textInput, language, characterVoice, volume) {
+        try {
+            const queryParams = new URLSearchParams({
+                text: textInput,
+                voice: characterVoice,
+                language: language,
+                output_file: "streaming_file",
+                streaming: "True"
+            });
+
+            // Reinitialize currentSound every time
+            var srcUrl = baseUrl + "/tts-demo-request?" + queryParams.toString();
+            currentSound = new Howl({
+                src: [srcUrl],
+                volume: volume,
+                html5: true // Force HTML5 Audio to enable streaming
+            });
+
+            currentSound.play();
+            isStreamInitialized = true;
+        } catch (error) {
+            console.error("Error in generateAndStream:", error);
+        }
+    }
+
+
+    //////////////////////////////////////////
+    //////// Audio Playback Functions ////////
+    //////////////////////////////////////////
+
+    function playSound(fileUrl) {
+        if (!fileUrl) {
+            console.error('No file URL provided');
+            return;
+        }
+
+        // Check if a Howl instance exists for this file URL
+        if (!howlInstances[fileUrl]) {
+            // Create a new Howl instance if it doesn't exist
+            howlInstances[fileUrl] = new Howl({
+                src: [fileUrl],
+                volume: parseFloat(document.getElementById("volume").value),
+                onplay: function () {
+                },
+                onend: function () {
+                },
+                onpause: function () {
+                },
+                onloaderror: function (e) {
+                    console.error('Load error for', fileUrl, ':', e);
+                },
+                onplayerror: function (e) {
+                    console.error('Playback error for', fileUrl, ':', e);
+                }
+            });
+        }
+
+        // Toggle play/stop
+        const sound = howlInstances[fileUrl];
+        if (sound.playing()) {
+            sound.pause();
+        } else {
+            sound.play();
+        }
+    }
+
+    async function previewVoice() {
+        const characterVoice = document.getElementById("character_voice_gen").value;
+        try {
+            const formData = new FormData();
+            formData.append("voice", characterVoice);
+
+            const response = await fetch(baseUrl + "/api/previewvoice/", {
+                method: "POST",
+                body: formData,
+            });
+
+            const result = await response.json();
+            if (result.status === "generate-success") {
+                // Append a timestamp to the URL to avoid caching
+                const audioUrlWithTimestamp = result.output_file_url + "?t=" + new Date().getTime();
+
+                // Play the preview audio using Howler.js
+                const previewSound = new Howl({
+                    src: [audioUrlWithTimestamp]
+                });
+                previewSound.play();
+            } else {
+                throw new Error('Preview generation failed');
+            }
+        } catch (error) {
+            console.error('Error in previewVoice:', error);
+        }
+    }
+
+    // Modified togglePausePlayback function
+    function togglePausePlayback() {
+        if (currentSound && currentSound.playing()) {
+            currentSound.pause();
+        } else if (currentSound) {
+            currentSound.play();
+        }
+    }
+
+    // Function to handle changes in play type selection
+    function updatePlayTypeSettings() {
+        const playType = document.getElementById('playType').value;
+        const chunkSizeInput = document.getElementById('chunkSize');
+        const playModeSelect = document.getElementById('playMode');
+
+        // Disable chunk size and play mode selection for streaming
+        if (playType === 'stream') {
+            chunkSizeInput.disabled = true;
+            playModeSelect.value = 'local';
+            playModeSelect.disabled = true;
+        } else {
+            chunkSizeInput.disabled = false;
+            playModeSelect.disabled = false;
+        }
+    }
+
+    // Function to toggle between playing and pausing the stream, and update button text
+    function toggleStreamPlayback() {
+        const streamToggleButton = document.getElementById('streamToggle');
+
+        if (!isStreamInitialized || !currentSound) {
+            // If the stream is not initialized or there is no current sound, start the stream
+            generateAndStream(textInput, language, characterVoice, volume); // These variables need to be defined or passed to this function
+            streamToggleButton.textContent = 'Pause/Resume'; // Change button text to "Pause"
+        } else {
+            // If the stream is already initialized, toggle play/pause
+            if (currentSound.playing()) {
+                currentSound.pause();
+                streamToggleButton.textContent = 'Pause/Resume'; // Change button text to "Resume"
+            } else {
+                currentSound.play();
+                streamToggleButton.textContent = 'Pause/Resume'; // Change button text to "Pause"
+            }
+        }
+        isStreamInitialized = true; // Set flag to indicate the stream is initialized
+    }
+
+    // Function to pause the current stream
+    function pauseStream() {
+        if (currentSound) {
+            currentSound.pause();
+        }
+    }
+
+    // Function to resume playing the current stream
+    function playStream() {
+        if (currentSound) {
+            currentSound.play();
+        }
+    }
+
+    // Unified toggle function for both streaming and chunk playback
+    function togglePausePlayback() {
+        if (isStreamingMode) {
+            // In streaming mode, toggle the stream play/pause
+            if (currentSound && currentSound.playing()) {
+                currentSound.pause();
+            } else if (currentSound) {
+                currentSound.play();
+            }
+        } else {
+            // In chunk mode, toggle the chunk play/pause
+            if (isPlaying && currentlyPlayingIndex > 0) {
+                let currentSound = audioQueue[currentlyPlayingIndex - 3];
+                if (currentSound.playing()) {
+                    currentSound.pause();
+                } else {
+                    currentSound.play();
+                }
+            }
+        }
+    }
+
+    function playNextLocalChunk() {
+        if (audioQueue.length > 0 && currentlyPlayingIndex < audioQueue.length) {
+            isPlaying = true;
+            let currentSound = audioQueue[currentlyPlayingIndex];
+            currentSound.play();
+
+            // Once a sound finishes playing, unload it
+            currentSound.on('end', () => {
+                currentSound.unload();
+            });
+
+            currentlyPlayingIndex++;
+        } else {
+            isPlaying = false;
+        }
+    }
+
+    function updatePlaybackButton() {
+        const playbackButton = document.querySelector(".toggle-playback");
+
+        if (isStreamingMode) {
+            // Set button text to "Pause" when switching to streaming mode
+            playbackButton.textContent = 'Pause/Resume';
+            playbackButton.onclick = toggleStreamPlayback; // Set the onclick function to toggleStreamPlayback
+            playbackButton.id = 'streamToggle'; // Assign ID for streaming
+        } else {
+            // If not in streaming mode, the button should say "Pause/Resume Playback"
+            playbackButton.textContent = 'Pause/Resume';
+            playbackButton.onclick = togglePausePlayback; // Set the onclick function to togglePausePlayback
+            playbackButton.removeAttribute('id'); // Remove ID for chunk mode
+        }
+    }
+
+
+    //////////////////////////////////////////////////
+    //////// Generated List Playback Function ////////
+    //////////////////////////////////////////////////
+
+    // Attach the playPauseList function to the Play/Pause button
+    document.getElementById('playPauseList').addEventListener('click', playPauseList);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get elements by ID and assign event listeners to them
+        const playPauseButton = document.getElementById('playPauseList');
+        playPauseButton.addEventListener('click', togglePlayPauseList);
+
+        const clearListButton = document.getElementById('clearList'); // Update this ID to match your HTML
+        clearListButton.addEventListener('click', clearTTSList);
+
+        const startFromIdElement = document.getElementById('startFromId');
+        if (startFromIdElement) {
+            startFromIdElement.setAttribute('value', '1');
+        }
+        // Other initializations...
+    });
+
+    function togglePlayPauseList() {
+        // Get the ID from the user interface
+        const startFromId = document.getElementById('startFromId').value;
+        // Convert ID to a 0-based index
+        const startIndex = startFromId ? parseInt(startFromId, 10) - 1 : 0;
+
+        // Toggle the playing state
+        listPlaying = !listPlaying;
+        updatePlayPauseButton(listPlaying);
+
+        if (listPlaying) {
+            // If list is set to play, start playing from the specified index
+            // and highlight the corresponding item
+            playListFromIndex(startIndex);
+            highlightPlaying(startIndex + 1); // Assuming the list items are 1-indexed
+            updateCurrentPage(startIndex + 1); // Update the current page based on the playing item
+        } else {
+            // If list is set to pause, pause the current item
+            // and remove highlighting
+            if (howlInstances[listPlayIndex]) {
+                howlInstances[listPlayIndex].pause();
+            }
+            highlightPlaying(null); // Call with null to clear highlighting
+        }
+    }
+
+    function highlightPlaying(id) {
+        // Clear previous highlights
+        document.querySelectorAll('.ttsListItem').forEach(item => {
+            item.classList.remove('highlight');
+        });
+
+        // Update the startFromId input to show the currently playing item's ID
+        const startFromIdInput = document.getElementById('startFromId');
+        if (startFromIdInput) {
+            startFromIdInput.value = id;
+        }
+
+        // If id is null, no further action is needed
+        if (id === null) {
+            return;
+        }
+
+        // Otherwise, highlight the new item
+        const currentItem = document.getElementById(`item-${id}`);
+        if (currentItem) {
+            currentItem.classList.add('highlight');
+        }
+        updateCurrentPage(id);
+    }
+
+
+    function updateCurrentPage(itemIndex) {
+        // Calculate the page number based on the item index
+        // Note: Ensure that the itemIndex is 1-based; if it's 0-based, add 1.
+        const newPage = Math.ceil(itemIndex / itemsPerPage);
+
+        // Update the current page and UI if the new page is different from the current page
+        if (currentPage !== newPage) {
+            currentPage = newPage; // Set the new current page
+            updateUIList(); // Refresh the list display to show the correct page
+        }
+
+        // Optionally, update the 'Jump to Page' input to reflect the current page
+        const jumpToPageInput = document.getElementById('jumpToPage');
+        if (jumpToPageInput) {
+            jumpToPageInput.value = currentPage;
+        }
+    }
+
+
+    function playListFromIndex(index) {
+        if (index < ttsList.length) {
+            const ttsDetails = ttsList[index];
+            if (ttsDetails) {
+                const currentVolume = parseFloat(document.getElementById("volume").value);
+                const sound = new Howl({
+                    src: [ttsDetails.fileUrl],
+                    volume: currentVolume, // Set the volume for this Howl instance
+                    onplay: function () {
+                        // Highlight when the sound starts playing
+                        highlightPlaying(index + 1);
+                    },
+                    onend: function () {
+                        // Clear highlight when the sound ends
+                        highlightPlaying(null);
+
+                        // Play the next item if it exists
+                        if (index + 1 < ttsList.length) {
+                            playListFromIndex(index + 1);
+                        } else {
+                            console.log('Finished playing the list.');
+                        }
+                    }
+                });
+
+                // Play the sound
+                sound.play();
+            } else {
+                console.error('TTS details not found for index:', index);
+            }
+        } else {
+            console.log('Index is out of bounds, stopping playback.');
+            // Clear any highlights if out of bounds
+            highlightPlaying(null);
+            updateUIList();
+        }
+    }
+
+    function updatePlayPauseButton(isPlaying) {
+        const playPauseButton = document.getElementById('playPauseList'); // Ensure this ID matches your HTML
+        playPauseButton.textContent = isPlaying ? 'Pause List' : 'Play List';
+    }
+
+    function clearTTSList() {
+        Howler.stop();
+        audioQueue.forEach(sound => sound.unload());
+        audioQueue = [];
+        ttsList = [];
+        listPlayIndex = 0; // If listPlayIndex is the correct variable, use it instead of currentlyPlayingIndex
+        listPlaying = false; // Assuming listPlaying is the correct variable for list playback state
+        currentGenerationId = 0;
+        updateUIList(); // Refresh the list display
+        // Reset the 'Start From ID' input if you have this element in your HTML
+        const startFromIdElement = document.getElementById('startFromId');
+        if (startFromIdElement) {
+            startFromIdElement.value = '1';
+        }
+        const pageIndicator = document.getElementById('pageIndicator');
+        if (pageIndicator) {
+            pageIndicator.textContent = 'Page 1 of 1';
+        }
+        const pageIndicator1 = document.getElementById('pageIndicator1');
+        if (pageIndicator1) {
+            pageIndicator1.textContent = 'Page 1 of 1';
+        }
+        updateButtonStyles()
+    }
+
+
+    function encodeHtmlEntities(text) {
+        return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function decodeHtmlEntities(text) {
+        var textArea = document.createElement('textarea');
+        textArea.innerHTML = text;
+        return textArea.value;
+    }
+
+    function editText(id) {
+        console.log(`Initiating edit for ID: ${id}`);
+        console.log("Before edit, ttsList:", JSON.parse(JSON.stringify(ttsList)));
+        // First, check if we're already editing and should save the current value
+        const existingInput = document.getElementById(`edit-input-${id}`);
+        if (existingInput) {
+            console.log(`Existing input found for ID: ${id}, triggering blur event to save.`);
+            existingInput.blur(); // This will trigger the blur event, saving the current value
+            return; // Don't proceed further since we're just saving the existing input
+        }
+        const entryDiv = document.getElementById(`item-${id}`);
+        if (!entryDiv) {
+            console.error(`Item with ID ${id} not found.`);
+            return;
+        }
+        const textPreviewSpan = entryDiv.querySelector('.text-preview');
+        // Retrieve the full text and immediately encode it
+        let fullText = textPreviewSpan.getAttribute('data-fulltext');
+        fullText = decodeHtmlEntities(fullText);
+        //fullText = encodeHtmlEntities(fullText);
+        console.log(`Current full text for ID: ${id} is: ${fullText}`);
+
+        // Create an input field for editing
+        const inputField = document.createElement('input');
+        inputField.type = 'text';
+        // The value is already encoded at this point
+        inputField.value = fullText;
+        inputField.classList.add('edit-input');
+        inputField.id = `edit-input-${id}`; // Assign an ID to the input field for later access
+
+        // Handle saving the edited text
+        inputField.addEventListener('blur', function () {
+            console.log(`Saving edited text for ID: ${id}: ${this.value}`);
+            // Update the text in the ttsList array and the data-fulltext attribute
+            const itemIndex = ttsList.findIndex(item => item.id === id);
+            if (itemIndex !== -1) {
+                console.log(`Updating ttsList with new text for ID: ${id}`);
+                ttsList[itemIndex].text = this.value;
+                // If this item is in the list of problematic IDs, un-highlight it
+                if (problematicIds.includes(id)) {
+                    console.log(`ID: ${id} is problematic, removing highlight class`);
+                    const problemItemElement = document.getElementById(`item-${id}`);
+                    problemItemElement.classList.remove('problematic');
+                }
+            }
+
+            // Create a new span element to replace the input field
+            const newTextPreviewSpan = document.createElement('span');
+            newTextPreviewSpan.classList.add('item-field', 'text-preview');
+            newTextPreviewSpan.setAttribute('data-fulltext', this.value);
+            newTextPreviewSpan.title = this.value;
+            const displayText = this.value.length > 190 ? this.value.substring(0, 190) + '...' : this.value;
+            newTextPreviewSpan.textContent = displayText;
+
+            // Replace the input field with the new span
+            console.log(`Replacing input field with text span for ID: ${id}`);
+            inputField.replaceWith(newTextPreviewSpan);
+        });
+
+        // Replace the span with the input field
+        console.log(`Replacing text span with input field for ID: ${id}`);
+        textPreviewSpan.replaceWith(inputField);
+
+        // Focus the input field and select its content to facilitate editing
+        inputField.focus();
+        inputField.select();
+        console.log("After edit, ttsList:", JSON.parse(JSON.stringify(ttsList)));
+    }
+
+    ////////////////////////////////////////
+    //////// JSON Import and Export ////////
+    ////////////////////////////////////////
+
+    function exportToJSON() {
+        // Convert the ttsList array to a JSON string
+        const jsonString = JSON.stringify(ttsList, null, 2);
+
+        // Create a Blob object from the JSON string
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        // Create a URL for the blob object
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary anchor element
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ttsList.json'; // Name of the file to be downloaded
+
+        // Append the anchor to the body, click it to initiate download, and remove it
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Revoke the URL after download
+        URL.revokeObjectURL(url);
+    }
+
+    function importFromJSON() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.readAsText(file);
+                reader.onload = (e) => {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+
+                        ttsList = jsonData;
+                        currentPage = 1; // Reset to the first page
+                        updateUIList();
+                        updateButtonStyles()
+                        updatePaginationControls(); // Update pagination controls
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
+                };
+            }
+        };
+
+        input.click();
+    }
+
+    function updatePaginationControls() {
+        const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        const prevPageButtons = document.querySelectorAll('.pagination-btn[id^="prevPage"]');
+        const nextPageButtons = document.querySelectorAll('.pagination-btn[id^="nextPage"]');
+
+        // Update page indicators and buttons
+        prevPageButtons.forEach(btn => btn.disabled = (currentPage === 1));
+        nextPageButtons.forEach(btn => btn.disabled = (currentPage === lastPage));
+
+        // Assuming the page indicators are consistent with button IDs
+        document.querySelectorAll('span[id^="pageIndicator"]').forEach(indicator => {
+            indicator.textContent = `Page ${currentPage} of ${lastPage}`;
+        });
+
+        // Update 'Jump to Page' inputs and 'Go' buttons
+        const jumpToPageInputs = document.querySelectorAll('.pagination-input[id^="jumpToPage"]');
+        const jumpButtons = document.querySelectorAll('.pagination-btn[id^="jumpButton"]');
+        const moreThanOnePage = lastPage > 1;
+
+        jumpToPageInputs.forEach(input => input.disabled = !moreThanOnePage);
+        jumpButtons.forEach(button => button.disabled = !moreThanOnePage);
+    }
+
+    //////////////////////////////
+    //////// Other Things ////////
+    //////////////////////////////
+
+    function updateButtonStyles() {
+        const ttsList = document.getElementById('ttsListDisplay');
+        const buttons = document.querySelectorAll('.conditional-btn');
+
+        if (!ttsList.hasChildNodes()) { // Check if the list is empty
+            buttons.forEach(button => button.disabled = true); // Disable buttons
+        } else {
+            buttons.forEach(button => button.disabled = false); // Enable buttons
+        }
+    }
+
+    function updateLanguage(language) {
+        // Update the language in your application logic
+        console.log("Selected language:", language);
+        // ... your code to handle the language change ...
+    }
+
+
+    function updateCharacterVoice(characterVoice) {
+        console.log("Selected character voice:", characterVoice);
+    }
+
+    function setPlayMode(mode) {
+        playModeValue = mode;
+    }
+
+    // Function to play a new sound (used in all modes)
+    function playSoundWithHowler(src, volume) {
+        if (currentSound) {
+            currentSound.stop(); // Stop any currently playing sound
+        }
+
+        currentSound = new Howl({
+            src: [src],
+            volume: volume,
+            onend: function () {
+                currentSound = null; // Reset the currentSound when playback ends
+            }
+        });
+
+        currentSound.play();
+    }
+
+    function togglePausePlayback() {
+        if (isPlaying && currentlyPlayingIndex > 0) {
+            let currentSound = audioQueue[currentlyPlayingIndex - 1];
+            if (currentSound.playing()) {
+                currentSound.pause();
+            } else {
+                currentSound.play();
+            }
+        }
+    }
+
+    async function fetchVoices() {
+        try {
+            const response = await fetch(baseUrl + "/api/voices");
+            const result = await response.json();
+            const characterVoiceSelect = document.getElementById("character_voice_gen");
+
+            characterVoiceSelect.innerHTML = ''; // Clear existing options
+            result.voices.forEach(voice => {
+                const option = document.createElement("option");
+                option.value = voice;
+                option.text = voice;
+                characterVoiceSelect.add(option);
+            });
+
+            // After populating the dropdown, restore the saved voice preference
+            const savedCharacterVoice = localStorage.getItem('characterVoice');
+            if (savedCharacterVoice) {
+                characterVoiceSelect.value = savedCharacterVoice;
+            }
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // Replace stopPlayback function to stop all sounds using Howler.js
+    function stopPlayback() {
+        Howler.stop();
+        audioQueue = [];
+        //currentlyPlayingIndex = 0;
+        isPlaying = false;
+        //highlightPlaying(null);
+        //document.getElementById('startFromId').value = '1'; // Reset the startFromId input to 1
+    }
+
+    function displayOutput(result) {
+        const outputContainer = document.getElementById("output");
+        outputContainer.innerHTML = `<p>Status: ${result.status}</p>`;
+        if (result.output_file_path) {
+            outputContainer.innerHTML += `<p>File Path: ${result.output_file_path}</p>`;
+        }
+        if (result.output_file_url) {
+            outputContainer.innerHTML += `<p>File URL: ${result.output_file_url}</p>`;
+        }
+        if (result.error) {
+            outputContainer.innerHTML += `<p class="error">Error: ${result.error}</p>`;
+        }
+    }
+
+    ////////////////////////////////////////////
+    //////// General Dcoument Listeners ////////
+    ////////////////////////////////////////////
+
+    // Event listeners for pagination controls
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateUIList();
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+        const lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        if (currentPage < lastPage) {
+            currentPage++;
+            updateUIList();
+        }
+    });
+
+    // Initialize the list on page load
+    document.addEventListener('DOMContentLoaded', updateUIList);
+
+
+    // For the 'Previous' button at the bottom
+    document.getElementById('prevPage1').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateUIList();
+        }
+    });
+
+    // For the 'Next' button at the bottom
+    document.getElementById('nextPage1').addEventListener('click', () => {
+        let lastPage = Math.ceil(ttsList.length / itemsPerPage);
+        if (currentPage < lastPage) {
+            currentPage++;
+            updateUIList();
+        }
+    });
+
+    function handleJumpButtonClick(event) {
+        // Determine which set of controls to use based on the button that was clicked
+        const suffix = event.target.id === 'jumpButton' ? '' : '1';
+        const jumpToInput = document.getElementById(`jumpToPage${suffix}`);
+        const jumpToValue = jumpToInput.value.trim(); // Get the trimmed value
+        const jumpTo = parseInt(jumpToValue, 10); // Parse the value as an integer
+
+        if (!isNaN(jumpTo)) {
+            let lastPage = Math.ceil(ttsList.length / itemsPerPage);
+
+            if (jumpTo >= 1 && jumpTo <= lastPage) {
+                currentPage = jumpTo;
+                updateUIList();
+            } else {
+                alert(`Please enter a valid page number between 1 and ${lastPage}`);
+            }
+        } else {
+            alert("Please enter a number to jump to.");
+        }
+    }
+
+    // Set up the event listener for both jump buttons
+    document.getElementById('jumpButton').addEventListener('click', handleJumpButtonClick);
+    document.getElementById('jumpButton1').addEventListener('click', handleJumpButtonClick);
+
+
+
+    // Event listener for changing play type
+    document.getElementById('playType').addEventListener('change', function () {
+        isStreamingMode = this.value === 'stream';
+        updatePlaybackButton();
+    });
+
+    // Add event listener to the play type dropdown to update settings on change
+    document.getElementById('playType').addEventListener('change', updatePlayTypeSettings);
+
+    // Call updatePlayTypeSettings initially to set the correct state
+    updatePlayTypeSettings();
+
+    // Call this function on page load to ensure correct initial state
+    document.getElementById('playType').dispatchEvent(new Event('change'));
+
+
+    // Initialize button state on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        isStreamingMode = false; // Default to non-streaming mode
+        updatePlaybackButton(); // Set the correct button text on load
+    });
+
+    // Event listener to update characterVoice when the selection changes
+    document.getElementById("character_voice_gen").addEventListener('change', function () {
+        characterVoice = this.value;
+    });
+
+    document.getElementById('language').addEventListener('change', function () {
+        // Get the selected language from the dropdown
+        const selectedLanguage = this.value;
+        updateLanguage(selectedLanguage);
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('playMode').addEventListener('change', function () {
+            setPlayMode(this.value);
+        });
+    });
+
+    document.getElementById('playType').addEventListener('change', function () {
+        var playType = this.value;
+        var playModeDropdown = document.getElementById('playMode');
+        var chunkSizeSlider = document.getElementById('chunkSize');
+
+        if (playType === 'stream') {
+            // If 'Streaming' is selected, force 'In Browser' playback, disable the dropdown, and disable the chunk size slider
+            playModeDropdown.value = 'local';
+            playModeDropdown.disabled = true;
+            chunkSizeSlider.disabled = true;
+        } else {
+            // If 'Wav Chunks' is selected, enable the dropdown and the chunk size slider
+            playModeDropdown.disabled = false;
+            chunkSizeSlider.disabled = false;
+        }
+    });
+
+    /////////////////////////////////////////////////////
+    //////// Setup Page on Load & Store settings ////////
+    /////////////////////////////////////////////////////
+
+    function updateChunkSizeValue(value) {
+        document.getElementById('chunkSizeValue').innerText = value;
+    }
+
+    function updateVolumeValue(value) {
+        document.getElementById("volumeValue").innerText = value;
+        Howler.volume(parseFloat(value));
+    }
+
+    function toggleThemeMode() {
+        // Retrieve the value of the selected option for themeMode from the dropdown
+        const themeModeValue = document.getElementById('themeMode').value;
+
+        if (themeModeValue === "dark") {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('darkMode', 'enabled'); // Assuming saveDarkModePreference sets this
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('darkMode', 'disabled'); // Assuming saveDarkModePreference sets this
+        }
+    }
+
+    function setupPage() {
+        // Fetch voices or other initial data
+        fetchVoices();
+        updateButtonStyles()
+
+        // Check for dark mode preference in localStorage, default to enabled if not set
+        let isDarkModeEnabled = localStorage.getItem('darkMode');
+        if (isDarkModeEnabled === null) {
+            isDarkModeEnabled = 'enabled'; // Default to dark mode
+            localStorage.setItem('darkMode', isDarkModeEnabled); // Save the default preference
+        }
+
+        // Apply dark mode if it's enabled
+        if (isDarkModeEnabled === 'enabled') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeMode').value = 'dark';
+        } else {
+            document.getElementById('themeMode').value = 'light';
+        }
+
+        // Initialize character voice based on preference
+        const savedCharacterVoice = localStorage.getItem('characterVoice');
+        if (savedCharacterVoice) {
+            document.getElementById('character_voice_gen').value = savedCharacterVoice;
+        }
+
+        // Initialize language based on preference
+        const savedLanguage = localStorage.getItem('language');
+        if (savedLanguage) {
+            document.getElementById('language').value = savedLanguage;
+        }
+
+        // Initialize play type based on preference
+        const savedPlayType = localStorage.getItem('playType');
+        if (savedPlayType) {
+            const playTypeSelect = document.getElementById('playType');
+            playTypeSelect.value = savedPlayType;
+            adjustPlaybackAndChunkSize(savedPlayType); // Adjust selectability on page load
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedPlayMode = localStorage.getItem('playMode');
+            if (savedPlayMode) {
+                document.getElementById('playMode').value = savedPlayMode;
+            }
+            playModeValue = savedPlayMode || 'local'; // Default to 'local' if nothing is saved
+        });
+
+        // Initialize chunk size based on preference
+        const savedChunkSize = localStorage.getItem('chunkSize');
+        if (savedChunkSize) {
+            document.getElementById('chunkSize').value = savedChunkSize;
+            updateChunkSizeValue(savedChunkSize); // Update display to match
+        }
+
+        // Initialize volume based on preference
+        const savedVolume = localStorage.getItem('volume');
+        if (savedVolume) {
+            document.getElementById('volume').value = savedVolume;
+            updateVolumeValueDisplay(savedVolume); // Update display to match
+        }
+
+        // Add change event listeners to save preferences when they change
+        attachEventListeners();
+    }
+
+    function attachEventListeners() {
+        document.getElementById('themeMode').addEventListener('change', function () {
+            document.body.classList.toggle('dark-mode', this.value === 'dark');
+            savePreferences();
+        });
+        document.getElementById('character_voice_gen').addEventListener('change', savePreferences);
+        document.getElementById('language').addEventListener('change', savePreferences);
+        document.getElementById('playType').addEventListener('change', function () {
+            savePreferences(); // Save the new play type
+            adjustPlaybackAndChunkSize(this.value); // Adjust 'Playback' and 'Chunk Size' selectability
+        });
+        document.getElementById('playMode').addEventListener('change', savePreferences);
+        document.getElementById('chunkSize').addEventListener('input', function () {
+            updateChunkSizeValue(this.value);
+            savePreferences();
+        });
+        document.getElementById('volume').addEventListener('input', function () {
+            updateVolumeValue(this.value);
+            savePreferences();
+        });
+    }
+
+    // Use this function to update the volume display, not the actual volume
+    function updateVolumeValueDisplay(value) {
+        document.getElementById('volumeValue').innerText = value;
+    }
+
+    // Later, when user interacts with the volume control:
+    function updateVolumeValue(value) {
+        document.getElementById('volumeValue').innerText = value;
+        // Setting the volume on Howler is now allowed because it's in response to user interaction
+        Howler.volume(parseFloat(value));
+    }
+
+    // Make sure to call updateVolumeValue only in response to user interaction
+    document.getElementById('volume').addEventListener('input', function () {
+        updateVolumeValue(this.value);
+        savePreferences();
+    });
+
+    function adjustPlaybackAndChunkSize(playType) {
+        const playbackSelect = document.getElementById('playMode');
+        const chunkSizeInput = document.getElementById('chunkSize');
+        const isStreaming = playType === 'stream'; // Make sure the value matches the one in the dropdown
+
+        // Disable or enable 'Playback' and 'Chunk Size' based on 'Play Type'
+        playbackSelect.disabled = isStreaming;
+        chunkSizeInput.disabled = isStreaming;
+
+        // If Streaming is selected, also reset the 'Playback' and 'Chunk Size' to default values
+        if (isStreaming) {
+            playbackSelect.value = 'local';
+            chunkSizeInput.value = '1';
+            updateChunkSizeValue('1');
+        }
+    }
+
+    function savePreferences() {
+        // Save character voice preference
+        const characterVoice = document.getElementById('character_voice_gen').value;
+        localStorage.setItem('characterVoice', characterVoice);
+
+        // Save language preference
+        const language = document.getElementById('language').value;
+        localStorage.setItem('language', language);
+
+        // Save play type preference
+        const playType = document.getElementById('playType').value;
+        localStorage.setItem('playType', playType);
+
+        // Save playback preference
+        const playMode = document.getElementById('playMode').value;
+        localStorage.setItem('playMode', playMode);
+
+        // Save chunk size preference
+        const chunkSize = document.getElementById('chunkSize').value;
+        localStorage.setItem('chunkSize', chunkSize);
+
+        // Save volume preference
+        const volume = document.getElementById('volume').value;
+        localStorage.setItem('volume', volume);
+
+        // Save dark mode preference
+        const isDarkModeEnabled = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkModeEnabled ? 'enabled' : 'disabled');
+    }
+
+    window.onload = function () {
+        setupPage();
+        hideProgress(); // Ensure the progress indicator is hidden on page load
+        if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+            alert('AllTalk TTS Generator is not designed to be run from your disk folder. Please run it from the correct URL e.g. http://127.0.0.1:7851/static/tts_chunk_player/tts_chunk_player.html');
+        }
+    };
+
+</script>
+</body>
+
+</html>

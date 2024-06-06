@@ -1,0 +1,190 @@
+{
+    "first_start_model": "tts_models--en--vctk--vits",
+    "models": [
+      {
+        "model_name": "tts_models--bg--cv--vits",
+        "folder_path": "tts_models--bg--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--bg--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--cs--cv--vits",
+        "folder_path": "tts_models--cs--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--cs--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--da--cv--vits",
+        "folder_path": "tts_models--da--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--da--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--et--cv--vits",
+        "folder_path": "tts_models--et--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--et--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--ga--cv--vits",
+        "folder_path": "tts_models--ga--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--ga--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--en--vctk--vits",
+        "folder_path": "tts_models--en--vctk--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.1_models/tts_models--en--vctk--vits.zip"
+      },
+      {
+        "model_name": "tts_models--es--css10--vits",
+        "folder_path": "tts_models--es--css10--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--es--css10--vits.zip"
+      },
+      {
+        "model_name": "tts_models--fr--css10--vits",
+        "folder_path": "tts_models--fr--css10--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--fr--css10--vits.zip"
+      },
+      {
+        "model_name": "tts_models--uk--mai--vits",
+        "folder_path": "tts_models--uk--mai--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--uk--mai--vits.zip"
+      },
+      {
+        "model_name": "tts_models--nl--css10--vits",
+        "folder_path": "tts_models--nl--css10--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--nl--css10--vits.zip"
+      },
+      {
+        "model_name": "tts_models--de--thorsten--vits",
+        "folder_path": "tts_models--de--thorsten--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.7.0_models/tts_models--de--thorsten--vits.zip"
+      },
+      {
+        "model_name": "tts_models--de--css10--vits-neon",
+        "folder_path": "tts_models--de--css10--vits-neon",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--de--css10--vits.zip"
+      },
+      {
+        "model_name": "tts_models--it--mai_female--vits",
+        "folder_path": "tts_models--it--mai_female--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.1_models/tts_models--it--mai_female--vits.zip"
+      },
+      {
+        "model_name": "tts_models--it--mai_male--vits",
+        "folder_path": "tts_models--it--mai_male--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.1_models/tts_models--it--mai_male--vits.zip"
+      },
+      {
+        "model_name": "tts_models--ewe--openbible--vits",
+        "folder_path": "tts_models--ewe--openbible--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.2_models/tts_models--ewe--openbible--vits.zip"
+      },
+      {
+        "model_name": "tts_models--hau--openbible--vits",
+        "folder_path": "tts_models--hau--openbible--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.2_models/tts_models--hau--openbible--vits.zip"
+      },
+      {
+        "model_name": "tts_models--lin--openbible--vits",
+        "folder_path": "tts_models--lin--openbible--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.2_models/tts_models--lin--openbible--vits.zip"
+      },
+      {
+        "model_name": "tts_models--tw_akuapem--openbible--vits",
+        "folder_path": "tts_models--tw_akuapem--openbible--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.2_models/tts_models--tw_akuapem--openbible--vits.zip"
+      },
+      {
+        "model_name": "tts_models--tw_asante--openbible--vits",
+        "folder_path": "tts_models--tw_asante--openbible--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.2_models/tts_models--tw_asante--openbible--vits.zip"
+      },
+      {
+        "model_name": "tts_models--yor--openbible--vits",
+        "folder_path": "tts_models--yor--openbible--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.6.2_models/tts_models--yor--openbible--vits.zip"
+      },
+      {
+        "model_name": "tts_models--hu--css10--vits",
+        "folder_path": "tts_models--hu--css10--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--hu--css10--vits.zip"
+      },
+      {
+        "model_name": "tts_models--el--cv--vits",
+        "folder_path": "tts_models--el--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--el--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--fi--css10--vits",
+        "folder_path": "tts_models--fi--css10--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--fi--css10--vits.zip"
+      },
+      {
+        "model_name": "tts_models--hr--cv--vits",
+        "folder_path": "tts_models--hr--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--hr--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--lt--cv--vits",
+        "folder_path": "tts_models--lt--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--lt--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--lv--cv--vits",
+        "folder_path": "tts_models--lv--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--lv--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--mt--cv--vits",
+        "folder_path": "tts_models--mt--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--mt--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--pl--mai_female--vits",
+        "folder_path": "tts_models--pl--mai_female--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--pl--mai_female--vits.zip"
+      },
+      {
+        "model_name": "tts_models--pt--cv--vits",
+        "folder_path": "tts_models--pt--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--pt--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--ro--cv--vits",
+        "folder_path": "tts_models--ro--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--ro--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--sk--cv--vits",
+        "folder_path": "tts_models--sk--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--sk--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--sl--cv--vits",
+        "folder_path": "tts_models--sl--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--sl--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--sv--cv--vits",
+        "folder_path": "tts_models--sv--cv--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.8.0_models/tts_models--sv--cv--vits.zip"
+      },
+      {
+        "model_name": "tts_models--ca--custom--vits",
+        "folder_path": "tts_models--ca--custom--vits",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.10.1_models/tts_models--ca--custom--vits.zip"
+      },
+      {
+        "model_name": "tts_models--en--jenny--jenny",
+        "folder_path": "tts_models--en--jenny--jenny",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.14.0_models/tts_models--en--jenny--jenny.zip"
+      },
+      {
+        "model_name": "tts_models--bn--custom--vits-male",
+        "folder_path": "tts_models--bn--custom--vits-male",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.13.3_models/tts_models--bn--custom--vits_male.zip"
+      },
+      {
+        "model_name": "tts_models--bn--custom--vits-female",
+        "folder_path": "tts_models--bn--custom--vits-female",
+        "github_rls_url": "https://coqui.gateway.scarf.sh/v0.13.3_models/tts_models--bn--custom--vits_female.zip"
+      }
+    ]
+  }
