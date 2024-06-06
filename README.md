@@ -133,9 +133,6 @@ To perform a Standalone installation of AllTalk:
 
 </details>
 
-Refer to `🟩 Other installation notes` for further details, including information on additional voices, changing IP, character card notes etc.
-> If you wish to understand AllTalks start-up screen, please read **Understanding the AllTalk start-up screen** in the Help section.
-
 ---
 
 
