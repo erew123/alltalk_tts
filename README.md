@@ -42,7 +42,7 @@ There is a welcome screen that covers a few other bits, along with the built in 
 
 ### Windows Systems
 - You need to install **Espeak-ng**. You will find a copy of this in the `...\alltalk_tts_v2\system\espeak-ng\` folder. If you dont install it, you will get a warning and various TTS engines will probably crash.
-- Windows users must install C++ development tools for Python to compile Python packages. This ia a Python requirement not an AllTalk specifc requirement. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
+- If you have NEVER run Python on your system EVER, Windows users must install C++ development tools for Python to compile Python packages. This ia a Python requirement not an AllTalk specifc requirement. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
 
 ### Linux Systems
 You need `libaio-dev` or `libaio-devl` (depending on your Linux flavour), otherwise DeepSpeed will fail e.g at your terminal.
