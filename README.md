@@ -1,4 +1,4 @@
-# AllTalk TTS v2 BETA (NOT COMPLETE YET STILL UPLOADING)
+# AllTalk TTS v2 BETA
 This is the BETA of v2. To be clear, that means they may well be bugs, issues, missing/incomplete documentation, a variety of potential problems etc (This is what BETA refers to in the software world for those whom dont know). This means you may need a bit of technical know how to deal with things that could come up and should only continue if you feel comfortable with that.
 
 Github discussions on the BETA are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
