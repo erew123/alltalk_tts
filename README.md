@@ -45,7 +45,7 @@ There is a welcome screen that covers a few other bits, along with the built in 
 - If you have NEVER run Python on your system EVER, Windows users must install C++ development tools for Python to compile Python packages. This ia a Python requirement not an AllTalk specifc requirement. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
 
 ### Linux Systems
-You need to install a few bits (depending on your Linux flavour), otherwise DeepSpeed will fail and some TTS engine. At your terminal.
+You need to install a few bits (depending on your Linux flavour), otherwise DeepSpeed will fail and some TTS engines not work. At your terminal type the following:
 - **Debian-based systems** `sudo apt install libaio-dev espeak-ng ffmpeg`
 - **RPM-based systems** `sudo yum install libaio-devel espeak-ng ffmpeg`
 
