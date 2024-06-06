@@ -76,7 +76,7 @@ Quick setup scripts are available for users on Windows 10/11 and Linux. Instruct
 
 For a step-by-step video guide, click [here](https://www.youtube.com/watch?v=icn2XS5rUH8).
 
-**NOTE. IF YOU HAVE AN EXISTING ALLTALK INSTALL** this will want to create a folder called `alltalk_tts` so you will need to re-name your old `alltalk_tts` to something else. 
+### **NOTE. IF YOU HAVE AN EXISTING ALLTALK INSTALL** this will want to create a folder called `alltalk_tts` so you will need to re-name your old `alltalk_tts` to something else. 
 
 To set up AllTalk within Text-generation-webui, follow either method:
 
@@ -117,7 +117,7 @@ To perform a Standalone installation of AllTalk:
 1. **Get AllTalk Setup**:
    - **Via Terminal/Console (Recommended)**:
      - Navigate to your preferred directory: `cd C:\myfiles\`
-     - Clone the AllTalk repository: `git clone https://github.com/erew123/alltalk_tts`
+     - Clone the AllTalk repository: `git clone -b alltalkbeta https://github.com/erew123/alltalk_tts`
 
 2. **Start AllTalk Setup**:
    - Open a terminal/command prompt, move to the AllTalk directory, and run the setup script:
