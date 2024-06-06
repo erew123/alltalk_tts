@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import math
 import os
 import sys
@@ -297,7 +298,7 @@ def create_temporary_file(folder, suffix=".wav"):
     unique_filename = f"custom_tempfile_{int(time.time())}_{random.randint(1, 1000)}{suffix}"
     return os.path.join(folder, unique_filename)
 
-def format_audio_list(target_language, whisper_model, eval_split_number, speaker_name_input, create_bpe_tokenizer, gradio_progress=progress):
+def format_audio_list(target_language, whisper_model, eval_split_number, speaker_name_input, create_bpe_tokenizer, gradio_progress=gr.Progress(track_tqdm=True)):
     global out_path
     pfc_check_fail()
     audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith(('.mp3', '.flac', '.wav'))]
@@ -356,9 +357,11 @@ def format_audio_list(target_language, whisper_model, eval_split_number, speaker
         print("[FINETUNE] Existing evaluation metadata found and loaded.")
 
     whisper_words = []
-    start = time.time()
-
+    audio_steps = (0, len(audio_files))
+    gradio_progress_duration = 0
+    gradio_progress(audio_steps, desc="Starting audio processing", unit="files")
     for idx, audio_path in tqdm(enumerate(audio_files)):
+        start = datetime.datetime.now()
         if isinstance(audio_path, str):
             audio_file_name_without_ext, _ = os.path.splitext(os.path.basename(audio_path))
             # If it's a string, it's already the path to the file
@@ -496,11 +499,15 @@ def format_audio_list(target_language, whisper_model, eval_split_number, speaker
                 metadata["text"].append(sentence)
                 metadata["speaker_name"].append(speaker_name)
 
-        os.remove(temp_audio_path)
 
-    end = time.time()
-    length = end - start
-    print(f"[FINETUNE] Transcript took {length}s")
+        os.remove(temp_audio_path)
+        end = datetime.datetime.now()
+        gradio_progress_duration += (end - start).total_seconds()
+        audio_steps = (audio_steps[0] + 1, audio_steps[1])
+        additional_data_points_needed = audio_steps[1] - audio_steps[0]
+        avg_duration = gradio_progress_duration / audio_steps[0]
+        gradio_estimated_duration = (avg_duration * additional_data_points_needed)
+        gradio_progress(audio_steps, desc=f"Processing. Estimated Completion: {c_logger.format_duration(gradio_estimated_duration)}", unit="files")
 
     if os.path.exists(train_metadata_path) and os.path.exists(eval_metadata_path):
         existing_train_df = existing_metadata['train']
@@ -544,6 +551,8 @@ def format_audio_list(target_language, whisper_model, eval_split_number, speaker
     print("[FINETUNE] Train CSV:", train_metadata_path)
     print("[FINETUNE] Eval CSV:", eval_metadata_path)
     print("[FINETUNE] Audio Total:", audio_total_size)
+
+    gradio_progress(1, desc="Audio Processing Completed")
     return train_metadata_path, eval_metadata_path, audio_total_size
 
 ######################
@@ -1534,14 +1543,14 @@ if __name__ == "__main__":
 
             prompt_compute_btn = gr.Button(value="Step 1 - Create dataset")
         
-            def preprocess_dataset(language, whisper_model, eval_split_number, speaker_name_input, create_bpe_tokenizer, progress=gr.Progress(track_tqdm=True)):
+            def preprocess_dataset(language, whisper_model, eval_split_number, speaker_name_input, create_bpe_tokenizer):
                 clear_gpu_cache()
                 test_for_audio_files = [file for file in os.listdir(audio_folder) if any(file.lower().endswith(ext) for ext in ['.wav', '.mp3', '.flac'])]
                 if not test_for_audio_files:
                     return "I cannot find any mp3, wav or flac files in the folder called 'put-voice-samples-in-here'", "", ""
                 else:
                     try:
-                        train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model,  eval_split_number=eval_split_number, speaker_name_input=speaker_name_input, create_bpe_tokenizer=create_bpe_tokenizer, gradio_progress=progress)
+                        train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model, eval_split_number=eval_split_number, speaker_name_input=speaker_name_input, create_bpe_tokenizer=create_bpe_tokenizer)
                     except:
                         traceback.print_exc()
                         error = traceback.format_exc()
@@ -1631,14 +1640,14 @@ if __name__ == "__main__":
                         label="Learning Rate Scheduler",
                         choices=[
                             ("None", "None"),
-                            ("Step", "StepLR"),
-                            ("Multi Step", "MultiStepLR"),
-                            ("Exponential", "ExponentialLR"),
                             ("Cosine Annealing", "CosineAnnealingLR"),
-                            ("Reduce on Plateau", "ReduceLROnPlateau"),
+                            ("Cosine Annealing Warm Restarts", "CosineAnnealingWarmRestarts"),
                             ("Cyclic", "CyclicLR"),
+                            ("Exponential", "ExponentialLR"),
+                            ("Multi Step", "MultiStepLR"),
+                            ("Reduce on Plateau", "ReduceLROnPlateau"),
+                            ("Step", "StepLR")
                             #("OneCycleLR", "OneCycleLR"),
-                            ("Cosine Annealing Warm Restarts", "CosineAnnealingWarmRestarts")
                         ],
                         type="value",
                         allow_custom_value=False,
