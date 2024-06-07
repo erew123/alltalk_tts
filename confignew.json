@@ -20,10 +20,10 @@
         "autotune": false,
         "pitch": 0,
         "filter_radius": 3,
-        "index_rate": 0.5,
+        "index_rate": 0.75,
         "rms_mix_rate": 1,
         "protect": 0.5,
-        "hop_length": 79,
+        "hop_length": 130,
         "f0method": "fcpe",
         "embedder_model": "hubert",
         "training_data_size": 45000
