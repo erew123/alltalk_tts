@@ -435,10 +435,16 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
                 while audio.size(-1) > max_duration * sr:
                     split_audio = audio[:, :int(max_duration * sr)]
                     audio = audio[:, int(max_duration * sr):]
-                    split_file_name = f"wavs/{audio_file_name}_{str(i).zfill(8)}.wav"
-                    split_absolute_path = os.path.join(audio_folder, split_file_name)
+                    # Normalize the file path
+                    split_file_name = f"{audio_file_name}_{str(i).zfill(8)}.wav"
+                    split_relative_path = os.path.join('wavs', split_file_name)
+                    split_absolute_path = os.path.normpath(os.path.join(audio_folder, split_relative_path))
+                    # Ensure the directory exists
+                    os.makedirs(os.path.dirname(split_absolute_path), exist_ok=True)
+                    # Save the split audio
                     torchaudio.save(split_absolute_path, split_audio, sr)
-                    metadata["audio_file"].append(split_file_name)
+                    # Update metadata
+                    metadata["audio_file"].append(split_relative_path)
                     metadata["text"].append(sentence)
                     metadata["speaker_name"].append(speaker_name)
                     i += 1
