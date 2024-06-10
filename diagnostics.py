@@ -1,7 +1,6 @@
 import platform
 import subprocess
 import logging
-from importlib_metadata import distributions
 import torch
 import os
 import re
@@ -9,12 +8,10 @@ import sys
 import glob
 import site
 import textwrap
-import packaging.version
-import packaging.specifiers
-from packaging.specifiers import SpecifierSet
-from packaging.version import parse as parse_version
+import threading
 from pathlib import Path
 
+# Check and install psutil if necessary
 try:
     import psutil
 except ImportError:
@@ -22,22 +19,68 @@ except ImportError:
     subprocess.run(['pip', 'install', 'psutil'])
     import psutil
 
+# Check and install importlib_metadata if necessary
+try:
+    from importlib_metadata import distributions
+except ImportError:
+    print("importlib_metadata not found. Installing...")
+    subprocess.run(['pip', 'install', 'importlib_metadata'])
+    from importlib_metadata import distributions
+
+# Check and install packaging if necessary
+try:
+    from packaging.specifiers import SpecifierSet
+    from packaging.version import parse as parse_version
+except ImportError:
+    print("packaging not found. Installing...")
+    subprocess.run(['pip', 'install', 'packaging'])
+    from packaging.specifiers import SpecifierSet
+    from packaging.version import parse as parse_version
+
+def input_with_timeout(prompt, timeout):
+    def input_thread(result):
+        try:
+            result.append(input(prompt))
+        except EOFError:  # Handles the situation where input is interrupted
+            result.append(None)
+
+    result = []
+    thread = threading.Thread(target=input_thread, args=(result,))
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout)
+
+    if thread.is_alive():
+        print("\n\n    No input received. Using default 'requirements_standalone.txt'.")
+        return None
+    else:
+        return result[0]
+
 def get_requirements_file():
     this_dir = Path(__file__).parent
     requirements_dir = this_dir / 'system' / 'requirements'
     requirements_files = list(requirements_dir.glob('requirements*.txt'))
-    
+
     if not requirements_files:
         print("\033[91mNo requirements files found.\033[0m")
         return None
+    print(f"\033[94m      _    _ _ \033[1;35m_____     _ _     \033[0m  _____ _____ ____  ")
+    print(f"\033[94m     / \  | | |\033[1;35m_   _|_ _| | | __ \033[0m |_   _|_   _/ ___| ")
+    print(f"\033[94m    / _ \ | | |\033[1;35m | |/ _` | | |/ / \033[0m   | |   | | \___ \ ")
+    print(f"\033[94m   / ___ \| | |\033[1;35m | | (_| | |   <  \033[0m   | |   | |  ___) |")
+    print(f"\033[94m  /_/   \_\_|_|\033[1;35m |_|\__,_|_|_|\_\ \033[0m   |_|   |_| |____/ ")
+    print(f"")
 
-    print("\033[94m\n    Select a requirements file to check against.")
-    print("\033[94m    Or press Enter for default 'requirements_standalone.txt'):\033[0m\n")
+    print("\033[94m\n  Select a requirements file to check against.")
+    print("\033[94m  Or press Enter for default 'requirements_standalone.txt'):\033[0m\n")
     for i, file_path in enumerate(requirements_files, start=1):
-        print(f"    {i}. {file_path.name}")
-
-    choice = input("\n    Enter the number of your choice: ")
+        print(f"  {i}. {file_path.name}")
+    print("\033[94m\n  After 20 seconds, requirements_standalone.txt will be auto selected.\033[0m\n")
+    choice = input_with_timeout("\n  Enter the number of your choice: ", 20)
+    
     try:
+        if choice is None:
+            raise ValueError("No input; using default.")
         choice = int(choice) - 1
         return str(requirements_files[choice])
     except (ValueError, IndexError):
@@ -190,17 +233,17 @@ def log_system_info():
     logging.info(f" System RAM: {system_ram}")
     logging.info(f"\nGPU INFORMATION:")
     logging.info(f" {gpu_info}")
+    logging.info(f"CUDA:")
+    logging.info(f" CUDA Working: {cuda_test_result}")
+    logging.info(f" CUDA_HOME   : {cuda_home}")    
     logging.info(f" CUDA Device : {cuda_device_name}")
     logging.info(f" CUDA Memory : {cuda_device_memory:.2f} GB")
     logging.info(f" CUDA Version: {cuda_version}")
-    logging.info("DISK INFORMATION:")
+    logging.info("\nDISK INFORMATION:")
     for disk in disk_info:
         logging.info(disk)
     logging.info("\nNETWORK PORT:")
     logging.info(f" Port Status : {port_status}")
-    logging.info("\nCUDA        :")
-    logging.info(f" CUDA Working: {cuda_test_result}")
-    logging.info(f" CUDA_HOME   : {cuda_home}")
     if found_paths:
         logging.info(f" Cublas64_11 Path: {', '.join(found_paths)}")
     else:
@@ -333,3 +376,4 @@ def log_system_info():
 
 if __name__ == "__main__":
     log_system_info()
+    sys.exit(1)
