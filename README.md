@@ -142,6 +142,8 @@ To perform a Standalone installation of AllTalk:
 
 As long as you did the `git clone` method to setup initially, you will be able to go into the folder and use `git pull` to download updates.
 
+There was an issue with the `.gitignore` file, so if you cannot git pull on a build that is pre 11 June 2024, you can `git reset --hard origin/alltalkbeta` and then git pull (your config file will be reset).
+
 ---
 
 ### 🆘 Support Requests, Troubleshooting, BETA Discussions & Feature requests
