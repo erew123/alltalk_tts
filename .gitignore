@@ -1,8 +1,0 @@
-voices/*.*
-models/*.*
-outputs/*.*
-finetune/*.*
-system/config/at_github_sha.json
-system/tts_engines/tts_engines.json
-confignew.json
-diagnostics.log
