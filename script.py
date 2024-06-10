@@ -1870,11 +1870,11 @@ if gradio_enabled == True:
 
     if __name__ == "__main__":
         app = alltalk_gradio().queue()
-        app.launch(server_port=params['gradio_port_number'], prevent_thread_lock=True, quiet=True)
+        app.launch(server_name="0.0.0.0", server_port=params['gradio_port_number'], prevent_thread_lock=True, quiet=True)
 
     if not running_in_standalone:
         app = alltalk_gradio().queue()
-        app.launch(server_port=params['gradio_port_number'], prevent_thread_lock=True, quiet=True)
+        app.launch(server_name="0.0.0.0", server_port=params['gradio_port_number'], prevent_thread_lock=True, quiet=True)
 
 #########################################
 # START-UP # Final Splash before Gradio #
