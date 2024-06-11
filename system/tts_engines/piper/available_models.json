@@ -338,24 +338,10 @@
       ]
     },
     {
-      "model_name": "en_US-ryan-high",
-      "files_to_download": [
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx?download=true",
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx.json?download=true"
-      ]
-    },
-    {
       "model_name": "en_US-ryan-low",
       "files_to_download": [
         "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/low/en_US-ryan-low.onnx?download=true",
         "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/low/en_US-ryan-low.onnx.json?download=true"
-      ]
-    },
-    {
-      "model_name": "en_US-ryan-medium",
-      "files_to_download": [
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium/en_US-ryan-medium.onnx?download=true",
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json?download=true"
       ]
     },
     {
