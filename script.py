@@ -63,16 +63,30 @@ print(f"[{branding}TTS]\033[94m  / ___ \| | |\033[1;35m | | (_| | |   <  \033[0m
 print(f"[{branding}TTS]\033[94m /_/   \_\_|_|\033[1;35m |_|\__,_|_|_|\_\ \033[0m   |_|   |_| |____/ ")
 print(f"[{branding}TTS]")
 
+##############################################
+# START-UP # Check if we are on Google Colab #
+##############################################
+def check_google_colab():
+    try:
+        import google.colab
+        return True
+    except ImportError:
+        return False
+
+running_on_google_colab = check_google_colab()
+
 ######################################################
 # START-UP # Check if this is a first time start-up  #
 ######################################################
 def run_firsttime_script():
+    script_path = '/content/alltalk_tts/system/config/firstrun.py' if running_on_google_colab else 'system/config/firstrun.py'
     try:
-        subprocess.run(['python', 'system/config/firstrun.py'], check=True)
+        subprocess.run(['python', script_path], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while running the script: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-# Call the function to run the startup script
 run_firsttime_script()
 
 ###########################################################
@@ -301,16 +315,14 @@ def signal_handler(sig, frame):
 try:
     import google.colab
     running_on_google_colab = True
-    #if deepspeed_installed:
-        #params["deepspeed_activate"] = True
     with open('/content/alltalk_tts/googlecolab.json', 'r') as f:
         data = json.load(f)
-        google_ip_address = data.get('google_ip_address', tunnel_url)
+        tunnel_url_1, tunnel_url_2 = data.get('google_ip_address', [None, None])
 except FileNotFoundError:
     print("Could not find IP address")
-    google_ip_address = tunnel_url
+    tunnel_url_1, tunnel_url_2 = None, None
 except ImportError:
-    pass
+    running_on_google_colab = False
 
 # Attach the signal handler to the SIGINT signal (Ctrl+C)
 signal.signal(signal.SIGINT, signal_handler)
@@ -326,7 +338,7 @@ else:
     if process.poll() is None:
         if running_on_google_colab:
             print(f"[{branding}TTS]")
-            print(f"[{branding}TTS] \033[94m{branding}Google Colab Address:\033[00m",f"\033[92m{google_ip_address}:443\033[00m")
+            print(f"[{branding}TTS] \033[94mGoogle Colab Detected\033[00m")
             print(f"[{branding}TTS]")
     else:
         print(f"[{branding}TTS] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process")
@@ -376,11 +388,18 @@ else:
         # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
         sys.exit(1)
 
-    print(f"[{branding}TTS]")
-    print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m127.0.0.1:{params['api_def']['api_port_number']}\033[00m")
-    print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92mhttp://127.0.0.1:{params['gradio_port_number']}\033[00m")
-    print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{params['gradio_port_number']}?__theme=dark\033[00m")
-    print(f"[{branding}TTS]")
+    if running_on_google_colab:
+        print(f"[{branding}TTS]")
+        print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m{tunnel_url_1}\033[00m")
+        print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92m{tunnel_url_2}\033[00m")
+        print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m",f"\033[92m{tunnel_url_2}?__theme=dark\033[00m")
+        print(f"[{branding}TTS]")
+    else:
+        print(f"[{branding}TTS]")
+        print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m127.0.0.1:{params['api_def']['api_port_number']}\033[00m")
+        print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92mhttp://127.0.0.1:{params['gradio_port_number']}\033[00m")
+        print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{params['gradio_port_number']}?__theme=dark\033[00m")
+        print(f"[{branding}TTS]")
 
 
 #########################################
@@ -497,9 +516,14 @@ tts_model_loaded = None
 #################################################
 def get_alltalk_settings():
     global current_model_loaded, models_available, engines_available, current_engine_loaded
-    voices_url = f"{alltalk_protocol}{alltalk_ip_port}/api/voices"
-    rvcvoices_url = f"{alltalk_protocol}{alltalk_ip_port}/api/rvcvoices"
-    settings_url = f"{alltalk_protocol}{alltalk_ip_port}/api/currentsettings"
+    if running_on_google_colab:
+        voices_url = f"{tunnel_url_1}/api/voices"
+        rvcvoices_url = f"{tunnel_url_1}/api/rvcvoices"
+        settings_url = f"{tunnel_url_1}/api/currentsettings"
+    else:
+        voices_url = f"{alltalk_protocol}{alltalk_ip_port}/api/voices"
+        rvcvoices_url = f"{alltalk_protocol}{alltalk_ip_port}/api/rvcvoices"
+        settings_url = f"{alltalk_protocol}{alltalk_ip_port}/api/currentsettings"
 
     try:
         voices_response = requests.get(voices_url, timeout=connection_timeout)
@@ -612,7 +636,10 @@ at_settings = get_alltalk_settings()   # Pull all the current settings from the 
 #### TTS STOP GENERATION ####
 #############################
 def stop_generate_tts():
-    api_url = f"{alltalk_protocol}{alltalk_ip_port}/api/stop-generation"
+    if running_on_google_colab:
+        api_url = f"{tunnel_url_1}/api/stop-generation"
+    else:
+        api_url = f"{alltalk_protocol}{alltalk_ip_port}/api/stop-generation"
     try:
         response = requests.put(api_url, timeout=connection_timeout)  
         if response.status_code == 200:
@@ -630,7 +657,10 @@ def stop_generate_tts():
 # MODEL - Swap model based on Gradio selection
 def send_reload_request(value_sent):
     try:
-        url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
+        if running_on_google_colab:
+            url = f"{tunnel_url_1}/api/reload"
+        else:
+            url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
         payload = {"tts_method": value_sent}
         response = requests.post(url, params=payload)
         response.raise_for_status()  # Raises an HTTPError for bad responses
@@ -667,9 +697,9 @@ def tgwui_save_settings():
     with open(config_file_path, "w") as file:
         json.dump(existing_settings, file, indent=4)
         
-#############################################
-# Low VRAM change request to enable/disable #
-#############################################
+#####################################################
+# TGWUI - Low VRAM change request to enable/disable #
+#####################################################
 # LOW VRAM - Gradio Checkbox handling
 def send_lowvram_request(value_sent):
     try:
@@ -693,9 +723,9 @@ def send_lowvram_request(value_sent):
         print(f"[{branding}Server] \033[91mWarning\033[0m Error during request to webserver process: Status code:\n{e}")
         return {"status": "error", "message": str(e)}
 
-###################
-#### DeepSpeed ####
-###################
+#########################
+# TGWUI -  DeepSpeed ####
+#########################
 def send_deepspeed_request(value_sent):
     try:
         params["tgwui"]["tts_model_loaded"] = False
@@ -718,9 +748,9 @@ def send_deepspeed_request(value_sent):
         print(f"[{branding}Server] \033[91mWarning\033[0m Error during request to webserver process: Status code:\n{e}")
         return {"status": "error", "message": str(e)}
 
-#################################
-#### TTS STANDARD GENERATION ####
-#################################
+###################################
+# TGWUI - TTS STANDARD GENERATION #
+###################################
 def send_and_generate(gen_text, gen_character_voice, gen_narrartor_voice, gen_narrator_activated, gen_textnotinisde, gen_repetition, gen_language, gen_filter, gen_speed, gen_pitch, gen_autoplay, gen_autoplay_vol, gen_file_name, gen_temperature, gen_filetimestamp, gen_stream, gen_stopcurrentgen):
     api_url = f"{alltalk_protocol}{alltalk_ip_port}/api/tts-generate"
     if gen_text == "":
@@ -1173,7 +1203,10 @@ if gradio_enabled == True:
 
     def reload_config():
         # Send a GET request to the /reload_config endpoint
-        reload_config_url = f"http://localhost:{params['api_def']['api_port_number']}/api/reload_config"
+        if running_on_google_colab:
+            reload_config_url = f"{tunnel_url_1}/api/reload_config"
+        else:
+            reload_config_url = f"http://localhost:{params['api_def']['api_port_number']}/api/reload_config"
         try:
             response = requests.get(reload_config_url)
             if response.status_code == 200:
@@ -1259,7 +1292,7 @@ if gradio_enabled == True:
         # Restart the subprocess
         restart_subprocess()
         # Wait for the engine to be ready with error handling and retries
-        max_retries = 40
+        max_retries = 80
         retry_delay = 1  # seconds
         retries = 0
         while retries < max_retries:
@@ -1306,7 +1339,10 @@ if gradio_enabled == True:
         
         # Define the output path for the processed audio
         output_rvc_path = this_dir / "outputs" / "voice2rvcOutput.wav"
-        url = f"{alltalk_protocol}{alltalk_ip_port}/api/voice2rvc"
+        if running_on_google_colab:
+            url = f"{tunnel_url_1}/api/voice2rvc"
+        else:
+            url = f"{alltalk_protocol}{alltalk_ip_port}/api/voice2rvc"
 
         # Submit the paths to the API endpoint
         response = requests.post(url, data={
@@ -1335,7 +1371,10 @@ if gradio_enabled == True:
             print(f"[{branding}ENG]")
             print(f"[{branding}ENG] \033[94mChanging model loaded. Please wait.\033[00m")
             print(f"[{branding}ENG]")
-            url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
+            if running_on_google_colab:
+                url = f"{tunnel_url_1}/api/reload"
+            else: 
+                url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
             payload = {"tts_method": selected_model}
             response = requests.post(url, params=payload)
             response.raise_for_status()  # Raises an HTTPError for bad responses
@@ -1461,14 +1500,20 @@ if gradio_enabled == True:
         return "RVC settings updated successfully!"
 
     def generate_tts(gen_text, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen):
-        api_url = f"http://{my_current_url}/api/tts-generate"
+        if running_on_google_colab:
+            api_url = f"{tunnel_url_1}/api/tts-generate"
+        else:
+            api_url = f"http://{my_current_url}/api/tts-generate"
         if gen_text == "":
             print(f"[{branding}TTS] No Text was sent to generate as TTS")
             return None, str("No Text was sent to generate as TTS")
         if gen_stopcurrentgen:
             stop_generate_tts()
         if gen_stream == "true":
-            api_url = f"http://{my_current_url}/api/tts-generate-streaming"
+            if running_on_google_colab:
+                api_url = f"{tunnel_url_1}/api/tts-generate-streaming"
+            else:
+                api_url = f"http://{my_current_url}/api/tts-generate-streaming"
             encoded_text = requests.utils.quote(gen_text)
             streaming_url = f"{api_url}?text={encoded_text}&voice={gen_char}&language={gen_lang}&output_file={gen_filen}"
             return streaming_url, str("TTS Streaming Audio Generated")
@@ -1506,7 +1551,10 @@ if gradio_enabled == True:
                         # Set the protocol type
                         protocol = "http://"  # or "https://" if using HTTPS
                         # Prepend the URL and PORT to the output_file_url
-                        output_file_url = f"{protocol}{my_current_url}{result['output_file_url']}"
+                        if running_on_google_colab:
+                            output_file_url = f"{tunnel_url_1}{result['output_file_url']}"
+                        else:
+                            output_file_url = f"{protocol}{my_current_url}{result['output_file_url']}"
                         return output_file_url, str("TTS Audio Generated")
             except requests.exceptions.RequestException as e:
                 error_message = "An error occurred. Please see console output."
@@ -1520,6 +1568,9 @@ if gradio_enabled == True:
         # Get the URL IP or domain name
         def get_domain_name(request: gr.Request):
             global my_current_url
+            if running_on_google_colab:
+                my_current_url = tunnel_url_1
+                return None
             if request:
                 host = request.headers.get("host", "Unknown")
                 my_current_url = host.split(":")[0]  # Split the host by ":" and take the first part
