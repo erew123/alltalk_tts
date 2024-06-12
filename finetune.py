@@ -1,27 +1,30 @@
-import argparse
 import os
-import sys
-import platform
-import site
-import tempfile
-import signal
-import gradio as gr
-import torch
-import torchaudio
-import traceback
-from TTS.tts.configs.xtts_config import XttsConfig
-from TTS.tts.models.xtts import Xtts
-import random
 import gc
+import re
+import sys
 import time
-import shutil
-import psutil
-import pandas as pd
 import glob
 import json
-from pathlib import Path
+import site
+import torch
+import signal
+import random
+import shutil
+import psutil
+import string
+import tempfile
+import platform
+import argparse
+import torchaudio
+import traceback
+import gradio as gr
+import pandas as pd
+from word2number import w2n
 from tqdm import tqdm
+from pathlib import Path
 from faster_whisper import WhisperModel  
+from TTS.tts.configs.xtts_config import XttsConfig
+from TTS.tts.models.xtts import Xtts
 # Use a local Tokenizer to resolve Japanese support
 # from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
 from system.ft_tokenizer.tokenizer import multilingual_cleaners
@@ -42,6 +45,13 @@ base_path = this_dir / "models" / "xtts"
 # Set the Gradio temporary directory
 gradio_temp_dir = this_dir / "finetune" / "gradio_temp"
 os.environ["GRADIO_TEMP_DIR"] = str(gradio_temp_dir)
+
+# Set validation globals to nothing
+validate_train_metadata_path = None
+validate_eval_metadata_path = None
+validate_audio_folder = None
+validate_whisper_model = None
+validate_target_language = None
 
 ########################
 #### Find All Model ####
@@ -298,8 +308,11 @@ def create_temporary_file(folder, suffix=".wav"):
     unique_filename = f"custom_tempfile_{int(time.time())}_{random.randint(1, 1000)}{suffix}"
     return os.path.join(folder, unique_filename)
 
-def format_audio_list(target_language, whisper_model, out_path, max_sample_length, eval_split_number, speaker_name_input, gradio_progress=None):
-    buffer = 0.2
+
+
+def format_audio_list(target_language, whisper_model, out_path, max_sample_length, eval_split_number, speaker_name_input, gradio_progress=gr.Progress()):
+    global validate_train_metadata_path, validate_eval_metadata_path, validate_audio_folder, validate_whisper_model, validate_target_language
+    buffer = 0.3
     max_duration = float(max_sample_length)  # Ensure max_duration is a float
     eval_percentage = eval_split_number / 100.0
     speaker_name = speaker_name_input
@@ -326,6 +339,7 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
     else:
         print("[FINETUNE] The existing language matches the target language")
 
+    gradio_progress((1, 4), desc="Loading in Whisper")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     asr_model = WhisperModel(whisper_model, device=device, compute_type="float32")
 
@@ -343,6 +357,9 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
         existing_metadata['eval'] = pd.read_csv(eval_metadata_path, sep="|")
         print("[FINETUNE] Existing evaluation metadata found and loaded.")
 
+    # List to store information about files that are too long
+    too_long_files = []
+
     # Process original voice samples to create WAV files
     original_audio_files = [os.path.join(original_samples_folder, file) for file in os.listdir(original_samples_folder) if file.endswith(('.mp3', '.flac', '.wav'))]
 
@@ -350,7 +367,8 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
         print(f"[FINETUNE] No audio files found in {original_samples_folder}. Skipping processing.")
         return None, None, 0
 
-    for idx, audio_path in tqdm(enumerate(original_audio_files)):
+    for audio_path in tqdm(original_audio_files):  # No start argument for tqdm
+        gradio_progress((2, 4), desc="Processing Audio Files")
         audio_file_name_without_ext, _ = os.path.splitext(os.path.basename(audio_path))
         temp_audio_path = os.path.join(temp_folder, f"{audio_file_name_without_ext}.wav")
 
@@ -370,7 +388,7 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
             if existing_metadata[key] is not None:
                 mask = existing_metadata[key]['audio_file'].str.startswith(prefix_check)
                 if mask.any():
-                    print(f"[FINETUNE] Segments from {audio_file_name_without_ext} have been previously processed; skipping...")
+                    print(f"\n[FINETUNE] Segments from {audio_file_name_without_ext} have been previously processed; skipping...")
                     skip_processing = True
                     audio_total_size = 121
                     break
@@ -387,7 +405,7 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
 
         segments, _ = asr_model.transcribe(audio_path, vad_filter=True, word_timestamps=True, language=target_language)
         segments = list(segments)
-        i = 0
+        i = 1  # Start the index at 1
         sentence = ""
         sentence_start = None
         first_word = True
@@ -426,30 +444,32 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
 
                 absolute_path = os.path.join(audio_folder, audio_file)  # Save to the audio_folder
                 os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
-                i += 1
                 first_word = True
 
                 audio = wav[int(sr * sentence_start):int(sr * word_end)].unsqueeze(0)
                 
                 # If the audio is too long, split it into smaller chunks
+                if audio.size(-1) > max_duration * sr:
+                    gradio_progress((3,4), "Splitting overly large audio")
+                    too_long_files.append((audio_file, audio.size(-1) / sr))
                 while audio.size(-1) > max_duration * sr:
                     split_audio = audio[:, :int(max_duration * sr)]
                     audio = audio[:, int(max_duration * sr):]
                     # Normalize the file path
                     split_file_name = f"{audio_file_name}_{str(i).zfill(8)}.wav"
-                    split_relative_path = os.path.join('wavs', split_file_name)
+                    split_relative_path = os.path.join(split_file_name)
                     split_absolute_path = os.path.normpath(os.path.join(audio_folder, split_relative_path))
                     # Ensure the directory exists
                     os.makedirs(os.path.dirname(split_absolute_path), exist_ok=True)
                     # Save the split audio
                     torchaudio.save(split_absolute_path, split_audio, sr)
                     # Update metadata
-                    metadata["audio_file"].append(split_relative_path)
+                    metadata["audio_file"].append(f"wavs/{split_relative_path}")
                     metadata["text"].append(sentence)
                     metadata["speaker_name"].append(speaker_name)
                     i += 1
 
-                if audio.size(-1) >= sr / 3:  # if the remaining audio is at least 0.33 seconds
+                if audio.size(-1) >= sr:  # if the remaining audio is at least half a second long
                     torchaudio.save(absolute_path, audio, sr)
                 else:
                     continue
@@ -457,6 +477,7 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
                 metadata["audio_file"].append(f"wavs/{audio_file_name}_{str(i).zfill(8)}.wav")
                 metadata["text"].append(sentence)
                 metadata["speaker_name"].append(speaker_name)
+                i += 1  # Increment the index after saving
 
         os.remove(temp_audio_path)
 
@@ -468,15 +489,41 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
         return None, None, 0
 
     if os.path.exists(train_metadata_path) and os.path.exists(eval_metadata_path):
-        existing_train_df = existing_metadata['train']
-        existing_eval_df = existing_metadata['eval']
-    else:
-        existing_train_df = pd.DataFrame(columns=["audio_file", "text", "speaker_name"])
-        existing_eval_df = pd.DataFrame(columns=["audio_file", "text", "speaker_name"])
+        validate_train_metadata_path = train_metadata_path
+        validate_eval_metadata_path = eval_metadata_path
+        validate_audio_folder = audio_folder
+        validate_whisper_model = whisper_model
+        validate_target_language = target_language
+        
+        gradio_progress((4,4), "Finalizing")
+        
+        del asr_model, existing_metadata
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        return train_metadata_path, eval_metadata_path, audio_total_size
+
+    # Check if there are any new audio files to process
+    if not metadata["audio_file"]:
+        print("[FINETUNE] No new audio files to process. Skipping processing.")
+        validate_train_metadata_path = train_metadata_path
+        validate_eval_metadata_path = eval_metadata_path
+        validate_audio_folder = audio_folder
+        validate_whisper_model = whisper_model
+        validate_target_language = target_language
+        
+        gradio_progress((4,4), "Finalizing")
+        
+        del asr_model, existing_metadata
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        return train_metadata_path, eval_metadata_path, audio_total_size
 
     new_data_df = pd.DataFrame(metadata)
-    combined_train_df = pd.concat([existing_train_df, new_data_df], ignore_index=True).drop_duplicates().reset_index(drop=True)
-    combined_train_df_shuffled = combined_train_df.sample(frac=1)
+    combined_train_df_shuffled = new_data_df.sample(frac=1)
     num_val_samples = int(len(combined_train_df_shuffled) * eval_percentage)
 
     final_eval_set = combined_train_df_shuffled[:num_val_samples]
@@ -485,12 +532,109 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
     final_training_set.sort_values('audio_file').to_csv(train_metadata_path, sep='|', index=False)
     final_eval_set.sort_values('audio_file').to_csv(eval_metadata_path, sep='|', index=False)
 
+    gradio_progress((4,4), "Finalizing")
+
     del asr_model, final_eval_set, final_training_set, new_data_df, existing_metadata
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+
+    # Print or log the files that were too long
+    if too_long_files:
+        print(f"[FINETUNE] The following files were too long and were split into smaller chunks:")
+        print(f"[FINETUNE]")
+        for file_name, length in too_long_files:
+            print(f"[FINETUNE] File: {file_name}, Length: {length:.2f} seconds")
+        print(f"[FINETUNE]")
+    
+    validate_train_metadata_path = train_metadata_path
+    validate_eval_metadata_path = eval_metadata_path
+    validate_audio_folder = audio_folder
+    validate_whisper_model = whisper_model
+    validate_target_language = target_language
+    
     return train_metadata_path, eval_metadata_path, audio_total_size
 
+
+#######################
+# STEP 1 # Validation #
+#######################
+def normalize_text(text):
+    # Convert text to lowercase
+    text = text.lower()
+    # Remove punctuation
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    # Replace multiple spaces with a single space
+    text = re.sub(r'\s+', ' ', text)
+    # Convert written numbers to digits
+    words = text.split()
+    normalized_words = []
+    for word in words:
+        try:
+            # Try to convert word to a number
+            normalized_word = str(w2n.word_to_num(word))
+        except ValueError:
+            # If it fails, keep the original word
+            normalized_word = word
+        normalized_words.append(normalized_word)
+    # Join words back into a single string
+    text = ' '.join(normalized_words)
+    return text
+
+def get_audio_file_list(mismatches):
+    if mismatches.empty:
+        return ["No bad transcriptions"]
+    else:
+        return mismatches["Audio Path"].tolist()
+
+def load_and_display_mismatches():
+    def validate_audio_transcriptions(csv_paths, audio_folder, whisper_model, target_language, progress=None):
+        metadata_dfs = []
+        for csv_path in csv_paths:
+            metadata_df = pd.read_csv(csv_path, sep='|')
+            metadata_dfs.append(metadata_df) 
+        metadata_df = pd.concat(metadata_dfs, ignore_index=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        asr_model = WhisperModel(whisper_model, device=device, compute_type="float32")
+        mismatches = []
+        total_files = metadata_df.shape[0]
+        if progress is not None:
+            progress((0, total_files), desc="Processing files")
+        for index, row in tqdm(metadata_df.iterrows(), total=total_files, unit="file", disable=False, leave=True):
+            audio_file = row['audio_file']
+            expected_text = row['text']
+            audio_file_name = audio_file.replace("wavs/", "")
+            audio_path = os.path.normpath(os.path.join(audio_folder, audio_file_name))
+            if not os.path.exists(audio_path):
+                if progress is not None:
+                    progress((index + 1, total_files), desc="Processing files")  # Update progress bar for skipped files
+                continue
+            wav, sr = torchaudio.load(audio_path)
+            segments, _ = asr_model.transcribe(audio_path, vad_filter=True, word_timestamps=True, language=target_language)
+            transcribed_text = " ".join([segment.text for segment in segments]).strip()
+            normalized_expected_text = normalize_text(expected_text)
+            normalized_transcribed_text = normalize_text(transcribed_text)
+            if normalized_transcribed_text != normalized_expected_text:
+                mismatches.append([
+                    row['text'],  # expected_text
+                    transcribed_text,
+                    audio_file_name,  # Just the filename for display
+                    audio_path  # Full path for playback
+                ])
+            if progress is not None:
+                progress((index + 1, total_files), desc="Processing files")  # Update progress bar for each file
+        return mismatches
+    def load_mismatches(csv_paths, audio_folder, whisper_model, target_language, progress):
+        mismatches_list = validate_audio_transcriptions(csv_paths, audio_folder, whisper_model, target_language, progress)
+        return pd.DataFrame(mismatches_list, columns=["Expected Text", "Transcribed Text", "Filename", "Audio Path"])
+    progress = gr.Progress(track_tqdm=True)
+    if validate_train_metadata_path and validate_eval_metadata_path and validate_audio_folder and validate_whisper_model and validate_target_language:
+        mismatches = load_mismatches([validate_train_metadata_path, validate_eval_metadata_path], validate_audio_folder, validate_whisper_model, validate_target_language, progress)
+        file_list = get_audio_file_list(mismatches)
+        file_list_select = file_list[0] if file_list else "No Mismatched Audio Files"
+        return mismatches[["Expected Text", "Transcribed Text", "Filename"]], gr.Dropdown(choices=file_list, value=file_list_select), ""
+    else:
+        return pd.DataFrame(columns=["Expected Text", "Transcribed Text", "Filename"]), [], ""
 
 
 ######################
@@ -1210,14 +1354,14 @@ if __name__ == "__main__":
                     with gr.Column(scale=3):
                         with gr.Row():                                        
                             with gr.Column(scale=1):                        
-                                audio_upload_button = gr.Button("Upload Audio")
-                                delete_audio_button = gr.Button("Delete Existing Audio")
+                                audio_upload_button = gr.Button("Upload New Audio Samples")
+                                delete_audio_button = gr.Button("Delete Existing Audio Samples")
                                 delete_dataset_button = gr.Button("Delete Existing Training Dataset")                        
                             with gr.Column(scale=2):
                                 gr.Markdown("""
-                                You can manually copy your audio files to `/finetune/put-voice-samples-in-here/` or use the upload to the left and click "Upload Audio". Once you have uploaded files, you can start creating your dataset.
+                                You can manually copy your audio files to `/finetune/put-voice-samples-in-here/` or use the upload to the left and click "Upload New Audio Samples". Once you have uploaded files, you can start creating your dataset.
 
-                                - If you wish to delete previously uploaded audio files then use 'Delete Existing Audio'.
+                                - If you wish to delete previously uploaded audio samples files then use 'Delete Existing Audio Samples'.
                                 - If you wish to delete previously generated training datasets, please use 'Delete Existing Training Dataset'.
                                 - If you wish to re-use your previously created training data, just click 'Create Dataset'.
                                 """)
@@ -1267,7 +1411,7 @@ if __name__ == "__main__":
                         scale=1,
                     )
                     max_sample_length = gr.Dropdown(
-                        label="Max Audio Length Created by Whisper (seconds)",
+                        label="Maximum Audio Length Created by Whisper (seconds)",
                         value="30",
                         choices=["10", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80", "85", "90"],
                         scale=2
@@ -1298,7 +1442,7 @@ if __name__ == "__main__":
 
                 prompt_compute_btn = gr.Button(value="Step 1 - Create dataset")
             
-                def preprocess_dataset(language, whisper_model, out_path, max_sample_length, eval_split_number, speaker_name_input, progress=gr.Progress(track_tqdm=True)):
+                def preprocess_dataset(language, whisper_model, out_path, max_sample_length, eval_split_number, speaker_name_input, progress=gr.Progress()):
                     clear_gpu_cache()
                     test_for_audio_files = [file for file in os.listdir(audio_folder) if any(file.lower().endswith(ext) for ext in ['.wav', '.mp3', '.flac'])]
                     if not test_for_audio_files:
@@ -1320,9 +1464,31 @@ if __name__ == "__main__":
                         print("[FINETUNE] ",message)
                         return message, "", ""
 
-                    print("[FINETUNE] Dataset Generated. Move to Step 2")
-                    return "Dataset Generated. Move to Step 2", train_meta, eval_meta
+                    print("[FINETUNE] Dataset Generated. Either run Dataset Validation or move to Step 2")
+                    return "Dataset Generated. Either run Dataset Validation or move to Step 2", train_meta, eval_meta
+            
+            def play_selected_audio(selected_file):
+                if selected_file and selected_file != "Please Generate Your Dataset":
+                    return selected_file
+                return None
+        
+            with gr.TabItem("Dataset Validation"):
+                gr.Markdown("""# Audio Transcription Validation
+                            This feature allows you to validate the transcriptions in your dataset by comparing the generated audio files against the expected transcriptions provided in the training and evaluation CSV files. It uses the Whisper model to transcribe each audio file and checks if the transcribed text matches the corresponding text in the CSV files. Any mismatches found during the validation process are highlighted in a list, and you can select and play the mismatched audio files from a dropdown menu to manually compare them with the transcriptions. If necessary, you'll need to manually edit and update the CSV files to correct any discrepancies identified during the validation process. Whisper is a Best Effort helper for generating a dataset and editing the dataset or manual dataset generation will be the only way to get a 100% perfect dataset.
+                            """)
                 
+                with gr.Row():
+                    load_button = gr.Button("Run Validation")
+                    progress_box = gr.Textbox(label="Progress", interactive=False)
+                with gr.Row():
+                    audio_dropdown = gr.Dropdown(label="Select Audio File to Play", choices=["Please Generate Your Dataset"], value="Please Generate Your Dataset", allow_custom_value=True)
+                    audio_output = gr.Audio(label="Audio Player", interactive=False)
+                
+                mismatch_table = gr.Dataframe(headers=["Text in the CSV Files", "Whisper Transcribed Text", "Filename"], datatype=["str", "str", "str"], interactive=False, wrap=True)
+            
+                load_button.click(load_and_display_mismatches, [], [mismatch_table, audio_dropdown, progress_box])           
+                audio_dropdown.change(play_selected_audio, [audio_dropdown], audio_output)
+            
             with gr.Tab("Generate Dataset Instructions"):
                 gr.Markdown(
                     f"""
