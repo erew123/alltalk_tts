@@ -536,12 +536,16 @@ def tgwui_update_dropdowns():
         language_label = "Model not multi language"
     if current_character_voice not in current_voices:
         current_character_voice = current_voices[0] if current_voices else ""
+        params["tgwui"]["tgwui_character_voice"] = current_character_voice
     if current_narrator_voice not in current_voices:
         current_narrator_voice = current_voices[0] if current_voices else ""
+        params["tgwui"]["tgwui_narrator_voice"] = current_narrator_voice
     if rvccurrent_character_voice not in rvccurrent_voices:
         rvccurrent_character_voice = rvccurrent_voices[0] if rvccurrent_voices else ""
+        params["tgwui"]["tgwui_rvc_char_voice"] = rvccurrent_character_voice
     if rvccurrent_narrator_voice not in rvccurrent_voices:
         rvccurrent_narrator_voice = rvccurrent_voices[0] if rvccurrent_voices else ""
+        params["tgwui"]["tgwui_rvc_char_voice"] = rvccurrent_narrator_voice
     tgwui_handle_ttsmodel_dropdown_change.skip_reload = True  # Debounce tgwui_tts_dropdown_gr and stop it sending a model reload when it is updated.
 
     return (
