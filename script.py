@@ -63,31 +63,6 @@ print(f"[{branding}TTS]\033[94m  / ___ \| | |\033[1;35m | | (_| | |   <  \033[0m
 print(f"[{branding}TTS]\033[94m /_/   \_\_|_|\033[1;35m |_|\__,_|_|_|\_\ \033[0m   |_|   |_| |____/ ")
 print(f"[{branding}TTS]")
 
-##############################################
-# START-UP # Check if we are on Google Colab #
-##############################################
-def check_google_colab():
-    try:
-        import google.colab
-        return True
-    except ImportError:
-        return False
-
-running_on_google_colab = check_google_colab()
-
-######################################################
-# START-UP # Check if this is a first time start-up  #
-######################################################
-def run_firsttime_script():
-    script_path = '/content/alltalk_tts/system/config/firstrun.py' if running_on_google_colab else 'system/config/firstrun.py'
-    try:
-        subprocess.run(['python', script_path], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while running the script: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-
-run_firsttime_script()
 
 ###########################################################
 # START-UP # Check for updates needed to the config file  #
@@ -183,16 +158,33 @@ params = load_config(config_file_path)
 #############################################################################
 # START-UP # Check current folder name has dashes '-' in it and error if so #
 #############################################################################
-if "-" in current_folder:
+# Get the directory of the current script
+this_script_path = Path(__file__).resolve()
+this_script_dir = this_script_path.parent
+# Get the current folder name
+this_current_folder = this_script_dir.name
+if "-" in this_current_folder:
     print(f"[{branding}TTS]")
     print(f"[{branding}TTS] \033[91mWarning\033[0m The current folder name contains a dash ('\033[93m-\033[0m') and this causes errors/issues. Please ensure")
     print(f"[{branding}TTS] \033[91mWarning\033[0m the folder name does not have a dash e.g. rename ('\033[93malltalk_tts-main\033[0m') to ('\033[93malltalk_tts\033[0m').")
     print(f"[{branding}TTS]")
-    print(f"[{branding}TTS] \033[92mCurrent folder:\033[0m {current_folder}")
+    print(f"[{branding}TTS] \033[92mCurrent folder:\033[0m {this_current_folder}")
     sys.exit(1)
 
+##############################################
+# START-UP # Check if we are on Google Colab #
+##############################################
+def check_google_colab():
+    try:
+        import google.colab
+        return True
+    except ImportError:
+        return False
+
+running_on_google_colab = check_google_colab()
+
 ###############################################################################
-# START-UP # Test if we are running within Text-gen-webui or as a Stanadalone #
+# START-UP # Test if we are running within Text-gen-webui or as a Standalone  #
 ###############################################################################
 try:
     import gradio as gr
@@ -202,9 +194,34 @@ try:
     from modules.utils import gradio
     print(f"[{branding}TTS] \033[92mStart-up Mode     : \033[93mText-gen-webui mode\033[0m")
     running_in_standalone = False
+    running_in_tgwui = True
 except ModuleNotFoundError:
     running_in_standalone = True
+    running_in_tgwui = False
     print(f"[{branding}TTS] \033[92mStart-up Mode     : \033[93mStandalone mode\033[0m")
+
+######################################################
+# START-UP # Check if this is a first time start-up  #
+######################################################
+def run_firsttime_script():
+    try:
+        if running_on_google_colab:
+            script_path = '/content/alltalk_tts/system/config/firstrun.py'
+        elif running_in_standalone:
+            script_path = os.path.join(this_dir, 'system', 'config', 'firstrun.py')
+        elif running_in_tgwui:
+            script_path = os.path.join(this_dir, 'system', 'config', 'firstrun_tgwui.py')
+        else:
+            script_path = os.path.join(this_dir, 'system', 'config', 'firstrun.py')  # Default to Standalone if nothing matched.
+
+        subprocess.run(['python', script_path], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while running the script: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+# Call the function to run the startup script
+run_firsttime_script()
 
 ###########################################################
 # START-UP # Delete files in outputs folder if configured #
@@ -479,14 +496,6 @@ def check_subprocess_status():
 ###################################################################
 atexit.register(lambda: process.terminate() if process.poll() is None else None)
 
-#############################################################################################################
-#  _____         _                                           _           _    ____               _ _        #
-# |_   _|____  _| |_       __ _  ___ _ __      __      _____| |__  _   _(_)  / ___|_ __ __ _  __| (_) ___   #
-#   | |/ _ \ \/ / __|____ / _` |/ _ \ '_ \ ____\ \ /\ / / _ \ '_ \| | | | | | |  _| '__/ _` |/ _` | |/ _ \  #
-#   | |  __/>  <| ||_____| (_| |  __/ | | |_____\ V  V /  __/ |_) | |_| | | | |_| | | | (_| | (_| | | (_) | #
-#   |_|\___/_/\_\\__|     \__, |\___|_| |_|      \_/\_/ \___|_.__/ \__,_|_|  \____|_|  \__,_|\__,_|_|\___/  #
-#                         |___/                                                                             #
-#############################################################################################################
 ##########################
 # Setup global variables #
 ##########################
@@ -669,6 +678,15 @@ def send_reload_request(value_sent):
         print(f"[{branding}TTS] \033[91mWarning\033[0m Error during request to webserver process: Status code:\n{e}")
         return {"status": "error", "message": str(e)}
 
+#############################################################################################################
+#  _____         _                                           _           _    ____               _ _        #
+# |_   _|____  _| |_       __ _  ___ _ __      __      _____| |__  _   _(_)  / ___|_ __ __ _  __| (_) ___   #
+#   | |/ _ \ \/ / __|____ / _` |/ _ \ '_ \ ____\ \ /\ / / _ \ '_ \| | | | | | |  _| '__/ _` |/ _` | |/ _ \  #
+#   | |  __/>  <| ||_____| (_| |  __/ | | |_____\ V  V /  __/ |_) | |_| | | | |_| | | | (_| | (_| | | (_) | #
+#   |_|\___/_/\_\\__|     \__, |\___|_| |_|      \_/\_/ \___|_.__/ \__,_|_|  \____|_|  \__,_|\__,_|_|\___/  #
+#                         |___/                                                                             #
+#############################################################################################################
+
 ####################################################################################################
 # TGWUI # Saves all settings back to the config file for the REMOTE version of the TGWUI extension #
 ####################################################################################################
@@ -693,6 +711,8 @@ def tgwui_save_settings():
     existing_settings["tgwui"]["tgwui_narrator_voice"] = params["tgwui"]['tgwui_narrator_voice']
     existing_settings["tgwui"]["tgwui_show_text"] = params["tgwui"]['tgwui_show_text']
     existing_settings["tgwui"]["tgwui_character_voice"] = params["tgwui"]['tgwui_character_voice']
+    existing_settings["tgwui"]["tgwui_rvc_char_voice"] = params["tgwui"]['tgwui_rvc_char_voice']
+    existing_settings["tgwui"]["tgwui_rvc_narr_voice"] = params["tgwui"]['tgwui_rvc_narr_voice']    
     # Save the updated settings back to the file
     with open(config_file_path, "w") as file:
         json.dump(existing_settings, file, indent=4)
@@ -751,7 +771,7 @@ def send_deepspeed_request(value_sent):
 ###################################
 # TGWUI - TTS STANDARD GENERATION #
 ###################################
-def send_and_generate(gen_text, gen_character_voice, gen_narrartor_voice, gen_narrator_activated, gen_textnotinisde, gen_repetition, gen_language, gen_filter, gen_speed, gen_pitch, gen_autoplay, gen_autoplay_vol, gen_file_name, gen_temperature, gen_filetimestamp, gen_stream, gen_stopcurrentgen):
+def send_and_generate(gen_text, gen_character_voice, gen_rvccharacter_voice, gen_narrator_voice, gen_rvcnarrator_voice, gen_narrator_activated, gen_textnotinisde, gen_repetition, gen_language, gen_filter, gen_speed, gen_pitch, gen_autoplay, gen_autoplay_vol, gen_file_name, gen_temperature, gen_filetimestamp, gen_stream, gen_stopcurrentgen):
     api_url = f"{alltalk_protocol}{alltalk_ip_port}/api/tts-generate"
     if gen_text == "":
         print(f"[{branding}TTS] No Text was sent to generate as TTS")
@@ -769,8 +789,10 @@ def send_and_generate(gen_text, gen_character_voice, gen_narrartor_voice, gen_na
             "text_input": gen_text,
             "text_filtering": gen_filter,
             "character_voice_gen": gen_character_voice,
+            "rvccharacter_voice_gen": gen_rvccharacter_voice,
             "narrator_enabled": str(gen_narrator_activated).lower(),
-            "narrator_voice_gen": gen_narrartor_voice,
+            "narrator_voice_gen": gen_narrator_voice,
+            "rvcnarrator_voice_gen": gen_rvcnarrator_voice,
             "text_not_inside": gen_textnotinisde,
             "language": gen_language,
             "output_file_name": str(gen_file_name),
@@ -782,7 +804,7 @@ def send_and_generate(gen_text, gen_character_voice, gen_narrartor_voice, gen_na
             "temperature": str(gen_temperature),
             "repetition_penalty": str(gen_repetition),
         }
-        print(f"Debug: Generate request param:", data) if params["debug_tts"] else None
+        # print(f"Debug: Generate request param:", data) if params["debug_tts"] else None
         try:
             response = requests.post(api_url, data=data)
             response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
@@ -814,7 +836,9 @@ def output_modifier(string, state):
     # Get current settings
     language_code = languages_list.get(params["tgwui"]["tgwui_language"])
     character_voice = params["tgwui"]["tgwui_character_voice"]
+    rvc_character_voice = params["tgwui"]["tgwui_rvc_char_voice"]
     narrator_voice = params["tgwui"]["tgwui_narrator_voice"]
+    rvc_narrator_voice = params["tgwui"]["tgwui_rvc_narr_voice"]
     narrator_enabled = params["tgwui"]["tgwui_narrator_enabled"]
     text_not_inside = params["tgwui"]["tgwui_non_quoted_text_is"]
     repetition_policy = params["tgwui"]["tgwui_repetitionpenalty_set"]
@@ -831,7 +855,7 @@ def output_modifier(string, state):
                 output_file = state["character_menu"]
             else:
                 output_file = str("TTSOUT_")
-            generate_response, status_message = send_and_generate(cleaned_text, character_voice, narrator_voice, narrator_enabled, text_not_inside, repetition_policy, language_code, text_filtering, speed, pitch, autoplay, autoplay_volume, output_file, temperature, True, False, False)
+            generate_response, status_message = send_and_generate(cleaned_text, character_voice, rvc_character_voice, narrator_voice, rvc_narrator_voice, narrator_enabled, text_not_inside, repetition_policy, language_code, text_filtering, speed, pitch, autoplay, autoplay_volume, output_file, temperature, True, False, False)
             if status_message == "TTS Audio Generated":
                 # Handle Gradio and playback
                 autoplay = "autoplay" if params["tgwui"]["tgwui_autoplay_tts"] else ""
@@ -849,7 +873,7 @@ def output_modifier(string, state):
         # The lock is already acquired
         print(f"[{branding}Model] \033[91mWarning\033[0m Audio generation is already in progress. Please wait.")
         return
-
+    
 ###########################################################################################################
 # TGWUI # Strips out images from the TGWUI string if needed and re-inserts the image after TTS generation #
 ###########################################################################################################
@@ -886,7 +910,7 @@ def voice_preview(string):
     language_code = languages_list.get(params["tgwui"]["tgwui_language"])
     if not string:
         string = random_sentence()
-    generate_response, status_message = send_and_generate(string, params["tgwui"]["tgwui_character_voice"], params["tgwui"]["tgwui_narrator_voice"], params["tgwui"]["tgwui_narrator_enabled"], "character", params["tgwui"]["tgwui_repetitionpenalty_set"], language_code, "standard", params["tgwui"]["tgwui_generationspeed_set"], params["tgwui"]["tgwui_pitch_set"], False, 0.8, "previewvoice", params["tgwui"]["tgwui_temperature_set"], False, False, False)
+    generate_response, status_message = send_and_generate(string, params["tgwui"]["tgwui_character_voice"], params["tgwui"]["tgwui_rvc_char_voice"], params["tgwui"]["tgwui_narrator_voice"], params["tgwui"]["tgwui_rvc_narr_voice"], False, "character", params["tgwui"]["tgwui_repetitionpenalty_set"], language_code, "standard", params["tgwui"]["tgwui_generationspeed_set"], params["tgwui"]["tgwui_pitch_set"], False, 0.8, "previewvoice", params["tgwui"]["tgwui_temperature_set"], False, False, False)
     if status_message == "TTS Audio Generated":
         # Handle Gradio and playback
         autoplay = "autoplay" if params["tgwui"]["tgwui_autoplay_tts"] else ""
@@ -977,6 +1001,9 @@ def tgwui_update_dropdowns():
     global at_settings
     at_settings = get_alltalk_settings()  # Pull all the current settings from the AllTalk server, if its online.
     current_voices = at_settings["voices"]
+    rvccurrent_voices = at_settings["rvcvoices"]
+    rvccurrent_character_voice = params["tgwui"]["tgwui_rvc_char_voice"]
+    rvccurrent_narrator_voice = params["tgwui"]["tgwui_rvc_char_voice"]    
     current_models_available = sorted(at_settings["models_available"])
     current_model_loaded = at_settings["current_model_loaded"]
     current_character_voice = params["tgwui"]["tgwui_character_voice"]
@@ -997,16 +1024,25 @@ def tgwui_update_dropdowns():
         language_label = "Model not multi language"
     if current_character_voice not in current_voices:
         current_character_voice = current_voices[0] if current_voices else ""
+        params["tgwui"]["tgwui_character_voice"] = current_character_voice
     if current_narrator_voice not in current_voices:
         current_narrator_voice = current_voices[0] if current_voices else ""
-
+        params["tgwui"]["tgwui_narrator_voice"] = current_narrator_voice
+    if rvccurrent_character_voice not in rvccurrent_voices:
+        rvccurrent_character_voice = rvccurrent_voices[0] if rvccurrent_voices else ""
+        params["tgwui"]["tgwui_rvc_char_voice"] = rvccurrent_character_voice
+    if rvccurrent_narrator_voice not in rvccurrent_voices:
+        rvccurrent_narrator_voice = rvccurrent_voices[0] if rvccurrent_voices else ""
+        params["tgwui"]["tgwui_rvc_char_voice"] = rvccurrent_narrator_voice
     tgwui_handle_ttsmodel_dropdown_change.skip_reload = True  # Debounce tgwui_tts_dropdown_gr and stop it sending a model reload when it is updated.
 
     return (
         gr.Checkbox(interactive=current_lowvram_capable, value=current_lowvram_enabled),
         gr.Checkbox(interactive=current_deepspeed_capable, value=current_deepspeed_enabled),
         gr.Dropdown(choices=current_voices, value=current_character_voice),
+        gr.Dropdown(choices=rvccurrent_voices, value=rvccurrent_character_voice, interactive=True),        
         gr.Dropdown(choices=current_voices, value=current_narrator_voice),
+        gr.Dropdown(choices=rvccurrent_voices, value=rvccurrent_narrator_voice, interactive=True),        
         gr.Dropdown(choices=current_models_available, value=current_model_loaded),
         gr.Dropdown(interactive=current_temperature_capable),
         gr.Dropdown(interactive=current_repetitionpenalty_capable),
@@ -1021,45 +1057,64 @@ def tgwui_update_dropdowns():
 ###############################################################
 def ui():
     global at_settings
+    alltalk_settings = get_alltalk_settings()   # Pull all the current settings from the AllTalk server, if its online.
     with gr.Accordion(params["branding"] + " TTS (Text-gen-webui Remote)"):
+        tgwui_available_voices_gr = alltalk_settings["voices"]
+        tgwui_rvc_available_voices_gr = alltalk_settings["rvcvoices"]     
         # Activate alltalk_tts, Enable autoplay, Show text
         with gr.Row():
+            def tgwui_on_load():
+                tgwui_update_dropdowns()
+            app.load(tgwui_on_load, inputs=None, outputs=None)   
             tgwui_activate_tts_gr = gr.Checkbox(value=params["tgwui"]["tgwui_activate_tts"], label="Enable TGWUI TTS")
             tgwui_autoplay_gr = gr.Checkbox(value=params["tgwui"]["tgwui_autoplay_tts"], label="Autoplay TTS Generated")
             tgwui_show_text_gr = gr.Checkbox(value=params["tgwui"]["tgwui_show_text"], label="Show Text in chat")
 
         # Low vram enable, Deepspeed enable, Link
         with gr.Row():
-            tgwui_lowvram_enabled_gr = gr.Checkbox(value=at_settings["lowvram_enabled"] if at_settings["lowvram_capable"] else False, label="Enable Low VRAM Mode", interactive=at_settings["lowvram_capable"])
+            tgwui_lowvram_enabled_gr = gr.Checkbox(value=alltalk_settings["lowvram_enabled"] if alltalk_settings["lowvram_capable"] else False, label="Enable Low VRAM Mode", interactive=alltalk_settings["lowvram_capable"])
             tgwui_lowvram_enabled_play_gr = gr.HTML(visible=False)
-            tgwui_deepspeed_enabled_gr = gr.Checkbox(value=params["tgwui"]["tgwui_deepspeed_enabled"], label="Enable DeepSpeed", interactive=at_settings["deepspeed_capable"],)
+            tgwui_deepspeed_enabled_gr = gr.Checkbox(value=params["tgwui"]["tgwui_deepspeed_enabled"], label="Enable DeepSpeed", interactive=alltalk_settings["deepspeed_capable"],)
             tgwui_deepspeed_enabled_play_gr = gr.HTML(visible=False)
             tgwui_empty_space_gr = gr.HTML(f"<p><a href='{alltalk_protocol}{alltalk_ip_port}'>AllTalk Server & Documentation Link</a><a href='{alltalk_protocol}{alltalk_ip_port}'></a>")
 
         # Model, Language, Character voice
         with gr.Row():
             tgwui_tts_dropdown_gr = gr.Dropdown(choices=models_available, label="TTS Engine/Model", value=current_model_loaded,)
-            tgwui_language_gr = gr.Dropdown(languages_list.keys(), label="Languages" if at_settings["languages_capable"] else "Model not multi language", interactive=at_settings["languages_capable"], value=params["tgwui"]["tgwui_language"])
-            tgwui_available_voices_gr = at_settings["voices"]
+            tgwui_language_gr = gr.Dropdown(languages_list.keys(), label="Languages" if alltalk_settings["languages_capable"] else "Model not multi language", interactive=alltalk_settings["languages_capable"], value=params["tgwui"]["tgwui_language"])
+            tgwui_narrator_enabled_gr = gr.Dropdown(choices=[("Enabled", "true"), ("Disabled", "false"), ("Silent", "silent")], label="Narrator Enable", value="true" if params.get("tgwui_narrator_enabled") == "true" else ("silent" if params.get("tgwui_narrator_enabled") == "silent" else "false"))            
+
+        # Narrator
+        with gr.Row():
+            tgwui_available_voices_gr = alltalk_settings["voices"]
             tgwui_default_voice_gr = params["tgwui"]["tgwui_character_voice"]
             if tgwui_default_voice_gr not in tgwui_available_voices_gr:
                 tgwui_default_voice_gr = tgwui_available_voices_gr[0] if tgwui_available_voices_gr else ""
             tgwui_character_voice_gr = gr.Dropdown(choices=tgwui_available_voices_gr, label="Character Voice", value=tgwui_default_voice_gr, allow_custom_value=True,)
+            tgwui_narr_voice_gr = params["tgwui"]["tgwui_narrator_voice"]
+            if tgwui_narr_voice_gr not in tgwui_available_voices_gr:
+                tgwui_narr_voice_gr = tgwui_available_voices_gr[0] if tgwui_available_voices_gr else ""
+            tgwui_narrator_voice_gr = gr.Dropdown(choices=tgwui_available_voices_gr, label="Narrator Voice", value=tgwui_narr_voice_gr, allow_custom_value=True,)                      
+            tgwui_non_quoted_text_is_gr = gr.Dropdown(choices=[("Character", "character"), ("Narrator", "narrator"), ("Silent", "silent")], label='Narrator unmarked text is', value=params.get("tgwui_non_quoted_text_is", "character"))
 
-        # Narrator
+        # RVC voices
         with gr.Row():
-            with gr.Row():
-                tgwui_narrator_voice_gr = gr.Dropdown(tgwui_available_voices_gr, label="Narrator Voice", allow_custom_value=True, value=params["tgwui"]["tgwui_narrator_voice"],)
-                tgwui_narrator_enabled_gr = gr.Dropdown(choices=[("Enabled", "true"), ("Disabled", "false"), ("Enabled (Silent)", "silent")], label="Narrator Enable", value="true" if params.get("tgwui_narrator_enabled") == "true" else ("silent" if params.get("tgwui_narrator_enabled") == "silent" else "false"))
-                tgwui_non_quoted_text_is_gr = gr.Dropdown(choices=[("Character", "character"), ("Narrator", "narrator"), ("Silent", "silent")], label='Narrator unmarked text is', value=params.get("tgwui_non_quoted_text_is", "character"))
+            tgwui_rvc_default_voice_gr = params["tgwui"]["tgwui_rvc_char_voice"]
+            tgwui_rvc_narrator_voice_gr = params["tgwui"]["tgwui_rvc_narr_voice"]            
+            if tgwui_rvc_default_voice_gr not in tgwui_rvc_available_voices_gr:
+                tgwui_rvc_default_voice_gr = tgwui_rvc_available_voices_gr[0] if tgwui_rvc_available_voices_gr else ""
+            tgwui_rvc_char_voice_gr = gr.Dropdown(choices=tgwui_rvc_available_voices_gr, label="RVC Character Voice", value=tgwui_rvc_default_voice_gr, allow_custom_value=True,)
+            if tgwui_rvc_narrator_voice_gr not in tgwui_rvc_available_voices_gr:
+                tgwui_rvc_narrator_voice_gr = tgwui_rvc_available_voices_gr[0] if tgwui_rvc_available_voices_gr else ""
+            tgwui_rvc_narr_voice_gr = gr.Dropdown(choices=tgwui_rvc_available_voices_gr, label="RVC Narrator Voice", value=tgwui_rvc_narrator_voice_gr, allow_custom_value=True,)                   
 
         # Temperature, Repetition Penalty, Speed, pitch
         with gr.Row():
-            tgwui_temperature_set_gr = gr.Slider(minimum=0.05, maximum=1, step=0.05, label="Temperature", value=params["tgwui"]["tgwui_temperature_set"], interactive=at_settings["temperature_capable"])
-            tgwui_repetitionpenalty_set_gr = gr.Slider(minimum=0.5, maximum=20, step=0.5, label="Repetition Penalty", value=params["tgwui"]["tgwui_repetitionpenalty_set"], interactive=at_settings["repetitionpenalty_capable"])
+            tgwui_temperature_set_gr = gr.Slider(minimum=0.05, maximum=1, step=0.05, label="Temperature", value=params["tgwui"]["tgwui_temperature_set"], interactive=alltalk_settings["temperature_capable"])
+            tgwui_repetitionpenalty_set_gr = gr.Slider(minimum=0.5, maximum=20, step=0.5, label="Repetition Penalty", value=params["tgwui"]["tgwui_repetitionpenalty_set"], interactive=alltalk_settings["repetitionpenalty_capable"])
         with gr.Row():            
-            tgwui_generationspeed_set_gr = gr.Slider(minimum=0.30, maximum=2.00, step=0.10, label="TTS Speed", value=params["tgwui"]["tgwui_generationspeed_set"], interactive=at_settings["generationspeed_capable"])
-            tgwui_pitch_set_gr = gr.Slider(minimum=-10, maximum=10, step=1, label="Pitch", value=params["tgwui"]["tgwui_pitch_set"], interactive=at_settings["pitch_capable"])
+            tgwui_generationspeed_set_gr = gr.Slider(minimum=0.30, maximum=2.00, step=0.10, label="TTS Speed", value=params["tgwui"]["tgwui_generationspeed_set"], interactive=alltalk_settings["generationspeed_capable"])
+            tgwui_pitch_set_gr = gr.Slider(minimum=-10, maximum=10, step=1, label="Pitch", value=params["tgwui"]["tgwui_pitch_set"], interactive=alltalk_settings["pitch_capable"])
 
         # Preview speech
         with gr.Row():
@@ -1068,17 +1123,19 @@ def ui():
             tgwui_preview_audio_gr = gr.HTML(visible=False)
 
         with gr.Row():
-            tgwui_protocol_gr = gr.Dropdown(choices=["http://", "https://"], label="AllTalk Server Protocol", value=alltalk_protocol, interactive=False, visible=False)
+            tgwui_protocol_gr = gr.Dropdown(choices=["http://", "https://"], label="AllTalk Server Protocol", value=alltalk_protocol)
             tgwui_protocol_gr.change(tgwui_update_alltalk_protocol, tgwui_protocol_gr, None)
-            tgwui_ip_address_port_gr = gr.Textbox(label="AllTalk Server IP:Port", value=alltalk_ip_port, interactive=False, visible=False)
+            tgwui_ip_address_port_gr = gr.Textbox(label="AllTalk Server IP:Port", value=alltalk_ip_port)
             tgwui_ip_address_port_gr.change(tgwui_update_alltalk_ip_port, tgwui_ip_address_port_gr, None)
+            tgwui_refresh_settings_gr = gr.Button("Refresh settings & voices")
+            tgwui_refresh_settings_gr.click(tgwui_update_dropdowns, None, [tgwui_lowvram_enabled_gr, tgwui_deepspeed_enabled_gr, tgwui_character_voice_gr, tgwui_rvc_char_voice_gr, tgwui_narrator_voice_gr, tgwui_rvc_narr_voice_gr, tgwui_tts_dropdown_gr, tgwui_temperature_set_gr, tgwui_repetitionpenalty_set_gr, tgwui_language_gr, tgwui_generationspeed_set_gr, tgwui_pitch_set_gr, tgwui_non_quoted_text_is_gr])
+
+        with gr.Row():
             tgwui_convert_gr = gr.Button("Remove old TTS audio and leave only message texts")
             tgwui_convert_cancel_gr = gr.Button("Cancel", visible=False)
             tgwui_convert_confirm_gr = gr.Button("Confirm (cannot be undone)", variant="stop", visible=False)
             tgwui_stop_generation_gr = gr.Button("Stop current TTS generation")
             tgwui_stop_generation_gr.click(stop_generate_tts, None, None,)
-            tgwui_refresh_settings_gr = gr.Button("Refresh settings & voices")
-            tgwui_refresh_settings_gr.click(tgwui_update_dropdowns, None, [tgwui_lowvram_enabled_gr, tgwui_deepspeed_enabled_gr, tgwui_character_voice_gr, tgwui_narrator_voice_gr, tgwui_tts_dropdown_gr, tgwui_temperature_set_gr, tgwui_repetitionpenalty_set_gr, tgwui_language_gr, tgwui_generationspeed_set_gr, tgwui_pitch_set_gr, tgwui_non_quoted_text_is_gr])
 
     # Convert history with confirmation
     convert_arr = [tgwui_convert_confirm_gr, tgwui_convert_gr, tgwui_convert_cancel_gr]
@@ -1102,9 +1159,9 @@ def ui():
     tgwui_lowvram_enabled_gr.change(lambda x: send_lowvram_request(x), tgwui_lowvram_enabled_gr, tgwui_lowvram_enabled_play_gr, None)
 
     # Trigger the send_reload_request function when the dropdown value changes
-    #tgwui_tts_dropdown_gr.change(send_reload_request, tgwui_tts_dropdown_gr, None)
     tgwui_tts_dropdown_gr.change(tgwui_handle_ttsmodel_dropdown_change, tgwui_tts_dropdown_gr, None)
 
+    tgwui_deepspeed_enabled_gr.change(lambda x: params["tgwui"].update({"tgwui_deepspeed_enabled": x}), tgwui_deepspeed_enabled_gr, None)
     tgwui_deepspeed_enabled_gr.change(send_deepspeed_request, tgwui_deepspeed_enabled_gr, tgwui_deepspeed_enabled_play_gr, None)
     tgwui_character_voice_gr.change(lambda x: params["tgwui"].update({"tgwui_character_voice": x}), tgwui_character_voice_gr, None)
     tgwui_language_gr.change(lambda x: params["tgwui"].update({"tgwui_language": x}), tgwui_language_gr, None)
@@ -1119,6 +1176,11 @@ def ui():
     tgwui_narrator_enabled_gr.change(lambda x: params["tgwui"].update({"tgwui_narrator_enabled": x}), tgwui_narrator_enabled_gr, None)
     tgwui_non_quoted_text_is_gr.change(lambda x: params["tgwui"].update({"tgwui_non_quoted_text_is": x}), tgwui_non_quoted_text_is_gr, None)
     tgwui_narrator_voice_gr.change(lambda x: params["tgwui"].update({"tgwui_narrator_voice": x}), tgwui_narrator_voice_gr, None)
+    
+    # RVC selection actions
+    tgwui_rvc_char_voice_gr.change(lambda x: params["tgwui"].update({"tgwui_rvc_char_voice": x}), tgwui_rvc_char_voice_gr, None)
+    tgwui_rvc_narr_voice_gr.change(lambda x: params["tgwui"].update({"tgwui_rvc_narr_voice": x}), tgwui_rvc_narr_voice_gr, None)
+
     # Play preview
     tgwui_preview_text_gr.submit(voice_preview, tgwui_preview_text_gr, tgwui_preview_audio_gr)
     tgwui_preview_play_gr.click(voice_preview, tgwui_preview_text_gr, tgwui_preview_audio_gr)
@@ -1133,18 +1195,29 @@ def ui():
 ##################################################################
 
 if gradio_enabled == True:
+    import importlib
+    import gradio as gr
     # Get the directory of the current script
     script_dir = Path(__file__).resolve().parent
     my_current_url = "null"
     at_default_voice_gr = params["tgwui"]["tgwui_character_voice"]
-    # Load the theme list and select a theme
-    import system.gradio_pages.themes.loadThemes as loadThemes
+    ####################################################
+    # Dynamically import the Themes builder for Gradio #
+    ####################################################
+    themesmodule_path = this_dir / 'system' / 'gradio_pages' / 'themes' / 'loadThemes.py'
+    # Add the directory containing the module to the system path
+    sys.path.insert(0, str(this_dir / 'system' / 'gradio_pages' / 'themes'))
+    # Import the module dynamically
+    spec = importlib.util.spec_from_file_location("loadThemes", themesmodule_path)
+    loadThemes = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loadThemes)
     # Load the theme list from JSON file
     theme_list = loadThemes.get_list()
-
     # Load the selected theme from configuration
     selected_theme = loadThemes.load_json()
-
+    ###########################################################
+    # Finish Dynamically import the Themes builder for Gradio #
+    ###########################################################
     # Check if the script is running in standalone mode
     if script_dir.name == "alltalk_tts":
         # Running in standalone mode, add the script's directory to the Python module search path
@@ -1152,17 +1225,10 @@ if gradio_enabled == True:
     else:
         # Running as part of text-generation-webui, add the parent directory of "alltalk_tts" to the Python module search path
         sys.path.insert(0, str(script_dir.parent))
-
-    import importlib
-    import gradio as gr
-    from system.gradio_pages.alltalk_documentation import alltalk_documentation
-    from system.gradio_pages.alltalk_generation_help import alltalk_generation_help
-    from system.gradio_pages.alltalk_about import alltalk_about
-    from system.gradio_pages.alltalk_diskspace import get_disk_interface
-    from system.gradio_pages.api_documentation import api_documentation
-    if params["firstrun_splash"]:
-        from system.gradio_pages.alltalk_welcome import alltalk_welcome
-    
+    ########################################################################################
+    # Dynamically import modules and set path based on being a standalone or part of TGWUI #
+    ########################################################################################
+    # Function to get TTS engines data
     def get_tts_engines_data():
         global engines_available, engine_loaded, selected_model
         tts_engines_file = os.path.join(this_dir, "system", "tts_engines", "tts_engines.json")
@@ -1173,16 +1239,66 @@ if gradio_enabled == True:
         selected_model = tts_engines_data["selected_model"]
         return engines_available, engine_loaded, selected_model
 
+    # Determine if running as standalone or within another project
+    if __name__ == "__main__" or "text-generation-webui" not in this_dir.parts:
+        # Standalone execution
+        base_package = None  # No base package needed for absolute imports
+        # print("standalone execution", __name__)
+        from system.gradio_pages.alltalk_documentation import alltalk_documentation
+        from system.gradio_pages.alltalk_generation_help import alltalk_generation_help
+        from system.gradio_pages.alltalk_about import alltalk_about
+        from system.gradio_pages.alltalk_diskspace import get_disk_interface
+        from system.gradio_pages.api_documentation import api_documentation
+        if params["firstrun_splash"]:
+            from system.gradio_pages.alltalk_welcome import alltalk_welcome
+    else:
+        # Running within text-generation-webui
+        # Dynamically build the base package using the current folder name
+        from .system.gradio_pages.alltalk_documentation import alltalk_documentation
+        from .system.gradio_pages.alltalk_generation_help import alltalk_generation_help
+        from .system.gradio_pages.alltalk_about import alltalk_about
+        from .system.gradio_pages.alltalk_diskspace import get_disk_interface
+        from .system.gradio_pages.api_documentation import api_documentation
+        if params["firstrun_splash"]:
+            from .system.gradio_pages.alltalk_welcome import alltalk_welcome
+        # print("Running within text-generation-webui", __name__)
+        current_folder_name = this_dir.name
+        base_package = f"extensions.{current_folder_name}"
+
+    # Function to dynamically import a module from a given path
+    def dynamic_import(module_name, package=None):
+        try:
+            if package:
+                module = importlib.import_module(module_name, package=package)
+            else:
+                module = importlib.import_module(module_name)
+            return module
+        except ModuleNotFoundError as e:
+            print(f"Module not found: {module_name} - {e}")
+            return None
+        except Exception as e:
+            print(f"Error importing {module_name}: {e}")
+            return None
+
+    # Call the function to populate engines_available
     get_tts_engines_data()
+
     # Dynamically import modules and load JSON data for each available engine
     for engine_name in engines_available:
-        module_name = f"system.tts_engines.{engine_name}.{engine_name}_settings_page"
-        module = importlib.import_module(module_name)
-        globals()[f"{engine_name}_at_gradio_settings_page"] = getattr(module, f"{engine_name}_at_gradio_settings_page")
-        globals()[f"{engine_name}_model_update_settings"] = getattr(module, f"{engine_name}_model_update_settings")
-        json_file_path = os.path.join(this_dir, "system", "tts_engines", engine_name, "model_settings.json")
-        with open(json_file_path, "r") as f:
-            globals()[f"{engine_name}_model_config_data"] = json.load(f)
+        if base_package:
+            module_name = f"{base_package}.system.tts_engines.{engine_name}.{engine_name}_settings_page"
+        else:
+            module_name = f"system.tts_engines.{engine_name}.{engine_name}_settings_page"
+        module = dynamic_import(module_name, base_package)
+        if module:
+            globals()[f"{engine_name}_at_gradio_settings_page"] = getattr(module, f"{engine_name}_at_gradio_settings_page")
+            globals()[f"{engine_name}_model_update_settings"] = getattr(module, f"{engine_name}_model_update_settings")
+            json_file_path = os.path.join(this_dir, "system", "tts_engines", engine_name, "model_settings.json")
+            with open(json_file_path, "r") as f:
+                globals()[f"{engine_name}_model_config_data"] = json.load(f)
+    ###########################################
+    # Finishing Dynamically importing Modules #
+    ###########################################
 
     def confirm(message):
         return gr.Interface.fn("confirmation", f"""<script>
