@@ -1408,7 +1408,7 @@ if gradio_enabled == True:
         # Restart the subprocess
         restart_subprocess()
         # Wait for the engine to be ready with error handling and retries
-        max_retries = 80
+        max_retries = 140
         retry_delay = 1  # seconds
         retries = 0
         while retries < max_retries:
