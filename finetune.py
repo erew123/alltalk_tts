@@ -1267,9 +1267,9 @@ if __name__ == "__main__":
                 f"""         
                 {base_model_results}<br><br>
                 ◽ If your basemodel is not being detected, please ensure that <span style="color: #3366ff;">finetune.py</span> is being run from the AllTalk main folder.<br>
-                ◽ Ensure you have started AllTalk normally at least once. You can start it again and it will download any missing files.<br>
-                ◽ Check that there is an XTTS model within the models folder e.g. <span style="color: #3366ff;">/models/xttsv2_2.0.2/</span><br>
-                ◽ The files required are "model.pth", "vocab.json", "config.json", "dvae.pth", "mel_stats.pth", "speakers_xtts.pth".
+                ◽ Ensure you have started AllTalk normally at least once and downlaoded a XTTS model.<br>
+                ◽ Check that there is an XTTS model within the models folder e.g. <span style="color: #3366ff;">/models/xtts/model-folder-here/</span><br>
+                ◽ The files required inside the folder are "model.pth", "vocab.json", "config.json", "dvae.pth", "mel_stats.pth", "speakers_xtts.pth".
                 """
             )
             with gr.Tab("🟥 TTS Version Help"):
