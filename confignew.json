@@ -32,7 +32,7 @@
         "tgwui_activate_tts": true,
         "tgwui_autoplay_tts": true,
         "tgwui_narrator_enabled": "false",
-        "tgwui_non_quoted_text_is": "true",
+        "tgwui_non_quoted_text_is": "character",
         "tgwui_deepspeed_enabled": false,
         "tgwui_language": "English",
         "tgwui_lowvram_enabled": false,
