@@ -1747,7 +1747,9 @@ if gradio_enabled == True:
                             rvcat_narrator_voice_gr = params["rvc_settings"]["rvc_narr_model_file"]
                             if rvcat_narrator_voice_gr not in rvcat_available_voices_gr:
                                 rvcat_narrator_voice_gr = rvcat_available_voices_gr[0] if rvcat_available_voices_gr else ""
-                            rvcgen_narr = gr.Dropdown(choices=rvcat_available_voices_gr, label="RVC Narrator Voice", value=rvcat_narrator_voice_gr, allow_custom_value=True,)                   
+                            rvcgen_narr = gr.Dropdown(choices=rvcat_available_voices_gr, label="RVC Narrator Voice", value=rvcat_narrator_voice_gr, allow_custom_value=True,)
+
+                    with gr.Accordion("Advanced Engine/Model Settings", open=False):                 
                         with gr.Row():
                             #Get the current URL from the page
                             domain_name_output = gr.Textbox(label="Domain Name", visible=False)
