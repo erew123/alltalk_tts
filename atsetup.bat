@@ -395,9 +395,6 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is
 @rem activate installer env
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
 rem Install required packages
-@rem Enable conda logging
-call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" config --set log_level debug
-call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" config --set log_file "%INSTALL_ENV_DIR%\conda.log"
 echo ** PyTorch 2.2.1 **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 pytorch-cuda=12.1 -c pytorch -c nvidia
 echo ** Faiss **
