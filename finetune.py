@@ -597,6 +597,7 @@ def load_and_display_mismatches():
         device = "cuda" if torch.cuda.is_available() else "cpu"
         asr_model = WhisperModel(whisper_model, device=device, compute_type="float32")
         mismatches = []
+        missing_files = []
         total_files = metadata_df.shape[0]
         if progress is not None:
             progress((0, total_files), desc="Processing files")
@@ -606,6 +607,7 @@ def load_and_display_mismatches():
             audio_file_name = audio_file.replace("wavs/", "")
             audio_path = os.path.normpath(os.path.join(audio_folder, audio_file_name))
             if not os.path.exists(audio_path):
+                missing_files.append(audio_file_name)
                 if progress is not None:
                     progress((index + 1, total_files), desc="Processing files")  # Update progress bar for skipped files
                 continue
@@ -623,6 +625,11 @@ def load_and_display_mismatches():
                 ])
             if progress is not None:
                 progress((index + 1, total_files), desc="Processing files")  # Update progress bar for each file
+        if missing_files:
+            print("[FINETUNE]")
+            print("[FINETUNE] The following files are missing and should be removed from the CSV files:")
+            for file_name in missing_files:
+                print(f"[FINETUNE] - {file_name}")                
         return mismatches
     def load_mismatches(csv_paths, audio_folder, whisper_model, target_language, progress):
         mismatches_list = validate_audio_transcriptions(csv_paths, audio_folder, whisper_model, target_language, progress)
