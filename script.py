@@ -1408,7 +1408,7 @@ if gradio_enabled == True:
         # Restart the subprocess
         restart_subprocess()
         # Wait for the engine to be ready with error handling and retries
-        max_retries = 140
+        max_retries = 80
         retry_delay = 1  # seconds
         retries = 0
         while retries < max_retries:
@@ -1654,30 +1654,37 @@ if gradio_enabled == True:
                 "repetition_penalty": str(gen_repetition),
             }
             #print(f"Debug: Generate request param:", data) if params["debug_tts"] else None
-            try:
-                response = requests.post(api_url, data=data)
-                response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
-                result = response.json()
-                if gen_autopl == "true":
-                    return None, str("TTS Audio Generated (Played remotely)")
-                else:
-                    if params["api_def"]["api_use_legacy_api"]:
-                        return result['output_file_url'], str("TTS Audio Generated")
+            max_retries = 180 #3 minutes
+            retry_delay = 1  # seconds
+            retries = 0
+            while retries < max_retries:
+                try:
+                    response = requests.post(api_url, data=data, timeout=60)
+                    response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
+                    result = response.json()
+                    if gen_autopl == "true":
+                        return None, str("TTS Audio Generated (Played remotely)")
                     else:
-                        # Set the protocol type
-                        protocol = "http://"  # or "https://" if using HTTPS
-                        # Prepend the URL and PORT to the output_file_url
-                        if running_on_google_colab:
-                            output_file_url = f"{tunnel_url_1}{result['output_file_url']}"
+                        if params["api_def"]["api_use_legacy_api"]:
+                            return result['output_file_url'], str("TTS Audio Generated")
                         else:
-                            output_file_url = f"{protocol}{my_current_url}{result['output_file_url']}"
-                        return output_file_url, str("TTS Audio Generated")
-            except requests.exceptions.RequestException as e:
-                error_message = "An error occurred. Please see console output."
-                print(f"[{branding}TTS] \033[91mError:\033[0m {error_message}")
-                print(f"[{branding}TTS] \033[91mError Details:\033[0m {str(e)}")
-                # Handle the error or return an appropriate error message
-                return None, str(error_message)
+                            # Set the protocol type
+                            protocol = "http://"  # or "https://" if using HTTPS
+                            # Prepend the URL and PORT to the output_file_url
+                            if running_on_google_colab:
+                                output_file_url = f"{tunnel_url_1}{result['output_file_url']}"
+                            else:
+                                output_file_url = f"{protocol}{my_current_url}{result['output_file_url']}"
+                            return output_file_url, str("TTS Audio Generated")
+                except requests.exceptions.RequestException as e:
+                    retries += 1
+                    if retries == max_retries:
+                        error_message = "An error occurred. Please see console output."
+                        print(f"[{branding}TTS] \033[91mError:\033[0m {error_message}")
+                        print(f"[{branding}TTS] \033[91mError Details:\033[0m {str(e)}")
+                        # Handle the error or return an appropriate error message
+                        return None, str(error_message)
+                    time.sleep(retry_delay)
 
     def alltalk_gradio():
         global languages_list, at_settings
