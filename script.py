@@ -1436,7 +1436,7 @@ if gradio_enabled == True:
     ###############################
     # Sends voice2rvc request off #
     ###############################
-    def voice2rvc(audio, rvc_voice):
+    def voice2rvc(audio, rvc_voice, rvc_pitch, rvc_f0method):
         # Save the uploaded or recorded audio to a file
         input_tts_path = this_dir / "outputs" / "voice2rvcInput.wav"
         if rvc_voice == "Disabled":
@@ -1464,7 +1464,9 @@ if gradio_enabled == True:
         response = requests.post(url, data={
             "input_tts_path": str(input_tts_path),
             "output_rvc_path": str(output_rvc_path),
-            "pth_name": rvc_voice
+            "pth_name": rvc_voice, 
+            "pitch": rvc_pitch, 
+            "method": str(rvc_f0method), 
         })
 
         if response.status_code == 200:
@@ -1615,7 +1617,7 @@ if gradio_enabled == True:
         save_config_data()
         return "RVC settings updated successfully!"
 
-    def generate_tts(gen_text, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen):
+    def generate_tts(gen_text, gen_char, rvcgen_char, rvcgen_char_pitch, gen_narr, rvcgen_narr, rvcgen_narr_pitch, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen):
         if running_on_google_colab:
             api_url = f"{tunnel_url_1}/api/tts-generate"
         else:
@@ -1639,9 +1641,11 @@ if gradio_enabled == True:
                 "text_filtering": gen_filter,
                 "character_voice_gen": gen_char,
                 "rvccharacter_voice_gen": rvcgen_char,
+                "rvccharacter_pitch": rvcgen_char_pitch,
                 "narrator_enabled": str(gen_narren).lower(),
                 "narrator_voice_gen": gen_narr,
                 "rvcnarrator_voice_gen": rvcgen_narr,
+                "rvcnarrator_pitch": rvcgen_narr_pitch,
                 "text_not_inside": gen_textni,
                 "language": gen_lang,
                 "output_file_name": gen_filen,
@@ -1755,6 +1759,15 @@ if gradio_enabled == True:
                             if rvcat_narrator_voice_gr not in rvcat_available_voices_gr:
                                 rvcat_narrator_voice_gr = rvcat_available_voices_gr[0] if rvcat_available_voices_gr else ""
                             rvcgen_narr = gr.Dropdown(choices=rvcat_available_voices_gr, label="RVC Narrator Voice", value=rvcat_narrator_voice_gr, allow_custom_value=True,)
+                    with gr.Group():                            
+                        with gr.Row():
+                            rvcat_default_pitch_gr = gr.Slider(minimum=-24, maximum=24, step=1, label="RVC Character Pitch", info="Corrects the Character input TTS pitch to match the desired RVC voice output pitch.", value=params["rvc_settings"].get("pitch", 0), interactive=True, visible=False)
+                            rvcat_narrator_pitch_gr = gr.Slider(minimum=-24, maximum=24, step=1, label="RVC Narrator Pitch", info="Corrects the Narrator input TTS pitch to match the desired RVC voice output pitch.", value=params["rvc_settings"].get("pitch", 0), interactive=True, visible=False)
+                            def update_visibility(char_voice, narr_voice):
+                                is_visible = char_voice != "Disabled" or narr_voice != "Disabled"
+                                return gr.update(visible=is_visible), gr.update(visible=is_visible)
+                            rvcgen_char.change(fn=update_visibility, inputs=[rvcgen_char, rvcgen_narr], outputs=[rvcat_default_pitch_gr, rvcat_narrator_pitch_gr])
+                            rvcgen_narr.change(fn=update_visibility, inputs=[rvcgen_char, rvcgen_narr], outputs=[rvcat_default_pitch_gr, rvcat_narrator_pitch_gr])
 
                     with gr.Accordion("Advanced Engine/Model Settings", open=False):                 
                         with gr.Row():
@@ -1816,7 +1829,7 @@ if gradio_enabled == True:
                         }""", show_api=False)
                     refresh_button.click(at_update_dropdowns, None, [gen_stream, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_speed, gen_pitch, gen_temperature, gen_repetition, gen_lang, model_choices_gr, engine_choices])
                     stop_button.click(stop_generate_tts, inputs=[], outputs=[output_message])
-                    submit_button.click(generate_tts, inputs=[gen_text, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen], outputs=[output_audio, output_message])
+                    submit_button.click(generate_tts, inputs=[gen_text, gen_char, rvcgen_char, rvcat_default_pitch_gr, gen_narr, rvcgen_narr, rvcat_narrator_pitch_gr, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen], outputs=[output_audio, output_message])
 
                 with gr.Tab("Generate Help"):
                     help_content = alltalk_generation_help()
@@ -1827,11 +1840,14 @@ if gradio_enabled == True:
                 with gr.Row():
                     audio_input = gr.Audio(sources=["microphone", "upload"], type="numpy", label="Record audio or Upload a spoken audio file")
                 with gr.Row():
-                    rvc_voices_dropdown = gr.Dropdown(choices=at_settings["rvcvoices"], label="Select RVC Voice to generate as", value=at_settings["rvcvoices"][0])
-                    submit_button = gr.Button("Submit to RVC")
+                    rvc_voices_dropdown = gr.Dropdown(choices=at_settings["rvcvoices"], label="Select RVC Voice to generate as", value=at_settings["rvcvoices"][0], scale=1)
+                    rvc_pitch_slider = gr.Slider(minimum=-24, maximum=24, step=1, label="RVC Pitch", info="Depending on the pitch of your input audio, you will need to adjust this accordingly to change the pitch for the output voice. The higher the value, the higher the pitch.", value=0, interactive=True, scale=2)
+                with gr.Row():
+                    rvc_f0method = gr.Radio(label="Pitch Extraction Algorithm", info="Select the algorithm to be used for extracting the pitch (F0) during audio conversion. The default algorithm is rmvpe, which is generally recommended for most cases due to its balance of accuracy and performance.", choices=["crepe", "crepe-tiny", "dio", "fcpe", "harvest", "hybrid[rmvpe+fcpe]", "pm", "rmvpe"], value=params["rvc_settings"].get("f0method", "rmvpe"), interactive=True, scale=1)
+                    submit_button = gr.Button("Submit to RVC", scale=0)
                 audio_output = gr.Audio(label="Converted Audio")
                 
-                submit_button.click(fn=voice2rvc, inputs=[audio_input, rvc_voices_dropdown], outputs=audio_output)
+                submit_button.click(fn=voice2rvc, inputs=[audio_input, rvc_voices_dropdown, rvc_pitch_slider, rvc_f0method], outputs=audio_output)
                 
             with gr.Tab("TTS Generator"):
                 gr.Markdown("""With the TTS Generator you can create incredibly long audio e.g. entire books. Yet to be migrated into Gradio""")

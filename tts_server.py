@@ -451,7 +451,7 @@ async def deepspeed(request: Request, new_deepspeed_value: bool):
 # API Endpoint - /api/voice2rvc #
 #################################
 @app.post("/api/voice2rvc")
-async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form(...), pth_name: str = Form(...)):
+async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form(...), pth_name: str = Form(...), pitch: str = Form(...), method: str = Form(...)):
     try:
         # Handle "Disabled" case
         if pth_name.lower() in ["disabled", "disable"]:
@@ -468,7 +468,7 @@ async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form
         if not pth_path.is_file():
             raise HTTPException(status_code=400, detail=f"Model file {pth_path} does not exist.")
         # Run the RVC conversion
-        result_path = run_voice2rvc(input_tts_path, output_rvc_path, pth_path)
+        result_path = run_voice2rvc(input_tts_path, output_rvc_path, pth_path, pitch, method)
         if result_path:
             return {"status": "success", "output_path": str(result_path)}
         else:
@@ -478,80 +478,16 @@ async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form
         raise HTTPException(status_code=500, detail=str(e))
 
 # Define the run_rvc function
-def run_voice2rvc(input_tts_path, output_rvc_path, pth_path):
+def run_voice2rvc(input_tts_path, output_rvc_path, pth_path, pitch, method):
     print(f"[{branding}GEN] \033[94mVoice2RVC Convert: Started\033[0m")
     generate_start_time = time.time()
-    f0up_key = rvc_settings["pitch"]
+    f0up_key = pitch
     filter_radius = rvc_settings["filter_radius"]
     index_rate = rvc_settings["index_rate"]
     rms_mix_rate = rvc_settings["rms_mix_rate"]
     protect = rvc_settings["protect"]
     hop_length = rvc_settings["hop_length"]
-    f0method = rvc_settings["f0method"]
-    split_audio = rvc_settings["split_audio"]
-    f0autotune = rvc_settings["autotune"]
-    embedder_model = rvc_settings["embedder_model"]
-    training_data_size = rvc_settings["training_data_size"]
-    # Convert path variables to strings
-    input_tts_path = str(input_tts_path)
-    pth_path = str(pth_path)
-    # Check if the model file exists
-    if not os.path.isfile(pth_path):
-        print(f"Model file {pth_path} does not exist. Exiting.")
-        return
-    # Get the directory of the model file
-    model_dir = os.path.dirname(pth_path)
-    # Find all .index files in the model directory
-    index_files = [file for file in os.listdir(model_dir) if file.endswith(".index")]
-    if len(index_files) == 1:
-        index_path = str(os.path.join(model_dir, index_files[0]))
-    else:
-        index_path = ""
-    # Call the infer_pipeline function
-    infer_pipeline(f0up_key, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0method,
-                input_tts_path, output_rvc_path, pth_path, index_path, split_audio, f0autotune, embedder_model, training_data_size, debug_rvc)
-    generate_end_time = time.time()
-    generate_elapsed_time = generate_end_time - generate_start_time
-    print(f"[{branding}GEN] \033[94mVoice2RVC Convert: \033[91m{generate_elapsed_time:.2f} seconds.\033[0m")
-    return output_rvc_path
-
-#################################
-# API Endpoint - /api/voice2rvc #
-#################################
-@app.post("/api/voice2rvc")
-async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form(...), pth_name: str = Form(...)):
-    try:
-        input_tts_path = Path(input_tts_path)
-        output_rvc_path = Path(output_rvc_path) 
-        # Check if input file exists
-        if not input_tts_path.is_file():
-            raise HTTPException(status_code=400, detail=f"Input file {input_tts_path} does not exist.")
-        # Define the model path based on the selected model name
-        pth_path = this_dir / "models" / "rvc_voices" / pth_name
-        # Check if model file exists
-        if not pth_path.is_file():
-            raise HTTPException(status_code=400, detail=f"Model file {pth_path} does not exist.")
-        # Run the RVC conversion
-        result_path = run_voice2rvc(input_tts_path, output_rvc_path, pth_path)
-        if result_path:
-            return {"status": "success", "output_path": str(result_path)}
-        else:
-            raise HTTPException(status_code=500, detail="RVC conversion failed.")
-    except Exception as e:
-        print(f"Error during Voice2RVC conversion: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Define the run_rvc function
-def run_voice2rvc(input_tts_path, output_rvc_path, pth_path):
-    print(f"[{branding}GEN] \033[94mVoice2RVC Convert: Started\033[0m")
-    generate_start_time = time.time()
-    f0up_key = rvc_settings["pitch"]
-    filter_radius = rvc_settings["filter_radius"]
-    index_rate = rvc_settings["index_rate"]
-    rms_mix_rate = rvc_settings["rms_mix_rate"]
-    protect = rvc_settings["protect"]
-    hop_length = rvc_settings["hop_length"]
-    f0method = rvc_settings["f0method"]
+    f0method = method
     split_audio = rvc_settings["split_audio"]
     f0autotune = rvc_settings["autotune"]
     embedder_model = rvc_settings["embedder_model"]
@@ -1050,9 +986,9 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
 ##################################
 # Central RVC Generation request #
 ##################################
-def run_rvc(input_tts_path, pth_path, infer_pipeline):
+def run_rvc(input_tts_path, pth_path, pitch, infer_pipeline):
     generate_start_time = time.time()
-    f0up_key = rvc_settings["pitch"]
+    f0up_key = pitch
     filter_radius = rvc_settings["filter_radius"]
     index_rate = rvc_settings["index_rate"]
     rms_mix_rate = rvc_settings["rms_mix_rate"]
@@ -1131,13 +1067,13 @@ def run_rvc(input_tts_path, pth_path, infer_pipeline):
 ####################################################################
 # /api/tts-generate Generation API Endpoint Narration RVC handling #
 ####################################################################
-def process_rvc_narrator(part_type, voice_gen, default_model_file, output_file, infer_pipeline):
+def process_rvc_narrator(part_type, voice_gen, pitch, default_model_file, output_file, infer_pipeline):
     if voice_gen.lower() in ["disabled", "disable"]:
         return
     else:
         voice_gen_path = this_dir / "models" / "rvc_voices" / voice_gen
         pth_path = voice_gen_path if voice_gen else default_model_file
-        run_rvc(output_file, pth_path, infer_pipeline)
+        run_rvc(output_file, pth_path, pitch, infer_pipeline)
 
 #############################################################
 # /api/tts-generate Generation API Endpoint JSON validation #
@@ -1147,9 +1083,11 @@ class JSONInput(BaseModel):
     text_filtering: str = Field(..., pattern="^(none|standard|html)$", description="text_filtering needs to be 'none', 'standard' or 'html'.")
     character_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvccharacter_voice_gen: str = Field(..., description="rvccharacter_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
+    rvccharacter_pitch: str = Field(..., description="RVC Character pitch needs to be a number between -24 and 24")
     narrator_enabled: str = Field(..., pattern="^(true|false|silent)$", description="narrator_enabled needs to be 'true', 'false' or 'silent'.")
     narrator_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
-    rvcnarrator_voice_gen: str = Field(..., description="rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")    
+    rvcnarrator_voice_gen: str = Field(..., description="rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
+    rvcnarrator_pitch: str = Field(..., description="RVC Narrator pitch needs to be a number between -24 and 24")   
     text_not_inside: str = Field(..., pattern="^(character|narrator|silent)$", description="text_not_inside needs to be 'character', 'narrator' or 'silent'.")
     language: str = Field(..., pattern="^(ar|zh-cn|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following: ar, zh-cn, cs, nl, en, fr, de, hu, hi, it, ja, ko, pl, pt, ru, es, tr.")
     output_file_name: str = Field(..., pattern="^[a-zA-Z0-9_]+$", description="output_file_name needs to be the name without any special characters or file extension, e.g., 'filename'.")
@@ -1175,13 +1113,22 @@ class JSONInput(BaseModel):
             raise ValueError("rvccharacter_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or 'Disabled'.")
         return v
 
-    def validate_rvccharacter_voice_gen(cls, v):
+    def validate_rvnarrator_voice_gen(cls, v):
         if v.lower() == "disabled":
             return v
         pattern = re.compile(r'^.*\.(pth)$')
         if not pattern.match(v):
             raise ValueError("rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or 'Disabled'.")
         return v
+    
+    def validate_pitches(cls, value):
+        try:
+            num_value = float(value)
+        except ValueError:
+            raise ValueError("Pitch must be a number or a string representing a number.")
+        if not -24 <= num_value <= 24:
+            raise ValueError("Pitch needs to be a number between -24 and 24.")
+        return value
 
 def validate_json_input(json_input_data):
     try:
@@ -1228,10 +1175,14 @@ def get_character_voice_gen():
     return model_engine.def_character_voice
 def get_rvccharacter_voice_gen():
     return rvc_settings["rvc_char_model_file"]
+def get_rvccharacter_pitch():
+    return rvc_settings["pitch"]
 def get_narrator_voice_gen():
     return model_engine.def_narrator_voice
 def get_rvcnarrator_voice_gen():
     return rvc_settings["rvc_narr_model_file"]
+def get_rvcnarrator_pitch():
+    return rvc_settings["pitch"]
 
 #############################################
 # /api/tts-generate Generation API Endpoint #
@@ -1242,9 +1193,11 @@ async def apifunction_generate_tts_standard(
     text_filtering: str = Form(None),
     character_voice_gen: str = Form(None),
     rvccharacter_voice_gen: str = Form(None),
+    rvccharacter_pitch: str = Form(None),
     narrator_enabled: str = Form(None),
     narrator_voice_gen: str = Form(None),
     rvcnarrator_voice_gen: str = Form(None),
+    rvcnarrator_pitch: str = Form(None),
     text_not_inside: str = Form(None),
     language: str = Form(None),
     output_file_name: str = Form(None),
@@ -1259,9 +1212,11 @@ async def apifunction_generate_tts_standard(
     _text_filtering: str = Depends(get_api_text_filtering),
     _character_voice_gen: str = Depends(get_character_voice_gen),
     _rvccharacter_voice_gen: str = Depends(get_rvccharacter_voice_gen),
+    _rvccharacter_pitch: str = Depends(get_rvccharacter_pitch),
     _narrator_enabled: str = Depends(get_api_narrator_enabled),
     _narrator_voice_gen: str = Depends(get_narrator_voice_gen),
     _rvcnarrator_voice_gen: str = Depends(get_rvcnarrator_voice_gen),
+    _rvcnarrator_pitch: str = Depends(get_rvcnarrator_pitch),
     _text_not_inside: str = Depends(get_api_text_not_inside),
     _language: str = Depends(get_api_language),
     _output_file_name: str = Depends(get_api_output_file_name),
@@ -1288,9 +1243,11 @@ async def apifunction_generate_tts_standard(
             f"[{branding}Debug] text_filtering         : {text_filtering}",
             f"[{branding}Debug] character_voice_gen    : {character_voice_gen}",
             f"[{branding}Debug] rvccharacter_voice_gen : {rvccharacter_voice_gen}",
+            f"[{branding}Debug] rvccharacter_pitch     : {rvccharacter_pitch}",
             f"[{branding}Debug] narrator_enabled       : {narrator_enabled}",
             f"[{branding}Debug] narrator_voice_gen     : {narrator_voice_gen}",
             f"[{branding}Debug] rvcnarrator_voice_gen  : {rvcnarrator_voice_gen}",
+            f"[{branding}Debug] rvcnarrator_pitch      : {rvcnarrator_pitch}",
             f"[{branding}Debug] text_not_inside        : {text_not_inside}",
             f"[{branding}Debug] language               : {language}",
             f"[{branding}Debug] output_file_name       : {output_file_name}",
@@ -1308,9 +1265,11 @@ async def apifunction_generate_tts_standard(
     text_filtering = text_filtering or _text_filtering
     character_voice_gen = character_voice_gen or _character_voice_gen
     rvccharacter_voice_gen = rvccharacter_voice_gen or _rvccharacter_voice_gen
+    rvccharacter_pitch = rvccharacter_pitch or _rvccharacter_pitch
     narrator_enabled = narrator_enabled or _narrator_enabled # NEED TO COME BACK AND LOOK AT THIS!!!
     narrator_voice_gen = narrator_voice_gen or _narrator_voice_gen
     rvcnarrator_voice_gen = rvcnarrator_voice_gen or _rvcnarrator_voice_gen
+    rvcnarrator_pitch = rvcnarrator_pitch or _rvcnarrator_pitch
     text_not_inside = text_not_inside or _text_not_inside
     language = language or _language
     output_file_name = output_file_name or _output_file_name
@@ -1327,9 +1286,11 @@ async def apifunction_generate_tts_standard(
             "text_filtering": text_filtering,
             "character_voice_gen": character_voice_gen,
             "rvccharacter_voice_gen": rvccharacter_voice_gen,
+            "rvccharacter_pitch": rvccharacter_pitch,
             "narrator_enabled": narrator_enabled,
             "narrator_voice_gen": narrator_voice_gen,
             "rvcnarrator_voice_gen": rvcnarrator_voice_gen,
+            "rvcnarrator_pitch": rvcnarrator_pitch,
             "text_not_inside": text_not_inside,
             "language": language,
             "output_file_name": output_file_name,
@@ -1363,9 +1324,11 @@ async def apifunction_generate_tts_standard(
                 f"[{branding}Debug] text_filtering         : {text_filtering}",
                 f"[{branding}Debug] character_voice_gen    : {character_voice_gen}",
                 f"[{branding}Debug] rvccharacter_voice_gen : {rvccharacter_voice_gen}",
+                f"[{branding}Debug] rvccharacter_pitch     : {rvccharacter_pitch}",
                 f"[{branding}Debug] narrator_enabled       : {narrator_enabled}",
                 f"[{branding}Debug] narrator_voice_gen     : {narrator_voice_gen}",
                 f"[{branding}Debug] rvcnarrator_voice_gen  : {rvcnarrator_voice_gen}",
+                f"[{branding}Debug] rvcnarrator_pitch      : {rvcnarrator_pitch}",
                 f"[{branding}Debug] text_not_inside        : {text_not_inside}",
                 f"[{branding}Debug] language               : {language}",
                 f"[{branding}Debug] output_file_name       : {output_file_name}",
@@ -1425,14 +1388,14 @@ async def apifunction_generate_tts_standard(
                 audio_path = output_file_str
                 if rvc_settings["rvc_enabled"]:
                     if part_type == 'character':
-                        process_rvc_narrator(part_type, rvccharacter_voice_gen, rvc_settings["rvc_char_model_file"], output_file, infer_pipeline)
+                        process_rvc_narrator(part_type, rvccharacter_voice_gen, rvccharacter_pitch, rvc_settings["rvc_char_model_file"], output_file, infer_pipeline)
                     elif part_type == 'narrator':
-                        process_rvc_narrator(part_type, rvcnarrator_voice_gen, rvc_settings["rvc_narr_model_file"], output_file, infer_pipeline)
+                        process_rvc_narrator(part_type, rvcnarrator_voice_gen, rvcnarrator_pitch, rvc_settings["rvc_narr_model_file"], output_file, infer_pipeline)
                     else:
                         if text_not_inside == 'character':
-                            process_rvc_narrator('character', rvccharacter_voice_gen, rvc_settings["rvc_char_model_file"], output_file, infer_pipeline)
+                            process_rvc_narrator('character', rvccharacter_voice_gen, rvccharacter_pitch, rvc_settings["rvc_char_model_file"], output_file, infer_pipeline)
                         elif text_not_inside == 'narrator':
-                            process_rvc_narrator('narrator', rvcnarrator_voice_gen, rvc_settings["rvc_narr_model_file"], output_file, infer_pipeline)
+                            process_rvc_narrator('narrator', rvcnarrator_voice_gen, rvcnarrator_pitch, rvc_settings["rvc_narr_model_file"], output_file, infer_pipeline)
                 print(f"[{branding}Debug] Appending audio path to list") if debug_tts else None               
                 audio_files_all_paragraphs.append(audio_path) 
             # Combine audio files across paragraphs
@@ -1520,7 +1483,7 @@ async def apifunction_generate_tts_standard(
                             print(f"[{branding}Debug] send to rvc") if debug_tts else None
                             rvccharacter_voice_gen = this_dir / "models" / "rvc_voices" / rvccharacter_voice_gen
                             pth_path = rvccharacter_voice_gen if rvccharacter_voice_gen else rvc_settings["rvc_char_model_file"]
-                            run_rvc(output_file_path, pth_path, infer_pipeline)
+                            run_rvc(output_file_path, pth_path, rvccharacter_pitch, infer_pipeline)
                     # Transcode audio if necessary
                     model_audio_format = str(model_engine.audio_format).lower()
                     output_audio_format = str(params["transcode_audio_format"]).lower()
