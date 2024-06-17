@@ -1083,11 +1083,11 @@ class JSONInput(BaseModel):
     text_filtering: str = Field(..., pattern="^(none|standard|html)$", description="text_filtering needs to be 'none', 'standard' or 'html'.")
     character_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvccharacter_voice_gen: str = Field(..., description="rvccharacter_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
-    rvccharacter_pitch: str = Field(..., description="RVC Character pitch needs to be a number between -24 and 24")
+    rvccharacter_pitch: float = Field(..., description="RVC Character pitch needs to be a number between -24 and 24")
     narrator_enabled: str = Field(..., pattern="^(true|false|silent)$", description="narrator_enabled needs to be 'true', 'false' or 'silent'.")
     narrator_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvcnarrator_voice_gen: str = Field(..., description="rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
-    rvcnarrator_pitch: str = Field(..., description="RVC Narrator pitch needs to be a number between -24 and 24")   
+    rvcnarrator_pitch: float = Field(..., description="RVC Narrator pitch needs to be a number between -24 and 24")   
     text_not_inside: str = Field(..., pattern="^(character|narrator|silent)$", description="text_not_inside needs to be 'character', 'narrator' or 'silent'.")
     language: str = Field(..., pattern="^(ar|zh-cn|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following: ar, zh-cn, cs, nl, en, fr, de, hu, hi, it, ja, ko, pl, pt, ru, es, tr.")
     output_file_name: str = Field(..., pattern="^[a-zA-Z0-9_]+$", description="output_file_name needs to be the name without any special characters or file extension, e.g., 'filename'.")
@@ -1193,11 +1193,11 @@ async def apifunction_generate_tts_standard(
     text_filtering: str = Form(None),
     character_voice_gen: str = Form(None),
     rvccharacter_voice_gen: str = Form(None),
-    rvccharacter_pitch: str = Form(None),
+    rvccharacter_pitch: float = Form(None),
     narrator_enabled: str = Form(None),
     narrator_voice_gen: str = Form(None),
     rvcnarrator_voice_gen: str = Form(None),
-    rvcnarrator_pitch: str = Form(None),
+    rvcnarrator_pitch: float = Form(None),
     text_not_inside: str = Form(None),
     language: str = Form(None),
     output_file_name: str = Form(None),
@@ -1265,11 +1265,14 @@ async def apifunction_generate_tts_standard(
     text_filtering = text_filtering or _text_filtering
     character_voice_gen = character_voice_gen or _character_voice_gen
     rvccharacter_voice_gen = rvccharacter_voice_gen or _rvccharacter_voice_gen
-    rvccharacter_pitch = rvccharacter_pitch or _rvccharacter_pitch
+    print("rvccharacter_pitch", rvccharacter_pitch)
+    print("_rvccharacter_pitch", _rvccharacter_pitch)
+    rvccharacter_pitch = rvccharacter_pitch if rvccharacter_pitch is not None else _rvccharacter_pitch
+    print("rvccharacter_pitch is now", rvccharacter_pitch)
     narrator_enabled = narrator_enabled or _narrator_enabled # NEED TO COME BACK AND LOOK AT THIS!!!
     narrator_voice_gen = narrator_voice_gen or _narrator_voice_gen
     rvcnarrator_voice_gen = rvcnarrator_voice_gen or _rvcnarrator_voice_gen
-    rvcnarrator_pitch = rvcnarrator_pitch or _rvcnarrator_pitch
+    rvcnarrator_pitch = rvcnarrator_pitch if rvcnarrator_pitch is not None else _rvcnarrator_pitch
     text_not_inside = text_not_inside or _text_not_inside
     language = language or _language
     output_file_name = output_file_name or _output_file_name
