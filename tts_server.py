@@ -613,7 +613,9 @@ async def transcode_audio_if_necessary(output_file, model_audio_format, output_a
 @app.get("/api/tts-generate-streaming", response_class=StreamingResponse)
 async def apifunction_generate_streaming(text: str, voice: str, language: str, output_file: str):
     if model_engine.streaming_capable == False:
-         print(f"[{branding}GEN] Streaming is unavailable for this TTS Engine")
+        print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
+        print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
+        print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
     try:
         output_file_path = f'{this_dir / output_directory / output_file}.{model_engine.audio_format}'
         stream = await generate_audio(text, voice, language, model_engine.temperature_set, model_engine.repetitionpenalty_set, 1.0, 1.0, output_file_path, streaming=True)
@@ -625,7 +627,9 @@ async def apifunction_generate_streaming(text: str, voice: str, language: str, o
 @app.post("/api/tts-generate-streaming", response_class=JSONResponse)
 async def tts_generate_streaming(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
     if model_engine.streaming_capable == False:
-         print(f"[{branding}GEN] Streaming is unavailable for this TTS Engine")
+        print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
+        print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
+        print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
     try:
         output_file_path = f'{this_dir / output_directory / output_file}.{model_engine.audio_format}'
         await generate_audio(text, voice, language, model_engine.temperature_set, model_engine.repetitionpenalty_set, "1.0", "1.0", output_file_path, streaming=False)
@@ -638,6 +642,10 @@ async def tts_generate_streaming(request: Request, text: str = Form(...), voice:
 # Central generate_audio function #
 ###################################
 async def generate_audio(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False):
+    if model_engine.streaming_capable == False:
+        print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
+        print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
+        print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
     # Get the async generator from the internal function
     response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming)
     # If streaming, then return the generator as-is, otherwise just exhaust it and return
@@ -1265,10 +1273,7 @@ async def apifunction_generate_tts_standard(
     text_filtering = text_filtering or _text_filtering
     character_voice_gen = character_voice_gen or _character_voice_gen
     rvccharacter_voice_gen = rvccharacter_voice_gen or _rvccharacter_voice_gen
-    print("rvccharacter_pitch", rvccharacter_pitch)
-    print("_rvccharacter_pitch", _rvccharacter_pitch)
     rvccharacter_pitch = rvccharacter_pitch if rvccharacter_pitch is not None else _rvccharacter_pitch
-    print("rvccharacter_pitch is now", rvccharacter_pitch)
     narrator_enabled = narrator_enabled or _narrator_enabled # NEED TO COME BACK AND LOOK AT THIS!!!
     narrator_voice_gen = narrator_voice_gen or _narrator_voice_gen
     rvcnarrator_voice_gen = rvcnarrator_voice_gen or _rvcnarrator_voice_gen
