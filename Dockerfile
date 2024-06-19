@@ -9,10 +9,11 @@ RUN apt-get update && apt-get upgrade -y \
     && ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /app
-COPY . .
 ENV CUDA_DOCKER_ARCH=all
+COPY system/requirements/requirements_docker.txt system/requirements/requirements_docker.txt
 RUN pip install --no-cache-dir --no-deps -r system/requirements/requirements_docker.txt && \
     pip install --no-cache-dir deepspeed
+COPY . .
 
 EXPOSE 7851 7852
 RUN chmod +x launch.sh

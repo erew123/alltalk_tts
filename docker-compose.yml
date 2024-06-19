@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   alltalk-tts:
-    image: alltalk:v1-9c
+    image: ${IMAGE:-alltalk:v1-9c}
     restart: unless-stopped
     ports:
       - "7851:7851"
@@ -12,6 +12,12 @@ services:
       - ./voices:/app/voices/
       - ./finetune/put-voice-samples-in-here:/app/finetune/put-voice-samples-in-here
       - ./dockerconfig.json:/app/confignew.json
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7851/api/ready"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     deploy:
       resources:
         reservations:
