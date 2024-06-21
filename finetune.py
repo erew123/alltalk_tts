@@ -1,3 +1,4 @@
+import math
 import os
 import gc
 import re
@@ -6,6 +7,8 @@ import time
 import glob
 import json
 import site
+import datetime
+
 import torch
 import signal
 import random
@@ -25,16 +28,22 @@ from pathlib import Path
 from faster_whisper import WhisperModel  
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
+
+from metrics_logger import MetricsLogger
 # Use a local Tokenizer to resolve Japanese support
 # from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
 from system.ft_tokenizer.tokenizer import multilingual_cleaners
 import importlib.metadata as metadata
 from packaging import version
+from tokenizers import ByteLevelBPETokenizer
+from tokenizers.pre_tokenizers import Whitespace
 
 # STARTUP VARIABLES 
 this_dir = Path(__file__).parent.resolve()
 audio_folder = this_dir / "finetune" / "put-voice-samples-in-here"
-out_path = this_dir / "finetune" / "tmp-trn"
+default_path = this_dir / "finetune" / "tmp-trn"
+out_path = default_path
+
 progress = 0
 theme = gr.themes.Default()
 refresh_symbol = '🔄'
@@ -310,13 +319,17 @@ def create_temporary_file(folder, suffix=".wav"):
 
 
 
-def format_audio_list(target_language, whisper_model, out_path, max_sample_length, eval_split_number, speaker_name_input, gradio_progress=gr.Progress()):
+def format_audio_list(target_language, whisper_model, max_sample_length, eval_split_number, speaker_name_input, create_bpe_tokenizer, gradio_progress=gr.Progress()):
     global validate_train_metadata_path, validate_eval_metadata_path, validate_audio_folder, validate_whisper_model, validate_target_language
     buffer = 0.3
     max_duration = float(max_sample_length)  # Ensure max_duration is a float
     eval_percentage = eval_split_number / 100.0
     speaker_name = speaker_name_input
     audio_total_size = 0
+    global out_path
+    if speaker_name and speaker_name != 'personsname':
+        out_path = this_dir / "finetune" / speaker_name
+
     os.makedirs(out_path, exist_ok=True)
     temp_folder = os.path.join(out_path, "temp")
     os.makedirs(temp_folder, exist_ok=True)
@@ -367,8 +380,13 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
         print(f"[FINETUNE] No audio files found in {original_samples_folder}. Skipping processing.")
         return None, None, 0
 
+    whisper_words = []
+    audio_steps = (0, len(original_audio_files))
+    gradio_progress_duration = 0
+    gradio_progress(audio_steps, desc="Processing Audio Files", unit="files")
+
     for audio_path in tqdm(original_audio_files):  # No start argument for tqdm
-        gradio_progress((2, 4), desc="Processing Audio Files")
+        start = datetime.datetime.now()
         audio_file_name_without_ext, _ = os.path.splitext(os.path.basename(audio_path))
         temp_audio_path = os.path.join(temp_folder, f"{audio_file_name_without_ext}.wav")
 
@@ -415,6 +433,9 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
             words_list.extend(words)
 
         for word_idx, word in enumerate(words_list):
+            if create_bpe_tokenizer:
+                whisper_words.append(word.word)
+
             if first_word:
                 sentence_start = word.start
                 if word_idx == 0:
@@ -481,6 +502,14 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
 
         os.remove(temp_audio_path)
 
+        end = datetime.datetime.now()
+        gradio_progress_duration += (end - start).total_seconds()
+        audio_steps = (audio_steps[0] + 1, audio_steps[1])
+        additional_data_points_needed = audio_steps[1] - audio_steps[0]
+        avg_duration = gradio_progress_duration / audio_steps[0]
+        gradio_estimated_duration = (avg_duration * additional_data_points_needed)
+        gradio_progress(audio_steps, desc=f"Processing. Estimated Completion: {c_logger.format_duration(gradio_estimated_duration)}", unit="files")
+
     # Check if the WAV files folder contains files after processing
     audio_files = [os.path.join(audio_folder, file) for file in os.listdir(audio_folder) if file.endswith('.wav')]
 
@@ -531,6 +560,17 @@ def format_audio_list(target_language, whisper_model, out_path, max_sample_lengt
 
     final_training_set.sort_values('audio_file').to_csv(train_metadata_path, sep='|', index=False)
     final_eval_set.sort_values('audio_file').to_csv(eval_metadata_path, sep='|', index=False)
+
+    if create_bpe_tokenizer:
+        print(f"Training BPE Tokenizer")
+        tokenizer = ByteLevelBPETokenizer(str(this_dir / base_path / "xttsv2_2.0.3" / "vocab.json"))
+        tokenizer.pre_tokenizer = Whitespace()
+        tokenizer.add_tokens(["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "[STOP]", "[SAPCE]"])
+        tokenizer.train_from_iterator(whisper_words, vocab_size=30000, show_progress=True, min_frequency=2, special_tokens=[
+            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "[STOP]", "[SPACE]",
+        ])
+        # Save the tokenizer model
+        tokenizer.save(path=str(out_path / "bpe_tokenizer-vocab.json"), pretty=True)
 
     gradio_progress((4,4), "Finalizing")
 
@@ -648,7 +688,8 @@ def load_and_display_mismatches():
 #### STEP 2 BITS #####
 ######################
 
-from trainer import Trainer, TrainerArgs
+from trainer import TrainerArgs, Trainer
+from trainer_alltalk.trainer import Trainer
 
 from TTS.config.shared_configs import BaseDatasetConfig
 from TTS.tts.datasets import load_tts_samples
@@ -663,10 +704,10 @@ def basemodel_or_finetunedmodel_choice(value):
     elif value == "Existing finetuned model":
         basemodel_or_finetunedmodel = False
 
-def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, output_path, max_audio_length=255995, progress=gr.Progress()):  
+def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, max_audio_length=255995, progress=gr.Progress()):
     pfc_check_fail()
 
-    if "No Models Available" in eval_csv:
+    if "No Models Available" in model_to_train:
         print(f"[FINETUNE] \033[91mError\033[0m: Cannot train. You have not selected a model. Please download a model.")
         print(f"[FINETUNE] \033[91mError\033[0m: into a sub folder within the correct models folder.")
         return   
@@ -678,7 +719,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     model_path = this_dir / "models" / "xtts" / model_to_train
 
     # Set here the path that the checkpoints will be saved. Default: ./training/
-    OUT_PATH = os.path.join(output_path, "training")
+    OUT_PATH = os.path.join(out_path, "training")
     print("[FINETUNE] \033[94mStarting Step 2\033[0m - Fine-tuning the XTTS Encoder")
     print(f"[FINETUNE] \033[94mLanguage: \033[92m{language} \033[94mEpochs: \033[92m{num_epochs} \033[94mBatch size: \033[92m{batch_size}\033[0m \033[94mGrad accumulation steps: \033[92m{grad_acumm}\033[0m")
     print(f"[FINETUNE] \033[94mTraining   : \033[92m{train_csv}\033[0m")
@@ -731,8 +772,30 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     MEL_NORM_FILE = model_path / "mel_stats.pth"
     SPEAKERS_FILE = model_path / "speakers_xtts.pth"
 
+    training_assets = None
+    if (out_path / "bpe_tokenizer-vocab.json").exists():
+        print("[FINETUNE] Using custom BPE tokenizer")
+        training_assets = {
+            'Tokenizer': str(out_path / "bpe_tokenizer-vocab.json")
+        }
+
+    continue_path = None
+    if continue_run:
+        folders = glob.glob(os.path.join(OUT_PATH, '*/'))
+        if folders:
+            last_run = max(folders, key=os.path.getmtime)
+            if last_run:
+                checkpoints = glob.glob(os.path.join(last_run, "best_model_*.pth"))
+                if checkpoints:
+                    latest_checkpoint = max(checkpoints, key=os.path.getmtime)
+                    if latest_checkpoint:
+                        XTTS_CHECKPOINT = None
+                        continue_path = last_run
+                        print(f"[FINETUNE] Continuing previous fine tuning {latest_checkpoint}")
+
+
     # Copy the supporting files
-    destination_dir = this_dir / "finetune" / "tmp-trn" / "chkptandnorm"
+    destination_dir = out_path / "chkptandnorm"
     destination_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(DVAE_CHECKPOINT, destination_dir / DVAE_CHECKPOINT.name)
     shutil.copy2(MEL_NORM_FILE, destination_dir / MEL_NORM_FILE.name)
@@ -763,6 +826,95 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     if language == "ja":
         number_of_workers = 0
 
+    lr_scheduler = None
+    lr_scheduler_params = {}
+
+    if learning_rate_scheduler and learning_rate_scheduler != "None":
+        lr_gamma_mapping = {
+            1e-6: 0.9,
+            5e-6: 0.8,
+            1e-5: 0.3,
+            5e-5: 0.3,
+            1e-4: 0.3,
+            5e-4: 0.1,
+            1e-3: 0.1
+        }
+        lr_scheduler = learning_rate_scheduler
+        if lr_scheduler == "StepLR":
+            lr_scheduler_params = {'step_size': 30, 'gamma': 0.1, 'last_epoch': -1}
+        elif lr_scheduler == "MultiStepLR":
+            exponent = 3 - int(math.log2(num_epochs) / 2)
+            base = 2
+            num_milestones = min(num_epochs, int(math.pow(base, exponent)))
+            milestone_interval = num_epochs // (num_milestones + 1)
+            milestones = [milestone_interval * (i + 1) for i in range(num_milestones)]
+            lr_scheduler_params = {'milestones': milestones, 'gamma': lr_gamma_mapping[learning_rate], 'last_epoch': -1}
+        elif lr_scheduler == "ExponentialLR":
+            lr_scheduler_params = {'gamma': 0.5, 'last_epoch': -1}
+        elif lr_scheduler == "CosineAnnealingLR":
+            lr_scheduler_params = {'T_max': num_epochs, 'eta_min': 1e-6, 'last_epoch': -1}
+        elif lr_scheduler == "ReduceLROnPlateau":
+            lr_scheduler_params = {'mode': 'min', 'factor': 0.8, 'patience': 1, 'threshold': 0.0001,
+                                   'threshold_mode': 'rel', 'cooldown': 0, 'min_lr': 1e-8, 'eps': 1e-08,}
+        elif lr_scheduler == "CyclicLR":
+            lr_scheduler_params = {'base_lr': learning_rate, 'max_lr': 0.1, 'step_size_up': 2000, 'step_size_down': None,
+                                   'mode': 'triangular', 'gamma': 1.0, 'scale_fn': None, 'scale_mode': 'cycle',
+                                   'cycle_momentum': True, 'base_momentum': 0.8, 'max_momentum': 0.9, 'last_epoch': -1}
+        elif lr_scheduler == "OneCycleLR":
+            #TODO: Determine total steps / epoch for this
+            lr_scheduler_params = {'max_lr': learning_rate, 'total_steps': None, 'epochs_up': None, 'steps_per_epoch': None,
+                                   'anneal_strategy': 'cos', 'cycle_momentum': True, 'base_momentum': 0.85,
+                                   'max_momentum': 0.95, 'div_factor': 25.0, 'final_div_factor': 10000.0,
+                                   'last_epoch': -1}
+        elif lr_scheduler == "CosineAnnealingWarmRestarts":
+            #Set 4 learning rate restarts
+            lr_scheduler_params = {'T_0': int(num_epochs / 4), 'T_mult': 1, 'eta_min': 1e-6, 'last_epoch': -1}
+
+    optimizer_params = None
+    optimizer_wd_only_on_weight = OPTIMIZER_WD_ONLY_ON_WEIGHTS
+
+    if optimizer == "AdamW":
+        optimizer_params = {
+            "betas": [0.9, 0.96],
+            "eps": 1e-8,
+            "weight_decay": 1e-2
+        }
+    elif optimizer == "RMSprop":
+        optimizer_params = {
+            "alpha": 0.99,
+            "eps": 1e-8,
+            "weight_decay": 1e-4
+        }
+    elif optimizer == "SGD":
+        optimizer_params = {
+            "momentum": 0.9,
+            "weight_decay": 1e-4
+        }
+    elif optimizer == "Adam":
+        optimizer_params = {
+            "betas": [0.9, 0.999],
+            "eps": 1e-8,
+            "weight_decay": 1e-4
+        }
+    elif optimizer == "Adagrad":
+        optimizer_params = {
+            "lr_decay": 0,
+            "weight_decay": 1e-4,
+            "eps": 1e-10
+        }
+    elif optimizer == "RAdam":
+        optimizer_params = {
+            "betas": [0.9, 0.999],
+            "eps": 1e-8,
+            "weight_decay": 1e-2
+        }
+    elif optimizer == "stepwisegraduallr" or optimizer == "noamlr":
+        optimizer_params = { }
+        # These are Hardcoded learning rate schedulers
+
+
+    print(f"[FINETUNE] Learning Scheduler {lr_scheduler}, params {lr_scheduler_params}")
+
     # training parameters config
     config = GPTTrainerConfig(
         epochs=num_epochs,
@@ -788,13 +940,13 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         # target_loss="loss",
         print_eval=False,
         # Optimizer values like tortoise, pytorch implementation with modifications to not apply WD to non-weight parameters.
-        optimizer="AdamW",
+        optimizer=optimizer,
         optimizer_wd_only_on_weights=OPTIMIZER_WD_ONLY_ON_WEIGHTS,
-        optimizer_params={"betas": [0.9, 0.96], "eps": 1e-8, "weight_decay": 1e-2},
+        optimizer_params=optimizer_params,
         lr=learning_rate,  # learning rate
-        lr_scheduler="MultiStepLR",
+        lr_scheduler=lr_scheduler,
         # it was adjusted accordly for the new step scheme
-        lr_scheduler_params={"milestones": [50000 * 18, 150000 * 18, 300000 * 18], "gamma": 0.5, "last_epoch": -1},
+        lr_scheduler_params=lr_scheduler_params,
         test_sentences=[],
     )
     progress(0, desc="Model is currently training. See console for more information")
@@ -808,11 +960,15 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         eval_split_size=config.eval_split_size,
     )
 
+    global c_logger
+    c_logger = MetricsLogger()
+
     # init the trainer
     trainer = Trainer(
         TrainerArgs(
             restore_path=None,  # xtts checkpoint is restored via xtts_checkpoint key so no need of restore it using Trainer restore_path parameter
             skip_train_epoch=False,
+            continue_path=continue_path,
             start_with_eval=START_WITH_EVAL,
             grad_accum_steps=GRAD_ACUMM_STEPS,
         ),
@@ -821,7 +977,15 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         model=model,
         train_samples=train_samples,
         eval_samples=eval_samples,
+        training_assets=training_assets,
+        c_logger=c_logger,
     )
+
+    if(disable_shared_memory):
+        # Limit training to GPU memory instead of shared memory
+        print("[FINETUNE] Limiting GPU memory to 95% to prevent spillover")
+        torch.cuda.set_per_process_memory_fraction(0.95)
+
     trainer.fit()
 
     # get the longest text audio file to use as speaker reference
@@ -884,7 +1048,13 @@ def run_tts(lang, tts_text, speaker_audio_file):
     if XTTS_MODEL is None or not speaker_audio_file:
         return "You need to run the previous step to load the model !!", None, None
     speaker_audio_file = str(speaker_audio_file)
-    gpt_cond_latent, speaker_embedding = XTTS_MODEL.get_conditioning_latents(audio_path=speaker_audio_file, gpt_cond_len=XTTS_MODEL.config.gpt_cond_len, max_ref_length=XTTS_MODEL.config.max_ref_len, sound_norm_refs=XTTS_MODEL.config.sound_norm_refs)
+    if os.path.isdir(speaker_audio_file):
+        wavs_files = glob.glob(os.path.join(speaker_audio_file, "*.wav"))
+        speaker_audio_file = wavs_files[0]
+    else:
+        wavs_files = [speaker_audio_file]
+
+    gpt_cond_latent, speaker_embedding = XTTS_MODEL.get_conditioning_latents(audio_path=wavs_files, gpt_cond_len=XTTS_MODEL.config.gpt_cond_len, max_ref_length=XTTS_MODEL.config.max_ref_len, sound_norm_refs=XTTS_MODEL.config.sound_norm_refs)
     out = XTTS_MODEL.inference(
         text=tts_text,
         language=lang,
@@ -904,33 +1074,45 @@ def run_tts(lang, tts_text, speaker_audio_file):
 
     return "Speech generated !", out_path, speaker_audio_file
 
-def get_available_voices(minimum_size_kb=1200):
+def get_available_voices(minimum_size_kb=1200, speaker_name=None):
+    directory = out_path
+    if speaker_name and speaker_name != 'personsname':
+        directory = this_dir / "finetune" / speaker_name
+
     voice_files = [
-        voice for voice in Path(f"{this_dir}/finetune/tmp-trn/wavs").glob("*.wav")
+        voice for voice in Path(f"{directory}/wavs").glob("*.wav")
         if voice.stat().st_size > minimum_size_kb * 1200  # Convert KB to bytes
     ]
     return sorted([str(file) for file in voice_files])  # Return full path as string
 
-def find_best_models(directory):
+def find_best_models(directory, speaker_name=None):
+    if speaker_name and speaker_name != 'personsname':
+        directory = this_dir / "finetune" / speaker_name
+
     """Find files named 'best_model.pth' in the given directory."""
     return [str(file) for file in Path(directory).rglob("best_model.pth")]
 
-def find_models(directory, extension):
+def find_models(directory, extension,  speaker_name=None):
+    if speaker_name and speaker_name != 'personsname':
+        directory = this_dir / "finetune" / speaker_name
+
     """Find files with a specific extension in the given directory."""
     return [str(file) for file in Path(directory).rglob(f"*.{extension}")]
 
-def find_jsons(directory, filename):
+def find_jsons(directory, filename, speaker_name=None):
+    if speaker_name and speaker_name != 'personsname':
+        directory = this_dir / "finetune" / speaker_name
+
     """Find files with a specific filename in the given directory."""
     return [str(file) for file in Path(directory).rglob(filename)]
 
-# Your main directory
-main_directory = Path(this_dir) / "finetune" / "tmp-trn"
+
 # XTTS checkpoint files (best_model.pth)
-xtts_checkpoint_files = find_best_models(main_directory)
+xtts_checkpoint_files = find_best_models(out_path)
 # XTTS config files (config.json)
-xtts_config_files = find_jsons(main_directory, "config.json")
+xtts_config_files = find_jsons(out_path, "config.json")
 # XTTS vocab files (vocab.json)
-xtts_vocab_files = find_jsons(main_directory, "vocab.json")
+xtts_vocab_files = find_jsons(out_path, "vocab.json")
 
 ##########################
 #### STEP 4 AND OTHER ####
@@ -976,11 +1158,11 @@ def compact_custom_model(xtts_checkpoint_copy, folder_path, overwrite_existing):
     files_to_copy = ["vocab.json", "config.json"]
     copy_files(folder_path_new, target_dir, files_to_copy)
     # Copy second set of files
-    chkptandnorm_path = this_dir / "finetune" / "tmp-trn" / "chkptandnorm"
+    chkptandnorm_path = out_path / "chkptandnorm"
     files_to_copy2 = ["speakers_xtts.pth", "mel_stats.pth", "dvae.pth"]
     copy_files(chkptandnorm_path, target_dir, files_to_copy2)
     # Copy large wav files
-    source_wavs_dir = this_dir / "finetune" / "tmp-trn" / "wavs"
+    source_wavs_dir = out_path / "wavs"
     target_wavs_dir = target_dir / "wavs"
     target_wavs_dir.mkdir(parents=True, exist_ok=True)
     for file_path in source_wavs_dir.iterdir():
@@ -991,7 +1173,7 @@ def compact_custom_model(xtts_checkpoint_copy, folder_path, overwrite_existing):
 
 def delete_training_data():
     # Define the folder to be deleted
-    folder_to_delete = Path(this_dir / "finetune" / "tmp-trn")
+    folder_to_delete = Path(out_path)
 
     # Check if the folder exists before deleting
     if folder_to_delete.exists():
@@ -1077,6 +1259,9 @@ logging.basicConfig(
     ]
 )
 
+c_logger = MetricsLogger()
+def load_metrics():
+    return c_logger.plot_metrics(), f"Running Time: {c_logger.format_duration(c_logger.total_duration)} - Estimated Completion: {c_logger.format_duration(c_logger.estimated_duration)}"
 def read_logs():
     sys.stdout.flush()
     with open(sys.stdout.log_file, "r") as f:
@@ -1088,10 +1273,10 @@ def cleanup_before_exit(signum, frame):
     sys.exit(0)
 
 def create_refresh_button(refresh_components, refresh_methods, elem_class, interactive=True):
-    def refresh():
+    def refresh(speaker_name):
         updates = {}
         for component, method in zip(refresh_components, refresh_methods):
-            args = method() if callable(method) else method
+            args = method(speaker_name=speaker_name) if callable(method) else method
             if args and 'choices' in args:
                 # Select the most recent file (last in the sorted list)
                 args['value'] = args['choices'][-1] if args['choices'] else ""
@@ -1103,12 +1288,33 @@ def create_refresh_button(refresh_components, refresh_methods, elem_class, inter
     refresh_button = gr.Button("Refresh Dropdowns", elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
         fn=refresh,
-        inputs=[],
+        inputs=[speaker_name_input_testing],
         outputs=refresh_components
     )
 
     return refresh_button
 
+def create_refresh_button_next(refresh_components, refresh_methods, elem_class, interactive=True):
+    def refresh_export(speaker_name):
+        updates = {}
+        for component, method in zip(refresh_components, refresh_methods):
+            args = method(speaker_name=speaker_name) if callable(method) else method
+            if args and 'choices' in args:
+                # Select the most recent file (last in the sorted list)
+                args['value'] = args['choices'][-1] if args['choices'] else ""
+            for k, v in args.items():
+                setattr(component, k, v)
+            updates[component] = gr.update(**(args or {}))
+        return updates
+
+    refresh_button = gr.Button("Refresh Dropdowns", elem_classes=elem_class, interactive=interactive)
+    refresh_button.click(
+        fn=refresh_export,
+        inputs=[speaker_name_input_export],
+        outputs=refresh_components
+    )
+
+    return refresh_button
 
 
 pfc_markdown = f"""
@@ -1315,11 +1521,11 @@ if __name__ == "__main__":
 #######################
         with gr.Tab("📁 Step 1 - Generating the dataset"):
             with gr.Tab("Generate Dataset"):  
-                out_path = gr.Textbox(
-                    label="Output path (where data and checkpoints will be saved):",
-                    value=out_path,
-                    visible=False,
-                )
+                # out_path = gr.Textbox(
+                #     label="Output path (where data and checkpoints will be saved):",
+                #     value=out_path,
+                #     visible=False,
+                # )
                 # Define directories
                 this_dir = Path(__file__).parent.resolve()
                 voice_samples_dir = this_dir / "finetune" / "put-voice-samples-in-here"
@@ -1381,6 +1587,13 @@ if __name__ == "__main__":
                 delete_dataset_button.click(delete_existing_training_data, outputs=output_text)
                 
                 with gr.Row():
+                    speaker_name_input = gr.Textbox(
+                        label="Training Project Name",
+                        value="personsname",
+                        visible=True,
+                        scale=2,
+                        info='Create Unique Training Folder',
+                    )
                     whisper_model = gr.Dropdown(
                         label="Whisper Model",
                         value="large-v2",
@@ -1431,12 +1644,11 @@ if __name__ == "__main__":
                         step=1,  # Increment step
                         scale=2,
                     )
-                    speaker_name_input = gr.Textbox(
-                    label="The name of the speaker/person you are training",
-                    value="personsname",
-                    visible=True,
-                    scale=2,
-                )
+                    create_bpe_tokenizer = gr.Checkbox(
+                        label='BPE Tokenizer',
+                        value=False,
+                        info='Custom Tokenizer for training'
+                    )
                 progress_data = gr.Label(
                     label="Progress:"
                 )
@@ -1449,7 +1661,7 @@ if __name__ == "__main__":
 
                 prompt_compute_btn = gr.Button(value="Step 1 - Create dataset")
             
-                def preprocess_dataset(language, whisper_model, out_path, max_sample_length, eval_split_number, speaker_name_input, progress=gr.Progress()):
+                def preprocess_dataset(language, whisper_model, max_sample_length, eval_split_number, speaker_name_input, create_bpe_tokenizer, progress=gr.Progress()):
                     clear_gpu_cache()
                     test_for_audio_files = [file for file in os.listdir(audio_folder) if any(file.lower().endswith(ext) for ext in ['.wav', '.mp3', '.flac'])]
                     if not test_for_audio_files:
@@ -1457,7 +1669,7 @@ if __name__ == "__main__":
                     else:
                         try:
 
-                            train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model, out_path=out_path, max_sample_length=max_sample_length, eval_split_number=eval_split_number, speaker_name_input=speaker_name_input, gradio_progress=progress)
+                            train_meta, eval_meta, audio_total_size = format_audio_list(target_language=language, whisper_model=whisper_model, max_sample_length=max_sample_length, eval_split_number=eval_split_number, speaker_name_input=speaker_name_input, create_bpe_tokenizer=create_bpe_tokenizer, gradio_progress=progress)
                         except:
                             traceback.print_exc()
                             error = traceback.format_exc()
@@ -1472,7 +1684,7 @@ if __name__ == "__main__":
                         return message, "", ""
 
                     print("[FINETUNE] Dataset Generated. Either run Dataset Validation or move to Step 2")
-                    return "Dataset Generated. Either run Dataset Validation or move to Step 2", train_meta, eval_meta
+                    return "Dataset Generated. Either run Dataset Validation or move to Step 2", train_meta, eval_meta, speaker_name_input
             
             def play_selected_audio(selected_file):
                 if selected_file and selected_file != "Please Generate Your Dataset":
@@ -1534,8 +1746,26 @@ if __name__ == "__main__":
 #### GRADIO STEP 2 ####
 #######################
         with gr.Tab("💻 Step 2 - Training"):
-            with gr.Tab("Training the model"):                    
+            with gr.Tab("Training the model"):
                 with gr.Row():
+                    speaker_name_input_training = gr.Textbox(
+                        label="Project Name",
+                        value="personsname",
+                        visible=True,
+                        info='Create Unique Training Folder',
+                        scale=1,
+                    )
+                    with gr.Group():
+                        continue_run = gr.Checkbox(
+                            value=False,
+                            label="Continue Previous",
+                            scale=1,
+                        )
+                        disable_shared_memory = gr.Checkbox(
+                            value=False,
+                            label="Disable Shared Memory",
+                            scale=1,
+                        )
                     model_to_train_choices = list(available_models.keys())
                     model_to_train = gr.Dropdown(
                         choices=model_to_train_choices,
@@ -1550,6 +1780,7 @@ if __name__ == "__main__":
                         label="Eval CSV:",
                         scale=2,
                     )
+                with gr.Row():
                     learning_rates = gr.Dropdown(
                         value=5e-6,
                         label="Learning Rate",
@@ -1564,7 +1795,42 @@ if __name__ == "__main__":
                         ],
                         type="value",
                         allow_custom_value=True,
-                        scale=0,
+                        scale=1,
+                    )
+                    learning_rate_scheduler = gr.Dropdown(
+                        value="None",
+                        label="Learning Rate Scheduler(s)",
+                        choices=[
+                            ("None", "None"),
+                            ("Cosine Annealing", "CosineAnnealingLR"),
+                            ("Cosine Annealing Warm Restarts", "CosineAnnealingWarmRestarts"),
+                            ("Cyclic", "CyclicLR"),
+                            ("Exponential", "ExponentialLR"),
+                            ("Multi Step", "MultiStepLR"),
+                            ("Reduce on Plateau", "ReduceLROnPlateau"),
+                            ("Step", "StepLR")
+                            #("OneCycleLR", "OneCycleLR"),
+                        ],
+                        type="value",
+                        allow_custom_value=False,
+                        scale=2,
+                    )
+                    optimizer = gr.Dropdown(
+                        value="AdamW",
+                        label="Optimizer",
+                        choices=[
+                            ("AdamW", "AdamW"),
+                            ("SGD with Momentum", "SGD"),
+                            ("RMSprop", "RMSprop"),
+                            ("Adagrad", "Adagrad"),
+                            ("Adam", "Adam"),
+                            ("Rectified Adam", "RAdam"),
+                            ("Step Wise", "stepwisegraduallr"),
+                            ("Noam", "noamlr")
+                        ],
+                        type="value",
+                        allow_custom_value=False,
+                        scale=2,
                     )
                 with gr.Row():
                     num_epochs =  gr.Slider(
@@ -1599,24 +1865,41 @@ if __name__ == "__main__":
                 progress_train = gr.Label(
                     label="Progress:"
                 )
+
+                with gr.Row():
+                    train_time = gr.Label("Estimated Total Training Time", show_label=False)
+
+                with gr.Row():
+                    model_data = gr.Image(c_logger.plot_metrics(), show_label=False)
+
                 logs_tts_train = gr.Textbox(
                     label="Logs:",
                     interactive=False,
                     lines=10,
                 )
+                demo.load(load_metrics, None, [model_data, train_time], every=1)
                 demo.load(read_logs, None, logs_tts_train, every=1)
                 train_btn = gr.Button(value="Step 2 - Run the training")
 
-                def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, output_path, max_audio_length, progress=gr.Progress()):
+                def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, max_audio_length, speaker_name_input_training, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, progress=gr.Progress()):
                     clear_gpu_cache()
+                    global out_path
+                    if speaker_name_input_training and speaker_name_input_training != 'personsname':
+                        out_path = this_dir / "finetune" / speaker_name_input_training
+
                     if not train_csv or not eval_csv:
-                        return "You need to run the data processing step or manually set `Train CSV` and `Eval CSV` fields !", "", "", "", ""
+                        if (out_path / "metadata_eval.csv").exists() and (out_path / "metadata_train.csv").exists():
+                            train_csv = out_path / "metadata_eval.csv"
+                            eval_csv = out_path / "metadata_train.csv"
+                            print("Using existing metadata and training csv.")
+                        else:
+                            return "You need to run the data processing step or manually set `Train CSV` and `Eval CSV` fields !", "", "", "", ""
                     try:
                         # convert seconds to waveform frames
                         max_audio_length = int(max_audio_length * 22050)
                         learning_rate = float(learning_rates)  # Convert the learning rate value to a float
                         progress(0, "Initializing training...")
-                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, output_path=str(output_path), max_audio_length=max_audio_length, progress=gr.Progress())
+                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, max_audio_length=max_audio_length, progress=gr.Progress())
                     except:
                         traceback.print_exc()
                         error = traceback.format_exc()
@@ -1629,7 +1912,7 @@ if __name__ == "__main__":
                     ft_xtts_checkpoint = os.path.join(exp_path, "best_model.pth")
                     print("[FINETUNE] Model training done. Move to Step 3")
                     clear_gpu_cache()
-                    return "Model training done. Move to Step 3", config_path, vocab_file, ft_xtts_checkpoint, speaker_wav
+                    return "Model training done. Move to Step 3", config_path, vocab_file, ft_xtts_checkpoint, speaker_wav, speaker_name_input_training
                 
             with gr.Tab("Training the model Instructions"):
                 gr.Markdown(
@@ -1697,6 +1980,35 @@ if __name__ == "__main__":
                     ◽ 5e-4: Very high learning rate, fast convergence but higher risk of instability.<br>
                     ◽ 1e-3: Extremely high learning rate, very fast convergence but high risk of instability.<br><br>
                     The optimal learning rate depends on the model architecture, dataset, and other hyperparameters.
+                    """
+                )
+            with gr.Tab("Info - Learning Rate Schedulers"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Learning Rate Schedulers</u><br>
+                    ◽ None: Learning rate remains unchanged throughout the training. <br>
+                    ◽ Step: Decreases the learning rate by a factor at specified intervals, offering a straightforward method for controlling learning rate decay.<br>
+                    ◽ MultiStep: Decreases the learning rate by a factor at specified milestones, useful for gradually reducing the learning rate during training.<br>
+                    ◽ Exponential: Decreases the learning rate exponentially over epochs, providing a simple decay mechanism for training.<br>
+                    ◽ CosineAnnealing: Adjusts the learning rate following a cosine annealing schedule, facilitating smoother optimization and potentially better convergence.<br>
+                    ◽ Reduce On Plateau: Reduces the learning rate when a monitored metric has stopped improving, helping to fine-tune learning rates during training.<br>
+                    ◽ Cyclic: Cycles the learning rate between two boundary values, allowing for dynamic learning rate schedules during training.<br>
+                    ◽ One Cycle (disabled): Sets the learning rate using a cyclical learning rate policy and varies momentum inversely, potentially accelerating training and improving performance.<br>
+                    ◽ Cosine Annealing Warm Restarts: Adjusts the learning rate following a cosine annealing schedule with warm restarts, offering a balance between exploration and exploitation during optimization.<br><br>
+                    The choice of learning rate scheduler depends on the specific characteristics of the model, dataset, and training objectives.
+                    """
+                )
+            with gr.Tab("Info - Optimizers"):
+                                gr.Markdown(
+                    f"""
+                    ### 🟩 <u>Optimizers</u><br>
+                    ◽ SGD with Momentum: Good for convergence, requires careful tuning of the learning rate and momentum.
+                    ◽ RMSprop: Adaptively adjusts learning rates, good for varying gradient magnitudes.
+                    ◽ Adam: Widely used, performs well with default parameters.
+                    ◽ Adagrad: Good for sparse data, adapts learning rates based on historical gradients.
+                    ◽ AdamW: Similar to Adam but with decoupled weight decay for better regularization.
+                    When picking an optimizer, you need to experiment with different options to find the one that achieves the best performance and convergence for your task.
+                    AdamW has been set to default as its a sensible pick that will handle most needs.
                     """
                 )
             with gr.Tab("Info - Epochs"):
@@ -1778,6 +2090,13 @@ if __name__ == "__main__":
                                 allow_custom_value=True,  # Allow custom values
                                 scale=1,
                             )
+                            speaker_name_input_testing = gr.Textbox(
+                                label="Project Name",
+                                value="personsname",
+                                visible=True,
+                                info='Create Unique Training Folder',
+                                scale=1,
+                            )
 
                         with gr.Row():
                             tts_language = gr.Dropdown(
@@ -1804,12 +2123,13 @@ if __name__ == "__main__":
                             )
                             # Create refresh button
                             refresh_button = create_refresh_button(
-                                [xtts_checkpoint, xtts_config, xtts_vocab, speaker_reference_audio],
+                                [xtts_checkpoint, xtts_config, xtts_vocab, speaker_reference_audio,
+                                 speaker_name_input_testing],
                                 [
-                                    lambda: {"choices": find_best_models(main_directory), "value": ""},
-                                    lambda: {"choices": find_jsons(main_directory, "config.json"), "value": ""},
-                                    lambda: {"choices": find_jsons(main_directory, "vocab.json"), "value": ""},
-                                    lambda: {"choices": get_available_voices(), "value": ""},
+                                    lambda speaker_name: {"choices": find_best_models(out_path, speaker_name=speaker_name), "value": ""},
+                                    lambda speaker_name: {"choices": find_jsons(out_path, "config.json", speaker_name=speaker_name), "value": ""},
+                                    lambda speaker_name: {"choices": find_jsons(out_path, "vocab.json", speaker_name=speaker_name),"value": ""},
+                                    lambda speaker_name: {"choices": get_available_voices(speaker_name=speaker_name),"value": ""},
                                 ],
                                 elem_class="refresh-button-class"
                             )
@@ -1878,11 +2198,18 @@ if __name__ == "__main__":
                     allow_custom_value=True,
                     scale=2,
                 )
+                speaker_name_input_export = gr.Textbox(
+                    label="Project Name",
+                    value="personsname",
+                    visible=True,
+                    info='Unique Training Folder',
+                    scale=1,
+                )
                 # Create refresh button
-                refresh_button = create_refresh_button(
-                    [xtts_checkpoint_copy,],
+                refresh_button = create_refresh_button_next(
+                    [xtts_checkpoint_copy,speaker_name_input_export],
                     [
-                        lambda: {"choices": find_best_models(main_directory), "value": ""},
+                        lambda speaker_name: {"choices": find_best_models(out_path, speaker_name), "value": ""},
                     ],
                     elem_class="refresh-button-class")
             with gr.Row():
@@ -1901,15 +2228,16 @@ if __name__ == "__main__":
                 inputs=[
                     lang,
                     whisper_model,
-                    out_path,
                     max_sample_length,
                     eval_split_number,
                     speaker_name_input,
+                    create_bpe_tokenizer
                 ],
                 outputs=[
                     progress_data,
                     train_csv,
                     eval_csv,
+                    speaker_name_input_training
                 ],
             )
 
@@ -1925,10 +2253,14 @@ if __name__ == "__main__":
                     num_epochs,
                     batch_size,
                     grad_acumm,
-                    out_path,
                     max_audio_length,
+                    speaker_name_input_training,
+                    continue_run,
+                    disable_shared_memory,
+                    learning_rate_scheduler,
+                    optimizer
                 ],
-                outputs=[progress_train, xtts_config, xtts_vocab, xtts_checkpoint, speaker_reference_audio],
+                outputs=[progress_train, xtts_config, xtts_vocab, xtts_checkpoint, speaker_reference_audio, speaker_name_input_testing],
             )
             
             load_btn.click(

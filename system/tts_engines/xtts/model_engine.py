@@ -1,6 +1,7 @@
 ###############################################
 # DONT CHANGE # These are base imports needed #
 ###############################################
+import glob
 import os
 import sys
 import json
@@ -471,10 +472,15 @@ class tts_class:
         print(f"[{self.branding}Debug] Deciding if streaming or not") if self.debug_tts else None
         print(f"[{self.branding}Debug] self.current_model_loaded", self.current_model_loaded) if self.debug_tts else None
         self.current_model_loaded
+        if os.path.isdir(voice):
+            wavs_files = glob.glob(os.path.join(voice, "*.wav"))
+        else:
+            wavs_files = [f"{self.main_dir}/voices/{voice}"]
+
         if self.current_model_loaded.startswith ("xtts"):
             print(f"[{self.branding}Debug] Text arriving at engine {text}") if self.debug_tts else None
             gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(
-                audio_path=[f"{self.main_dir}/voices/{voice}"],
+                audio_path=wavs_files,
                 gpt_cond_len=self.model.config.gpt_cond_len,
                 max_ref_length=self.model.config.max_ref_len,
                 sound_norm_refs=self.model.config.sound_norm_refs,
@@ -551,7 +557,7 @@ class tts_class:
             self.model.tts_to_file(
                 text=text,
                 file_path=output_file,
-                speaker_wav=[f"{self.main_dir}/voices/{voice}"],
+                speaker_wav=wavs_files,
                 language=language,
                 temperature=temperature,
                 length_penalty=self.model.config.length_penalty,
