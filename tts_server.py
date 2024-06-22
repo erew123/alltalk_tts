@@ -642,7 +642,7 @@ async def tts_generate_streaming(request: Request, text: str = Form(...), voice:
 # Central generate_audio function #
 ###################################
 async def generate_audio(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False):
-    if model_engine.streaming_capable == False and streaming == True:
+    if model_engine.streaming_capable == False and streaming==True:
         print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
         print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
         print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
@@ -650,9 +650,19 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
     response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming)
     # If streaming, then return the generator as-is, otherwise just exhaust it and return
     if streaming:
-        return response
-    async for _ in response:
-        pass
+        # Return an async generator that yields from the response
+        async def stream_response():
+            async for chunk in response:
+                yield chunk
+        return stream_response()
+    else:
+        # Exhaust the generator and handle any errors
+        try:
+            async for _ in response:
+                pass
+        except Exception as e:
+            print(f"[GEN] Error during audio generation: {str(e)}")
+            raise
 
 ###########################
 #### PREVIEW VOICE API ####
