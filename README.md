@@ -46,8 +46,8 @@ There is a welcome screen that covers a few other bits, along with the built in 
 
 ### Linux Systems
 You need to install a few bits (depending on your Linux flavour), otherwise DeepSpeed will fail and some TTS engines not work. At your terminal type the following:
-- **Debian-based systems** `sudo apt install libaio-dev espeak-ng ffmpeg`
-- **RPM-based systems** `sudo yum install libaio-devel espeak-ng ffmpeg`
+- **Debian-based systems** `sudo apt install libaio-dev espeak-ng ffmpeg gcc g++`
+- **RPM-based systems** `sudo yum install libaio-devel espeak-ng ffmpeg gcc g++`
 
 As mentioned, the **atsetup.sh** install for Standalone installations **should** install deepspeed automatically. 
 
