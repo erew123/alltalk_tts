@@ -843,12 +843,12 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         if lr_scheduler == "StepLR":
             lr_scheduler_params = {'step_size': 30, 'gamma': 0.1, 'last_epoch': -1}
         elif lr_scheduler == "MultiStepLR":
-            exponent = 3 - int(math.log2(num_epochs) / 2)
-            base = 2
-            num_milestones = min(num_epochs, int(math.pow(base, exponent)))
-            milestone_interval = num_epochs // (num_milestones + 1)
-            milestones = [milestone_interval * (i + 1) for i in range(num_milestones)]
-            lr_scheduler_params = {'milestones': milestones, 'gamma': lr_gamma_mapping[learning_rate], 'last_epoch': -1}
+            # exponent = 3 - int(math.log2(num_epochs) / 2)
+            # base = 2
+            # num_milestones = min(num_epochs, int(math.pow(base, exponent)))
+            # milestone_interval = num_epochs // (num_milestones + 1)
+            # milestones = [milestone_interval * (i + 1) for i in range(num_milestones)]
+            lr_scheduler_params = {"milestones": [50000 * 18, 150000 * 18, 300000 * 18], "gamma": 0.5, "last_epoch": -1}
         elif lr_scheduler == "ExponentialLR":
             lr_scheduler_params = {'gamma': 0.5, 'last_epoch': -1}
         elif lr_scheduler == "CosineAnnealingLR":
@@ -1850,7 +1850,7 @@ if __name__ == "__main__":
                     grad_acumm = gr.Slider(
                         label="Grad accumulation steps:",
                         minimum=1,
-                        maximum=32,
+                        maximum=1024,
                         step=1,
                         value=args.grad_acumm,
                     )
