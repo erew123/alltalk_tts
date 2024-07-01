@@ -843,12 +843,12 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         if lr_scheduler == "StepLR":
             lr_scheduler_params = {'step_size': 30, 'gamma': 0.1, 'last_epoch': -1}
         elif lr_scheduler == "MultiStepLR":
-            # exponent = 3 - int(math.log2(num_epochs) / 2)
-            # base = 2
-            # num_milestones = min(num_epochs, int(math.pow(base, exponent)))
-            # milestone_interval = num_epochs // (num_milestones + 1)
-            # milestones = [milestone_interval * (i + 1) for i in range(num_milestones)]
-            lr_scheduler_params = {"milestones": [50000 * 18, 150000 * 18, 300000 * 18], "gamma": 0.5, "last_epoch": -1}
+            exponent = 3 - int(math.log2(num_epochs) / 2)
+            base = 2
+            num_milestones = min(num_epochs, int(math.pow(base, exponent)))
+            milestone_interval = num_epochs // (num_milestones + 1)
+            milestones = [milestone_interval * (i + 1) for i in range(num_milestones)]
+            lr_scheduler_params = {'milestones': milestones, 'gamma': lr_gamma_mapping[learning_rate], 'last_epoch': -1}
         elif lr_scheduler == "ExponentialLR":
             lr_scheduler_params = {'gamma': 0.5, 'last_epoch': -1}
         elif lr_scheduler == "CosineAnnealingLR":
@@ -867,6 +867,10 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
                                    'max_momentum': 0.95, 'div_factor': 25.0, 'final_div_factor': 10000.0,
                                    'last_epoch': -1}
         elif lr_scheduler == "CosineAnnealingWarmRestarts":
+            if num_epochs < 4:
+                error_message = "For Cosine Annealing Warm Restarts, epochs must be at least 4. Please set a minimum of 4 epochs."
+                progress(1.0, desc=f"Error: {error_message}")
+                raise ValueError(error_message)
             #Set 4 learning rate restarts
             lr_scheduler_params = {'T_0': int(num_epochs / 4), 'T_mult': 1, 'eta_min': 1e-6, 'last_epoch': -1}
 
@@ -1592,7 +1596,6 @@ if __name__ == "__main__":
                         value="personsname",
                         visible=True,
                         scale=2,
-                        info='Create Unique Training Folder',
                     )
                     whisper_model = gr.Dropdown(
                         label="Whisper Model",
@@ -1631,13 +1634,13 @@ if __name__ == "__main__":
                         scale=1,
                     )
                     max_sample_length = gr.Dropdown(
-                        label="Maximum Audio Length Created by Whisper (seconds)",
+                        label="Max Audio Length (in seconds)",
                         value="30",
                         choices=["10", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80", "85", "90"],
                         scale=2
                     )
                     eval_split_number = gr.Number(
-                        label="Evaluation data Split (the % to use for Evaluation data)",
+                        label="Evaluation Data Split",
                         value=15,  # Default value
                         minimum=5,  # Minimum value
                         maximum=95,  # Maximum value
@@ -1711,36 +1714,57 @@ if __name__ == "__main__":
             with gr.Tab("Generate Dataset Instructions"):
                 gr.Markdown(
                     f"""
-                    ### 📁 <u>Generating the dataset</u><br>
-                    ### 🟥 <u>Important Note - Windows - "UserWarning: huggingface_hub cache-system uses symlinks."</u>
-                    ◽ This error is caused by Huggingfaces download software downloading the Whisper model. If you get this error, please restart your Windows command prompt with "Run as Administrator" and restart finetuning.<br>
-                    ◽ This should only occur the 1st time it downloads the Whisper model. [Huggingface Reference here](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache#limitations)
-                    ### 🟥 <u>Important Note - Language support.</u>
-                    ◽ Although I have done my best to help automate this step, the Whisper model is not great with all languages and may fail to build your training data correctly. The Large-v3 may be better at certain languages.<br>
-                    ◽ You can find information about the Whisper model [here](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages) and you can find data about manually building training data [here](https://docs.coqui.ai/en/latest/formatting_your_dataset.html), as well as details below about the file structure this step performs.<br>
-                    ### 🟦 <u>What you need to do</u>
-                    ◽ Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)<br>
-                    ◽ Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>          
-                    ◽ Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span><br>
-                    ◽ You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. 5 to 10 minutes of audio would probably be better, allowing for more varied sample data to be generated.<br>
-                    ◽ Very small sample files cause errors, so I would recommend that the samples are at least 30 seconds and longer.<br>
-                    ◽ FYI Anecdotal evidence suggests that the Whisper 2 model may yield superior results in audio splitting and dataset creation.<br>
-                    ### 🟨 <u>What this step is doing</u><br>
-                    ◽ With step one, we are going to be stripping your audio file(s) into smaller files, using Whisper to find spoken words/sentences, compile that into excel sheets of training data, ready for Step 2.<br>
-                    ◽ Whisper is making a best effort to find spoken audio and break it down into smaller audio files. The content of these audio files is then transcribed into CSV fles (which you can edit in Excel or similar).<br>
-                    ◽ These files (audio and CSV) are used at the next step to train the model "this is what the audio sounds like and these are the words being spoken".<br>
-                    ◽ If you are using Audio that has multiple speakers/people speaking, you will HAVE to edit the generated CSV files and remove the **OTHER** person out of the training list.<br>
-                    ◽ If you wish to manually look at the CSV files before running the next step, you are welcome to do so and edit them as necessary. The greater the accuracy of the text the better the training will be.<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/lang.txt</span> Contains a two digit langauage code e.g. `en`, `fr` etc.<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/metadata_train.csv</span> Contains the list of wavs to text that will be used. This is what the model is trained with.<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/metadata_eval.csv</span> Lists the evaluation wav to text, used to generate TTS while training and evaluate the quality of generated TTS to the original sample.<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ <span style="color: #3366ff;">/alltalk_tts/finetune/tmp-trn/wavs/</span> These are the wavs split out from your original training samples and match the contents of the CSV files.<br>
-                    ◽ Whilst you can choose multiple Whisper models, its best only to use the 1 model as each one is about 3GB in size and will download to your local huggingface cache on first-time use. <br>
-                    ◽ If and when you have completed training, should you wish to delete this 3GB Whisper model from your system, you are welcome to do so.<br>
-                    ### 🟩 <u>How long will this take?</u><br>
-                    ◽ First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.<br>
+                    #### 🟦 <u>What You Need to Do</u>
+                    1. Read [Coqui's guide on creating a good dataset](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html).<br>
+                    2. Place your audio files (MP3, WAV, or FLAC) in `{str(audio_folder)}` Or Upload them through the interface.<br>
+                    3. Provide at least 2 minutes of audio, preferably 5-10 minutes for better results.<br>
+                    4. Maximum Audio Length will ensure the audio samples do not exceed the set value in seconds. The AI model can only process so much audio per audio sample, per epoch.<br>
+                    5. Enter a unique Project Name if you wish to create a dedicated training folder. You will need to specify this name as you move through the interfaces and click the Refresh buttons where needed.<br>
+                    6. Select the Whisper model (large-v2 recommended for English use cases).<br>
+                    7. Choose your Dataset Language.<br>
+                    8. Adjust the Evaluation Split percentage (default 15% is suitable for most cases).<br>
+                    9. Optionally enable the BPE Tokenizer for custom tokenization, which can improve the model's ability to handle unique words, accents, or languages by creating a vocabulary tailored to your specific dataset. This is especially useful for non-standard speech patterns or languages with complex morphology.<br>
+
+                    #### 🟨 <u>What This Step Does</u>
+                    1. Uses Whisper to transcribe and segment your audio files.<br>
+                    2. Creates smaller audio clips and corresponding transcriptions.<br>
+                    3. Generates two CSV files: `metadata_train.csv` and `metadata_eval.csv`.<br>
+                    4. Saves processed audio in `/finetune/[project_name]/wavs/`.<br>
+                    5. Stores CSV files and metadata in `/finetune/[project_name]/`.<br>
+
+                    Key files generated:<br>
+                    ◽ `/finetune/[project_name]/lang.txt`: Contains the two-letter language code.<br>
+                    ◽ `/finetune/[project_name]/metadata_train.csv`: List of audio files and transcriptions for training.<br>
+                    ◽ `/finetune/[project_name]/metadata_eval.csv`: Evaluation data for assessing training quality.<br>
+
+                    #### <u>Important Considerations</u>
+                    ◽ For multi-speaker audio, manually edit CSV files to remove other speakers.<br>
+                    ◽ You can manually edit CSV files to improve transcription accuracy & use the `Dataset Validation` to help identify possible bad transcriptions.<br>
+                    ◽ The Whisper 2 model may provide better results in audio splitting and dataset creation for English languages, however please see the Whisper site for more details on other languages.<br>
+                    ◽ Each Whisper model is about 3GB. It's recommended to stick with one model to save disk space.<br>
                     """
                 )
+                
+            with gr.Tab("Generate Dataset Notes"):
+                gr.Markdown(
+                    f"""
+                    #### 🟥 <u>Important Notes</u>
+                    ◽ **Windows Users:** If you encounter a `UserWarning: huggingface_hub cache-system uses symlinks` error, restart your Windows command prompt with `Run as Administrator` and relaunch the finetuning process. This typically only occurs during the first Whisper model download.<br>
+                    ◽ **Language Support:** Whisper's performance varies across languages. The Large-v3 model may offer better results for certain languages. For problematic languages, consider manual dataset creation.<br>
+
+                    #### 🟩 <u>Processing Time</u>
+                    ◽ First run: Requires downloading the 3GB Whisper model.<br>
+                    ◽ Subsequent runs: A few minutes on an average 3-4 year old system.<br>
+
+                    After processing, use the 'Dataset Validation' tab to check transcription accuracy and make necessary corrections.<br>
+
+                    For more details on Whisper models or manual dataset creation, refer to:<br>
+                    ◽ [Whisper Models Information](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages)<br>
+                    ◽ [Manual Dataset Creation Guide](https://docs.coqui.ai/en/latest/formatting_your_dataset.html)
+                    """
+                )                
+                
+                
             
 #######################
 #### GRADIO STEP 2 ####
@@ -1752,26 +1776,19 @@ if __name__ == "__main__":
                         label="Project Name",
                         value="personsname",
                         visible=True,
-                        info='Create Unique Training Folder',
                         scale=1,
                     )
                     with gr.Group():
                         continue_run = gr.Checkbox(
                             value=False,
-                            label="Continue Previous",
+                            label="Continue Previous Project",
                             scale=1,
                         )
                         disable_shared_memory = gr.Checkbox(
                             value=False,
-                            label="Disable Shared Memory",
+                            label="Disable Shared Memory Use",
                             scale=1,
                         )
-                    model_to_train_choices = list(available_models.keys())
-                    model_to_train = gr.Dropdown(
-                        choices=model_to_train_choices,
-                        label="Select the Model to train",
-                        value=model_to_train_choices[0] if model_to_train_choices else None
-                    )
                     train_csv = gr.Textbox(
                         label="Train CSV:",
                         scale=2,
@@ -1781,6 +1798,14 @@ if __name__ == "__main__":
                         scale=2,
                     )
                 with gr.Row():
+                    model_to_train_choices = list(available_models.keys())
+                    model_to_train = gr.Dropdown(
+                        choices=model_to_train_choices,
+                        label="Select the Model to train",
+                        value=model_to_train_choices[0] if model_to_train_choices else None,
+                        scale=2,
+                    )                  
+  
                     learning_rates = gr.Dropdown(
                         value=5e-6,
                         label="Learning Rate",
@@ -1798,7 +1823,7 @@ if __name__ == "__main__":
                         scale=1,
                     )
                     learning_rate_scheduler = gr.Dropdown(
-                        value="None",
+                        value="CosineAnnealingWarmRestarts",
                         label="Learning Rate Scheduler(s)",
                         choices=[
                             ("None", "None"),
@@ -1850,7 +1875,7 @@ if __name__ == "__main__":
                     grad_acumm = gr.Slider(
                         label="Grad accumulation steps:",
                         minimum=1,
-                        maximum=1024,
+                        maximum=32,
                         step=1,
                         value=args.grad_acumm,
                     )
@@ -1867,7 +1892,8 @@ if __name__ == "__main__":
                 )
 
                 with gr.Row():
-                    train_time = gr.Label("Estimated Total Training Time", show_label=False)
+                    train_time = gr.Label("Estimated Total Training Time", show_label=False, scale=2)
+                    train_btn = gr.Button(value="Step 2 - Run the training", scale=1)
 
                 with gr.Row():
                     model_data = gr.Image(c_logger.plot_metrics(), show_label=False)
@@ -1879,7 +1905,6 @@ if __name__ == "__main__":
                 )
                 demo.load(load_metrics, None, [model_data, train_time], every=1)
                 demo.load(read_logs, None, logs_tts_train, every=1)
-                train_btn = gr.Button(value="Step 2 - Run the training")
 
                 def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, max_audio_length, speaker_name_input_training, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, progress=gr.Progress()):
                     clear_gpu_cache()
@@ -1900,24 +1925,30 @@ if __name__ == "__main__":
                         learning_rate = float(learning_rates)  # Convert the learning rate value to a float
                         progress(0, "Initializing training...")
                         config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, max_audio_length=max_audio_length, progress=gr.Progress())
-                    except:
-                        traceback.print_exc()
-                        error = traceback.format_exc()
-                        return f"The training was interrupted due an error !! Please check the console to check the full error message! \n Error summary: {error}", "", "", "", ""
+                    
+                        # copy original files to avoid parameters changes issues
+                        shutil.copy(config_path, exp_path)
+                        shutil.copy(vocab_file, exp_path)
 
-                    # copy original files to avoid parameters changes issues
-                    shutil.copy(config_path, exp_path)
-                    shutil.copy(vocab_file, exp_path)
+                        ft_xtts_checkpoint = os.path.join(exp_path, "best_model.pth")
+                        print("[FINETUNE] Model training done. Move to Step 3")
+                        clear_gpu_cache()
+                        return "Model training done. Move to Step 3", config_path, vocab_file, ft_xtts_checkpoint, speaker_wav, speaker_name_input_training
 
-                    ft_xtts_checkpoint = os.path.join(exp_path, "best_model.pth")
-                    print("[FINETUNE] Model training done. Move to Step 3")
-                    clear_gpu_cache()
-                    return "Model training done. Move to Step 3", config_path, vocab_file, ft_xtts_checkpoint, speaker_wav, speaker_name_input_training
+                    except ValueError as ve:
+                        # This will catch the specific ValueError we raised in train_gpt
+                        error_message = str(ve)
+                        print(f"[FINETUNE] Error: {error_message}")
+                        return f"Training error: {error_message}", "", "", "", "", ""
+                    except Exception as e:
+                        # This will catch any other unexpected errors
+                        error_message = f"An unexpected error occurred: {str(e)}"
+                        print(f"[FINETUNE] Error: {error_message}")
+                        return f"Training error: {error_message}", "", "", "", "", ""
                 
             with gr.Tab("Training the model Instructions"):
                 gr.Markdown(
                     f"""
-                    ### 💻 <u>Training</u><br>
                     ### 🟥 <u>Important Note - Language support.</u>
                     ◽ If this step is failing/erroring you may wish to check your training data was created correctly (Detailed in Step 1), confirming that wav files have been generated and your `metadata_train.csv` and `metadata_eval.csv` files have been populated.<br>             
                     ◽ Ignore 'fatal: not a git repository (or any of the parent directories): .git' as this is a legacy training script issue.<br>  
@@ -1928,6 +1959,23 @@ if __name__ == "__main__":
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- What you are training (A human voice, A cartoon voice, A new language entirely etc)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- How much audio you have (you may want less or more eval or epochs)<br>
                     ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary.<br>
+                    #### 🟪 <u>Continue Previous Project</u>
+                    This option allows you to resume training from where it left off if your previous session was interrupted (e.g., due to a power outage or system crash). When enabled:<br>
+                    ◽ The system will attempt to load the most recent checkpoint from your previous training session.<br>
+                    ◽ It will continue training from that point, preserving your progress and saving time.<br>
+                    ◽ This is particularly useful for long training sessions or when you want to extend training on a previously trained model.<br>
+                    #### 🟪 <u>Disable Shared Memory</u>
+                    This option affects how the system manages memory during training:<br>
+                    ◽ When enabled, it limits GPU memory usage to 95% of its capacity.<br>
+                    ◽ This prevents the training process from spilling over into your system's shared memory.<br>
+                    ◽ You're more likely to get a clear "out of memory" error if your GPU runs out of memory, rather than experiencing slower performance due to memory spillover.<br>
+                    ◽ This option is useful if you prefer to keep training confined to GPU memory for better performance and clearer error reporting.<br>
+
+                    Important Note for Windows Users with Low VRAM GPUs:<br>
+                    ◽ If you're using Windows and have a GPU with lower VRAM (e.g., 8GB or less), it's recommended to leave this option disabled.<br>
+                    ◽ Windows can utilize system RAM as extended VRAM, which can be crucial for completing the training process on lower VRAM GPUs.<br>
+                    ◽ Disabling this option allows Windows to manage memory allocation more flexibly, potentially preventing out-of-memory errors on GPUs with limited VRAM.
+                    
                     ### 🟨 <u>What this step is doing</u><br>
                     ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
                     ### 🟩 <u>How long will this take?</u><br>
@@ -1972,13 +2020,13 @@ if __name__ == "__main__":
                                 gr.Markdown(
                     f"""
                     ### 🟩 <u>Learning Rate</u><br>
-                    ◽ 1e-6: Very small learning rate, slow but stable learning.<br>
-                    ◽ 5e-6: Small learning rate, slow but stable learning.<br>
-                    ◽ 1e-5: Moderate learning rate, balanced between stability and convergence speed.<br>
-                    ◽ 5e-5: Higher learning rate, faster convergence but potential instability.<br>
-                    ◽ 1e-4: High learning rate, faster convergence but increased risk of instability.<br>
-                    ◽ 5e-4: Very high learning rate, fast convergence but higher risk of instability.<br>
-                    ◽ 1e-3: Extremely high learning rate, very fast convergence but high risk of instability.<br><br>
+                    ◽ **1e-6:** Very small learning rate, slow but stable learning.<br>
+                    ◽ **5e-6:** Small learning rate, slow but stable learning.<br>
+                    ◽ **1e-5:** Moderate learning rate, balanced between stability and convergence speed.<br>
+                    ◽ **5e-5:** Higher learning rate, faster convergence but potential instability.<br>
+                    ◽ **1e-4:** High learning rate, faster convergence but increased risk of instability.<br>
+                    ◽ **5e-4:** Very high learning rate, fast convergence but higher risk of instability.<br>
+                    ◽ **1e-3:** Extremely high learning rate, very fast convergence but high risk of instability.<br><br>
                     The optimal learning rate depends on the model architecture, dataset, and other hyperparameters.
                     """
                 )
@@ -1986,15 +2034,15 @@ if __name__ == "__main__":
                                 gr.Markdown(
                     f"""
                     ### 🟩 <u>Learning Rate Schedulers</u><br>
-                    ◽ None: Learning rate remains unchanged throughout the training. <br>
-                    ◽ Step: Decreases the learning rate by a factor at specified intervals, offering a straightforward method for controlling learning rate decay.<br>
-                    ◽ MultiStep: Decreases the learning rate by a factor at specified milestones, useful for gradually reducing the learning rate during training.<br>
-                    ◽ Exponential: Decreases the learning rate exponentially over epochs, providing a simple decay mechanism for training.<br>
-                    ◽ CosineAnnealing: Adjusts the learning rate following a cosine annealing schedule, facilitating smoother optimization and potentially better convergence.<br>
-                    ◽ Reduce On Plateau: Reduces the learning rate when a monitored metric has stopped improving, helping to fine-tune learning rates during training.<br>
-                    ◽ Cyclic: Cycles the learning rate between two boundary values, allowing for dynamic learning rate schedules during training.<br>
-                    ◽ One Cycle (disabled): Sets the learning rate using a cyclical learning rate policy and varies momentum inversely, potentially accelerating training and improving performance.<br>
-                    ◽ Cosine Annealing Warm Restarts: Adjusts the learning rate following a cosine annealing schedule with warm restarts, offering a balance between exploration and exploitation during optimization.<br><br>
+                    ◽ **None:** Learning rate remains unchanged throughout the training. <br>
+                    ◽ **Step:** Decreases the learning rate by a factor at specified intervals, offering a straightforward method for controlling learning rate decay.<br>
+                    ◽ **MultiStep:** Decreases the learning rate by a factor at specified milestones, useful for gradually reducing the learning rate during training.<br>
+                    ◽ **Exponential:** Decreases the learning rate exponentially over epochs, providing a simple decay mechanism for training.<br>
+                    ◽ **CosineAnnealing:** Adjusts the learning rate following a cosine annealing schedule, facilitating smoother optimization and potentially better convergence.<br>
+                    ◽ **Reduce On Plateau:** Reduces the learning rate when a monitored metric has stopped improving, helping to fine-tune learning rates during training.<br>
+                    ◽ **Cyclic:** Cycles the learning rate between two boundary values, allowing for dynamic learning rate schedules during training.<br>
+                    ◽ **One Cycle (disabled):** Sets the learning rate using a cyclical learning rate policy and varies momentum inversely, potentially accelerating training and improving performance.<br>
+                    ◽ **Cosine Annealing Warm Restarts:** Adjusts the learning rate following a cosine annealing schedule with warm restarts, offering a balance between exploration and exploitation during optimization.<br><br>
                     The choice of learning rate scheduler depends on the specific characteristics of the model, dataset, and training objectives.
                     """
                 )
@@ -2002,12 +2050,12 @@ if __name__ == "__main__":
                                 gr.Markdown(
                     f"""
                     ### 🟩 <u>Optimizers</u><br>
-                    ◽ SGD with Momentum: Good for convergence, requires careful tuning of the learning rate and momentum.
-                    ◽ RMSprop: Adaptively adjusts learning rates, good for varying gradient magnitudes.
-                    ◽ Adam: Widely used, performs well with default parameters.
-                    ◽ Adagrad: Good for sparse data, adapts learning rates based on historical gradients.
-                    ◽ AdamW: Similar to Adam but with decoupled weight decay for better regularization.
-                    When picking an optimizer, you need to experiment with different options to find the one that achieves the best performance and convergence for your task.
+                    ◽ **SGD with Momentum:** Good for convergence, requires careful tuning of the learning rate and momentum.<br>
+                    ◽ **RMSprop:** Adaptively adjusts learning rates, good for varying gradient magnitudes.<br>
+                    ◽ **Adam:** Widely used, performs well with default parameters.<br>
+                    ◽ **Adagrad:** Good for sparse data, adapts learning rates based on historical gradients.<br>
+                    ◽ **AdamW:** Similar to Adam but with decoupled weight decay for better regularization.<br><br>
+                    When picking an optimizer, you need to experiment with different options to find the one that achieves the best performance and convergence for your task.<br><br>
                     AdamW has been set to default as its a sensible pick that will handle most needs.
                     """
                 )
@@ -2091,10 +2139,9 @@ if __name__ == "__main__":
                                 scale=1,
                             )
                             speaker_name_input_testing = gr.Textbox(
-                                label="Project Name",
+                                label="Project Name (Refresh Dropdowns on change)",
                                 value="personsname",
                                 visible=True,
-                                info='Create Unique Training Folder',
                                 scale=1,
                             )
 
@@ -2199,10 +2246,9 @@ if __name__ == "__main__":
                     scale=2,
                 )
                 speaker_name_input_export = gr.Textbox(
-                    label="Project Name",
+                    label="Project Name (Refresh Dropdowns on change)",
                     value="personsname",
                     visible=True,
-                    info='Unique Training Folder',
                     scale=1,
                 )
                 # Create refresh button
