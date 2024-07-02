@@ -58,6 +58,8 @@ from trainer.utils.distributed import (
     rank_zero_only,
 )
 
+from trainer_alltalk.WarmUpScheduler import WarmUpScheduler
+
 logger = logging.getLogger("trainer")
 
 if is_apex_available():
@@ -309,6 +311,7 @@ class Trainer:
         parse_command_line_args: bool = True,
         callbacks: Dict[str, Callable] = {},
         gpu: int = None,
+        warmup: bool = False,
     ) -> None:
         """Simple yet powerful 🐸💬 TTS trainer for PyTorch. It can train all the available `tts` and `vocoder` models
         or easily be customized.
@@ -429,6 +432,7 @@ class Trainer:
         self.overfit_batch = args.overfit_batch
         self.skip_train_epoch = args.skip_train_epoch
         self.start_with_eval = args.start_with_eval
+        self.warmup = warmup
 
         assert self.grad_accum_steps > 0, " [!] grad_accum_steps must be greater than 0."
 
@@ -568,6 +572,16 @@ class Trainer:
         self.scheduler = self.restore_scheduler(
             self.scheduler, self.args, self.config, self.restore_epoch, self.restore_step
         )
+
+        if self.warmup:
+            warmup_scheduler = WarmUpScheduler(
+                optimizer=self.optimizer,
+                total_epochs=self.config.epochs,
+                warmup_lr=1e-7,
+                target_lr=self.config.lr,
+                after_scheduler=self.scheduler
+            )
+            self.scheduler = warmup_scheduler
 
         # DISTRIBUTED
         if self.use_pt_ddp:
@@ -1541,6 +1555,7 @@ class Trainer:
                 else:
                     self.model.train()
                 torch.set_grad_enabled(True)
+
 
         epoch_time = time.time() - epoch_start_time
         self.callbacks.on_train_epoch_end(self)

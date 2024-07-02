@@ -704,7 +704,7 @@ def basemodel_or_finetunedmodel_choice(value):
     elif value == "Existing finetuned model":
         basemodel_or_finetunedmodel = False
 
-def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, max_audio_length=255995, progress=gr.Progress()):
+def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, warm_up, max_audio_length=255995, progress=gr.Progress()):
     pfc_check_fail()
 
     if "No Models Available" in model_to_train:
@@ -983,6 +983,8 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         eval_samples=eval_samples,
         training_assets=training_assets,
         c_logger=c_logger,
+        warmup=warm_up,
+
     )
 
     if(disable_shared_memory):
@@ -1789,6 +1791,11 @@ if __name__ == "__main__":
                             label="Disable Shared Memory Use",
                             scale=1,
                         )
+                        warm_up = gr.Checkbox(
+                            value=False,
+                            label="Perform Small a Warmup Learning",
+                            scale=1,
+                        )
                     train_csv = gr.Textbox(
                         label="Train CSV:",
                         scale=2,
@@ -1875,7 +1882,7 @@ if __name__ == "__main__":
                     grad_acumm = gr.Slider(
                         label="Grad accumulation steps:",
                         minimum=1,
-                        maximum=32,
+                        maximum=128,
                         step=1,
                         value=args.grad_acumm,
                     )
@@ -1906,7 +1913,7 @@ if __name__ == "__main__":
                 demo.load(load_metrics, None, [model_data, train_time], every=1)
                 demo.load(read_logs, None, logs_tts_train, every=1)
 
-                def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, max_audio_length, speaker_name_input_training, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, progress=gr.Progress()):
+                def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, max_audio_length, speaker_name_input_training, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, warm_up, progress=gr.Progress()):
                     clear_gpu_cache()
                     global out_path
                     if speaker_name_input_training and speaker_name_input_training != 'personsname':
@@ -1914,8 +1921,8 @@ if __name__ == "__main__":
 
                     if not train_csv or not eval_csv:
                         if (out_path / "metadata_eval.csv").exists() and (out_path / "metadata_train.csv").exists():
-                            train_csv = out_path / "metadata_eval.csv"
-                            eval_csv = out_path / "metadata_train.csv"
+                            train_csv = out_path / "metadata_train.csv"
+                            eval_csv = out_path / "metadata_eval.csv"
                             print("Using existing metadata and training csv.")
                         else:
                             return "You need to run the data processing step or manually set `Train CSV` and `Eval CSV` fields !", "", "", "", ""
@@ -1924,7 +1931,7 @@ if __name__ == "__main__":
                         max_audio_length = int(max_audio_length * 22050)
                         learning_rate = float(learning_rates)  # Convert the learning rate value to a float
                         progress(0, "Initializing training...")
-                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, max_audio_length=max_audio_length, progress=gr.Progress())
+                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, warm_up, max_audio_length=max_audio_length, progress=gr.Progress())
                     
                         # copy original files to avoid parameters changes issues
                         shutil.copy(config_path, exp_path)
@@ -2304,7 +2311,8 @@ if __name__ == "__main__":
                     continue_run,
                     disable_shared_memory,
                     learning_rate_scheduler,
-                    optimizer
+                    optimizer,
+                    warm_up
                 ],
                 outputs=[progress_train, xtts_config, xtts_vocab, xtts_checkpoint, speaker_reference_audio, speaker_name_input_testing],
             )
