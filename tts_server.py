@@ -1099,7 +1099,7 @@ def process_rvc_narrator(part_type, voice_gen, pitch, default_model_file, output
 class JSONInput(BaseModel):
     text_input: str = Field(..., max_length=int(api_defaults["api_max_characters"]), description=f"text_input needs to be {api_defaults['api_max_characters']} characters or less.")
     text_filtering: str = Field(..., pattern="^(none|standard|html)$", description="text_filtering needs to be 'none', 'standard' or 'html'.")
-    character_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
+    #character_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvccharacter_voice_gen: str = Field(..., description="rvccharacter_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
     rvccharacter_pitch: float = Field(..., description="RVC Character pitch needs to be a number between -24 and 24")
     narrator_enabled: str = Field(..., pattern="^(true|false|silent)$", description="narrator_enabled needs to be 'true', 'false' or 'silent'.")
