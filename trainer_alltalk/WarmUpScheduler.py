@@ -3,7 +3,9 @@ from torch.optim.lr_scheduler import LRScheduler
 class WarmUpScheduler(LRScheduler):
     def __init__(self, optimizer, total_epochs, warmup_lr, target_lr, after_scheduler=None):
         self.total_epochs = total_epochs
-        self.warmup_epochs = int(total_epochs * 0.1)
+        self.warmup_epochs = int(total_epochs * 0.05)
+        if self.warmup_epochs <= 0:
+            self.warmup_epochs = 1
         self.warmup_lr = warmup_lr
         self.target_lr = target_lr
         self.after_scheduler = after_scheduler
