@@ -140,15 +140,19 @@ def test_cuda():
             return f"Fail - CUDA is available but not working. Error: {e}"
     else:
         return "Fail - CUDA is not available."
-
+   
 def get_cuda_details():
-    if torch.cuda.is_available():
-        device_id = torch.cuda.current_device()
-        device_name = torch.cuda.get_device_name(device_id)
-        device_memory = torch.cuda.get_device_properties(device_id).total_memory / (1024 ** 3)
-        cuda_version = torch.version.cuda
-        return device_name, device_memory, cuda_version
-    else:
+    try:
+        if torch.cuda.is_available():
+            device_id = torch.cuda.current_device()
+            device_name = torch.cuda.get_device_name(device_id)
+            device_memory = torch.cuda.get_device_properties(device_id).total_memory / (1024 ** 3)
+            cuda_version = torch.version.cuda
+            return device_name, device_memory, cuda_version
+        else:
+            return None, None, None
+    except Exception as e:
+        logging.warning(f"Error getting CUDA details: {e}")
         return None, None, None
 
 def find_files_in_path_with_wildcard(pattern):
@@ -236,9 +240,9 @@ def log_system_info():
     logging.info(f"CUDA:")
     logging.info(f" CUDA Working: {cuda_test_result}")
     logging.info(f" CUDA_HOME   : {cuda_home}")    
-    logging.info(f" CUDA Device : {cuda_device_name}")
-    logging.info(f" CUDA Memory : {cuda_device_memory:.2f} GB")
-    logging.info(f" CUDA Version: {cuda_version}")
+    logging.info(f" CUDA Device : {cuda_device_name if cuda_device_name else 'N/A'}")
+    logging.info(f" CUDA Memory : {cuda_device_memory:.2f} GB" if cuda_device_memory else "N/A")
+    logging.info(f" CUDA Version: {cuda_version if cuda_version else 'N/A'}")
     logging.info("\nDISK INFORMATION:")
     for disk in disk_info:
         logging.info(disk)
@@ -295,9 +299,9 @@ def log_system_info():
     print(f"\033[94mPort Status :\033[0m \033[92m{port_status}\033[0m")
     print(f"\033[0m\n  If this network port is unavailable because something else is using it, your")
     print(f"\033[0m  firewall or antivirus is blocking it, AllTalk will fail to start.")     
-    print(f"\n\033[94mCUDA Device :\033[0m \033[92m{cuda_device_name}\033[0m")
-    print(f"\033[94mCUDA Memory :\033[0m \033[92m{cuda_device_memory:.2f} GB\033[0m")
-    print(f"\033[94mCUDA Version:\033[0m \033[92m{cuda_version}\033[0m")
+    print(f"\n\033[94mCUDA Device :\033[0m \033[92m{cuda_device_name if cuda_device_name else 'N/A'}\033[0m")
+    print(f"\033[94mCUDA Memory :\033[0m \033[92m{cuda_device_memory:.2f} GB\033[0m" if cuda_device_memory else "\033[94mCUDA Memory :\033[0m \033[92mN/A\033[0m")
+    print(f"\033[94mCUDA Version:\033[0m \033[92m{cuda_version if cuda_version else 'N/A'}\033[0m")
     if "Fail" in cuda_test_result:
         print(f"\033[91mCUDA Working:\033[0m \033[91m{cuda_test_result}\033[0m")
     else:
