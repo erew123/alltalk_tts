@@ -43,3 +43,4 @@ hangul_romanize
 word2number
 git+https://github.com/huggingface/parler-tts.git
 piper-tts; sys_platform == "linux"
+trainer

@@ -31,3 +31,4 @@ git+https://github.com/huggingface/parler-tts.git
 piper-tts; sys_platform == "linux"
 piper-tts; sys_platform == "darwin"
 piper-phonemize==1.1.0; sys_platform == "darwin"
+trainer
