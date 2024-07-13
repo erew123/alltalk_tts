@@ -510,7 +510,7 @@ tgwui_deepspeed = False
 process_lock = threading.Lock()
 # Pull the values for IP address, port and protocol for communication with the AllTalk renote server
 alltalk_protocol = "http://"
-alltalk_ip_port = "127.0.0.1:7851"
+alltalk_ip_port = f"127.0.0.1:{params['api_def']['api_port_number']}"
 # Pull the connection timeout value for communication requests with the AllTalk remote server
 connection_timeout = 10
 # Create a few base global variables that are required
