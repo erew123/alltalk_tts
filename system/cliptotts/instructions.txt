@@ -1,0 +1,11 @@
+This is a Windows only clipboard to TTS extension. Its a very rough bit of code with no logic or error handling built in.
+
+When run it will create a system tray icon that you can Start/Stop clipboard monitoring for the text stored in the clipboard changing. When the text changes, it will be sent to AllTalk for TTS generation. You can specify the voice to use in the System Tray icon Settings area.
+
+In the main folder, run "start_environment.bat"
+
+Go to the "cliptotts" folder and "python clipboard-to-tts.py" which should start the application.
+
+Start monitoring of the clipboard on the icon in the system tray.
+
+When you Ctrl+C text to the clipboard, it will be sent over for TTS generation and it will play back at the AllTalk console.
