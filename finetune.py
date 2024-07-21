@@ -2336,6 +2336,7 @@ if __name__ == "__main__":
                     disable_shared_memory,
                     learning_rate_scheduler,
                     optimizer,
+                    num_workers,
                     warm_up
                 ],
                 outputs=[progress_train, xtts_config, xtts_vocab, xtts_checkpoint, speaker_reference_audio, speaker_name_input_testing],
