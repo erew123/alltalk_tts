@@ -704,7 +704,7 @@ def basemodel_or_finetunedmodel_choice(value):
     elif value == "Existing finetuned model":
         basemodel_or_finetunedmodel = False
 
-def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, warm_up, max_audio_length=255995, progress=gr.Progress()):
+def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, num_workers, warm_up, max_audio_length=255995, progress=gr.Progress()):
     pfc_check_fail()
 
     if "No Models Available" in model_to_train:
@@ -822,7 +822,7 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
     audio_config = XttsAudioConfig(sample_rate=22050, dvae_sample_rate=22050, output_sample_rate=24000)
 
     # Resolve Japanese threading issue
-    number_of_workers = 8
+    number_of_workers = int(num_workers)
     if language == "ja":
         number_of_workers = 0
 
@@ -1864,6 +1864,16 @@ if __name__ == "__main__":
                         allow_custom_value=False,
                         scale=2,
                     )
+                    num_workers = gr.Dropdown(
+                        value="8",
+                        label="Workers/Threads",
+                        choices=[
+                            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"
+                        ],
+                        allow_custom_value=False,
+                        interactive=True,                     
+                        scale=0,
+                    )
                 with gr.Row():
                     num_epochs =  gr.Slider(
                         label="Number of epochs:",
@@ -1913,7 +1923,7 @@ if __name__ == "__main__":
                 demo.load(load_metrics, None, [model_data, train_time], every=1)
                 demo.load(read_logs, None, logs_tts_train, every=1)
 
-                def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, max_audio_length, speaker_name_input_training, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, warm_up, progress=gr.Progress()):
+                def train_model(language, train_csv, eval_csv, learning_rates, model_to_train, num_epochs, batch_size, grad_acumm, max_audio_length, speaker_name_input_training, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, num_workers, warm_up, progress=gr.Progress()):
                     clear_gpu_cache()
                     global out_path
                     if speaker_name_input_training and speaker_name_input_training != 'personsname':
@@ -1931,7 +1941,7 @@ if __name__ == "__main__":
                         max_audio_length = int(max_audio_length * 22050)
                         learning_rate = float(learning_rates)  # Convert the learning rate value to a float
                         progress(0, "Initializing training...")
-                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, warm_up, max_audio_length=max_audio_length, progress=gr.Progress())
+                        config_path, original_xtts_checkpoint, vocab_file, exp_path, speaker_wav = train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv, learning_rate, model_to_train, continue_run, disable_shared_memory, learning_rate_scheduler, optimizer, num_workers, warm_up, max_audio_length=max_audio_length, progress=gr.Progress())
                     
                         # copy original files to avoid parameters changes issues
                         shutil.copy(config_path, exp_path)
@@ -1953,7 +1963,7 @@ if __name__ == "__main__":
                         print(f"[FINETUNE] Error: {error_message}")
                         return f"Training error: {error_message}", "", "", "", "", ""
                 
-            with gr.Tab("Training the model Instructions"):
+            with gr.Tab("Training Instructions"):
                 gr.Markdown(
                     f"""
                     ### 🟥 <u>Important Note - Language support.</u>
@@ -1971,6 +1981,27 @@ if __name__ == "__main__":
                     ◽ The system will attempt to load the most recent checkpoint from your previous training session.<br>
                     ◽ It will continue training from that point, preserving your progress and saving time.<br>
                     ◽ This is particularly useful for long training sessions or when you want to extend training on a previously trained model.<br>
+                    ### 🟨 <u>What this step is doing</u><br>
+                    ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
+                    ### 🟩 <u>How long will this take?</u><br>
+                    ◽ On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.<br>
+                    ◽ Look at your command prompt/terminal window if you want to see what it is doing.<br>
+                    """
+                )                    
+            
+            with gr.Tab("Memory Optimization"):
+                gr.Markdown(
+                    f"""
+                    ### 🟦 <u>Memory Optimization Strategies</u>
+
+                    Adjusting these parameters can help manage memory usage during training:
+
+                    ◽ **Batch Size**: Smaller batch sizes use less memory. If you encounter out-of-memory errors, try reducing the batch size.<br>
+                    ◽ **Gradient Accumulation**: Increasing grad accumulation steps allows you to simulate larger batch sizes without increasing memory usage.<br>
+                    ◽ **Workers/Threads**: Fewer workers generally use less memory. If you're experiencing memory issues, try reducing the number of workers.<br>
+                    ◽ **Max Audio Length**: Limiting the maximum audio length reduces memory usage by preventing very long audio clips from being loaded.<br>
+                    ◽ **Learning Rate and Optimizer**: While these don't directly affect memory usage, they can impact training efficiency. A well-tuned learning rate and appropriate optimizer can lead to faster convergence, potentially reducing overall training time and resource usage.<br>
+                    
                     #### 🟪 <u>Disable Shared Memory</u>
                     This option affects how the system manages memory during training:<br>
                     ◽ When enabled, it limits GPU memory usage to 95% of its capacity.<br>
@@ -1983,14 +2014,11 @@ if __name__ == "__main__":
                     ◽ Windows can utilize system RAM as extended VRAM, which can be crucial for completing the training process on lower VRAM GPUs.<br>
                     ◽ Disabling this option allows Windows to manage memory allocation more flexibly, potentially preventing out-of-memory errors on GPUs with limited VRAM.
                     
-                    ### 🟨 <u>What this step is doing</u><br>
-                    ◽ Very simply put, it's taking all our wav files generated in Step 1, along with our recorded speech in out excel documents and its training the model on that voice e.g. listen to this audio file and this is what is being said in it, so learn to reproduce it.<br>
-                    ### 🟩 <u>How long will this take?</u><br>
-                    ◽ On a RTX 4070 with factory settings (as below) and 20 minutes of audio, this took 20 minutes. Again, it will vary by system and how much audio you are throwing at it. You have time to go make a coffee.<br>
-                    ◽ Look at your command prompt/terminal window if you want to see what it is doing.<br>
+
+                    Remember, the goal is to find a balance between memory usage and training effectiveness. Start with lower values and gradually increase them while monitoring your system's memory usage.
                     """
-                )                    
-            
+                )
+      
             with gr.Tab("Info - Grad Accumulation"):
                                 gr.Markdown(
                     f"""
@@ -2023,7 +2051,7 @@ if __name__ == "__main__":
                     ◽ Keep in mind that the batch size also affects the model's generalization and convergence behavior, so it's important to monitor the model's performance while adjusting the batch size.
                     """
                 )
-            with gr.Tab("Info - Learning Rate"):
+            with gr.Tab("Info - Learning Rate & Schedulers"):
                                 gr.Markdown(
                     f"""
                     ### 🟩 <u>Learning Rate</u><br>
@@ -2035,11 +2063,7 @@ if __name__ == "__main__":
                     ◽ **5e-4:** Very high learning rate, fast convergence but higher risk of instability.<br>
                     ◽ **1e-3:** Extremely high learning rate, very fast convergence but high risk of instability.<br><br>
                     The optimal learning rate depends on the model architecture, dataset, and other hyperparameters.
-                    """
-                )
-            with gr.Tab("Info - Learning Rate Schedulers"):
-                                gr.Markdown(
-                    f"""
+
                     ### 🟩 <u>Learning Rate Schedulers</u><br>
                     ◽ **None:** Learning rate remains unchanged throughout the training. <br>
                     ◽ **Step:** Decreases the learning rate by a factor at specified intervals, offering a straightforward method for controlling learning rate decay.<br>
