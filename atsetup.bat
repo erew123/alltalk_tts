@@ -42,6 +42,9 @@ if "%ERRORLEVEL%" NEQ "0" (
     goto end
 )
 
+:: Check for "-silent" install command-line argument
+if "%1"=="-silent" goto InstallCustomStandalone
+
 :MainMenu
 cls
 echo.
@@ -446,6 +449,7 @@ Echo    Run %L_YELLOW%start_diagnostics.bat%RESET% to start the diagnostics.
 Echo    Run %L_YELLOW%start_finetune.bat%RESET% to start Finetuning.
 Echo    Run %L_YELLOW%start_environment.bat%RESET% to start the AllTalk Python environment.
 Echo.
+if "%1"=="-silent" goto End
 pause
 goto StandaloneMenu
 
