@@ -346,78 +346,85 @@ signal.signal(signal.SIGINT, signal_handler)
 
 # Check if we're running in docker
 if os.path.isfile("/.dockerenv") and 'google.colab' not in sys.modules:
-    print(f"[{branding}TTS] \033[94mRunning in Docker. Please wait.\033[0m")
-else:
-    # Start the subprocess
-    process = subprocess.Popen(["python", script_path])
+    print(f"[{branding}TTS] \033[94mRunning in Docker environment. Please note:\033[0m")
+    print(f"[{branding}TTS] - Docker like environments are a work in progress.")
+    print(f"[{branding}TTS] - On a LAN environment, as long as you expose the Gradio and API ports correctly, this should work.")
+    print(f"[{branding}TTS] - On a routed Internet environment, a VPN to the host server OR secure tunnel will be required for")
+    print(f"[{branding}TTS] both addresses and additionally Gradio is yet to be re-coded to handle a custom API address, so")
+    print(f"[{branding}TTS] the Gradio interface will not work correctly as of yet.")
+    print(f"[{branding}TTS] Internal API address: http://localhost:{params['api_def']['api_port_number']}")
+    print(f"[{branding}TTS] Internal Gradio address: http://localhost:{params['gradio_port_number']}")
 
-    # Check if the subprocess has started successfully
-    if process.poll() is None:
-        if running_on_google_colab:
-            print(f"[{branding}TTS]")
-            print(f"[{branding}TTS] \033[94mGoogle Colab Detected\033[00m")
-            print(f"[{branding}TTS]")
-    else:
-        print(f"[{branding}TTS] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process")
-        print(f"[{branding}TTS] \033[91mWarning\033[0m It could be that you have something on port:",params["port_number"],)
-        print(f"[{branding}TTS] \033[91mWarning\033[0m Or you have not started in a Python environement with all the necesssary bits installed")
-        print(f"[{branding}TTS] \033[91mWarning\033[0m Check you are starting Text-generation-webui with either the start_xxxxx file or the Python environment with cmd_xxxxx file.")
-        print(f"[{branding}TTS] \033[91mWarning\033[0m xxxxx is the type of OS you are on e.g. windows, linux or mac.")
-        print(f"[{branding}TTS] \033[91mWarning\033[0m Alternatively, you could check no other Python processes are running that shouldnt be e.g. Restart your computer is the simple way.")
-        # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
-        sys.exit(1)
+# Start the subprocess (now unified for both Docker and non-Docker environments)
+process = subprocess.Popen(["python", script_path])
 
-    timeout = startup_wait_time  # Gather timeout setting from startup_wait_time
-    initial_delay = 5  # Initial delay before starting the check loop
-    warning_delay = 60  # Delay before displaying warnings
-
-    # Introduce a delay before starting the check loop
-    time.sleep(initial_delay)
-
-    start_time = time.time()
-    warning_displayed = False
-
-    url = f"http://localhost:{params['api_def']['api_port_number']}/api/ready"
-    while time.time() - start_time < timeout:
-        try:
-            response = requests.get(url)
-            if response.status_code == 200 and response.text == "Ready":
-                break
-        except requests.RequestException as e:
-            # Log the exception if needed
-            pass
-
-        if not warning_displayed and time.time() - start_time >= warning_delay:
-            print(f"[{branding}TTS] \033[91mWarning\033[0m TTS Engine has NOT started up yet. Will keep trying for {timeout} seconds maximum. Please wait.")
-            print(f"[{branding}TTS] \033[91mWarning\033[0m Mechanical hard drives and a slow PCI BUS are examples of things that can affect load times.")
-            print(f"[{branding}TTS] \033[91mWarning\033[0m Some TTS engines index their AI TTS models on loading, which can be slow on CPU or old systems.")
-            print(f"[{branding}TTS] \033[91mWarning\033[0m Using one of the other TTS engines on slower systems can help ease this issue.")
-            warning_displayed = True
-        
-        time.sleep(1)
-    else:
-        print(f"[{branding}TTS]")
-        print(f"[{branding}TTS] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m")
-        print(f"[{branding}TTS] On older systems, you may wish to open and edit \033[94mscript.py\033[0m with a text editor and change the")
-        print(f"[{branding}TTS] \033[94mstartup_wait_time = 240\033[0m setting to something like \033[94mstartup_wait_time = 460\033[0m as this will allow")
-        print(f"[{branding}TTS] AllTalk more time (6 mins) to try load the model into your VRAM. Otherwise, please visit the GitHub for")
-        print(f"[{branding}TTS] a list of other possible troubleshooting options.")
-        # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
-        sys.exit(1)
-
+# Check if the subprocess has started successfully
+if process.poll() is None:
     if running_on_google_colab:
         print(f"[{branding}TTS]")
-        print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m{tunnel_url_1}\033[00m")
-        print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92m{tunnel_url_2}\033[00m")
-        print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m",f"\033[92m{tunnel_url_2}?__theme=dark\033[00m")
+        print(f"[{branding}TTS] \033[94mGoogle Colab Detected\033[00m")
         print(f"[{branding}TTS]")
-    else:
-        print(f"[{branding}TTS]")
-        print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m127.0.0.1:{params['api_def']['api_port_number']}\033[00m")
-        print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92mhttp://127.0.0.1:{params['gradio_port_number']}\033[00m")
-        print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{params['gradio_port_number']}?__theme=dark\033[00m")
-        print(f"[{branding}TTS]")
+else:
+    print(f"[{branding}TTS] \033[91mWarning\033[0m TTS Subprocess Webserver failing to start process")
+    print(f"[{branding}TTS] \033[91mWarning\033[0m It could be that you have something on port:", params["port_number"])
+    print(f"[{branding}TTS] \033[91mWarning\033[0m Or you have not started in a Python environment with all the necessary bits installed")
+    print(f"[{branding}TTS] \033[91mWarning\033[0m Check you are starting Text-generation-webui with either the start_xxxxx file or the Python environment with cmd_xxxxx file.")
+    print(f"[{branding}TTS] \033[91mWarning\033[0m xxxxx is the type of OS you are on e.g. windows, linux or mac.")
+    print(f"[{branding}TTS] \033[91mWarning\033[0m Alternatively, you could check no other Python processes are running that shouldn't be e.g. Restart your computer is the simple way.")
+    # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
+    sys.exit(1)
 
+timeout = startup_wait_time  # Gather timeout setting from startup_wait_time
+initial_delay = 5  # Initial delay before starting the check loop
+warning_delay = 60  # Delay before displaying warnings
+
+# Introduce a delay before starting the check loop
+time.sleep(initial_delay)
+
+start_time = time.time()
+warning_displayed = False
+
+url = f"http://localhost:{params['api_def']['api_port_number']}/api/ready"
+while time.time() - start_time < timeout:
+    try:
+        response = requests.get(url)
+        if response.status_code == 200 and response.text == "Ready":
+            break
+    except requests.RequestException as e:
+        # Log the exception if needed
+        pass
+
+    if not warning_displayed and time.time() - start_time >= warning_delay:
+        print(f"[{branding}TTS] \033[91mWarning\033[0m TTS Engine has NOT started up yet. Will keep trying for {timeout} seconds maximum. Please wait.")
+        print(f"[{branding}TTS] \033[91mWarning\033[0m Mechanical hard drives and a slow PCI BUS are examples of things that can affect load times.")
+        print(f"[{branding}TTS] \033[91mWarning\033[0m Some TTS engines index their AI TTS models on loading, which can be slow on CPU or old systems.")
+        print(f"[{branding}TTS] \033[91mWarning\033[0m Using one of the other TTS engines on slower systems can help ease this issue.")
+        warning_displayed = True
+    
+    time.sleep(1)
+else:
+    print(f"[{branding}TTS]")
+    print(f"[{branding}TTS] Startup timed out. Full help available here \033[92mhttps://github.com/erew123/alltalk_tts#-help-with-problems\033[0m")
+    print(f"[{branding}TTS] On older systems, you may wish to open and edit \033[94mscript.py\033[0m with a text editor and change the")
+    print(f"[{branding}TTS] \033[94mstartup_wait_time = 240\033[0m setting to something like \033[94mstartup_wait_time = 460\033[0m as this will allow")
+    print(f"[{branding}TTS] AllTalk more time (6 mins) to try load the model into your VRAM. Otherwise, please visit the GitHub for")
+    print(f"[{branding}TTS] a list of other possible troubleshooting options.")
+    # Cleanly kill off this script, but allow text-generation-webui to keep running, albeit without this alltalk_tts
+    sys.exit(1)
+
+if running_on_google_colab:
+    print(f"[{branding}TTS]")
+    print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m{tunnel_url_1}\033[00m")
+    print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92m{tunnel_url_2}\033[00m")
+    print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m",f"\033[92m{tunnel_url_2}?__theme=dark\033[00m")
+    print(f"[{branding}TTS]")
+else:
+    print(f"[{branding}TTS]")
+    print(f"[{branding}TTS] \033[94mAPI Address :\033[00m",f"\033[92m127.0.0.1:{params['api_def']['api_port_number']}\033[00m")
+    print(f"[{branding}TTS] \033[94mGradio Light:\033[00m",f"\033[92mhttp://127.0.0.1:{params['gradio_port_number']}\033[00m")
+    print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{params['gradio_port_number']}?__theme=dark\033[00m")
+    print(f"[{branding}TTS]")
+    
 
 #########################################
 # START-UP # Espeak-ng check on Windows #
