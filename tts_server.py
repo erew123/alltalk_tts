@@ -216,8 +216,6 @@ async def apifunction_reload(request: Request):
     success = await model_engine.handle_tts_method_change(requested_model)
     if success:
         model_engine.current_model_loaded = requested_model
-        print(f"[{branding}ENG]")
-        print(f"[{branding}ENG] {branding} Server Ready.")
         model_currently_changing == False
         return Response(content=json.dumps({"status": "model-success"}), media_type="application/json")
     else:
@@ -851,6 +849,38 @@ async def transcode_for_openai(input_file, output_format):
     print(f"[{branding}Debug] Transcoded file: {output_file}") if debug_openai else None
     return output_file
 
+######################################################################################
+# API Endpoint - OpenAI Speech API compatable endpoint change engine voices Function #
+######################################################################################
+class VoiceMappings(BaseModel):
+    alloy: str
+    echo: str
+    fable: str
+    nova: str
+    onyx: str
+    shimmer: str
+
+@app.put("/api/openai-voicemap")
+async def update_openai_voice_mappings(mappings: VoiceMappings):
+    # Update in-memory versions (wont display in Gradio without a restart as gradio caches)
+    model_engine.openai_alloy = mappings.alloy
+    model_engine.openai_echo = mappings.echo
+    model_engine.openai_fable = mappings.fable
+    model_engine.openai_nova = mappings.nova
+    model_engine.openai_onyx = mappings.onyx
+    model_engine.openai_shimmer = mappings.shimmer
+    # Update model_settings.json file for the currently loaded TTS engine
+    try:
+        settings_file = this_dir / "system" / "tts_engines" / model_engine.engine_loaded / "model_settings.json"
+        with open(settings_file, "r+") as f:
+            settings = json.load(f)
+            settings["openai_voices"] = mappings.dict()
+            f.seek(0)
+            json.dump(settings, f, indent=4)
+            f.truncate()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update model settings file: {str(e)}")
+    return {"message": "OpenAI voice mappings updated successfully"}
 
 #######################
 # Play at the console #
