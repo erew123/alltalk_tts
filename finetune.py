@@ -2375,3 +2375,12 @@ if __name__ == "__main__":
                 outputs=[final_progress_data],
             )
             model_to_train.change(basemodel_or_finetunedmodel_choice, model_to_train, None)
+
+    demo.queue().launch(
+        show_api=False,
+        inbrowser=True,
+        share=False,
+        debug=False,
+        server_port=7052,
+        server_name="127.0.0.1",
+    )
