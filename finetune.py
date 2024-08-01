@@ -2376,12 +2376,28 @@ if __name__ == "__main__":
             )
             model_to_train.change(basemodel_or_finetunedmodel_choice, model_to_train, None)
 
-    demo.queue().launch(
-        show_api=False,
-        inbrowser=True,
-        share=False,
-        debug=False,
-        server_port=7052,
-        server_name="127.0.0.1",
-    )
+import random
+def find_available_port(start_port, end_port):
+    ports = list(range(start_port, end_port + 1))
+    random.shuffle(ports)
+    return ports
+
+ports_to_try = find_available_port(7800, 7810)
+
+for port in ports_to_try:
+    try:
+        demo.queue().launch(
+            show_api=False,
+            inbrowser=True,
+            share=False,
+            debug=False,
+            server_port=port,
+            server_name="127.0.0.1",
+        )
+        print(f"Successfully launched on port {port}")
+        break
+    except OSError:
+        print(f"Port {port} is not available, trying next...")
+else:
+    print("No available ports in the specified range.")
 
