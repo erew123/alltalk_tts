@@ -918,7 +918,6 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
 
 
     print(f"[FINETUNE] Learning Scheduler {lr_scheduler}, params {lr_scheduler_params}")
-
     # training parameters config
     config = GPTTrainerConfig(
         epochs=num_epochs,
@@ -951,8 +950,6 @@ def train_gpt(language, num_epochs, batch_size, grad_acumm, train_csv, eval_csv,
         lr_scheduler=lr_scheduler,
         # it was adjusted accordly for the new step scheme
         lr_scheduler_params=lr_scheduler_params,
-        test_sentences=[],
-    )
     progress(0, desc="Model is currently training. See console for more information")
     # init the model from config
     model = GPTTrainer.init_from_config(config)
@@ -2375,12 +2372,3 @@ if __name__ == "__main__":
                 outputs=[final_progress_data],
             )
             model_to_train.change(basemodel_or_finetunedmodel_choice, model_to_train, None)
-
-    demo.queue().launch(
-        show_api=False,
-        inbrowser=True,
-        share=False,
-        debug=False,
-        server_port=7052,
-        server_name="127.0.0.1",
-    )
