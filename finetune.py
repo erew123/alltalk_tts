@@ -1609,7 +1609,7 @@ if __name__ == "__main__":
                             ("medium", "large"),
                             ("small", "large"),
                             ("distil-large-v3 (en only)", "distil-large-v3"),
-                            ("distil-large-v2 (en only)", "distil-large-v3"),
+                            ("distil-large-v2 (en only)", "distil-large-v2"),
                         ],
                         scale=1,
                     )
