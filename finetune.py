@@ -1601,15 +1601,15 @@ if __name__ == "__main__":
                     )
                     whisper_model = gr.Dropdown(
                         label="Whisper Model",
-                        value="large-v2",
+                        value="distil-large-v3",
                         choices=[
-                            "large-v3",
-                            "large-v2",
-                            "large",
-                            "medium",
-                            "small",
-                            "distil-large-v3"
-                            "distil-large-v2"
+                            ("large-v3", "large-v3"),
+                            ("large-v2", "large-v2"),
+                            ("large", "large"),
+                            ("medium", "large"),
+                            ("small", "large"),
+                            ("distil-large-v3 (en only)", "distil-large-v3"),
+                            ("distil-large-v2 (en only)", "distil-large-v3"),
                         ],
                         scale=1,
                     )
