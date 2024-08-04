@@ -1607,7 +1607,9 @@ if __name__ == "__main__":
                             "large-v2",
                             "large",
                             "medium",
-                            "small"
+                            "small",
+                            "distil-large-v3"
+                            "distil-large-v2"
                         ],
                         scale=1,
                     )
@@ -1722,7 +1724,7 @@ if __name__ == "__main__":
                     3. Provide at least 2 minutes of audio, preferably 5-10 minutes for better results.<br>
                     4. Maximum Audio Length will ensure the audio samples do not exceed the set value in seconds. The AI model can only process so much audio per audio sample, per epoch.<br>
                     5. Enter a unique Project Name if you wish to create a dedicated training folder. You will need to specify this name as you move through the interfaces and click the Refresh buttons where needed.<br>
-                    6. Select the Whisper model (large-v2 recommended for English use cases).<br>
+                    6. Select the Whisper model (distil-large-v3 recommended for English use cases).<br>
                     7. Choose your Dataset Language.<br>
                     8. Adjust the Evaluation Split percentage (default 15% is suitable for most cases).<br>
                     9. Optionally enable the BPE Tokenizer for custom tokenization, which can improve the model's ability to handle unique words, accents, or languages by creating a vocabulary tailored to your specific dataset. This is especially useful for non-standard speech patterns or languages with complex morphology.<br>
