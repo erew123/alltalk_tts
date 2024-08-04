@@ -1611,7 +1611,7 @@ if __name__ == "__main__":
                             ("distil-large-v3 (en only)", "distil-large-v3"),
                             ("distil-large-v2 (en only)", "distil-large-v2"),
                         ],
-                        scale=1,
+                        scale=2,
                     )
 
                     lang = gr.Dropdown(
@@ -1649,7 +1649,7 @@ if __name__ == "__main__":
                         minimum=5,  # Minimum value
                         maximum=95,  # Maximum value
                         step=1,  # Increment step
-                        scale=2,
+                        scale=1,
                     )
                     create_bpe_tokenizer = gr.Checkbox(
                         label='BPE Tokenizer',
