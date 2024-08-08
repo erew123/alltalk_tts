@@ -329,6 +329,8 @@ def format_audio_list(target_language, whisper_model, max_sample_length, eval_sp
     global out_path
     if speaker_name and speaker_name != 'personsname':
         out_path = this_dir / "finetune" / speaker_name
+    else:
+        out_path = default_path
 
     os.makedirs(out_path, exist_ok=True)
     temp_folder = os.path.join(out_path, "temp")
@@ -1302,6 +1304,8 @@ def create_refresh_button(refresh_components, refresh_methods, elem_class, inter
 
 def create_refresh_button_next(refresh_components, refresh_methods, elem_class, interactive=True):
     def refresh_export(speaker_name):
+        global out_path
+        out_path = this_dir / "finetune" / speaker_name
         updates = {}
         for component, method in zip(refresh_components, refresh_methods):
             args = method(speaker_name=speaker_name) if callable(method) else method
@@ -1930,6 +1934,8 @@ if __name__ == "__main__":
                     global out_path
                     if speaker_name_input_training and speaker_name_input_training != 'personsname':
                         out_path = this_dir / "finetune" / speaker_name_input_training
+                    else:
+                        out_path = default_path
 
                     if not train_csv or not eval_csv:
                         if (out_path / "metadata_eval.csv").exists() and (out_path / "metadata_train.csv").exists():
