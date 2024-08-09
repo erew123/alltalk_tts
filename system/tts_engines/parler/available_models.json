@@ -1,17 +1,17 @@
 {
-  "first_start_model": "parler_tts_mini_v0.1",
+  "first_start_model": "parler-tts-mini-v1",
   "models": [
     {
-      "model_name": "parler_tts_mini_v0.1",
+      "model_name": "parler-tts-mini-v1",
       "files_to_download": [
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/config.json?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/generation_config.json?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/preprocessor_config.json?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/special_tokens_map.json?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/spiece.model?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/tokenizer.json?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/tokenizer_config.json?download=true",
-        "https://huggingface.co/parler-tts/parler_tts_mini_v0.1/resolve/main/model.safetensors?download=true"
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/generation_config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/preprocessor_config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/special_tokens_map.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/spiece.model?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/tokenizer.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/tokenizer_config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/model.safetensors?download=true"
       ]
     }
   ]
