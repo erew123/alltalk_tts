@@ -13,6 +13,21 @@
         "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/tokenizer_config.json?download=true",
         "https://huggingface.co/parler-tts/parler-tts-mini-v1/resolve/main/model.safetensors?download=true"
       ]
+    },
+    {
+      "model_name": "parler-tts-large-v1",
+      "files_to_download": [
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/generation_config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/preprocessor_config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/special_tokens_map.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/spiece.model?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/tokenizer.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/tokenizer_config.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/model.safetensors.index.json?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/model-00001-of-00002.safetensors?download=true",
+        "https://huggingface.co/parler-tts/parler-tts-large-v1/resolve/main/model-00002-of-00002.safetensors?download=true"
+      ]
     }
   ]
 }

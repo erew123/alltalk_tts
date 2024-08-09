@@ -1,12 +1,148 @@
 {
   "voices": [
     {
+      "voice_name": "Native Aaron",
+      "description": "Aaron's voice is a deep male voice with a resonant quality. He speaks slowly and clearly, with a commanding presence."
+    },
+    {
+      "voice_name": "Native Alisa",
+      "description": "Alisa's voice is a crisp female voice with a hint of assertiveness. She speaks at a brisk pace with clear enunciation."
+    },
+    {
+      "voice_name": "Native Anna",
+      "description": "Anna's voice is a soft female voice with a slight Eastern European accent. She speaks at a careful pace with gentle tones."
+    },
+    {
+      "voice_name": "Native Barbara",
+      "description": "Barbara's voice is a sophisticated female voice with a slight huskiness. She speaks at a measured pace with refined intonation."
+    },
+    {
+      "voice_name": "Native Bill",
+      "description": "Bill's voice is a mature male voice with a gravelly texture. He speaks slowly and deliberately, with a wise tone."
+    },
+    {
+      "voice_name": "Native Brenda",
+      "description": "Brenda's voice is a soft-spoken female voice with a gentle, soothing quality. She speaks slowly and clearly."
+    },
+    {
+      "voice_name": "Native Bruce",
+      "description": "Bruce's voice is a strong male voice with a commanding presence. He speaks at a steady pace with authoritative tones."
+    },
+    {
+      "voice_name": "Native Carol",
+      "description": "Carol's voice is a mature female voice with a warm, motherly quality. She speaks at a gentle pace with nurturing tones."
+    },
+    {
+      "voice_name": "Native David",
+      "description": "David's voice is an authoritative male voice with a rich timbre. He speaks at a steady pace with precise diction."
+    },
+    {
+      "voice_name": "Native Eileen",
+      "description": "Eileen's voice is a mature female voice with a slight breathiness. She speaks at a relaxed pace with a warm tone."
+    },
+    {
+      "voice_name": "Native Emily",
+      "description": "Emily's voice is a sweet female voice with a youthful quality. She speaks at a lively pace with cheerful inflections."
+    },
+    {
+      "voice_name": "Native Eric",
+      "description": "Eric's voice is a casual male voice with a hint of gruffness. He speaks at a relaxed pace with natural pauses."
+    },
+    {
+      "voice_name": "Native Gary",
+      "description": "Gary's voice is a deep, resonant male voice with a hint of gravel. He speaks slowly and deliberately, giving weight to each word."
+    },
+    {
+      "voice_name": "Native James",
+      "description": "James's voice is a refined male voice with a slight British accent. He speaks at a moderate pace with crisp articulation."
+    },
+    {
+      "voice_name": "Native Jason",
+      "description": "Jason's voice is a calm male voice with a neutral accent. He speaks at a moderate pace with even tones."
+    },
+    {
+      "voice_name": "Native Jenna",
+      "description": "Jenna's voice is a young female voice with a slight vocal fry. She speaks at a moderate pace with modern inflections."
+    },
+    {
+      "voice_name": "Native Jerry",
+      "description": "Jerry's voice is a jovial male voice with a hint of a chuckle. He speaks at a relaxed pace with natural inflections."
+    },
+    {
+      "voice_name": "Native Jon",
+      "description": "Jon's voice is monotone yet slightly fast in delivery, with a very close recording that almost has no background noise."
+    },
+    {
+      "voice_name": "Native Jordan",
+      "description": "Jordan's voice is a youthful, gender-neutral voice with a slight rasp. They speak at a variable pace with natural inflections."
+    },
+    {
+      "voice_name": "Native Joy",
+      "description": "Joy's voice is a cheerful female voice with a musical quality. She speaks at a lively pace with expressive intonation."
+    },
+    {
+      "voice_name": "Native Karen",
+      "description": "Karen's voice is a mature female voice with a slight huskiness. She speaks at a measured pace with a calming tone."
+    },
+    {
+      "voice_name": "Native Laura",
+      "description": "Laura's voice is a warm and friendly female tone with a slight lilt. She speaks at a moderate pace with clear enunciation."
+    },
+    {
+      "voice_name": "Native Lauren",
+      "description": "Lauren's voice is a professional female voice with a confident tone. She speaks at a steady pace with clear diction."
+    },
+    {
+      "voice_name": "Native Lea",
+      "description": "Lea's voice is a bright and energetic female voice with a slight upward inflection at the end of sentences. She speaks at a brisk pace."
+    },
+    {
+      "voice_name": "Native Mike",
+      "description": "Mike's voice is a friendly male voice with a hint of enthusiasm. He speaks at a brisk pace with clear enunciation."
+    },
+    {
+      "voice_name": "Native Naomie",
+      "description": "Naomie's voice is a vibrant female voice with a slight exotic accent. She speaks at a variable pace with expressive tones."
+    },
+    {
+      "voice_name": "Native Patrick",
+      "description": "Patrick's voice is a warm male voice with a slight Irish lilt. He speaks at a moderate pace with a friendly tone."
+    },
+    {
+      "voice_name": "Native Rebecca",
+      "description": "Rebecca's voice is a clear female voice with a hint of enthusiasm. She speaks at a moderate pace with engaging inflections."
+    },
+    {
+      "voice_name": "Native Rick",
+      "description": "Rick's voice is a confident male voice with a slight regional accent. He speaks at a moderate pace with clear articulation."
+    },
+    {
+      "voice_name": "Native Rose",
+      "description": "Rose's voice is a gentle female voice with a slight breathiness. She speaks slowly and softly, with a soothing quality."
+    },
+    {
+      "voice_name": "Native Tina",
+      "description": "Tina's voice is a bubbly female voice with an upbeat quality. She speaks at a lively pace with enthusiastic tones."
+    },
+    {
+      "voice_name": "Native Tom",
+      "description": "Tom's voice is a neutral male voice with a clear tone. He speaks at a steady pace with precise articulation."
+    },
+    {
+      "voice_name": "Native Will",
+      "description": "Will's voice is an energetic male voice with a youthful tone. He speaks at a fast pace with enthusiastic inflections."
+    },
+    {
+      "voice_name": "Native Yann",
+      "description": "Yann's voice is a sophisticated male voice with a slight foreign accent. He speaks at a measured pace with precise pronunciation."
+    },
+    {
       "voice_name": "soothing_female",
-      "description": "A female speaker with a soft, soothing voice. Her tone is gentle and calming, with a slight reverb as if she is in a small, cozy room. She speaks slowly and clearly."
+      "description": "A female speaker with a soft, soothing voice. Her tone is gentle and calming, with a slight reverb as if she is in a small, cozy room."
     },
     {
       "voice_name": "authoritative_male",
-      "description": "A male speaker with a strong, authoritative voice. His tone is firm and commanding, with a slight bass boost that adds to the depth. He speaks at a moderate pace."
+      "description": "Nicks voice is a male speaker with a strong, authoritative voice. His tone is firm and commanding, with a slight bass boost that adds to the depth. He speaks at a moderate pace."
     },
     {
       "voice_name": "friendly_young_male",
