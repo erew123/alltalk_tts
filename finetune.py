@@ -266,6 +266,7 @@ def generate_base_model_markdown(base_model_detected):
 
 def check_tts_version(required_version="0.24.0"):
     global pfc_status
+    tts_status_icon = "❌"
     try:
         # Get the installed version of TTS
         installed_version = metadata.version("coqui-tts")
