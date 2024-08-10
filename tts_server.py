@@ -1216,7 +1216,8 @@ def get_params_speed():
 def get_params_temperature():
     return model_engine.temperature_set
 def get_params_repetition():
-    return model_engine.repetitionpenalty_set
+    value = model_engine.repetitionpenalty_set
+    return float(str(value).replace(',', '.'))
 def get_params_pitch():
     return model_engine.pitch_set
 def get_character_voice_gen():
