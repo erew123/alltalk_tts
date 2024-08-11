@@ -172,12 +172,7 @@ class tts_class:
     ##################################
     # If your model does load into CUDA and you want to support LowVRAM, aka moving the model
     # on the fly between CUDA and System RAM on each generation request, you will be adding
-    # The code in here to do it. See the XTTS tts engine for an example. Piper however, doesnt
-    # Load into VRAM or System RAM, also low vram is set globally disabled by the model_settings.JSON
-    # file, so this would never get called anywyay, however, we still need to keep an empty 
-    # function in place. Piper TTS uses "pass" telling function to just exit out cleanly if called.
-    # However, its quite a simple check along the lines of "if CUDA is available and model is
-    # in X place, then send it to Y place (or Y to X).
+    # The code in here to do it. See the XTTS tts engine for an example. 
     async def handle_lowvram_change(self):
         if torch.cuda.is_available():
             if self.device == "cuda":
@@ -238,26 +233,40 @@ class tts_class:
         # ↑↑↑ Keep everything above this line ↑↑↑
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
         # Check if model_path exists
-        if not os.path.exists(models_folder):
-            print(f"[{self.branding}ENG] \033[91mError\033[0m: The specified model path '{models_folder}' does not exist.")
-            self.available_models = {'No Models Available': 'parler'} # Change the name in here to your TTS engine name
-            return self.available_models
-        required_files = ["config.json", "generation_config.json", "model.safetensors", "preprocessor_config.json", "special_tokens_map.json", "spiece.model", "tokenizer.json", "tokenizer_config.json"]
+        common_required_files = [
+            "config.json", "generation_config.json", "preprocessor_config.json", 
+            "special_tokens_map.json", "spiece.model", "tokenizer.json", "tokenizer_config.json"
+        ]
+
         for subfolder in models_folder.iterdir():
             if subfolder.is_dir():
                 model_name = subfolder.name
                 print("model_name is:", model_name) if self.debug_tts else None
-                if all(subfolder.joinpath(file).exists() for file in required_files):
-                    self.available_models[f"parler - {model_name}"] = "parler"
-                    print("self.available_models is:", self.available_models) if self.debug_tts else None
+
+                # Check for common required files
+                if all(subfolder.joinpath(file).exists() for file in common_required_files):
+                    # Check for mini model (single safetensors file)
+                    if subfolder.joinpath("model.safetensors").exists():
+                        self.available_models[f"parler - {model_name}"] = "parler"
+                        print("self.available_models is:", self.available_models) if self.debug_tts else None
+                    # Check for large model (split safetensors files and index)
+                    elif (subfolder.joinpath("model.safetensors.index.json").exists() and
+                        subfolder.joinpath("model-00001-of-00002.safetensors").exists() and
+                        subfolder.joinpath("model-00002-of-00002.safetensors").exists()):
+                        self.available_models[f"parler - {model_name}"] = "parler"
+                        print("self.available_models is:", self.available_models) if self.debug_tts else None
+                    else:
+                        print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required model files.")
+                else:
+                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing common required files.")
                     
-                # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-                # ↓↓↓ Keep everything below this line ↓↓↓
-                # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  
-                else:                  
-                    self.available_models = {'No Models Available': 'parler'} # Change the name in here to your TTS engine name
-                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required")
-                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: files or the folder does not exist.")
+            # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+            # ↓↓↓ Keep everything below this line ↓↓↓
+            # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  
+            else:                  
+                self.available_models = {'No Models Available': 'parler'} # Change the name in here to your TTS engine name
+                print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required")
+                print(f"[{self.branding}ENG] \033[91mWarning\033[0m: files or the folder does not exist.")
         return self.available_models
     
     #############################################################
@@ -301,7 +310,7 @@ class tts_class:
     #############################
     # This function will handle the loading of your model, into VRAM/CUDA, System RAM or whatever.
     # In XTTS, which has 2x model loader types, there are 2x loaders. They are called by "def handle_tts_method_change"
-    # In Piper we fake a model loader as Piper doesnt actually load a model into CUDA/System RAM as such. So, in that
+    # In Parler we fake a model loader as Parler doesnt actually load a model into CUDA/System RAM as such. So, in that
     # situation, api_manual_load_model is kind of a blank function. Though we do set self.is_tts_model_loaded = True
     # as this is used elsewhere in the scripts to confirm that a model is available to be used for TTS generation.
     # We always check for "No Models Available" being sent as that means we are trying to load in a model that 
@@ -332,10 +341,10 @@ class tts_class:
     ###############################
     # This function will handle the UN-loading of your model, from VRAM/CUDA, System RAM or whatever.
     # In XTTS, that model loads into CUDA/System Ram, so when we swap models, we want to unload the current model
-    # free up the memory and then load in the new model to VRAM/CUDA. On the flip side of that, Piper doesnt
+    # free up the memory and then load in the new model to VRAM/CUDA. On the flip side of that, Parler doesnt
     # doesnt load into memory, so we just need to put a fake function here that doesnt really do anything
     # other than set "self.is_tts_model_loaded = False", which would be set back to true by the model loader. 
-    # So look at the Piper model_engine.py if you DONT need to unload models.
+    # So look at the Parler model_engine.py if you DONT need to unload models.
     async def unload_model(self):
         self.is_tts_model_loaded = False
         if not self.current_model_loaded == None:
@@ -354,7 +363,7 @@ class tts_class:
     # This function is your central model loading/unloading handler that deals with the above functions as necesary, to call loading, unloading,
     # swappng DeepSpeed, Low vram etc. This function gets called with a "engine name - model name" type call. In XTTS, because there are 2x
     # model loader types, (XTTS and APILocal), we take tts_method and split the "engine name - model name" into a loader type and the model
-    # that it needs to load in and then we call the correct loader function. Whereas in Piper, which doesnt load models into memory at all, 
+    # that it needs to load in and then we call the correct loader function. Whereas in Parler, which doesnt load models into memory at all, 
     # we just have a fake function that doesnt really do anything. We always check to see if the model name has "No Models Available" in the
     # name thats sent over, just to catch any potential errors. We display the start load time and end load time. Thats about it.
     async def handle_tts_method_change(self, tts_method):
@@ -402,8 +411,6 @@ class tts_class:
     # as false in our model_settings.JSON file, meaning streaming will never be called. However, we have to put a fake streaming routine in our
     # function below (or a real function if it does support streaming of course). Parler has an example of a fake streaming function, which is
     # very clearly highlighted in its model_engine.py script.
-    # Piper TTS, which uses command line based calls and therefore has different ones for Windows and Linux/Mac, has an example of doing this
-    # within its model_engine.py file.   
     async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming):
         print(f"[{self.branding}Debug] Entered model_engine.py generate_tts function") if self.debug_tts else None
         if not self.is_tts_model_loaded: # Check if a model is loaded and error out if not.

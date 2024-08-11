@@ -1137,7 +1137,7 @@ class JSONInput(BaseModel):
     rvcnarrator_voice_gen: str = Field(..., description="rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
     rvcnarrator_pitch: float = Field(..., description="RVC Narrator pitch needs to be a number between -24 and 24")   
     text_not_inside: str = Field(..., pattern="^(character|narrator|silent)$", description="text_not_inside needs to be 'character', 'narrator' or 'silent'.")
-    language: str = Field(..., pattern="^(ar|zh-cn|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following: ar, zh-cn, cs, nl, en, fr, de, hu, hi, it, ja, ko, pl, pt, ru, es, tr.")
+    language: str = Field(..., pattern="^(ar|zh-cn|zh|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following: ar, zh-cn, zh, cs, nl, en, fr, de, hu, hi, it, ja, ko, pl, pt, ru, es, tr.")
     output_file_name: str = Field(..., pattern="^[a-zA-Z0-9_]+$", description="output_file_name needs to be the name without any special characters or file extension, e.g., 'filename'.")
     output_file_timestamp: bool = Field(..., description="output_file_timestamp needs to be true or false.")
     autoplay: bool = Field(..., description="autoplay needs to be a true or false value.")
@@ -1216,7 +1216,8 @@ def get_params_speed():
 def get_params_temperature():
     return model_engine.temperature_set
 def get_params_repetition():
-    return model_engine.repetitionpenalty_set
+    value = model_engine.repetitionpenalty_set
+    return float(str(value).replace(',', '.'))
 def get_params_pitch():
     return model_engine.pitch_set
 def get_character_voice_gen():

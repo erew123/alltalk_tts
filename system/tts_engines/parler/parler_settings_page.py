@@ -360,7 +360,9 @@ def parler_model_alltalk_settings(model_config_data):
                     This extension will download the models to `/alltalk_tts/models/parler/` folder.<br>
                     
                     ### 🟧 Where are the voices stored for parler models?
-                    Parler is unlike any other TTS engine. It is actually mode like Stable Diffusion, where you write a text based description of what you want your image to look like, but in this case, you describe what you want the voice to sound like. This means you can have pretty much any voice you want, however, the downside to this is, there is no consistency of the voices, meaning that no 2x TTS generations will sound exactly like the same voice.<br>
+                    Parler is unlike any other TTS engine. It is actually mode like Stable Diffusion, where you write a text based description of what you want your image to look like, but in this case, you describe what you want the voice to sound like. For example `A female speaker with an enthusiastic and lively voice. Her tone is bright and energetic, with a fast pace and a lot of inflection. The audio is clear and vibrant.` 
+                    
+                    This means you can have pretty much any voice you want, however, the downside to this is, there is little consistency of the voices, meaning that no 2x TTS generations will sound exactly like the same voice. You can however use one of the `Native` built in voices to give a level of consistency. Please refer to the Parler website for more infomation https://github.com/huggingface/parler-tts.<br>
                    
                     ### 🟧 So how do I create my voices for Parler?
                     On the settings page for Parler, there is a Voice Editor tab. In there you can add/remove/ammend voices as you wish, or edit the `parler_voices.json` file stored in `system/tts_engines/parler/`.
@@ -370,8 +372,36 @@ def parler_model_alltalk_settings(model_config_data):
                     
                     > When `Disabled`, your output wav files will be left untouched.<br>
                     > When set to a setting `1 Day` or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.<br>
+                    
+                    ### 🟧 Skipped text/speech
+                    At time of writing, this model is 1x day old and I could see reports of issues with some TTS not being generated, some longer text missing the middle portion of the text etc. You can confirm what AllTalk sent to the Parler TTS engine by looking at the command prompt/terminal window. If your text shows up there, it was sent to the Parler TTS engine. Please refer to the Parler website for more details https://github.com/huggingface/parler-tts. 
                     """)
                 gr.Markdown("""
+                    ### 🟧 How do I use Parler's voice generation system?
+                    To create a voice with Parler:
+
+                    Describe the voice characteristics in your prompt. For example: `Jon's voice is monotone yet slightly fast in delivery, with a very close recording that almost has no background noise.`
+                    
+                    Use one of the 34 inbuilt `Native` speaker names for a level of consistency: `Aaron, Alisa, Anna, Barbara, Bill, Brenda, Bruce, Carol, David, Eileen, Emily, Eric, Gary, James, Jason, Jenna, Jerry, Jon, Jordan, Joy, Karen, Laura, Lauren, Lea, Mike, Naomie, Patrick, Rebecca, Rick, Rose, Tina, Tom, Will, Yann`
+                    
+                    Control audio quality in the voice characteristics prompt:
+
+                    > Include `very clear audio` for highest quality<br>
+                    > Use `very noisy audio` for high levels of background noise
+
+                    Adjust other features in your voice characteristics prompt:
+
+                    > Gender<br>
+                    > Speaking rate<br>
+                    > Pitch<br>
+                    > Reverberation
+                    
+                    Remember, while you can create diverse voices, each generation may sound slightly different even with the same description.
+
+                    In the text sent for TTS generation, you can use punctuation to control speech rhythm (e.g. use `,` commas for small breaks)
+                    
+                    ### 🟧 UserWarning: 1Torch was not compiled with flash attention
+                    This is a limitation of Windows Pytorch not yet having full flash attention support on later builds of Pytorch (is my understanding at this time).
                     """)
 
     return app
