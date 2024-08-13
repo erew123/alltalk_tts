@@ -41,7 +41,7 @@ else:
     print(f"[{params['branding']}Startup] \033[91mWarning\033[0m modeldownload.json is missing so please re-download it and save it in the coquii_tts main folder.")
     print(f"[{params['branding']}Startup] \033[91mWarning\033[0m API Local and XTTSv2 Local will error unless this is corrected.")
 
-# Read the version specifier from requirements_nvidia.txt
+# Read the version specifier from requirements_standalone.txt
 with open(this_dir / "system" / "requirements" / "requirements_standalone.txt", "r") as req_file:
     requirements = req_file.readlines()
 
