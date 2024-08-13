@@ -1217,14 +1217,14 @@ if __name__ == "__main__":
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ You will need to download the Nvidia Cuda Toolkit 12.4<span style="color: #3366ff;"> network install</span> from <a href="https://developer.nvidia.com/cuda-12-4-0-download-archive" target="_blank">link here</a><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 1) Run the installer and select <span style="color: #3366ff;">Custom Advanced</span> Uncheck <span style="color: #3366ff;">everything</span> at the top then expand <span style="color: #3366ff;">CUDA</span>, <span style="color: #3366ff;">Development</span> > <span style="color: #3366ff;">Compiler</span> > and select <span style="color: #3366ff;;">nvcc</span> then expand <span style="color: #3366ff;;">Libraries</span> and select <span style="color: #3366ff;;">CUBLAS</span>.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 2) Back at the top of <span style="color: #3366ff;">CUDA</span>, expand <span style="color: #3366ff;">Runtime</span> > <span style="color: #3366ff;">Libraries</span> and select <span style="color: #3366ff;">CUBLAS</span>. Click <span style="color: #3366ff;;">Next</span>, accept the default path (taking a note of its location) and let the install run. <br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>. If it does you are good to go. If it doesn't > Step 4.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 12.4</span>. If it does you are good to go. If it doesn't > Step 4.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 4) <strong>Linux users</strong>, you can temporarily add these paths on your current terminal window with (you may need to confirm these are correct for your flavour of Linux):<br><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64&colon;&dollar;&lbrace;LD_LIBRARY_PATH&colon;&plus;&colon;&dollar;&lbrace;LD_LIBRARY_PATH&rbrace;&rbrace;</span> (Add it to your ~/.bashrc if you want this to be permanent)<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-12.4/bin</span><br><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Windows users</strong> need the add the following to the PATH environment variable. Start menu and search for "Environment Variables" or "Edit the system environment variables.". <br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Find and select the "Path" variable, then click on the "Edit...". Click on the "New" button and add:<br><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">C:&bsol;Program Files&bsol;NVIDIA GPU Computing Toolkit&bsol;CUDA&bsol;v12.4&bsol;bin.</span><br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 5) Once you have these set correctly, you should be able to open a new command prompt/terminal and <span style="color: #3366ff;">nvcc --version</span> at the command prompt/terminal, resulting in <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 5) Once you have these set correctly, you should be able to open a new command prompt/terminal and <span style="color: #3366ff;">nvcc --version</span> at the command prompt/terminal, resulting in <span style="color: #00a000;">Cuda compilation tools, release 12.4</span>.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 6) If the nvcc command doesn't work OR it reports a version different from 12.4, finetuning wont work, so you will to double check your environment variables and get them working correctly.<br>
                 """
             )
@@ -1234,7 +1234,7 @@ if __name__ == "__main__":
                 {pytorch_results}<br><br>
                 ◽ On the PyTorch version the:<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- first few digits are the version of PyTorch e.g. 2.1.0 is PyTorch 2.1.0<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- last few digits refer to the CUDA version e.g. cu118 is Cuda 11.8. cu121 is Cuda 12.1.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- last few digits refer to the CUDA version e.g. cu124 is Cuda 12.4.<br>
                 ◽ Ensure you have started your Python envuronment before running finetuning otherwise you will have failures on the above checks.<br>
                 ◽ If PyTorch does not show a CUDA version, then PyTorch will need reinstalling with CUDA. I would suggest running <span style="color: #3366ff;">pip cache purge</span> before installing PyTorch again.<br>
                 ◽ It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 12.1, CUDA 12.4 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing.<br>
@@ -1747,7 +1747,7 @@ if __name__ == "__main__":
                 ◽ If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) <br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Linux:** <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Windows:** <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.<br>
-                ◽ You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.<br>
+                ◽ You can also uninstall the Nvidia CUDA 12.4 Toolkit if you wish and remove your environment variable entries.<br>
                 """
             )
             final_progress_data = gr.Label(

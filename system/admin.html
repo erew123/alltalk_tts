@@ -1019,9 +1019,9 @@
                     <li>The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires
                         around 3GB&#39;s of disk space.</li>
                     <li>Install using your package manager <strong>(Recommended)</strong> e.g. <strong>CUDA Toolkit
-                            11.8</strong> or download directly from <a
+                            12.4.1</strong> or download directly from <a
                             href="https://developer.nvidia.com/cuda-toolkit-archive">Nvidia CUDA Toolkit Archive</a>
-                        (choose 11.8 or 12.1 for Linux).</li>
+                        (choose 12.4.1).</li>
                 </ul>
             </li>
             <li>
@@ -1089,7 +1089,7 @@
                     <li>
                         <p>You can confirm the path is set correctly and working by running the command
                             <code>nvcc --version</code> should confirm
-                            <code>Cuda compilation tools, release 11.8.</code>.
+                            <code>Cuda compilation tools, release 12.4.</code>.
                         </p>
                     </li>
                     <li>
@@ -1128,9 +1128,9 @@
                     <li>The toolkit is crucial for DeepSpeed to compile/build for your version of Linux and requires
                         around 3GB&#39;s of disk space.</li>
                     <li>Install using your package manager <strong>(Recommended)</strong> e.g. <strong>CUDA Toolkit
-                            11.8</strong> or download directly from <a
+                            12.4</strong> or download directly from <a
                             href="https://developer.nvidia.com/cuda-toolkit-archive">Nvidia CUDA Toolkit Archive</a>
-                        (choose 11.8 or 12.1 for Linux).</li>
+                        (choose 12.4).</li>
                 </ul>
             </li>
             <li>
@@ -1208,7 +1208,7 @@
                     <li>
                         <p>You can confirm the path is set correctly and working by running the command
                             <code>nvcc --version</code> should confirm
-                            <code>Cuda compilation tools, release 11.8.</code>.
+                            <code>Cuda compilation tools, release 12.4.</code>.
                         </p>
                     </li>
                     <li>
@@ -1523,7 +1523,7 @@
         <p>Ive paid very close attention to <strong>not</strong> impact what Text-generation-webui is requesting on a
             factory install. This is one of the requirements of submitting an extension to Text-generation-webui. If you
             want to look at a comparison of a factory fresh text-generation-webui installed packages (with cuda 12.1,
-            though AllTalk&#39;s requirements were set on cuda 11.8) you can find that comparison <a
+            though AllTalk&#39;s requirements were set on cuda 12.4) you can find that comparison <a
                 href="https://github.com/erew123/alltalk_tts/issues/23">here</a>. This comparison shows that AllTalk is
             requesting the same package version numbers as Text-generation-webui or even lower version numbers (meaning
             AllTalk will not update them to a later version). What other extensions do, I cant really account for that.
@@ -1890,16 +1890,16 @@
     </details>
 
     <h4 id="⚫-prerequisites-for-fine-tuning-with-nvidia-cuda-development-toolkit-118">⚫ Prerequisites for Fine-tuning
-        with Nvidia CUDA Development Toolkit 11.8</h4>
+        with Nvidia CUDA Development Toolkit 12.4</h4>
     <p>All the requirements for Finetuning will be installed by using the atsetup utility and installing your correct
         requirements (Standalone or for Text-generation-webui). The legacy manual instructions are stored below, however
         these shouldnt be required.</p>
     <details>
-        <summary>Legacy manual instructions for installing Nvidia CUDA Development Toolkit 11.8</summary><br>
-        - To perform fine-tuning, a specific portion of the **Nvidia CUDA Development Toolkit v11.8** must be installed.
+        <summary>Legacy manual instructions for installing Nvidia CUDA Development Toolkit 12.4</summary><br>
+        - To perform fine-tuning, a specific portion of the **Nvidia CUDA Development Toolkit v12.4** must be installed.
         This is crucial for step 1 of fine-tuning. The objective is to minimize the installation footprint by installing
         only the essential components.<br>
-        - The **Nvidia CUDA Development Toolkit v11.8** operates independently from your graphics card drivers and the
+        - The **Nvidia CUDA Development Toolkit v12.4** operates independently from your graphics card drivers and the
         CUDA version utilized by your Python environment.<br>
         - This installation process aims to keep the download and install size as minimal as possible, however a full
         install of the tookit requires 3GB's of disk space.<br>
@@ -1910,8 +1910,8 @@
             <li>
                 <p><strong>Download the Toolkit</strong>:</p>
                 <ul>
-                    <li>Obtain the <strong>network install</strong> version of the Nvidia CUDA Development Toolkit 11.8
-                        from <a href="https://developer.nvidia.com/cuda-11-8-0-download-archive">Nvidia&#39;s
+                    <li>Obtain the <strong>network install</strong> version of the Nvidia CUDA Development Toolkit 12.4
+                        from <a href="https://developer.nvidia.com/cuda-12-4-1-download-archive">Nvidia&#39;s
                             Archive</a>.</li>
                 </ul>
             </li>
@@ -1935,16 +1935,16 @@
                 <p><strong>Configure Environment Search Path</strong>:</p>
                 <ul>
                     <li>
-                        <p>It&#39;s essential that <code>nvcc</code> and CUDA 11.8 library files are discoverable in
+                        <p>It&#39;s essential that <code>nvcc</code> and CUDA 12.4 library files are discoverable in
                             your environment&#39;s search path. Adjustments can be reverted post-fine-tuning if desired.
                         </p>
                         <p><strong>For Windows</strong>:</p>
                         <ul>
                             <li>Edit the <code>Path</code> environment variable to include
-                                <code>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin</code>.
+                                <code>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin</code>.
                             </li>
                             <li>Add <code>CUDA_HOME</code> and set its path to
-                                <code>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8.</code>
+                                <code>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4.</code>
                             </li>
                         </ul>
                         <p><strong>For Linux</strong>:</p>
@@ -1976,8 +1976,8 @@
                 <ul>
                     <li>Open a <strong>new</strong> terminal/command prompt to refresh the search paths.</li>
                     <li>In a terminal or command prompt, execute <code>nvcc --version</code>.</li>
-                    <li>Success is indicated by a response of <code>Cuda compilation tools, release 11.8.</code>
-                        Specifically, ensure it is version 11.8.</li>
+                    <li>Success is indicated by a response of <code>Cuda compilation tools, release 12.4.</code>
+                        Specifically, ensure it is version 12.4.</li>
                 </ul>
             </li>
             <li>
@@ -1993,7 +1993,7 @@
     <h4 id="additional-note-on-torch-and-torchaudio">Additional Note on Torch and Torchaudio:</h4>
     <ul>
         <li>Ensure Torch and Torchaudio are CUDA-enabled (any version), which is separate from the CUDA Toolkit
-            installation. CUDA 11.8 corresponds to <code>cu118</code> and CUDA 12.1 to <code>cu121</code> in AllTalk
+            installation. CUDA 12.4 corresponds to <code>cu124</code> in AllTalk
             diagnostics.</li>
         <li>Failure to install CUDA for Torch and Torchaudio will result in Step 2 of fine-tuning failing. These
             requirements are distinct from the CUDA Toolkit installation, so avoid conflating the two.<br></li>
