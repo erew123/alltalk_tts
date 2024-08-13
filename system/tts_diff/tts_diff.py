@@ -19,7 +19,7 @@ def find_files_in_path_with_wildcard(pattern):
         sub_directory = os.path.join(sub_directory, "lib")
     else:
         sub_directory = os.path.join(sub_directory, "bin")
-    
+
     # Iterate over each site-packages directory (there can be more than one)
     for directory in site_packages_path:
         # Construct the search directory path
@@ -32,7 +32,7 @@ def find_files_in_path_with_wildcard(pattern):
 
 def detect_cublas():
     # Use different file patterns based on the operating system
-    file_name_pattern = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
+    file_name_pattern = 'cublas64_12.*' if platform.system() == "Windows" else 'libcublas.so.12*'
     found_paths = find_files_in_path_with_wildcard(file_name_pattern)
     if found_paths:
         print("[AllTalk TTSDiff] \033[94mCublas:\033[0m \033[92mDetected\033[0m", found_paths)
@@ -40,7 +40,7 @@ def detect_cublas():
         print("[AllTalk TTSDiff] \033[94mCublas:\033[0m \033[91mERROR Not Detected\033[0m")
         print("[AllTalk TTSDiff] \033[94mPlease install Cublas from the Nvidia CUDA Toolkit \033[0mhttps://developer.nvidia.com/cuda-downloads")
         exit(1)
-        
+
 
 parser = argparse.ArgumentParser(description="Compare TTS output with the original text using detailed comparison.")
 parser.add_argument("--threshold", type=int, default=98, help="Similarity threshold for considering a match (default: 98)")
@@ -78,8 +78,8 @@ def disclaimer_text():
     print(f"  - When you have your ID list, go back into the TTS Generator, correct any lines and regenerate them. If you")
     print(f"    want to re-test everthing again after re-generating, you will need to export your list again and re-run this")
     print(f"    script again, against your newly exported JSON list.")
-    print(f"  - This requires access to \033[93mcublas64_11\033[0m, the same as Finetuning.")
-    print(f"    https://github.com/erew123/alltalk_tts/tree/main?#-important-requirements-cuda-118\n")
+    print(f"  - This requires access to \033[93mcublas64_12\033[0m, the same as Finetuning.")
+    print(f"    https://github.com/erew123/alltalk_tts/tree/main?#-important-requirements-cuda-124\n")
     return
 
 try:
@@ -103,12 +103,12 @@ try:
 except Exception as e:
     print(f"[AllTalk TTSDiff] ERROR STARTING SCRIPT:")
     print("[AllTalk TTSDiff] Failed to load the spaCy language model.")
-    
+
     # Attempt to download the spaCy model automatically
     try:
         print("[AllTalk TTSDiff] Attempting to automatically download the spaCy language model...")
         subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_md"], check=True)
-        
+
         # Try to load the model again after downloading
         nlp = spacy.load("en_core_web_md")
         print("[AllTalk TTSDiff] Model downloaded and loaded successfully.")
@@ -127,29 +127,29 @@ def texts_are_similar(text1, text2, threshold=0.8):
     # Process the texts through the NLP model for longer texts
     doc1 = nlp(text1)
     doc2 = nlp(text2)
-    
+
     # Compute semantic similarity
     similarity = doc1.similarity(doc2)
-    
+
     return similarity >= threshold
 
 def normalize_text(text):
     # Normalize or remove CRLF and other non-standard whitespaces
     text = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
-    
+
     # Convert to lowercase
     text = text.lower()
-    
+
     # Standardize and then remove quotation marks
     text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
     text = text.translate(str.maketrans('', '', '"\''))
-    
+
     # Remove all other punctuation except hyphens to preserve compound words
     text = text.translate(str.maketrans('', '', string.punctuation.replace("-", "")))
-    
+
     # Collapse any sequence of whitespace (including spaces) into a single space
     text = re.sub(r'\s+', ' ', text)
-    
+
     return text.strip()
 
 spoken_punctuation_mapping = {
@@ -193,21 +193,21 @@ def transcribe_and_compare(file_url, original_text, model, item_id, flagged_ids)
     except Exception as e:
         print(f"[AllTalk TTSDiff] Error transcribing file {audio_file_path}: {e}")
         return  # Skip this file if transcription fails
-    
+
     segments, info = model.transcribe(str(audio_file_path), beam_size=5)
     transcribed_text = " ".join([segment.text for segment in segments])
-    
+
     # Normalize texts for comparison
     original_text_normalized = normalize_text(original_text)
     transcribed_text_normalized = normalize_text(transcribed_text)
-    
+
     # Enhanced comparison using detailed fuzzy matching
     is_detailed_match = detailed_comparison(original_text_normalized, transcribed_text_normalized, args.threshold)
     has_spoken_punctuation = contains_spoken_punctuation(transcribed_text_normalized) and not contains_spoken_punctuation(original_text_normalized)
-    
+
     # Adjust is_match based on detailed comparison and spoken punctuation check
     is_match = is_detailed_match and not has_spoken_punctuation
-    
+
     # Only log and flag IDs for review if there's a mismatch or detected issues
     if not is_match:
         #print(f"\033[93mMismatch Detected - ID:\033[0m {item_id}")
@@ -229,7 +229,7 @@ def main():
     model_size = "large-v2"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = WhisperModel(model_size, device=device, compute_type="float32")
-    
+
     flagged_ids = []  # Initialize the list to track IDs needing review
 
     try:
@@ -249,7 +249,7 @@ def main():
     for item in tts_list:
         print(f"[AllTalk TTSDiff] Processing ID: {item['id']}")
         transcribe_and_compare(item['fileUrl'], item['text'], model, item['id'], flagged_ids)
-    
+
     print(f"[AllTalk TTSDiff]")
     # Print summary information at the end
     if flagged_ids:

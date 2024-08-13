@@ -9,6 +9,11 @@ apt-get install -y git build-essential portaudio19-dev \
   ocl-icd-opencl-dev opencl-headers clinfo \
   libclblast-dev libopenblas-dev libaio-dev
 
+# Need this 440MB dep on 22.04 otherwise TTS Analyze is very sad if we don't have 11.8 CUDA and lack the dep:
+#   Could not load library libcudnn_ops_infer.so.8. Error: libcudnn_ops_infer.so.8: cannot open shared object file: No such file or directory
+#   https://github.com/SYSTRAN/faster-whisper/issues/516#issuecomment-2201088567
+apt-get install -y libcudnn8
+
 mkdir -p /etc/OpenCL/vendors
 echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 apt-get clean && rm -rf /var/lib/apt/lists/*

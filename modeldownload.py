@@ -47,12 +47,12 @@ with open(this_dir / "system" / "requirements" / "requirements_standalone.txt", 
 
 tts_version_required = None
 for req in requirements:
-    if req.startswith("TTS=="):
+    if req.startswith("coqui-tts=="):
         tts_version_required = req.strip().split("==")[1]
         break
 
 if tts_version_required is None:
-    raise ValueError(f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find TTS version specifier in requirements file")
+    raise ValueError(f"[{params['branding']}Startup] \033[91mWarning\033[0m Could not find Coqui-TTS version specifier in requirements file")
 
 def create_directory_if_not_exists(directory):
     if not directory.exists():
@@ -75,16 +75,16 @@ def download_file(url, destination):
 
 def check_tts_version():
     try:
-        tts_version = metadata.version("tts")
+        tts_version = metadata.version("coqui-tts")
         print(f"[{params['branding']}Startup] \033[92mCurrent TTS Version    : \033[93m"+tts_version+"\033[0m")
 
         if version.parse(tts_version) < version.parse(tts_version_required):
-            print(f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS version is too old. Please upgrade to version \033[93m"+tts_version_required+"\033[0m or later.\033[0m")
-            print(f"[{params['branding']}Startup] \033[91mWarning\033[0m At your terminal/command prompt \033[94mpip install --upgrade tts\033[0m")
+            print(f"[{params['branding']}Startup] \033[91mWarning\033[0m Coqui-TTS version is too old. Please upgrade to version \033[93m"+tts_version_required+"\033[0m or later.\033[0m")
+            print(f"[{params['branding']}Startup] \033[91mWarning\033[0m At your terminal/command prompt \033[94mpip install --upgrade coqui-tts\033[0m")
         else:
-            print(f"[{params['branding']}Startup] \033[92mCurrent TTS Version is :\033[93m Up to date\033[0m")
+            print(f"[{params['branding']}Startup] \033[92mCurrent Coqui-TTS Version is :\033[93m Up to date\033[0m")
     except metadata.PackageNotFoundError:
-        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m TTS is not installed")
+        print(f"[{params['branding']}Startup] \033[91mWarning\033[0m Coqui-TTS is not installed")
 
 def check_torch_version():
     import torch
