@@ -227,6 +227,15 @@ def api_documentation():
     }
     ```
     
+    Remapping the voices through an API call:
+    
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **URL**: `http://{ipaddress}:{port}/api/openai-voicemap`<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **Method**: `POST`<br>
+
+    `curl -X PUT "http://localhost:7851/api/openai-voicemap" -H "Content-Type: application/json" -d "{\"alloy\":\"female_01.wav\",\"echo\":\"female_01.wav\",\"fable\":\"female_01.wav\",\"nova\":\"female_01.wav\",\"onyx\":\"male_01.wav\",\"shimmer\":\"male_02.wav\"}"`
+
+    You can re-map the 6x voices on the fly, to any voices supported/available for the currently loaded TTS engine by using the above style post. You can use the `curl -X GET "http://127.0.0.1:7851/api/voices"` endpoint to get a list of all currently available voices. Please note that the Gradio interface will not reflect these changes until AllTalk is reloaded as gradio caches the list.
+    
     #### Python Example
     ```
     import requests
@@ -480,37 +489,37 @@ def api_documentation():
 
     #### **output_file_name***
     > The name of the output file (excluding the .wav extension).<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "output_file_name=myoutputfile"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "output_file_name=myoutputfile"
 
     #### **output_file_timestamp**
     > Add a timestamp to the output file name. If true, each file will have a unique timestamp; otherwise, the same file name will be overwritten each time you generate TTS.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "output_file_timestamp=true"<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "output_file_timestamp=false"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "output_file_timestamp=true"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "output_file_timestamp=false"
 
     #### **autoplay**
     > Enable or disable playing the generated TTS to your standard sound output device at the time of TTS generation.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "autoplay=true"<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "autoplay=false"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "autoplay=true"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "autoplay=false"
     
     #### **autoplay_volume**
     > Set the autoplay volume. Should be between 0.1 and 1.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "autoplay_volume=0.8"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "autoplay_volume=0.8"
 
     #### **speed**
     > Set the speed of the generated audio. Should be between 0.25 and 2.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "speed=1.0"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "speed=1.0"
 
     #### **pitch**
     > Set the pitch of the generated audio. Should be between -10 and 10.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "pitch=0"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "pitch=0"
 
     #### **temperature**
     > Set the temperature for the TTS engine. Should be between 0.1 and 1.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "temperature=0.75"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "temperature=0.75"
 
     #### **repetition_penalty**
     > Set the repetition penalty for the TTS engine. Should be between 1.0 and 20.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "repetition_penalty=10"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "repetition_penalty=10"
 
     ### 🟠 TTS Generation Response
     > The API returns a JSON object with the following properties:<br><br>
