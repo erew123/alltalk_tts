@@ -673,6 +673,7 @@ Echo    Remember, after installation you can....
 Echo    Run %L_YELLOW%start_alltalk.bat%RESET% to start AllTalk.
 Echo    Run %L_YELLOW%start_finetune.bat%RESET% to start Finetuning.
 Echo    Run %L_YELLOW%start_environment.bat%RESET% to start the AllTalk Python environment.
+Echo    Run %L_YELLOW%start_diagnostics.bat%RESET% to start generate a diagnostics file.
 Echo.
 exit /b
 
