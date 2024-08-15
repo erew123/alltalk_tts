@@ -139,6 +139,7 @@ goto StandaloneMenu
 :InstallNvidiaTextGen
 pip install -r system\requirements\requirements_textgen.txt
 pip install -r system\requirements\requirements_textgen2.txt
+pip install -r system\requirements\requirements_parler.txt
 echo ** Faiss **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
 echo ** FFmpeg **
@@ -413,6 +414,8 @@ curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0
 echo Installing DeepSpeed...
 pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
 del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+echo Installing Parler...
+pip install -r system\requirements\requirements_parler.txt
 echo ** Clean Environment **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" clean --all --force-pkgs-dirs -y
 
@@ -558,6 +561,7 @@ echo Installing requirements. If you have problems after this, you should
 echo delete the alltalk_environment and run the setup routine again. 
 echo.
 pip install -r system\requirements\requirements_standalone.txt
+pip install -r system\requirements\requirements_parler.txt
 echo Installing DeepSpeed...
 pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
 del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
