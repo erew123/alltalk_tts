@@ -72,8 +72,12 @@ Quick setup scripts are available for users on Windows 10/11 and Linux. Instruct
 - Ensure that **Git** is installed on your system as it is required for cloning the repository. If you do not have Git installed, visit [**Git's official website**](https://git-scm.com/downloads) to download and install it.
 - **Important**: Do not use dashes or spaces in your folder path (e.g. avoid `/my folder-is-this/alltalk_tts-main`) as this causes issues with Python.
 
-### **NOTE. IF YOU HAVE AN EXISTING ALLTALK INSTALL** this will want to create a folder called `alltalk_tts` so you will need to re-name your old `alltalk_tts` to something else OR put this in a different folder/location. 
-### **NOTE**. I am not saying this is a over-the-top of an old alltalk upgrade ATM. It needs the Python environment rebuilding, hence a fresh install is needed for now. 
+#### **NOTE. IF YOU HAVE AN EXISTING ALLTALK INSTALL** this will want to create a folder called `alltalk_tts` so you will need to re-name your old `alltalk_tts` to something else OR put this in a different folder/location. 
+#### **NOTE**. I am not saying this is a over-the-top of an old alltalk upgrade ATM. It needs the Python environment rebuilding, hence a fresh install is needed for now. 
+
+---
+#### Python/PIP has recently made changes to the package installer and I have/am doing what I can to keep the requirements files working, however, this is a complicated time to say the least as some external requirements change and this can cause installation issues. Please raise a ticket if you have an error that a module is missing.
+---
 
 <details>
 <summary>QUICK SETUP - Text-Generation-webui</summary>
