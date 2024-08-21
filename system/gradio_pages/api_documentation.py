@@ -407,10 +407,10 @@ def api_documentation():
     ### 🟠 Example Command Lines (Standard Generation)
     Standard TTS generation supports narration and generates a WAV file/blob.
 
-    > **Standard TTS Speech Example** - Generate a time-stamped file for standard text:<br><br>
+    > **Standard TTS Speech Example** - Generate a time-stamped file for standard text and play the audio at the command prompt/terminal:<br><br>
     `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest" -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=false" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`
 
-    > **Narrator Example** - Generate a time-stamped file for text with narrator and character speech:<br><br>
+    > **Narrator Example** - Generate a time-stamped file for text with narrator and character speech and play the audio at the command prompt/terminal:<br><br>
     `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=*This is text spoken by the narrator* \\\"This is text spoken by the character\\\;". This is text not inside quotes." -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=true" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`<br>
 
     > If your text contains double quotes, escape them with &#92;" (see the narrator example).<br>
@@ -420,7 +420,7 @@ def api_documentation():
 
     > `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest"`
 
-    Would generate the TTS for whatver engine is curretly loaded in. It will use the default API settings and default TTS engine settings to populate any missing fields, which gives you flexibility on how you want to send API requests to AllTalk.
+    Would generate the TTS for whatver engine is curretly loaded in. It will use the default API settings and default TTS engine settings `Global Settings > AllTalk API Defaults` to populate any missing fields, which gives you flexibility on how you want to send API requests to AllTalk.
 
     ### 🟠 Request Parameters
     #### **text_input**
