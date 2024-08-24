@@ -1,6 +1,6 @@
 coqui-tts>=0.24.1
 faster-whisper>=1.0.0
-fuzzywuzzy
+fuzzywuzzy>=0.18.0
 gradio>=4.26.0
 importlib_metadata>=7.1.0
 inputimeout>=1.0.4
@@ -22,12 +22,12 @@ torchcrepe>=0.0.2
 tqdm>=4.66.0
 unidic-lite>=1.0.8
 uvicorn>=0.29.0
-pypinyin
-hangul_romanize
-word2number
+pypinyin>=0.52.0
+hangul_romanize>=0.1.0
+word2number>=1.1
 ./system/config/fairseq-0.12.4-cp311-cp311-win_amd64.whl; sys_platform == "win32"
 ./system/config/fairseq-0.12.3.1-cp311-cp311-linux_x86_64.whl; sys_platform == "linux"
 piper-tts; sys_platform == "linux"
 piper-tts; sys_platform == "darwin"
 piper-phonemize==1.1.0; sys_platform == "darwin"
-trainer
+trainer>=0.0.36
