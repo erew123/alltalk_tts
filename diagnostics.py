@@ -110,8 +110,14 @@ def get_disk_info():
     disk_info = []
     partitions = psutil.disk_partitions()
     for p in partitions:
-        usage = psutil.disk_usage(p.mountpoint)
-        disk_info.append(f" Drive: {p.device} | Total: {usage.total / (1024 ** 3):.2f} GB | Used: {usage.used / (1024 ** 3):.2f} GB | Free: {usage.free / (1024 ** 3):.2f} GB | Type: {p.fstype}")
+        try:
+            usage = psutil.disk_usage(p.mountpoint)
+            disk_info.append(
+                f"Drive: {p.device} | Total: {usage.total / (1024 ** 3):.2f} GB | Used: {usage.used / (1024 ** 3):.2f} GB | Free: {usage.free / (1024 ** 3):.2f} GB | Type: {p.fstype}"
+            )
+        except PermissionError:
+            # Handle the case where the drive is locked or inaccessible
+            disk_info.append(f"Drive: {p.device} | Inaccessible or locked")
     return disk_info
 
 def is_port_in_use(port):
