@@ -42,4 +42,3 @@ python-multipart
 hangul_romanize
 word2number
 piper-tts; sys_platform == "linux"
-trainer
