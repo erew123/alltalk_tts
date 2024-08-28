@@ -30,4 +30,3 @@ word2number>=1.1
 piper-tts; sys_platform == "linux"
 piper-tts; sys_platform == "darwin"
 piper-phonemize==1.1.0; sys_platform == "darwin"
-trainer>=0.0.36
