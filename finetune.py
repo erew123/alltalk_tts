@@ -1791,7 +1791,9 @@ if __name__ == "__main__":
                             value=False,
                             label="Continue Previous Project",
                             scale=1,
+                            visible=False,
                         )
+                        # Continue Run has been set to invisible from the interface as its setting a 1000 epoch run when used. Have been unable to track down where this is coming from.
                         disable_shared_memory = gr.Checkbox(
                             value=False,
                             label="Disable Shared Memory Use",
@@ -1803,11 +1805,11 @@ if __name__ == "__main__":
                             scale=1,
                         )
                     train_csv = gr.Textbox(
-                        label="Train CSV:",
+                        label="Train CSV file path:",
                         scale=2,
                     )
                     eval_csv = gr.Textbox(
-                        label="Eval CSV:",
+                        label="Eval CSV file path:",
                         scale=2,
                     )
                 with gr.Row():
@@ -1984,7 +1986,7 @@ if __name__ == "__main__":
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- What you are training (A human voice, A cartoon voice, A new language entirely etc)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- How much audio you have (you may want less or more eval or epochs)<br>
                     ◽ The key indicator of sufficient model training is whether it sounds right to you. Coqui suggests beginning with the base settings for training. If the resulting audio doesn't meet your expectations, additional training sessions may be necessary.<br>
-                    #### 🟪 <u>Continue Previous Project</u>
+                    #### 🟪 <u>Continue Previous Project (CURRENTLY REMOVED AND NOT AVAILABLE)</u>
                     This option allows you to resume training from where it left off if your previous session was interrupted (e.g., due to a power outage or system crash). When enabled:<br>
                     ◽ The system will attempt to load the most recent checkpoint from your previous training session.<br>
                     ◽ It will continue training from that point, preserving your progress and saving time.<br>
