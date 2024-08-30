@@ -3,9 +3,9 @@ This is the BETA of v2. To be clear, that means they may well be bugs, issues, m
 
 Github **discussions** on the BETA are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
 
-For issues, please open an issue ticket [here in the issues area](https://github.com/erew123/alltalk_tts/issues)
+For **Issues/Bugs/Support**, please open an issue ticket [here in the issues area](https://github.com/erew123/alltalk_tts/issues)
 
-**Please note, my available time has become VERY limited due to unexpected family commitments.**
+**Please note, my available time has become VERY limited due to unexpected family commitments. So please DYOR and refer to the TTS manufacturer (listed in the interface) for issues with their TTS engines.**
 
 #### If you are going to run the BETA, please read all the info below....
 
