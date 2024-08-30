@@ -37,6 +37,7 @@ try:
     import torchaudio
     import wave
     import io
+    import random
     import numpy as np
     from TTS.tts.configs.xtts_config import XttsConfig
     from TTS.tts.models.xtts import Xtts
@@ -287,7 +288,19 @@ class tts_class:
             # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
                  
             directory = self.main_dir / "voices"
-            voices = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")]
+            # Step 1: Add .wav files in the main "voices" directory to the list
+            voices.extend([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")])
+            
+            # Step 2: Walk through subfolders and add subfolder names if they contain .wav files
+            for root, dirs, files in os.walk(directory):
+                # Skip the root directory itself and only consider subfolders
+                if os.path.normpath(root) != os.path.normpath(directory):
+                    if any(f.endswith(".wav") for f in files):
+                        folder_name = os.path.basename(root) + "/"
+                        voices.append(folder_name)
+            
+            # Remove "voices/" from the list if it somehow got added
+            voices = [v for v in voices if v != "voices/"]
             
             # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
             # ↓↓↓ Keep everything below this line ↓↓↓
@@ -470,15 +483,31 @@ class tts_class:
 
         # XTTSv2 LOCAL & Xttsv2 FT Method
         print(f"[{self.branding}Debug] Deciding if streaming or not") if self.debug_tts else None
-        print(f"[{self.branding}Debug] self.current_model_loaded", self.current_model_loaded) if self.debug_tts else None
+        print(f"[{self.branding}Debug] self.current_model_loaded is:", self.current_model_loaded) if self.debug_tts else None
         self.current_model_loaded
-        if os.path.isdir(voice):
-            wavs_files = glob.glob(os.path.join(voice, "*.wav"))
+        print(f"[{self.branding}Debug] Audio Sample Detection") if self.debug_tts else None
+        print(f"[{self.branding}Debug] Voice name sent in request is:", voice) if self.debug_tts else None
+        # Check if the voice ends with a slash, indicating it's a directory
+        if voice.endswith("/") or voice.endswith("\\"):
+            # Remove the trailing slash for proper path detection
+            voice = voice.rstrip("/\\")
+        if os.path.isdir(os.path.join(self.main_dir, "voices", voice)):
+            # Normalize the path for the directory and then search for .wav files
+            normalized_path = os.path.normpath(os.path.join(self.main_dir, "voices", voice))
+            wavs_files = glob.glob(os.path.join(normalized_path, "*.wav"))
+            print(f"[{self.branding}Debug] Directory of multiple voice samples detected. Using multiple WAV files:", wavs_files) if self.debug_tts else None            
+            # If there are more than 5 .wav files, randomly select 5
+            if len(wavs_files) > 5:
+                wavs_files = random.sample(wavs_files, 5)
+                print(f"[{self.branding}Debug] More than 5 wav files detected so only using 5x random audio samples:", wavs_files) if self.debug_tts else None
         else:
-            wavs_files = [f"{self.main_dir}/voices/{voice}"]
+            # Normalize the path for the file
+            normalized_path = os.path.normpath(os.path.join(self.main_dir, "voices", voice))
+            wavs_files = [normalized_path]
+            print(f"[{self.branding}Debug] Single voice sample detected. Using one WAV sample:", wavs_files) if self.debug_tts else None
 
         if self.current_model_loaded.startswith ("xtts"):
-            print(f"[{self.branding}Debug] Text arriving at engine {text}") if self.debug_tts else None
+            print(f"[{self.branding}Debug] Text arriving at TTS engine is: {text}") if self.debug_tts else None
             gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(
                 audio_path=wavs_files,
                 gpt_cond_len=self.model.config.gpt_cond_len,
