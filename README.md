@@ -1,7 +1,11 @@
 # AllTalk TTS v2 BETA
 This is the BETA of v2. To be clear, that means they may well be bugs, issues, missing/incomplete documentation, a variety of potential problems etc (This is what BETA refers to in the software world for those whom dont know). This means you may need a bit of technical know how to deal with things that could come up and should only continue if you feel comfortable with that.
 
-Github discussions on the BETA are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
+Github **discussions** on the BETA are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
+
+For issues, please open an issue ticket [here in the issues area](https://github.com/erew123/alltalk_tts/issues)
+
+**Please note, my available time has become VERY limited due to unexpected family commitments.**
 
 #### If you are going to run the BETA, please read all the info below....
 
@@ -20,6 +24,7 @@ Please go see [here](https://github.com/erew123/alltalk_tts/discussions/237)
   - FYI there is no limit on how many XTTS models AllTalk will now find/work with.
 - AllTalk starts up on 0.0.0.0, meaning it will bind to ALL available IP addresses. There is no setting its IP address any more.
 - Updated Coqui TTS engine.
+- XTTS multiple audio sample TTS generation to improve voice reproduction https://github.com/erew123/alltalk_tts/commit/b7aa3a7c5c8df260edede52dd1b31a7b40d9b202
 - Gradio web interface (see the screenshots)
 - Retrieval based Voice Conversion, AKA, RVC voice Pipeline, re-written to work on Python 3.11.
 - TTS Generator will now use any TTS engine.
