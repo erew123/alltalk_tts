@@ -1,1 +1,20 @@
+BASIC SETUP
+-----------
 Place the `alltalk.js` in your `\SillyTavern\public\scripts\extensions\tts\` folder, replacing the existing file.
+
+CHANGING THE DEFAULT IP ADDRESS
+-------------------------------
+If you change the default IP/URL in the SillyTavern interface, you need to press Enter for it to save the setting. Just typing in an address/URL will not change the setting.
+
+SIMPLE TROUBLESHOOTING
+----------------------
+The settings for AllTalk are stored, saved and managed by SillyTavern and not the AllTalk extension. You can manually edit OR delete these settings if necessary by editing the `settings.json` file that SillyTavern stores. I would suggest taking a copy of the file before making any changes.
+
+Older versions of SillyTavern store `settings.json` file in `\SillyTavern\public\`
+
+Newer version of SillyTavern store `settings.json` file in `\SillyTavern\data\default-user`
+
+Within the `settings.json` file you will find a section called `"AllTalk": {` and it is closed out a few lines down with `},`
+
+You can either manually edit any of the settings in there OR you can delete the entire section from the start of `"AllTalk":` to the end of `},` and when you refresh the SillyTavern web page OR restart SillyTavern, new settings for AllTalk will be created/saved.
+
