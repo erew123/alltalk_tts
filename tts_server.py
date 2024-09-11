@@ -1431,6 +1431,8 @@ async def apifunction_generate_tts_standard(
                 print(f"[{branding}Debug] text after api_allowed: {text_input}") if debug_tts else None
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
+                # Remove trailing : from string
+                cleaned_part = re.sub(r':$','',cleaned_part)
                 output_file = this_dir / output_directory / f'{output_file_name}_{uuid.uuid4()}_{int(time.time())}.{model_engine.audio_format}'
                 output_file_str = output_file.as_posix()
                 response = await generate_audio(cleaned_part, voice_to_use, language,temperature, repetition_penalty, speed, pitch, output_file_str, streaming)
