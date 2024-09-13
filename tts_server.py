@@ -741,8 +741,8 @@ async def openai_tts_generate(request: Request):
         model = json_data["model"]  # Currently ignored
         input_text = json_data["input"]
         voice = json_data["voice"]
-        response_format = json_data["response_format"].lower()
-        speed = json_data["speed"]
+        response_format = json_data.get("response_format", "wav").lower()
+        speed = json_data.get("speed", 1.0)
         print(f"[{branding}Debug] Input text: {input_text}")  if debug_openai else None
         print(f"[{branding}Debug] Voice: {voice}")  if debug_openai else None
         print(f"[{branding}Debug] Speed: {speed}")  if debug_openai else None
