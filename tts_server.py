@@ -1594,7 +1594,7 @@ async def apifunction_trigger_analysis(threshold: int = Query(default=98)):
     env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
     ttslist_path = this_dir / output_directory / "ttsList.json"
     wavfile_path = this_dir / output_directory
-    subprocess.run(["python", "tts_diff.py", f"--threshold={threshold}", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_diff", env=env)
+    subprocess.run([sys.executable, "tts_diff.py", f"--threshold={threshold}", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_diff", env=env)
     # Read the analysis summary
     try:
         with open(this_dir / output_directory / "analysis_summary.json", "r") as summary_file:
@@ -1613,7 +1613,7 @@ async def apifunction_srt_generation():
     env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
     ttslist_path = this_dir / output_directory / "ttsList.json"
     wavfile_path = this_dir / output_directory
-    subprocess.run(["python", "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
+    subprocess.run([sys.executable, "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
     srt_file_path = this_dir / output_directory / "subtitles.srt"
     if not srt_file_path.exists():
         raise HTTPException(status_code=404, detail="Subtitle file not found.")
