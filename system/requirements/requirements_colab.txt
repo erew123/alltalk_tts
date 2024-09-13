@@ -23,7 +23,7 @@ tqdm>=4.66.0
 unidic-lite>=1.0.8
 uvicorn>=0.29.0
 pillow==10.3.0
-fastapi
+fastapi==0.112.2
 starlette
 pypinyin
 pyee
