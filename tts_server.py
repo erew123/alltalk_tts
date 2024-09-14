@@ -741,8 +741,8 @@ async def openai_tts_generate(request: Request):
         model = json_data["model"]  # Currently ignored
         input_text = json_data["input"]
         voice = json_data["voice"]
-        response_format = json_data["response_format"].lower()
-        speed = json_data["speed"]
+        response_format = json_data.get("response_format", "wav").lower()
+        speed = json_data.get("speed", 1.0)
         print(f"[{branding}Debug] Input text: {input_text}")  if debug_openai else None
         print(f"[{branding}Debug] Voice: {voice}")  if debug_openai else None
         print(f"[{branding}Debug] Speed: {speed}")  if debug_openai else None
@@ -1594,7 +1594,7 @@ async def apifunction_trigger_analysis(threshold: int = Query(default=98)):
     env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
     ttslist_path = this_dir / output_directory / "ttsList.json"
     wavfile_path = this_dir / output_directory
-    subprocess.run(["python", "tts_diff.py", f"--threshold={threshold}", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_diff", env=env)
+    subprocess.run([sys.executable, "tts_diff.py", f"--threshold={threshold}", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_diff", env=env)
     # Read the analysis summary
     try:
         with open(this_dir / output_directory / "analysis_summary.json", "r") as summary_file:
@@ -1613,7 +1613,7 @@ async def apifunction_srt_generation():
     env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
     ttslist_path = this_dir / output_directory / "ttsList.json"
     wavfile_path = this_dir / output_directory
-    subprocess.run(["python", "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
+    subprocess.run([sys.executable, "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
     srt_file_path = this_dir / output_directory / "subtitles.srt"
     if not srt_file_path.exists():
         raise HTTPException(status_code=404, detail="Subtitle file not found.")
