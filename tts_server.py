@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import argparse
 import librosa
 import logging
 import importlib
@@ -1678,11 +1679,17 @@ async def read_root():
     return HTMLResponse(content=rendered_html, status_code=200)
 
 # Start Uvicorn Webserver
-port_parameter = int(params["api_def"]["api_port_number"])
+# port_parameter = int(params["api_def"]["api_port_number"])
 
 if __name__ == "__main__":
     import uvicorn
-
+    # Command line argument parser
+    parser = argparse.ArgumentParser(description="AllTalk TTS Server")
+    parser.add_argument("--port", type=int, help="Port number for the server")
+    args = parser.parse_args()
+    # Determine the port to use
+    config_port = int(params["api_def"]["api_port_number"])
+    port_to_use = args.port if args.port is not None else config_port
     # Start Uvicorn Webserver
-    uvicorn_server = uvicorn.run(app, host="0.0.0.0", port=port_parameter, log_level="debug")
+    uvicorn_server = uvicorn.run(app, host="0.0.0.0", port=port_to_use, log_level="debug")
 
