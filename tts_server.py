@@ -660,7 +660,7 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
             async for _ in response:
                 pass
         except Exception as e:
-            print(f"[GEN] Error during audio generation: {str(e)}")
+            print(f"{branding}[GEN] Error during audio generation: {str(e)}")
             raise
 
 ###########################
