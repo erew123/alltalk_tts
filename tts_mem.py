@@ -1,4 +1,6 @@
 import subprocess
+import threading
+import signal
 import sys
 import os
 import gradio as gr
@@ -8,12 +10,53 @@ from requests.exceptions import RequestException
 import socket
 import json
 
+# Add these at the beginning of your file, after other imports
+CONFIG_FILE = "mem_config.json"
+
 # Dictionary to store all processes
 processes = {}
-max_instances = 16
 script_path = "tts_server.py"
-current_base_port = 7001
-server_port = 7500
+
+# Global flag to indicate if the program should exit
+should_exit = threading.Event()
+
+def signal_handler(signum, frame):
+    print("[AllTalk MEM] Interrupt received, shutting down...")
+    should_exit.set()
+
+# Default configuration
+default_config = {
+    "base_port": 7001,
+    "auto_start_engines": 0,
+    "max_instances": 8,
+    "gradio_interface_port": 7500,
+    "max_retries": 8,
+    "initial_wait": 3,
+    "backoff_factor": 1.2,
+    "debug_mode": False
+}
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            loaded_config = json.load(f)
+            # Update loaded_config with any missing keys from default_config
+            for key, value in default_config.items():
+                if key not in loaded_config:
+                    loaded_config[key] = value
+            # Ensure debug_mode is a boolean
+            loaded_config['debug_mode'] = bool(loaded_config['debug_mode'])
+            return loaded_config
+    return default_config.copy()
+
+def save_config(config):
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump(config, f, indent=2)
+
+# Load configuration at the start of the script
+config = load_config()
+current_base_port = config['base_port']
+max_instances = config['max_instances']
 
 ############################################
 # START-UP # Display initial splash screen #
@@ -29,8 +72,8 @@ print(f"[AllTalk MEM]")
 print(f"[AllTalk MEM] \033[93m     MEM is not intended for production use and\033[00m")
 print(f"[AllTalk MEM] \033[93m      there is NO support being offered on MEM\033[00m")
 print(f"[AllTalk MEM]")
-print(f"[AllTalk MEM] \033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:{server_port}\033[00m")
-print(f"[AllTalk MEM] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{server_port}?__theme=dark\033[00m")
+print(f"[AllTalk MEM] \033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:{config['gradio_interface_port']}\033[00m")
+print(f"[AllTalk MEM] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{config['gradio_interface_port']}?__theme=dark\033[00m")
 print(f"[AllTalk MEM]")
 
 def is_port_in_use(port):
@@ -92,23 +135,23 @@ def check_subprocess_status(instance_id, port):
 
 # This code block tests if one of the engines has started in a timely fashion. You can increase the max retries and/or backoff factor
 # to allow for longer startup times of the TTS engine. 
-def retry_with_backoff(func, max_retries=8, initial_wait=3, backoff_factor=1.2):
+def retry_with_backoff(func):
     retries = 0
-    wait_time = initial_wait
-    while retries < max_retries:
+    wait_time = config['initial_wait']
+    while retries < config['max_retries']:
         try:
             result = func()
-            # print(f"[AllTalk MEM] Operation successful on attempt {retries + 1}")
+            # print(f"[AllTalk MEM] Operation successful on attempt {retries + 1}")            
             return result
         except RequestException as e:
             retries += 1
-            # print(f"[AllTalk MEM] Attempt {retries}")
-            if retries == max_retries:
-                # print(f"[AllTalk MEM] All {max_retries} attempts failed waiting for this instance of the Engine to load.")
+            # print(f"[AllTalk MEM] Attempt {retries}")            
+            if retries == config['max_retries']:
+                # print(f"[AllTalk MEM] All {max_retries} attempts failed waiting for this instance of the Engine to load.")                
                 return False
-            # print(f"[AllTalk MEM] Retrying in {wait_time} seconds...")
+            # print(f"[AllTalk MEM] Retrying in {wait_time} seconds...")            
             time.sleep(wait_time)
-            wait_time = round(wait_time * backoff_factor, 1)  # Round to 1 decimal place
+            wait_time = round(wait_time * config['backoff_factor'], 1)
     return False
 
 def is_server_ready(port, timeout=5):
@@ -236,18 +279,24 @@ def create_gradio_interface():
                 with gr.Row():
                     for j in range(8):
                         if i + j < max_instances:
+                            instance_id = i + j + 1
+                            
+                            # Use a column for each engine instance to control layout
                             with gr.Column(scale=1, min_width=160):
-                                instance_id = i + j + 1
                                 gr.Markdown(f"### Engine Instance {instance_id}")
                                 status = gr.Markdown("❌ Not running")
-                                start_btn = gr.Button("Start")
-                                stop_btn = gr.Button("Stop")
-                                restart_btn = gr.Button("Restart")
                                 
+                                with gr.Row():
+                                    start_btn = gr.Button("▶️ Start", size="sm", scale=1, min_width=10)
+                                with gr.Row():                                    
+                                    stop_btn = gr.Button("⏹️ Stop", size="sm", scale=1, min_width=10)
+                                    restart_btn = gr.Button("♻️ Re-St", size="sm", scale=1, min_width=10)
+
+                                # Define click behavior for each button
                                 start_btn.click(lambda id=instance_id: start_and_update(id, current_base_port + id - 1), outputs=status)
                                 stop_btn.click(lambda id=instance_id: stop_and_update(id), outputs=status)
                                 restart_btn.click(lambda id=instance_id: restart_and_update(id, current_base_port + id - 1), outputs=status)
-                            
+
                             instance_statuses.append(status)
             
             def refresh_and_update_slider():
@@ -357,33 +406,156 @@ def create_gradio_interface():
           
         with gr.Tab("MEM Settings"):
             with gr.Row():
-                base_port_input = gr.Number(
-                    value=current_base_port,
-                    label=f"Starting Port Number (Current: {current_base_port})",
-                    step=1
-                )
+                with gr.Column(scale=2):
+                    gr.Markdown("### Engine Instance Management")
+                    with gr.Row():
+                        base_port_input = gr.Number(
+                            value=config['base_port'],
+                            label=f"Starting Port Number (Current: {config['base_port']})",
+                            step=1
+                        )
+                        max_instances_input = gr.Number(
+                            value=config['max_instances'],
+                            label=f"Maximum Engine Instances (Current: {config['max_instances']})",
+                            step=1
+                        )
+                        auto_start_engines = gr.Number(
+                            value=config['auto_start_engines'],
+                            label="Auto-start Engine Instances (0 to disable)",
+                            step=1
+                        )
                 
-            set_port_button = gr.Button("Set Start Port Number")
+                with gr.Column(scale=1):
+                    gr.Markdown("### Gradio Port & Debugging")                                      
+                    with gr.Row():
+                        gradio_port_input = gr.Number(
+                            value=config['gradio_interface_port'],
+                            label=f"Gradio Interface Port (Current: {config['gradio_interface_port']})",
+                            step=1
+                        )                
+                        debug_mode_input = gr.Dropdown(
+                            choices=["Disabled", "Enabled"],
+                            value="Enabled" if config['debug_mode'] else "Disabled",
+                            label="Debug Mode"
+                        )
+                                        
+            with gr.Row():               
+                with gr.Column(scale=2):
+                    gr.Markdown("### Engine Start-up Time Contol")
+                    with gr.Row():
+                        max_retries_input = gr.Number(
+                            value=config['max_retries'],
+                            label=f"Max Retries (Current: {config['max_retries']})",
+                            step=1
+                        )
+                        initial_wait_input = gr.Number(
+                            value=config['initial_wait'],
+                            label=f"Initial Wait (Current: {config['initial_wait']})",
+                            step=0.1
+                        )
+                        backoff_factor_input = gr.Number(
+                            value=config['backoff_factor'],
+                            label=f"Backoff Factor (Current: {config['backoff_factor']})",
+                            step=0.1
+                        )
+                with gr.Column(scale=1):
+                    gr.Markdown("### Save Settings")
+                    with gr.Row():                        
+                        set_settings_button = gr.Button("Save Settings")
+            with gr.Row():                
+                settings_status = gr.Textbox(label="Settings Status")
+
+
+            def update_settings(new_port, new_max_instances, new_auto_start, new_gradio_port, 
+                                new_max_retries, new_initial_wait, new_backoff_factor, new_debug_mode):
+                global current_base_port, max_instances, config, server_port
                 
-            def set_base_port(new_port):
-                global current_base_port
                 if new_port < 1024:
-                    current_base_port = 7001
-                    return (
-                        f"Invalid port. Set to default: {current_base_port}",
-                        gr.update(value=current_base_port, label=f"Starting Port Number (Current: {current_base_port})")
-                    )
+                    new_port = 7001
+                
+                new_auto_start = min(int(new_auto_start), int(new_max_instances))
+                
                 current_base_port = int(new_port)
+                max_instances = int(new_max_instances)
+                server_port = int(new_gradio_port)
+                
+                config['base_port'] = current_base_port
+                config['max_instances'] = max_instances
+                config['auto_start_engines'] = new_auto_start
+                config['gradio_interface_port'] = server_port
+                config['max_retries'] = int(new_max_retries)
+                config['initial_wait'] = float(new_initial_wait)
+                config['backoff_factor'] = float(new_backoff_factor)
+                config['debug_mode'] = (new_debug_mode == "Enabled")
+                
+                save_config(config)
+                
                 return (
-                    f"Start port set to: {current_base_port}",
-                    gr.update(value=current_base_port, label=f"Starting Port Number (Current: {current_base_port})")
+                    f"Settings updated: Start port: {current_base_port}, Max instances: {max_instances}, "
+                    f"Auto-start engines: {config['auto_start_engines']}, Gradio port: {server_port}, "
+                    f"Max retries: {config['max_retries']}, Initial wait: {config['initial_wait']}, "
+                    f"Backoff factor: {config['backoff_factor']}, Debug mode: {config['debug_mode']}",
+                    gr.update(value=current_base_port, label=f"Starting Port Number (Current: {current_base_port})"),
+                    gr.update(value=max_instances, label=f"Maximum Instances (Current: {max_instances})"),
+                    gr.update(value=config['auto_start_engines']),
+                    gr.update(value=server_port, label=f"Gradio Interface Port (Current: {server_port})"),
+                    gr.update(value=config['max_retries']),
+                    gr.update(value=config['initial_wait']),
+                    gr.update(value=config['backoff_factor']),
+                    gr.update(value="Enabled" if config['debug_mode'] else "Disabled")
                 )
 
-            set_port_button.click(
-                set_base_port,
-                inputs=[base_port_input],
-                outputs=[error_box, base_port_input]
+            set_settings_button.click(
+                update_settings,
+                inputs=[base_port_input, max_instances_input, auto_start_engines, gradio_port_input,
+                        max_retries_input, initial_wait_input, backoff_factor_input, debug_mode_input],
+                outputs=[settings_status, base_port_input, max_instances_input, auto_start_engines,
+                         gradio_port_input, max_retries_input, initial_wait_input, backoff_factor_input,
+                         debug_mode_input]
             )
+              
+            with gr.Row():
+                gr.Markdown("""
+                All settings are saved in the `mem_config.json` file in the same directory as the MEM script. If `mem_config.json` doesn't exist, default settings will be used. Settings take effect immediately after saving. Some settings (like Gradio Interface Port) may require a restart of MEM to take effect.
+                """)
+            with gr.Row():                                              
+                with gr.Column():
+                    gr.Markdown("""
+                    ### 🟩 Starting Port Number
+                    **Default: 7001**<br>
+                    This is the base port number from which MEM starts assigning ports to TTS engine instances. Each subsequent instance will use the next available port number. Ensure this port and the following ones are free on your system.
+
+                    ### 🟩 Maximum Instances
+                    **Default: 8**<br>
+                    The maximum number of TTS engine instances that can be run simultaneously. This limit helps prevent system overload. Adjust based on your system's capabilities and requirements.
+
+                    ### 🟩 Auto-start Engines
+                    **Default: 0 (disabled)**<br>
+                    The number of TTS engine instances to automatically start when MEM launches. Set to 0 to disable auto-start. This number cannot exceed the Maximum Instances setting.
+
+                    ### 🟩 Gradio Interface Port
+                    **Default: 7500**<br>
+                    The port on which the Gradio web interface for MEM will be accessible. Make sure this port is free and not blocked by your firewall. Gradio will bind to all IP address on your machine on this port, aka 0.0.0.0.
+                    """)
+                    
+                with gr.Column():
+                    gr.Markdown("""                
+                    ### 🟩 Max Retries
+                    **Default: 8**<br>
+                    The maximum number of attempts MEM will make to connect to a TTS engine instance before considering it failed. This setting helps handle slow-starting engines.
+
+                    ### 🟩 Initial Wait
+                    **Default: 3 (seconds)**<br>
+                    The initial waiting time between retry attempts (Max Retries) when connecting to a TTS engine instance. This delay helps prevent overwhelming the system with rapid reconnection attempts.
+
+                    ### 🟩Backoff Factor
+                    **Default: 1.2**<br>
+                    A multiplier applied to the waiting time between retry attempts. With each failed attempt, the wait time (Initial Wait) is multiplied by this factor, implementing an exponential backoff strategy. This helps to reduce system load during persistent issues.
+
+                    ### 🟩 Debug Mode
+                    **Default: Disabled**<br>
+                    When enabled, MEM will output additional diagnostic information. This is useful for troubleshooting issues but may increase console output significantly. Use this when you need detailed information about MEM's operations .
+                    """)               
         
         with gr.Tab("MEM FAQ/Help"):
             with gr.Row():
@@ -475,11 +647,69 @@ def restart_and_update(instance_id, port):
     result = restart_subprocess(instance_id, port)
     return check_subprocess_status(instance_id, port)
 
+def start_MEMple_instances(num_instances, base_port):
+    currently_running = count_running_instances()
+    
+    if currently_running >= num_instances:
+        return update_all_statuses(base_port)  # All requested instances are already running
+    
+    instances_to_start = num_instances - currently_running
+    start_port, available_ports = find_available_port(base_port + currently_running, instances_to_start)
+    
+    if len(available_ports) < instances_to_start:
+        return ["Not enough available ports"] * max_instances
+
+    results = update_all_statuses(base_port)
+    for i, port in enumerate(available_ports[:instances_to_start], start=currently_running+1):
+        result = start_subprocess(i, port)
+        results[i-1] = result
+        time.sleep(10)  # Increase wait time to 10 seconds
+
+    return results
+
 print(f"[AllTalk MEM] Please use \033[91mCtrl+C\033[0m when exiting otherwise Python")
 print(f"[AllTalk MEM] subprocess's will continue running in the background.")
 print(f"[AllTalk MEM] ")
 print(f"[AllTalk MEM] MEM Server Ready")
 
+def launch_interface(interface):
+    interface.launch(quiet=True, server_port=config['gradio_interface_port'], prevent_thread_lock=True)
+
+def auto_start_engines():
+    num_engines = config['auto_start_engines']
+    if num_engines > 0:
+        print(f"[AllTalk MEM] Auto-starting {num_engines} engines...")
+        results = start_MEMple_instances(num_engines, current_base_port)
+        print(f"[AllTalk MEM] Auto-start complete. Results: {results}")
+
+def shutdown():
+    print("[AllTalk MEM] Shutting down all engines...")
+    stop_all_instances()
+    print("[AllTalk MEM] All engines stopped.")
+
 if __name__ == "__main__":
+    # Set up signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+
     interface = create_gradio_interface()
-    interface.launch(quiet=True, server_port=server_port)
+    
+    # Start the Gradio interface in a separate thread
+    interface_thread = threading.Thread(target=launch_interface, args=(interface,))
+    interface_thread.start()
+    
+    # Auto-start engines
+    auto_start_engines()
+    
+    try:
+        # Main loop
+        while not should_exit.is_set():
+            should_exit.wait(1)  # Wait for 1 second or until should_exit is set
+    except Exception as e:
+        print(f"[AllTalk MEM] An error occurred: {e}")
+    finally:
+        print("[AllTalk MEM] Initiating shutdown...")
+        shutdown()
+        # Give the interface thread a chance to close gracefully
+        interface_thread.join(timeout=5)
+        print("[AllTalk MEM] Shutdown complete.")
+        sys.exit(0)
