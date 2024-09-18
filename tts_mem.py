@@ -3,6 +3,7 @@ import threading
 import signal
 import sys
 import os
+from pathlib import Path
 import gradio as gr
 import time
 import requests
@@ -988,8 +989,8 @@ def process_tts_request(instance, data, timeout):
 def serve_audio(filename):
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
-# Make sure to update the path to match your actual output directory
-app.config['OUTPUT_FOLDER'] = 'E:\\installtest\\alltalk_tts\\outputs'
+# Set the output folder to be 'outputs' in the current directory
+app.config['OUTPUT_FOLDER'] = str(Path(os.getcwd()) / 'outputs')
 
 class SilentWSGIRequestHandler(WSGIRequestHandler):
     def log_request(self, *args, **kwargs):
