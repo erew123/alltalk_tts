@@ -9,6 +9,9 @@ import requests
 from requests.exceptions import RequestException
 import socket
 import json
+import queue
+from flask import Flask, request, jsonify, send_from_directory
+from werkzeug.serving import make_server, WSGIRequestHandler
 
 # Add these at the beginning of your file, after other imports
 CONFIG_FILE = "mem_config.json"
@@ -27,13 +30,21 @@ def signal_handler(signum, frame):
 # Default configuration
 default_config = {
     "base_port": 7001,
+    "api_server_port": 7401,
     "auto_start_engines": 0,
     "max_instances": 8,
     "gradio_interface_port": 7500,
     "max_retries": 8,
     "initial_wait": 3,
     "backoff_factor": 1.2,
-    "debug_mode": False
+    "debug_mode": False,
+    "max_queue_time": 60,  # Maximum time a request can wait in the queue (in seconds)
+    "queue_check_interval": 0.1,  # Time between checks for available instances (in seconds)
+    "tts_request_timeout": 30,  # Timeout for individual TTS requests (in seconds)
+    "text_length_factor": 0.2,  # Increase timeout by 20% per 100 characters
+    "concurrent_request_factor": 0.5,  # Increase timeout by 50% per concurrent request
+    "diminishing_factor": 0.5,  # Reduce additional time for long-running requests by 50%
+    "queue_position_factor": 1.0  # Add 100% of base timeout for each queue position    
 }
 
 def load_config():
@@ -72,6 +83,7 @@ print(f"[AllTalk MEM]")
 print(f"[AllTalk MEM] \033[93m     MEM is not intended for production use and\033[00m")
 print(f"[AllTalk MEM] \033[93m      there is NO support being offered on MEM\033[00m")
 print(f"[AllTalk MEM]")
+print(f"[AllTalk MEM] \033[94mAPI/Queue   :\033[00m \033[92mhttp://127.0.0.1:{config['api_server_port']}/api/tts-generate\033[00m")
 print(f"[AllTalk MEM] \033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:{config['gradio_interface_port']}\033[00m")
 print(f"[AllTalk MEM] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{config['gradio_interface_port']}?__theme=dark\033[00m")
 print(f"[AllTalk MEM]")
@@ -189,7 +201,8 @@ def stop_all_instances():
     return results
 
 def update_all_statuses(base_port):
-    return [check_subprocess_status(i, base_port + i - 1) for i in range(1, max_instances + 1)]
+    return [check_subprocess_status(i, base_port + i - 1) for i in range(1, max_instances + 1)]            
+                
 
 def count_running_instances():
     return sum(1 for p in processes.values() if p.poll() is None)
@@ -249,7 +262,7 @@ def test_tts(engine, voice, text):
         return None, f"Error in test_tts: {str(e)}"
 
 def create_gradio_interface():
-    global current_base_port 
+    global current_base_port, max_instances
     with gr.Blocks(title="AllTalk Multi Engine Manager", theme=gr.themes.Base()) as interface:
         with gr.Row():
             gr.Markdown("# AllTalk Multi Engine Manager")
@@ -407,7 +420,7 @@ def create_gradio_interface():
         with gr.Tab("MEM Settings"):
             with gr.Row():
                 with gr.Column(scale=2):
-                    gr.Markdown("### Engine Instance Management")
+                    gr.Markdown("### 🟦 Engine Instance Management")
                     with gr.Row():
                         base_port_input = gr.Number(
                             value=config['base_port'],
@@ -426,22 +439,22 @@ def create_gradio_interface():
                         )
                 
                 with gr.Column(scale=1):
-                    gr.Markdown("### Gradio Port & Debugging")                                      
+                    gr.Markdown("### 🟨 Gradio Port & API Port")                                      
                     with gr.Row():
                         gradio_port_input = gr.Number(
                             value=config['gradio_interface_port'],
                             label=f"Gradio Interface Port (Current: {config['gradio_interface_port']})",
                             step=1
-                        )                
-                        debug_mode_input = gr.Dropdown(
-                            choices=["Disabled", "Enabled"],
-                            value="Enabled" if config['debug_mode'] else "Disabled",
-                            label="Debug Mode"
                         )
+                        api_server_port_input = gr.Number(
+                            value=config['api_server_port'],
+                            label=f"API Server Port (Current: {config['api_server_port']})",
+                            step=1
+                        )                                     
                                         
             with gr.Row():               
                 with gr.Column(scale=2):
-                    gr.Markdown("### Engine Start-up Time Contol")
+                    gr.Markdown("### 🟥 Engine Start-up Time Contol")
                     with gr.Row():
                         max_retries_input = gr.Number(
                             value=config['max_retries'],
@@ -459,15 +472,67 @@ def create_gradio_interface():
                             step=0.1
                         )
                 with gr.Column(scale=1):
-                    gr.Markdown("### Save Settings")
+                    gr.Markdown("### 🟪 Debug Settings")
                     with gr.Row():                        
-                        set_settings_button = gr.Button("Save Settings")
-            with gr.Row():                
-                settings_status = gr.Textbox(label="Settings Status")
+                        debug_mode_input = gr.Dropdown(
+                            choices=["Disabled", "Enabled"],
+                            value="Enabled" if config['debug_mode'] else "Disabled",
+                            label="Debug Mode"
+                        )
 
+            with gr.Row():               
+                with gr.Column():
+                    gr.Markdown("### 🟩 Core Queue Management")                  
+                    with gr.Row(): 
+                        max_queue_time_input = gr.Number(
+                            value=config['max_queue_time'],
+                            label=f"Max Queue Time (seconds) (Current: {config['max_queue_time']})",
+                            step=1
+                        )
+                        queue_check_interval_input = gr.Number(
+                            value=config['queue_check_interval'],
+                            label=f"Queue Check Interval (seconds) (Current: {config['queue_check_interval']})",
+                            step=0.1
+                        )
+                        tts_request_timeout_input = gr.Number(
+                            value=config['tts_request_timeout'],
+                            label=f"TTS Request Timeout (seconds) (Current: {config['tts_request_timeout']})",
+                            step=1
+                        )
+                with gr.Column():
+                    gr.Markdown("### 🟩 Dynamic Timeout Factors")                  
+                    with gr.Row():                                    
+                        text_length_factor_input = gr.Number(
+                            value=config['text_length_factor'],
+                            label=f"Text Length Factor (Current: {config['text_length_factor']})",
+                            step=0.1
+                        )
+                        concurrent_request_factor_input = gr.Number(
+                            value=config['concurrent_request_factor'],
+                            label=f"Concurrent Request Factor (Current: {config['concurrent_request_factor']})",
+                            step=0.1
+                        )
+                        diminishing_factor_input = gr.Number(
+                            value=config['diminishing_factor'],
+                            label=f"Diminishing Factor (Current: {config['diminishing_factor']})",
+                            step=0.1
+                        )
+                        queue_position_factor_input = gr.Number(
+                            value=config['queue_position_factor'],
+                            label=f"Queue Position Factor (Current: {config['queue_position_factor']})",
+                            step=0.1
+                        )                                                           
+                                          
+            with gr.Row():                
+                settings_status = gr.Textbox(label="Settings Status", scale=3)
+                set_settings_button = gr.Button("Save Settings", scale=1)
 
             def update_settings(new_port, new_max_instances, new_auto_start, new_gradio_port, 
-                                new_max_retries, new_initial_wait, new_backoff_factor, new_debug_mode):
+                                new_api_server_port, new_max_retries, new_initial_wait, 
+                                new_backoff_factor, new_debug_mode, new_max_queue_time, 
+                                new_queue_check_interval, new_tts_request_timeout,
+                                new_text_length_factor, new_concurrent_request_factor,
+                                new_diminishing_factor, new_queue_position_factor):
                 global current_base_port, max_instances, config, server_port
                 
                 if new_port < 1024:
@@ -483,79 +548,194 @@ def create_gradio_interface():
                 config['max_instances'] = max_instances
                 config['auto_start_engines'] = new_auto_start
                 config['gradio_interface_port'] = server_port
+                config['api_server_port'] = int(new_api_server_port)
                 config['max_retries'] = int(new_max_retries)
                 config['initial_wait'] = float(new_initial_wait)
                 config['backoff_factor'] = float(new_backoff_factor)
                 config['debug_mode'] = (new_debug_mode == "Enabled")
+                config['max_queue_time'] = int(new_max_queue_time)
+                config['queue_check_interval'] = float(new_queue_check_interval)
+                config['tts_request_timeout'] = int(new_tts_request_timeout)
+                config['text_length_factor'] = float(new_text_length_factor)
+                config['concurrent_request_factor'] = float(new_concurrent_request_factor)
+                config['diminishing_factor'] = float(new_diminishing_factor)
+                config['queue_position_factor'] = float(new_queue_position_factor)
                 
                 save_config(config)
                 
-                return (
+                status_message = (
                     f"Settings updated: Start port: {current_base_port}, Max instances: {max_instances}, "
                     f"Auto-start engines: {config['auto_start_engines']}, Gradio port: {server_port}, "
+                    f"API Server Port: {config['api_server_port']}, "
                     f"Max retries: {config['max_retries']}, Initial wait: {config['initial_wait']}, "
-                    f"Backoff factor: {config['backoff_factor']}, Debug mode: {config['debug_mode']}",
+                    f"Backoff factor: {config['backoff_factor']}, Debug mode: {config['debug_mode']}, "
+                    f"Max queue time: {config['max_queue_time']}, "
+                    f"Queue check interval: {config['queue_check_interval']}, "
+                    f"TTS request timeout: {config['tts_request_timeout']}, "
+                    f"Text length factor: {config['text_length_factor']}, "
+                    f"Concurrent request factor: {config['concurrent_request_factor']}, "
+                    f"Diminishing factor: {config['diminishing_factor']}, "
+                    f"Queue position factor: {config['queue_position_factor']}"
+                )
+                
+                return (
+                    status_message,
                     gr.update(value=current_base_port, label=f"Starting Port Number (Current: {current_base_port})"),
                     gr.update(value=max_instances, label=f"Maximum Instances (Current: {max_instances})"),
                     gr.update(value=config['auto_start_engines']),
                     gr.update(value=server_port, label=f"Gradio Interface Port (Current: {server_port})"),
+                    gr.update(value=config['api_server_port'], label=f"API Server Port (Current: {config['api_server_port']})"),
                     gr.update(value=config['max_retries']),
                     gr.update(value=config['initial_wait']),
                     gr.update(value=config['backoff_factor']),
-                    gr.update(value="Enabled" if config['debug_mode'] else "Disabled")
+                    gr.update(value="Enabled" if config['debug_mode'] else "Disabled"),
+                    gr.update(value=config['max_queue_time'], label=f"Max Queue Time (seconds) (Current: {config['max_queue_time']})"),
+                    gr.update(value=config['queue_check_interval'], label=f"Queue Check Interval (seconds) (Current: {config['queue_check_interval']})"),
+                    gr.update(value=config['tts_request_timeout'], label=f"TTS Request Timeout (seconds) (Current: {config['tts_request_timeout']})"),
+                    gr.update(value=config['text_length_factor'], label=f"Text Length Factor (Current: {config['text_length_factor']})"),
+                    gr.update(value=config['concurrent_request_factor'], label=f"Concurrent Request Factor (Current: {config['concurrent_request_factor']})"),
+                    gr.update(value=config['diminishing_factor'], label=f"Diminishing Factor (Current: {config['diminishing_factor']})"),
+                    gr.update(value=config['queue_position_factor'], label=f"Queue Position Factor (Current: {config['queue_position_factor']})")
                 )
 
             set_settings_button.click(
                 update_settings,
                 inputs=[base_port_input, max_instances_input, auto_start_engines, gradio_port_input,
-                        max_retries_input, initial_wait_input, backoff_factor_input, debug_mode_input],
+                        api_server_port_input, max_retries_input, initial_wait_input, backoff_factor_input,
+                        debug_mode_input, max_queue_time_input, queue_check_interval_input, 
+                        tts_request_timeout_input, text_length_factor_input, concurrent_request_factor_input,
+                        diminishing_factor_input, queue_position_factor_input],
                 outputs=[settings_status, base_port_input, max_instances_input, auto_start_engines,
-                         gradio_port_input, max_retries_input, initial_wait_input, backoff_factor_input,
-                         debug_mode_input]
+                        gradio_port_input, api_server_port_input, max_retries_input, initial_wait_input,
+                        backoff_factor_input, debug_mode_input, max_queue_time_input, queue_check_interval_input,
+                        tts_request_timeout_input, text_length_factor_input, concurrent_request_factor_input,
+                        diminishing_factor_input, queue_position_factor_input]
             )
               
             with gr.Row():
-                gr.Markdown("""
-                All settings are saved in the `mem_config.json` file in the same directory as the MEM script. If `mem_config.json` doesn't exist, default settings will be used. Settings take effect immediately after saving. Some settings (like Gradio Interface Port) may require a restart of MEM to take effect.
-                """)
-            with gr.Row():                                              
+                gr.Markdown("### 🆘 Settings Help")
+            with gr.Tab("Engine Instance Management"):                
+                with gr.Row():                                              
+                    with gr.Column():
+                        gr.Markdown("""
+                        These settings control the initialization, quantity, and port assignment of TTS engine instances within MEM. They determine how many engines can run simultaneously and how network ports are allocated to them.
+
+                        ### 🟦 Starting Port Number
+                        **Default: 7001**<br>
+                        The base port number for TTS engine instances. Each instance uses the next available port. Ensure these ports are free on your system.
+
+                        ### 🟦 Maximum Instances
+                        **Default: 8**<br>
+                        The maximum number of simultaneous TTS engine instances. Adjust based on your system's capabilities to prevent overload.
+
+                        ### 🟦 Auto-start Engines
+                        **Default: 0 (disabled)**<br>
+                        Number of TTS engine instances to start automatically on MEM launch. Cannot exceed Maximum Instances.   
+                        """)
+            with gr.Tab("Gradio Port & API Port"):                
+                with gr.Row():                                              
+                    with gr.Column():
+                        gr.Markdown("""
+                        These settings define the network ports for user interface access and API communication. They are crucial for ensuring that users can interact with MEM and that other applications can send requests to MEM.
+
+                        ### 🟨 Gradio Interface Port
+                        **Default: 7500**<br>
+                        Port for the Gradio web interface. MEM binds to 0.0.0.0 on this port.
+
+                        ### 🟨 API Server Port
+                        **Default: 7401**<br>
+                        Port for incoming TTS requests to the MEM API. Ensure it's free and not firewalled.
+                        """)
+            with gr.Tab("Engine Start-up Time Contol"):                
+                with gr.Row():                                              
+                    with gr.Column():
+                        gr.Markdown("""                     
+                        These settings manage the initialization process and error handling for individual TTS engine instances. They control how MEM attempts to start each engine, how long it waits between attempts, and how it handles potential failures during the start-up process. These settings are particularly relevant when starting multiple TTS engines simultaneously or during automatic start-up.
+
+                        ### 🟥 Max Retries
+                        **Default: 8**<br>
+                        Maximum number of attempts MEM will make to connect to a TTS engine before marking it as failed. This helps handle slow-starting engines or temporary network issues.
+
+                        ### 🟥 Initial Wait
+                        **Default: 3 (seconds)**<br>
+                        Initial delay between retry attempts when connecting to a TTS engine. This gives the engine time to initialize before MEM attempts to connect again.
+
+                        ### 🟥 Backoff Factor
+                        **Default: 1.2**<br>
+                        Multiplier for wait time between retries, implementing an exponential backoff strategy. This reduces system load during persistent issues by increasing the wait time between each retry attempt.
+                        """)
+            with gr.Tab("Debug Settings"):                
+                with gr.Row():                                              
+                    with gr.Column():
+                        gr.Markdown("""                     
+                        **Default: Disabled**<br>
+                        When enabled, MEM outputs additional diagnostic information. Useful for troubleshooting but increases console output.
+
+                        Note: All settings are saved in `mem_config.json` in the MEM script directory. Default settings are used if the file doesn't exist. Most settings take effect immediately, but some (like port changes) may require a MEM restart.
+                        """)                                                                   
+            with gr.Tab("Core Queue Management"):                        
                 with gr.Column():
                     gr.Markdown("""
-                    ### 🟩 Starting Port Number
-                    **Default: 7001**<br>
-                    This is the base port number from which MEM starts assigning ports to TTS engine instances. Each subsequent instance will use the next available port number. Ensure this port and the following ones are free on your system.
+                    This section defines the fundamental behavior of the request queue system. These settings control how long requests can wait, how often MEM checks for available engines, and the base timeout for TTS requests. They work together to manage the flow of requests through the system.
 
-                    ### 🟩 Maximum Instances
-                    **Default: 8**<br>
-                    The maximum number of TTS engine instances that can be run simultaneously. This limit helps prevent system overload. Adjust based on your system's capabilities and requirements.
+                    ### 🟩 Max Queue Time
+                    **Default: 60 seconds**<br>
+                    Maximum time a request can wait before being processed or rejected. Prevents indefinite waiting.
 
-                    ### 🟩 Auto-start Engines
-                    **Default: 0 (disabled)**<br>
-                    The number of TTS engine instances to automatically start when MEM launches. Set to 0 to disable auto-start. This number cannot exceed the Maximum Instances setting.
+                    ### 🟩 Queue Check Interval
+                    **Default: 0.1 seconds**<br>
+                    Frequency of checking for available TTS engines. Lower values increase responsiveness but may increase CPU usage.
 
-                    ### 🟩 Gradio Interface Port
-                    **Default: 7500**<br>
-                    The port on which the Gradio web interface for MEM will be accessible. Make sure this port is free and not blocked by your firewall. Gradio will bind to all IP address on your machine on this port, aka 0.0.0.0.
-                    """)
-                    
-                with gr.Column():
-                    gr.Markdown("""                
-                    ### 🟩 Max Retries
-                    **Default: 8**<br>
-                    The maximum number of attempts MEM will make to connect to a TTS engine instance before considering it failed. This setting helps handle slow-starting engines.
+                    ### 🟩 TTS Request Timeout
+                    **Default: 30 seconds**<br>
+                    Base maximum processing time for a single TTS request. This value serves as the foundation for the Dynamic Timeout Factors. The actual timeout for each request is calculated by applying the Dynamic Timeout Factors to this base value. For a detailed explanation of how this base timeout is adjusted, please refer to the "Dynamic Timeout Factors" section in the settings help.
 
-                    ### 🟩 Initial Wait
-                    **Default: 3 (seconds)**<br>
-                    The initial waiting time between retry attempts (Max Retries) when connecting to a TTS engine instance. This delay helps prevent overwhelming the system with rapid reconnection attempts.
-
-                    ### 🟩Backoff Factor
-                    **Default: 1.2**<br>
-                    A multiplier applied to the waiting time between retry attempts. With each failed attempt, the wait time (Initial Wait) is multiplied by this factor, implementing an exponential backoff strategy. This helps to reduce system load during persistent issues.
-
-                    ### 🟩 Debug Mode
-                    **Default: Disabled**<br>
-                    When enabled, MEM will output additional diagnostic information. This is useful for troubleshooting issues but may increase console output significantly. Use this when you need detailed information about MEM's operations .
+                    These settings work together to balance system responsiveness and resource usage. Adjust Max Queue Time for overall request lifespan, Queue Check Interval for system reactivity, and TTS Request Timeout as a baseline for individual request processing. The TTS Request Timeout is particularly important as it forms the basis for all dynamic timeout calculations.
                     """)               
+            with gr.Tab("Dynamic Timeout Factors"):                        
+                with gr.Column():
+                    gr.Markdown("""
+                    These advanced settings allow adaptive adjustment of request timeouts based on various factors such as text length, system load, and queue position. They all work to modify the base TTS Request Timeout, creating a flexible timeout system that can adapt to changing conditions and ensure fair processing of requests.
+
+                    ### 🟩 Text Length Factor
+                    **Default: 0.2**<br>
+                    Increases the base TTS Request Timeout by this percentage for every 100 characters of text. For example, with a base timeout of 30 seconds and a 200-character text, the adjusted timeout would be 30 * (1 + (0.2 * 2)) = 42 seconds.
+
+                    ### 🟩 Concurrent Request Factor
+                    **Default: 0.5**<br>
+                    Increases the base TTS Request Timeout by this percentage for each concurrent request. For instance, if there are 2 concurrent requests, the timeout for each would be increased by 50% (0.5 * 2 = 1, so 30 * (1 + 1) = 60 seconds).
+
+                    ### 🟩 Diminishing Factor
+                    **Default: 0.5**<br>
+                    Reduces the additional time given to long-running requests. This factor is applied to the extra time calculated from other factors. For example, if other factors have increased the timeout by 20 seconds, this might be reduced to 10 seconds (20 * 0.5) for a long-running request.
+
+                    ### 🟩 Queue Position Factor
+                    **Default: 1.0**<br>
+                    Adds this percentage of the base TTS Request Timeout for each position in the queue. For a request that's second in the queue, this would add 100% of the base timeout (e.g., 30 + 30 = 60 seconds).
+
+                    These factors work together to create a flexible timeout system:
+                    1. The base TTS Request Timeout is first adjusted by the Text Length Factor and Concurrent Request Factor.
+                    2. The Queue Position Factor then adds additional time based on the request's position.
+                    3. For requests that have been processing for a while, the Diminishing Factor reduces the extra time added by other factors.
+                    4. The final calculated timeout is capped at the Max Queue Time to prevent excessive wait times.
+
+                    Example calculation:
+                    - Base TTS Request Timeout: 30 seconds
+                    - Text length: 300 characters
+                    - Concurrent requests: 2
+                    - Queue position: 3
+                    - Request has been processing for a while
+
+                    Calculation:
+                    1. Text Length adjustment: 30 * (1 + (0.2 * 3)) = 48 seconds
+                    2. Concurrent Request adjustment: 48 * (1 + (0.5 * 2)) = 96 seconds
+                    3. Queue Position adjustment: 96 + (30 * 1.0 * 3) = 186 seconds
+                    4. Diminishing Factor (assuming it reduces extra time by half): 30 + ((186 - 30) * 0.5) = 108 seconds
+
+                    Final timeout would be 108 seconds, unless this exceeds the Max Queue Time, in which case Max Queue Time would be used instead.
+
+                    This dynamic system allows for flexible handling of various request scenarios while still respecting overall system limits. 
+                    """)                    
         
         with gr.Tab("MEM FAQ/Help"):
             with gr.Row():
@@ -575,34 +755,47 @@ def create_gradio_interface():
 
                         ## Queue System
                         **Q: Is there an in-built queue system to handle different requests to different loaded engines?**<br>
-                        A: Not currently. AllTalk MEM is presently a demonstration and research tool without an integrated queue system. You are welcome to build your own and test it out.
+                        A: MEM incorporates a built-in queue system to manage multiple TTS requests across loaded engine instances:
 
+                        1. All TTS requests are received through the API port (default: 7401).
+                        2. The queue system distributes incoming requests among available TTS engine instances.
+                        3. If all engines are busy, new requests are held in a queue until an engine becomes available.
+                        4. The system continuously checks for available engines to process waiting requests.
+                        5. If a request cannot be processed within the allocated time, it will be marked as failed.
+
+                        This queue system aims to balance the load across all running engines efficiently. Advanced features for queue management and dynamic timeout calculations are available and can be configured in the MEM settings.
+
+                        Note: As this is a research and testing implementation, its performance in high-load or production environments is not guaranteed. For load testing, you can use the provided `mem_load_test.py` script to simulate multiple simultaneous requests.
+                        
+                        To use the load testing tool:
+                        `python mem_load_test.py --requests [number_of_requests] --length [text_length] --url "http://127.0.0.1:7501/api/tts-generate"`
+                        
+                        ## API Requests to each loaded engine
+                        **Q: Can I use the AllTalk API to each engine instance?**<br>
+                        A: Yes, each engine loaded will respond fully as if it was a standalone AllTalk instance. So you can use the standard API requests to the port number of each TTS engine loaded in.
+                        
+                        ## What happens if it tries to load an engine thats on a port already in use
+                        **Q: When a engine instance starts up, what happens if a port is already used by something else?**<br>
+                        A: A test is performed of the port before starting each instance, so the engine trying to load on that port number wouldnt load in.                          
+  
+                        """) 
+                with gr.Column():                    
+                    gr.Markdown(""" 
                         ## Handling Multiple Requests
                         **Q: How will different TTS engines from different manufacturers OR how will CUDA/Python handle multiple requests coming in at the same time for TTS generation?**<br>
                         A: The behavior in such scenarios is currently unknown and is part of the research aspect of this tool. Its highly possible some TTS engines may respond in a timely fashion and its also possible they may not. I cannot say how things like CUDA/Python will handle multiple requests to the same hadware. 
                         
                         CUDA has additional code and tools to deal with multiplexing requests and none of these have been implimented. So for example, if you are using a TTS engine that uses a GPU, and 2x different loaded TTS engines make a request of that hardware, you may get a 50/50 spit use of the hardware and you may not. 3x requests, you may get a 33/33/33 hardware load sharing sceanario nad you may not. I cannot say at the moment and havnt tested.
                         
-                        Python - As each instance of each TTS engine will be loaded into a seperate Python instance, all memory management and requests should remain segregated from one another, so there should be no bleed over of tensors in CUDA requests etc, however, I have not tested.
-                        
-                        ## API Requests to each loaded engine
-                        **Q: Can I use the AllTalk API to each engine instance?**<br>
-                        A: Yes, each engine loaded will respond fully as if it was a standalone AllTalk instance. So you can use the standard API requests to the port number of each TTS engine loaded in.
-  
-                        """) 
-                with gr.Column():                    
-                    gr.Markdown("""                
+                        Python - As each instance of each TTS engine will be loaded into a seperate Python instance, all memory management and requests should remain segregated from one another, so there should be no bleed over of tensors in CUDA requests etc, however, I have not tested.                             
+                                               
                         ## What settings are used for the TTS engines loaded
                         **Q: What exact settings are being used by the TTS engines being loaded in?**<br>
                         A: Whatever you have set in the main AllTalk Gradio interface when you load AllTalk as a standalone, under the `TTS Engine Settings` and the specific TTS engine, those are the settings loaded/used.
                         
                         ## How can I change which TTS engine is loaded
                         **Q: How can you change the TTS engines being loaded?**<br>
-                        A: Whatever you have set in the main AllTalk Gradio interface when you load AllTalk as a standalone, that will be the engine loaded in.
-                        
-                        ## What happens if it tries to load on a port in use
-                        **Q: When a engine instance starts up, what happens if a port is already used by something else?**<br>
-                        A: A test is performed of the port before starting each instance, so the engine trying to load on that port number wouldnt load in.                        
+                        A: Whatever you have set in the main AllTalk Gradio interface when you load AllTalk as a standalone, that will be the engine loaded in.                      
 
                         ## Future Updates
                         **Q: Will you be updating this in the future?**<br>
@@ -616,10 +809,7 @@ def create_gradio_interface():
                         If time permits, potential future developments include:<br>
 
                         - Potential control over each TTS engines's settings and manipulating the JSON files that control AllTalk, so as to handle which engine loads and its settings from the MEM interface.<br>
-                        - Storing settings in a configuration JSON file (e.g., start port number, number of engines to start, automatic start of engines on script start)<br>
-                        - Implementing an incoming queue management system to handle multiple requests and distribute them among loaded engines<br>
                         - Developing a basic API management suite for MEM<br>
-                        - Refining and optimizing the existing logi for model loading etc<br>
 
                         Please note that these are potential plans and not guaranteed features.
                         
@@ -635,10 +825,12 @@ def start_and_update(instance_id, port):
     if is_port_in_use(port):
         return f"Port {port} is already in use"
     result = start_subprocess(instance_id, port)
+    update_tts_instances()
     return check_subprocess_status(instance_id, port)
 
 def stop_and_update(instance_id):
     result = stop_subprocess(instance_id)
+    update_tts_instances()
     return "❌ Not running"
 
 def restart_and_update(instance_id, port):
@@ -667,6 +859,174 @@ def start_MEMple_instances(num_instances, base_port):
 
     return results
 
+###############
+## WEBSERVER ##
+###############
+
+app = Flask(__name__)
+
+# Queue for holding TTS requests
+request_queue = queue.Queue()
+
+# Lock for thread-safe operations
+lock = threading.Lock()
+
+# Dictionary to keep track of TTS instance status
+tts_instances = {}
+
+# Maximum wait time for a request (in seconds)
+MAX_WAIT_TIME = 60
+
+def initialize_instances():
+    global tts_instances
+    with lock:
+        tts_instances.clear()
+        for i in range(1, max_instances + 1):
+            port = current_base_port + i - 1
+            tts_instances[i] = {"port": port, "locked": False}
+
+def get_available_instance():
+    with lock:
+        for instance, info in tts_instances.items():
+            if not info["locked"] and is_instance_active(instance):
+                info["locked"] = True
+                return instance
+    return None
+
+def is_instance_active(instance):
+    port = tts_instances[instance]["port"]
+    try:
+        response = requests.get(f"http://127.0.0.1:{port}/api/ready", timeout=1)
+        return response.text.strip() == "Ready"
+    except:
+        return False
+
+def release_instance(instance):
+    with lock:
+        if instance in tts_instances:
+            tts_instances[instance]["locked"] = False
+
+def update_tts_instances():
+    global tts_instances
+    with lock:
+        tts_instances.clear()
+        for i, process in processes.items():
+            if process.poll() is None:  # Check if the process is running
+                port = current_base_port + i - 1
+                tts_instances[i] = {"port": port, "locked": False}
+
+def calculate_dynamic_timeout(text, concurrent_requests, queue_position, total_queue_length, request_start_time):
+    base_timeout = config['tts_request_timeout'] * (1 + (concurrent_requests * 0.5))
+    
+    text_length_factor = len(text) / 100
+    adjusted_timeout = base_timeout * (1 + (text_length_factor * 0.2))
+    
+    time_in_process = time.time() - request_start_time
+    diminishing_factor = max(0, 1 - (time_in_process / base_timeout))
+    timeout_with_diminishing = adjusted_timeout * (1 + (diminishing_factor * 0.5))
+    
+    queue_position_factor = queue_position / total_queue_length
+    final_timeout = timeout_with_diminishing + (config['tts_request_timeout'] * queue_position_factor)
+    
+    return min(final_timeout, config['max_queue_time'])  # Ensure we don't exceed max queue time
+
+@app.route('/api/tts-generate', methods=['POST'])
+def tts_generate():
+    print("[AllTalk MEM] Received TTS generate request") if config['debug_mode'] else None
+    start_time = time.time()
+    request_data = request.form.to_dict()
+    
+    # Add request to queue
+    request_queue.put(request_data)
+    queue_position = request_queue.qsize()
+
+    while time.time() - start_time < config['max_queue_time']:
+        instance = get_available_instance()
+        if instance:
+            try:
+                print(f"[AllTalk MEM] Processing request with instance {instance}") if config['debug_mode'] else None
+                
+                # Calculate dynamic timeout just before processing
+                dynamic_timeout = calculate_dynamic_timeout(
+                    text=request_data['text_input'],
+                    concurrent_requests=len([i for i in tts_instances.values() if i['locked']]),
+                    queue_position=queue_position,
+                    total_queue_length=request_queue.qsize(),
+                    request_start_time=start_time
+                )
+                
+                result = process_tts_request(instance, request_data, dynamic_timeout)
+                print(f"[AllTalk MEM] Request processed, result: {result}") if config['debug_mode'] else None
+                
+                # Remove request from queue
+                request_queue.get()
+                
+                return jsonify(result)
+            except Exception as e:
+                print(f"[AllTalk MEM] Error processing request: {str(e)}")
+                release_instance(instance)
+                return jsonify({"status": "error", "message": str(e)})
+        time.sleep(config['queue_check_interval'])
+    
+    # Remove request from queue if it times out
+    request_queue.get()
+    
+    print("[AllTalk MEM] No instance available within timeout period")
+    return jsonify({"status": "error", "message": "No TTS instance available within the maximum wait time"})
+
+def process_tts_request(instance, data, timeout):
+    port = tts_instances[instance]["port"]
+    try:
+        response = requests.post(f"http://127.0.0.1:{port}/api/tts-generate", data=data, timeout=timeout)
+        return response.json()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        release_instance(instance)
+
+@app.route('/audio/<path:filename>')
+def serve_audio(filename):
+    return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
+
+# Make sure to update the path to match your actual output directory
+app.config['OUTPUT_FOLDER'] = 'E:\\installtest\\alltalk_tts\\outputs'
+
+class SilentWSGIRequestHandler(WSGIRequestHandler):
+    def log_request(self, *args, **kwargs):
+        pass
+
+class ServerThread(threading.Thread):
+    def __init__(self, app):
+        threading.Thread.__init__(self)
+        self.server = make_server('0.0.0.0', config['api_server_port'], app, threaded=True, request_handler=SilentWSGIRequestHandler)
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        print(f"[AllTalk MEM] Starting API server on port {config['api_server_port']}") if config['debug_mode'] else None
+        self.server.serve_forever()
+
+    def shutdown(self):
+        self.server.shutdown()
+
+def start_api_server():
+    global server_thread
+    server_thread = ServerThread(app)
+    server_thread.start()
+    print(f"[AllTalk MEM] API server thread started on port {config['api_server_port']}") if config['debug_mode'] else None
+
+def stop_api_server():
+    global server_thread
+    if server_thread:
+        print("[AllTalk MEM] Shutting down API server")
+        server_thread.shutdown()
+        server_thread.join()
+        print("[AllTalk MEM] API server shut down successfully")
+
+######################
+### INITIALISATION ###
+######################
+
 print(f"[AllTalk MEM] Please use \033[91mCtrl+C\033[0m when exiting otherwise Python")
 print(f"[AllTalk MEM] subprocess's will continue running in the background.")
 print(f"[AllTalk MEM] ")
@@ -680,15 +1040,17 @@ def auto_start_engines():
     if num_engines > 0:
         print(f"[AllTalk MEM] Auto-starting {num_engines} engines...")
         results = start_MEMple_instances(num_engines, current_base_port)
-        print(f"[AllTalk MEM] Auto-start complete. Results: {results}")
+        update_tts_instances()
+        print(f"[AllTalk MEM] Auto-start complete.")
+        print(f"[AllTalk MEM] {results}")
 
 def shutdown():
     print("[AllTalk MEM] Shutting down all engines...")
     stop_all_instances()
-    print("[AllTalk MEM] All engines stopped.")
+    print("[AllTalk MEM] All engines stopped.")      
 
+# Main execution
 if __name__ == "__main__":
-    # Set up signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
     interface = create_gradio_interface()
@@ -697,7 +1059,10 @@ if __name__ == "__main__":
     interface_thread = threading.Thread(target=launch_interface, args=(interface,))
     interface_thread.start()
     
-    # Auto-start engines
+    # Start the API server
+    start_api_server()
+    
+    initialize_instances()
     auto_start_engines()
     
     try:
@@ -708,6 +1073,7 @@ if __name__ == "__main__":
         print(f"[AllTalk MEM] An error occurred: {e}")
     finally:
         print("[AllTalk MEM] Initiating shutdown...")
+        stop_api_server()
         shutdown()
         # Give the interface thread a chance to close gracefully
         interface_thread.join(timeout=5)
