@@ -443,6 +443,10 @@ def api_documentation():
     #### **rvccharacter_voice_gen**
     > The name of the RVC voice file for the character. Should be in the format `folder\\file.pth` or the word `Disabled`. When Disabled is sent and RVC is globally enabled, the RVC pipeline will not be used for the character/main voice.<br><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvccharacter_voice_gen=folder\\voice1.pth"
+    
+    #### **rvccharacter_pitch**
+    > The pitch for the RVC voice for the character. Should be in the range `-24` up to `24` with `0` being the central point and the global setting, set in the Gradio RVC page being used if the pitch is not specified in the TTS request.<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvccharacter_pitch=3"
 
     #### **narrator_enabled**
     > Enable or disable the narrator function. If true, minimum text filtering is set to standard.<br><br>
@@ -456,6 +460,10 @@ def api_documentation():
     #### **rvcnarrator_voice_gen**
     > The name of the RVC voice file for the narrator. Should be in the format folder\\file.pth or the word Disabled.  When Disabled is sent and RVC is globally enabled, the RVC pipeline will not be used for the character/main voice.<br><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvcnarrator_voice_gen=folder\\voice2.pth"
+    
+    #### **rvcnarrator_pitch**
+    > The pitch for the RVC voice for the narrator. Should be in the range `-24` up to `24` with `0` being the central point and the global setting, set in the Gradio RVC page being used if the pitch is not specified in the TTS request.<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvcnarrator_pitch=3"    
 
     #### **text_not_inside**
     > Specify the handling of lines not inside double quotes or asterisks for the narrator feature. Options:<br><br>
