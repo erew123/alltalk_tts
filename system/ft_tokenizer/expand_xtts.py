@@ -43,20 +43,13 @@ def get_vocab_size(tokenizer_path):
 
 # Function to adjust the pretrained model with a new tokenizer
 def adjust_pretrained_model(
-    pretrained_model_path, adjusted_model_path, new_tokenizer_path
-):
-    # Load the pretrained model state dictionary
+    pretrained_model_path, adjusted_model_path, new_tokenizer_path):
     state_dict = torch.load(pretrained_model_path)
     pretrained_state_dict = state_dict["model"]
-
-    # Create a new Xtts model instance with the loaded configuration
     model = Xtts(config)
 
     # Load the pretrained state dictionary into the new model
-    missing_keys, unexpected_keys = model.load_state_dict(
-        pretrained_state_dict, strict=False
-    )
-    # Print any missing or unexpected keys for debugging
+    missing_keys, unexpected_keys = model.load_state_dict(pretrained_state_dict, strict=False)
     if missing_keys:
         print(f"Missing keys: {missing_keys}")
     if unexpected_keys:
@@ -71,20 +64,18 @@ def adjust_pretrained_model(
     new_vocab_size = len(new_tokenizer.tokenizer.get_vocab())
     embedding_dim = model.gpt.text_embedding.embedding_dim
 
-    # Print vocabulary sizes and embedding dimension for debugging
     print(f"Old vocab size: {old_vocab_size}")
     print(f"New vocab size: {new_vocab_size}")
     print(f"Embedding dimension: {embedding_dim}")
 
     # Adjust the embedding layer with the new vocabulary size
-    adjust_embedding_layer(
-        model, pretrained_state_dict, new_vocab_size, adjusted_model_path
-    )
+    adjust_embedding_layer(model, new_vocab_size, adjusted_model_path)
 
-# Function to adjust the embedding layer for the new vocabulary size
-def adjust_embedding_layer(
-    model, pretrained_state_dict, new_vocab_size, adjusted_model_path
-):
+    # Freeze all parameters except the position embeddings
+    freeze_except_position_embeddings(model)
+
+    # Function to adjust the embedding layer for the new vocabulary size
+def adjust_embedding_layer(model, new_vocab_size, adjusted_model_path):
     old_vocab_size = model.gpt.text_embedding.num_embeddings
     embedding_dim = model.gpt.text_embedding.embedding_dim
 
@@ -94,33 +85,37 @@ def adjust_embedding_layer(
 
     # Copy weights from the old embedding layer to the new one
     if new_vocab_size > old_vocab_size:
-        # If the new vocabulary is larger, copy existing weights and initialize new ones
-        new_text_embedding.weight.data[:old_vocab_size] = (
-            model.gpt.text_embedding.weight.data
-        )
+        new_text_embedding.weight.data[:old_vocab_size] = model.gpt.text_embedding.weight.data
         new_text_head.weight.data[:old_vocab_size] = model.gpt.text_head.weight.data
         new_text_head.bias.data[:old_vocab_size] = model.gpt.text_head.bias.data
 
-        # Initialize new weights with normal distribution
         new_text_embedding.weight.data[old_vocab_size:].normal_(mean=0.0, std=0.02)
         new_text_head.weight.data[old_vocab_size:].normal_(mean=0.0, std=0.02)
         new_text_head.bias.data[old_vocab_size:].normal_(mean=0.0, std=0.02)
     else:
-        # If the new vocabulary is smaller, truncate the existing weights
-        new_text_embedding.weight.data = model.gpt.text_embedding.weight.data[
-            :new_vocab_size
-        ]
+        new_text_embedding.weight.data = model.gpt.text_embedding.weight.data[:new_vocab_size]
         new_text_head.weight.data = model.gpt.text_head.weight.data[:new_vocab_size]
         new_text_head.bias.data = model.gpt.text_head.bias.data[:new_vocab_size]
 
-    # Replace the old embedding layer with the new one
     model.gpt.text_embedding = new_text_embedding
     model.gpt.text_head = new_text_head
 
-    # Save the adjusted model
     checkpoint = {"model": model.state_dict()}
     torch.save(checkpoint, adjusted_model_path)
     print(f"Adjusted model saved to {adjusted_model_path}")
+
+# Function to freeze all parameters except the position embeddings
+def freeze_except_position_embeddings(model):
+    for param in model.parameters():
+        param.requires_grad = False
+
+    for name, param in model.named_parameters():
+        if 'pos_embedding' in name:
+            param.requires_grad = True
+
+    # Verify which parameters are frozen and which are not, comment this out if you dont want to debug. You should see only two true values
+    for name, param in model.named_parameters():
+        print(f"{name}: requires_grad={param.requires_grad}")
 
 # Expand the pretrained model with the new tokenizer
 adjust_pretrained_model(pretrained_model_path, expanded_model_path, new_tokenizer_path)
