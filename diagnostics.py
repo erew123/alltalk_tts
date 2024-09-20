@@ -108,10 +108,30 @@ def get_cpu_info():
 
 def get_disk_info():
     disk_info = []
-    partitions = psutil.disk_partitions()
+    partitions = psutil.disk_partitions(all=True)
     for p in partitions:
-        usage = psutil.disk_usage(p.mountpoint)
-        disk_info.append(f" Drive: {p.device} | Total: {usage.total / (1024 ** 3):.2f} GB | Used: {usage.used / (1024 ** 3):.2f} GB | Free: {usage.free / (1024 ** 3):.2f} GB | Type: {p.fstype}")
+        try:
+            usage = psutil.disk_usage(p.mountpoint)
+            disk_info.append(
+                f"Drive: {p.device} | Total: {usage.total / (1024 ** 3):.2f} GB | Used: {usage.used / (1024 ** 3):.2f} GB | Free: {usage.free / (1024 ** 3):.2f} GB | Type: {p.fstype}"
+            )
+        except Exception as e:
+            # Handle various types of errors
+            error_type = type(e).__name__
+            error_message = str(e)
+            
+            if isinstance(e, PermissionError):
+                status = "Inaccessible or locked (Permission denied)"
+            elif isinstance(e, OSError):
+                if e.winerror == 1117:  # WinError 1117: I/O device error
+                    status = "I/O device error"
+                else:
+                    status = f"OS Error: {error_message}"
+            else:
+                status = f"Error: {error_type} - {error_message}"
+            
+            disk_info.append(f"Drive: {p.device} | Status: {status} | Type: {p.fstype}")
+    
     return disk_info
 
 def is_port_in_use(port):

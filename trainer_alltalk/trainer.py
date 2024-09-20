@@ -23,7 +23,6 @@ from torch.nn.parallel import DistributedDataParallel as DDP_th
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
-from trainer.analytics import ping_training_run
 from trainer.callbacks import TrainerCallback
 from trainer.generic_utils import (
     KeepAverage,
@@ -597,7 +596,6 @@ class Trainer:
         self.callbacks.on_init_end(self)
         self.dashboard_logger.add_config(config)
         self.save_training_script()
-        ping_training_run()
 
     @property
     def use_apex(self):

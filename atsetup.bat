@@ -139,6 +139,7 @@ goto StandaloneMenu
 :InstallNvidiaTextGen
 pip install -r system\requirements\requirements_textgen.txt
 pip install -r system\requirements\requirements_textgen2.txt
+pip install -r system\requirements\requirements_parler.txt
 echo ** Faiss **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
 echo ** FFmpeg **
@@ -398,24 +399,202 @@ if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is
 @rem activate installer env
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
 rem Install required packages
-echo ** PyTorch 2.2.1 **
+
+:install_pytorch
+echo ** Installing PyTorch 2.2.1 **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 pytorch-cuda=12.1 -c pytorch -c nvidia
-echo ** Faiss **
+echo.
+if errorlevel 1 (
+    echo PyTorch installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo.
+    echo      1. Internet connection issues/unable to download PyTorch from Conda's website.
+    echo      2. Disk space related issues - Check your disk space on this drive.
+    echo      3. Incorrect or missing Conda environment - Restart installation.
+    echo      4. Permissions issues - Check you have enough rights on this system.
+    echo      5. Firewall or proxy settings blocking access to Conda's servers.
+    echo      6. Antivirus or security software interference.
+    echo      7. Other issues not mentioned above.
+    echo.
+    choice /C YN /M "Do you want to retry the Pytorch installation?"
+    if errorlevel 1 goto install_pytorch
+    if errorlevel 2 goto End
+) else (
+    echo PyTorch installation was successful.
+    echo.
+)
+
+:install_faiss
+echo ** Installing Faiss **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
-echo ** FFmpeg **
+echo.
+if errorlevel 1 (
+    echo Faiss installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo.
+    echo      1. Internet connection issues/unable to download Faiss from Conda's website.
+    echo      2. Disk space related issues - Check your disk space on this drive.
+    echo      3. Incorrect or missing Conda environment - Restart installation.
+    echo      4. Permissions issues - Check you have enough rights on this system.
+    echo      5. Firewall or proxy settings blocking access to Conda's servers.
+    echo      6. Antivirus or security software interference.
+    echo      7. Other issues not mentioned above.
+    echo.
+    choice /C YN /M "Do you want to retry the Faiss installation?"
+    if errorlevel 1 goto install_faiss
+    if errorlevel 2 goto End
+) else (
+    echo Faiss installation was successful.
+    echo.
+)
+
+:install_ffmpeg
+echo ** Installing FFmpeg **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y conda-forge::ffmpeg
+echo.
+if errorlevel 1 (
+    echo FFmpeg installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo.
+    echo      1. Internet connection issues/unable to download FFmpeg from Conda's website.
+    echo      2. Disk space related issues - Check your disk space on this drive.
+    echo      3. Incorrect or missing Conda environment - Restart installation.
+    echo      4. Permissions issues - Check you have enough rights on this system.
+    echo      5. Firewall or proxy settings blocking access to Conda's servers.
+    echo      6. Antivirus or security software interference.
+    echo      7. Other issues not mentioned above.
+    echo.
+    choice /C YN /M "Do you want to retry the FFmpeg installation?"
+    if errorlevel 1 goto install_ffmpeg
+    if errorlevel 2 goto End
+) else (
+    echo FFmpeg installation was successful.
+    echo.
+)
+
 echo ** Requirements file **
 pip install -r system\requirements\requirements_standalone.txt
-echo ** Gradio Update **
-pip install --upgrade gradio==4.32.2
-echo ** DeepSpeed **
-curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-echo Installing DeepSpeed...
-pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-echo ** Clean Environment **
-call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" clean --all --force-pkgs-dirs -y
+echo.
 
+:update_gradio
+echo ** Updating Gradio **
+pip install --upgrade gradio==4.32.2
+echo.
+if errorlevel 1 (
+    echo Gradio update failed, errorlevel was %errorlevel%. This could be caused by:
+    echo.
+    echo      1. Internet connection issues/unable to download Gradio from PyPI.
+    echo      2. Disk space related issues - Check your disk space on this drive.
+    echo      3. Incorrect or missing Python environment - Restart installation.
+    echo      4. Permissions issues - Check you have enough rights on this system.
+    echo      5. Firewall or proxy settings blocking access to PyPI servers.
+    echo      6. Antivirus or security software interference.
+    echo      7. Other issues not mentioned above.
+    echo.
+    choice /C YN /M "Do you want to retry the Gradio update?"
+    if errorlevel 1 goto update_gradio
+    if errorlevel 2 goto End
+) else (
+    echo Gradio update was successful.
+    echo.
+)
+
+:install_deepspeed
+echo ** Downloading DeepSpeed **
+curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+echo.
+if errorlevel 1 (
+    echo DeepSpeed download failed, errorlevel was %errorlevel%. This could be caused by:
+    echo.
+    echo      1. Internet connection issues/unable to reach GitHub.
+    echo      2. Disk space related issues - Check your disk space on this drive.
+    echo      3. Permissions issues - Check you have enough rights on this system.
+    echo      4. Firewall or proxy settings blocking access to GitHub.
+    echo      5. Antivirus or security software interference.
+    echo      6. The file may have been moved or deleted from the GitHub repository.
+    echo      7. Other issues not mentioned above.
+    echo.
+    choice /C YN /M "Do you want to retry the DeepSpeed download?"
+    if errorlevel 1 goto install_deepspeed
+    if errorlevel 2 goto End
+) else (
+    echo DeepSpeed download was successful.
+    echo.
+)
+
+echo ** Installing DeepSpeed **
+pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+echo.
+if errorlevel 1 (
+    echo DeepSpeed installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo.
+    echo      1. The DeepSpeed wheel file was not downloaded successfully in the previous step.
+    echo      2. Microsoft C++ development tools for Python are not installed correctly.
+    echo      3. Disk space related issues - Check your disk space on this drive.
+    echo      4. Incorrect or missing Python environment - Restart installation.
+    echo      5. Permissions issues - Check you have enough rights on this system.
+    echo      6. Antivirus or security software interference.
+    echo      7. Other issues not mentioned above.
+    echo.
+    echo Please ensure you have followed the instructions to install the Microsoft C++ development
+    echo tools for Python, which is detailed on the AllTalk GitHub page.
+    echo.
+    choice /C YN /M "Do you want to retry the DeepSpeed installation?"
+    if errorlevel 1 goto install_deepspeed
+    if errorlevel 2 goto End
+) else (
+    echo DeepSpeed installation was successful.
+    del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+    echo.
+)
+
+echo ** Installing Parler **
+pip install -r system\requirements\requirements_parler.txt
+echo Clean Environment
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" clean --all --force-pkgs-dirs -y
+echo.
+
+:transformers_choice
+echo.
+echo  ======================================== IMPORTANT NOTICE ===========================================
+echo   Currently, Coqui-TTS and the XTTS engine requires transformers version 4.40.2 to generate streaming
+echo   audio. XTTS can still generate standard non-streaming audio on any version of transformers. It is
+echo   ONLY streaming audio that is affected and ONLY with the Coqui XTTS engine. So this would affect 
+echo   things like Kobold, or anywhere you use XTTS with streaming audio.
+echo.
+echo   Parler-TTS states that it wants transformers version 4.43.3 but it appears to work fine with
+echo   transformers 4.40.2, however using transformers 4.40.2 generates a dependcy error message as
+echo   Parler-TTS is untested on 4.40.2 of transformers.
+echo.
+echo   Until the Coqui-TTS engine is updated to perform streaming with newer versions of transformers, if
+echo   you want to use streaming with XTTS, you will need to downgrade transformers to 4.40.2.
+echo.
+echo   AllTalk is NOT responsible for the maintainance or upkeep of the Coqui-TTS engine.
+echo.
+echo   If you change your mind in future you can re-run atsetup and re-apply the requirements.
+echo  ====================================================================================================
+echo.
+choice /C YN /M " Do you want to downgrade transformers to version 4.40.2 for XTTS streaming support?"
+if errorlevel 2 (
+    echo.
+    echo Keeping transformers at version 4.43.3.
+    echo Note: XTTS streaming may not work with this version.
+    goto end_transformers_choice
+)
+if errorlevel 1 (
+    echo.
+    echo Downgrading transformers to version 4.40.2...
+    echo.
+    pip install transformers==4.40.2
+    if errorlevel 1 (
+        echo.
+        echo Failed to downgrade transformers. Please check your internet connection and try manually later with:
+        echo pip install transformers==4.40.2
+    ) else (
+        echo.
+        echo XTTS streaming should now work correctly.
+    )
+)
+:end_transformers_choice
+echo.
+echo Installation process completed.
 
 @rem Create start_environment.bat to run AllTalk environment
 echo @echo off > start_environment.bat
@@ -448,6 +627,9 @@ Echo    Run %L_YELLOW%start_alltalk.bat%RESET% to start AllTalk.
 Echo    Run %L_YELLOW%start_diagnostics.bat%RESET% to start the diagnostics.
 Echo    Run %L_YELLOW%start_finetune.bat%RESET% to start Finetuning.
 Echo    Run %L_YELLOW%start_environment.bat%RESET% to start the AllTalk Python environment.
+Echo. 
+Echo    Documentation is built into the Gradio interface. Please explore the documentation for
+Echo    tips, troubleshooing and explanations as most common questions are answered there.
 Echo.
 if "%1"=="-silent" goto End
 pause
@@ -553,28 +735,14 @@ if errorlevel 1 (
 )
 @rem Run Reapply requirements
 echo.
+echo  Re-installing requirements. If you have problems after this, it may indicate 
+echo  that the custom Python environment is damaged in some way. As such it may be
+echo  best to delete the custom Python environment and re-run the entire setup
+echo  routine again to rebuild AllTalk's Python environment. Please press a key
+echo  to continue re-applying the Requirements for a standalone installation.
 echo.
-echo Installing requirements. If you have problems after this, you should 
-echo delete the alltalk_environment and run the setup routine again. 
-echo.
-pip install -r system\requirements\requirements_standalone.txt
-echo Installing DeepSpeed...
-pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo    There was an error.
-    echo    Press any key to return to the menu.
-    echo.
-    pause
-    goto StandaloneMenu
-)
-Echo.
-Echo.
-Echo    Requirements have been re-applied/updated.
-Echo.
 pause
-goto StandaloneMenu
+goto install_faiss
 
 :STPurgepipcache
 cd /D "%~dp0"
@@ -666,12 +834,19 @@ goto StandaloneMenu
 echo Exiting AllTalk Setup Utility...
 echo.
 Echo    Remember, after installation you can....
+Echo.
 Echo    Run %L_YELLOW%start_alltalk.bat%RESET% to start AllTalk.
 Echo    Run %L_YELLOW%start_finetune.bat%RESET% to start Finetuning.
 Echo    Run %L_YELLOW%start_environment.bat%RESET% to start the AllTalk Python environment.
+Echo    Run %L_YELLOW%start_diagnostics.bat%RESET% to start generate a diagnostics file.
 Echo.
+Echo    Documentation is built into the Gradio interface. Please explore the documentation for
+Echo    tips, troubleshooing and explanations as most common questions are answered there.
 exit /b
 
 :End
 echo Exiting AllTalk Setup Utility...
+Echo.
+Echo    Documentation is built into the Gradio interface. Please explore the documentation for
+Echo    tips, troubleshooing and explanations as most common questions are answered there.
 exit /b

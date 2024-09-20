@@ -214,7 +214,7 @@ def run_firsttime_script():
         else:
             script_path = os.path.join(this_dir, 'system', 'config', 'firstrun.py')  # Default to Standalone if nothing matched.
 
-        subprocess.run(['python', script_path], check=True)
+        subprocess.run([sys.executable, script_path], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while running the script: {e}")
     except Exception as e:
@@ -356,7 +356,7 @@ if os.path.isfile("/.dockerenv") and 'google.colab' not in sys.modules:
     print(f"[{branding}TTS] Internal Gradio address: http://localhost:{params['gradio_port_number']}")
 
 # Start the subprocess (now unified for both Docker and non-Docker environments)
-process = subprocess.Popen(["python", script_path])
+process = subprocess.Popen([sys.executable, script_path])
 
 # Check if the subprocess has started successfully
 if process.poll() is None:
@@ -468,7 +468,7 @@ check_espeak_ng()
 def start_subprocess():
     global process
     if process is None or process.poll() is not None:
-        process = subprocess.Popen(["python", script_path])
+        process = subprocess.Popen([sys.executable, script_path])
         return "Subprocess started."
     else:
         return "Subprocess is already running."

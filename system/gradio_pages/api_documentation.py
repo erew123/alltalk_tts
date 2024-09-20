@@ -227,6 +227,15 @@ def api_documentation():
     }
     ```
     
+    Remapping the voices through an API call:
+    
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **URL**: `http://{ipaddress}:{port}/api/openai-voicemap`<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **Method**: `POST`<br>
+
+    `curl -X PUT "http://localhost:7851/api/openai-voicemap" -H "Content-Type: application/json" -d "{\"alloy\":\"female_01.wav\",\"echo\":\"female_01.wav\",\"fable\":\"female_01.wav\",\"nova\":\"female_01.wav\",\"onyx\":\"male_01.wav\",\"shimmer\":\"male_02.wav\"}"`
+
+    You can re-map the 6x voices on the fly, to any voices supported/available for the currently loaded TTS engine by using the above style post. You can use the `curl -X GET "http://127.0.0.1:7851/api/voices"` endpoint to get a list of all currently available voices. Please note that the Gradio interface will not reflect these changes until AllTalk is reloaded as gradio caches the list.
+    
     #### Python Example
     ```
     import requests
@@ -398,10 +407,10 @@ def api_documentation():
     ### 🟠 Example Command Lines (Standard Generation)
     Standard TTS generation supports narration and generates a WAV file/blob.
 
-    > **Standard TTS Speech Example** - Generate a time-stamped file for standard text:<br><br>
+    > **Standard TTS Speech Example** - Generate a time-stamped file for standard text and play the audio at the command prompt/terminal:<br><br>
     `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest" -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=false" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`
 
-    > **Narrator Example** - Generate a time-stamped file for text with narrator and character speech:<br><br>
+    > **Narrator Example** - Generate a time-stamped file for text with narrator and character speech and play the audio at the command prompt/terminal:<br><br>
     `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=*This is text spoken by the narrator* \\\"This is text spoken by the character\\\;". This is text not inside quotes." -d "text_filtering=standard" -d "character_voice_gen=female_01.wav" -d "narrator_enabled=true" -d "narrator_voice_gen=male_01.wav" -d "text_not_inside=character" -d "language=en" -d "output_file_name=myoutputfile" -d "output_file_timestamp=true" -d "autoplay=true" -d "autoplay_volume=0.8"`<br>
 
     > If your text contains double quotes, escape them with &#92;" (see the narrator example).<br>
@@ -411,7 +420,7 @@ def api_documentation():
 
     > `curl -X POST "http://127.0.0.1:7851/api/tts-generate" -d "text_input=All of this is text spoken by the character. This is text not inside quotes, though that doesnt matter in the slightest"`
 
-    Would generate the TTS for whatver engine is curretly loaded in. It will use the default API settings and default TTS engine settings to populate any missing fields, which gives you flexibility on how you want to send API requests to AllTalk.
+    Would generate the TTS for whatver engine is curretly loaded in. It will use the default API settings and default TTS engine settings `Global Settings > AllTalk API Defaults` to populate any missing fields, which gives you flexibility on how you want to send API requests to AllTalk.
 
     ### 🟠 Request Parameters
     #### **text_input**
@@ -434,6 +443,10 @@ def api_documentation():
     #### **rvccharacter_voice_gen**
     > The name of the RVC voice file for the character. Should be in the format `folder\\file.pth` or the word `Disabled`. When Disabled is sent and RVC is globally enabled, the RVC pipeline will not be used for the character/main voice.<br><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvccharacter_voice_gen=folder\\voice1.pth"
+    
+    #### **rvccharacter_pitch**
+    > The pitch for the RVC voice for the character. Should be in the range `-24` up to `24` with `0` being the central point and the global setting, set in the Gradio RVC page being used if the pitch is not specified in the TTS request.<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvccharacter_pitch=3"
 
     #### **narrator_enabled**
     > Enable or disable the narrator function. If true, minimum text filtering is set to standard.<br><br>
@@ -447,6 +460,10 @@ def api_documentation():
     #### **rvcnarrator_voice_gen**
     > The name of the RVC voice file for the narrator. Should be in the format folder\\file.pth or the word Disabled.  When Disabled is sent and RVC is globally enabled, the RVC pipeline will not be used for the character/main voice.<br><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvcnarrator_voice_gen=folder\\voice2.pth"
+    
+    #### **rvcnarrator_pitch**
+    > The pitch for the RVC voice for the narrator. Should be in the range `-24` up to `24` with `0` being the central point and the global setting, set in the Gradio RVC page being used if the pitch is not specified in the TTS request.<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "rvcnarrator_pitch=3"    
 
     #### **text_not_inside**
     > Specify the handling of lines not inside double quotes or asterisks for the narrator feature. Options:<br><br>
@@ -480,37 +497,37 @@ def api_documentation():
 
     #### **output_file_name***
     > The name of the output file (excluding the .wav extension).<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "output_file_name=myoutputfile"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "output_file_name=myoutputfile"
 
     #### **output_file_timestamp**
     > Add a timestamp to the output file name. If true, each file will have a unique timestamp; otherwise, the same file name will be overwritten each time you generate TTS.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "output_file_timestamp=true"<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "output_file_timestamp=false"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "output_file_timestamp=true"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "output_file_timestamp=false"
 
     #### **autoplay**
     > Enable or disable playing the generated TTS to your standard sound output device at the time of TTS generation.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "autoplay=true"<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "autoplay=false"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "autoplay=true"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "autoplay=false"
     
     #### **autoplay_volume**
     > Set the autoplay volume. Should be between 0.1 and 1.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "autoplay_volume=0.8"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "autoplay_volume=0.8"
 
     #### **speed**
     > Set the speed of the generated audio. Should be between 0.25 and 2.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "speed=1.0"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "speed=1.0"
 
     #### **pitch**
     > Set the pitch of the generated audio. Should be between -10 and 10.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "pitch=0"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "pitch=0"
 
     #### **temperature**
     > Set the temperature for the TTS engine. Should be between 0.1 and 1.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "temperature=0.75"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "temperature=0.75"
 
     #### **repetition_penalty**
     > Set the repetition penalty for the TTS engine. Should be between 1.0 and 20.0.<br><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--d "repetition_penalty=10"
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d "repetition_penalty=10"
 
     ### 🟠 TTS Generation Response
     > The API returns a JSON object with the following properties:<br><br>

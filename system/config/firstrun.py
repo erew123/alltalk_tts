@@ -119,7 +119,9 @@ if "ip_address" in config:
 # Check if firstrun_model is true
 if config.get('firstrun_model', False):
     print(f"[{branding}TTS]")
-    print(f"[{branding}TTS] \033[92mThis is the first time startup. Please download a start TTS model.\033[0m")
+    print(f"[{branding}TTS] \033[92mThis is the first time startup. Please download a start TTS model. Other TTS engines\033[0m")
+    print(f"[{branding}TTS] \033[92mand TTS models can be downloaded/managed in the Gradio Interface `TTS Engines Settings`\033[0m")
+    print(f"[{branding}TTS] \033[92mtab after inital setup.\033[0m")
     print(f"[{branding}TTS]")
     
     # List of available models
@@ -170,13 +172,15 @@ if config.get('firstrun_model', False):
         if selected_model['name'] == 'piper':
             setup_piper()
             update_tts_engines('piper', 'piper')
+            set_firstrun_model_false()
         elif selected_model['name'] == 'vits':
             setup_vits()
             update_tts_engines('vits', 'vits - tts_models--en--vctk--vits')
+            set_firstrun_model_false()
         elif selected_model['name'] == 'xtts':
             setup_xtts()
             update_tts_engines('xtts', 'xtts - xttsv2_2.0.3')
-
+            set_firstrun_model_false()
         print(f"[{branding}TTS] {selected_model['name']} model downloaded and configuration updated successfully.")
         # Set firstrun_model to false
         set_firstrun_model_false()

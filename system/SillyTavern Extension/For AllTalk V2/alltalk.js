@@ -149,7 +149,7 @@ html += `</select>
         </div>
 
         <div class="at-endpoint-option">
-            <label for="at_server">AllTalk Endpoint:</label>
+            <label for="at_server">AllTalk Endpoint (Press Enter to save):</label>
             <input id="at_server" type="text" class="text_pole" maxlength="80" value="${this.settings.provider_endpoint}"/>
         </div>
    </div>`;

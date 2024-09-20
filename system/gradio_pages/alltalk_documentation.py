@@ -19,6 +19,9 @@ def alltalk_documentation():
     """
 
     silly_tavern_support = """
+    #### SillyTavern/AllTalk extension version
+    If you intend to use AllTalk V2 with SillyTavern, you will need to update the SillyTavern Extension from the `\alltalk_tts\system\SillyTavern Extension\` folder. Instructions are included within the folder.
+    
     #### Important note for Text-generation-webui users
     You **HAVE** to disable **Enable TTS** within the Text-generation-webui AllTalk interface, otherwise Text-generation-webui will also generate TTS due to the way it sends out text. You can do this each time you start up Text-generation-webui or set it in the start-up settings at the top of this page.
 
@@ -289,6 +292,8 @@ def alltalk_documentation():
 
     rvc_guides = """
     RVC (Retrieval-based Voice Conversion) enhances TTS by replicating voice characteristics for characters or narrators, adding depth to synthesized speech. It functions as a TTS-to-TTS pipeline and can be used with any TTS engine/model. However, the closer the original TTS generation is to the voice you want to use with RVC, the better the result will be. Therefore, it is recommended to use a voice cloning TTS engine like Coqui XTTS with voice samples for optimal performance.
+
+    When you first enable RVC on the `Global Settings > RVC Settings` tab and click the `Update RVC Settings` button, AllTalk will create the necessary folders and download any of the missing model files required for RVC to work.
 
     ### 🟩 Voice Model Files
 

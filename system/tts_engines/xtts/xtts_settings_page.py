@@ -280,8 +280,17 @@ def xtts_model_alltalk_settings(model_config_data):
                     ### 🟧 Using my own Finetuned models
                     Please your Finetuned models within their own folder in `/alltalk_tts/models/xtts/`. Once they are in here they will become availabe within the interface after reloading the XTTS engine.<br>
                             
-                    ### 🟧 Using Voice Samples
-                    Voice samples are stored in `/alltalk_tts/voices/` and should be named using the following format `name.wav`<br>
+                    ### 🟧 Using Single Voice Samples
+                    Voice samples are stored in `/alltalk_tts/voices/` and should be named using the following format `name.wav`. These files will be listed as `name.wav` in the available voices list.<br>
+                    
+                    ### 🟧 Using Multiple Voice Samples
+                    If you have multiple voice samples for a single voice, you can organize them into subfolders within the `/alltalk_tts/voices/` directory. Each subfolder should be named according to the voice it contains, up to 5 voice samples will be randomly selected for use.<br>
+                                      
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Each subfolder should reflect the name or type of the voice it contains (e.g., `female_voice`, `male_voice`).<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• The voice samples inside each subfolder should follow the standard `.wav` format.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• An example folder path would be `/alltalk_tts/voices/mynewvoice/` and this would be listed in the available voices list as `mynewvoice/`.<br>
+
+                    This organization allows for easy selection and management of multiple voice samples while ensuring the system can correctly identify and utilize each voice. Manual CURL API requests would send the folder in the format `mynewvoice/`.
                     
                     ### 🟧 Where are the outputs stored & Automatic output wav file deletion
                     Voice outputs are stored in `/alltalk_tts/outputs/`. You can configure automatic maintenance deletion of old wav files by setting `Del WAV's older than` in the global settings.<br>
@@ -292,12 +301,15 @@ def xtts_model_alltalk_settings(model_config_data):
                     ### 🟧 Where are the models stored?
                     This extension will download the models to `/alltalk_tts/models/xtts/` folder.<br>
                     
+                    ### 🟧 API Local, XTTSv2 Generation methods & Speed
+                    These two methods both produce sound output in slightly different ways. XTTSv2 is the perferable method a it supports DeepSpeed, which, if you have a system capable of DeepSpeed genereation, can result in a 2-3x speed gain in generation.
+                    """)
+                gr.Markdown("""
                     ### 🟧 How do I create a new voice sample?
                     To create a new voice sample, you need to make a wav file that is `22050Hz`, `Mono`, `16 bit` and between 6 to 30 seconds long, though 8 to 10 seconds is usually good enough. The model can handle up to 30 second samples, however I've not noticed any improvement in voice output from much longer clips.<br><br>
                     You want to find a nice clear selection of audio, so lets say you wanted to clone your favourite celebrity. You may go looking for an interview where they are talking. Pay close attention to the audio you are listening to and trying to sample. Are there noises in the background, hiss on the soundtrack, a low humm, some quiet music playing or something? The better quality the audio the better the final TTS result. Don't forget, the AI that processes the sounds can hear everything in your sample and it will use them in the voice its trying to recreate.<br><br>
                     Try make your clip one of nice flowing speech, like the included example files. No big pauses, gaps or other sounds. Preferably a sample that the person you are trying to copy will show a little vocal range and emotion in their voice. Also, try to avoid a clip starting or ending with breathy sounds (breathing in/out etc).<br>
-                    """)
-                gr.Markdown("""
+                            
                     ### 🟧 Editing your sample!
                     So, you've downloaded your favourite celebrity interview off YouTube, from here you need to chop it down to 6 to 30 seconds in length and resample it. If you need to clean it up, do audio processing, volume level changes etc, do this before down-sampling.<br><br>
                     Using the latest version of Audacity `select/highlight` your 6 to 30 second clip and:<br><br>
@@ -314,9 +326,6 @@ def xtts_model_alltalk_settings(model_config_data):
                     > Try using the 2x different generation methods `API Local` and `XTTSv2 Local`, as they generate output in slightly different ways.<br>
                      
                     Additionally, use the RVC pipeline with a matching voice model, however, some samples just never seem to work correctly, so maybe try a different sample. Always remember though, this is an AI model attempting to re-create a voice, so you will never get a 100% match.
-                    
-                    ### 🟧 API Local, XTTSv2 Generation methods & Speed
-                    These two methods both produce sound output in slightly different ways. XTTSv2 is the perferable method a it supports DeepSpeed, which, if you have a system capable of DeepSpeed genereation, can result in a 2-3x speed gain in generation.
                     """)
 
     return app
