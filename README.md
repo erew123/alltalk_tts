@@ -33,6 +33,7 @@ Please go see [here](https://github.com/erew123/alltalk_tts/discussions/237)
   - New remote TGWUI extension if you want to run your TTS elsewhere from the AllTalk server.
 - OpenAI compatable endpoint/API. Meaning this should work as an alternative endpoint with any software that can send a TTS generation request to OpenAI.
 - Fully customisable API Settings. I have **NOT** tested any limits of any TTS engines.
+- Multi Engine Manager (MEM) (Run Multiple TTS Engine instances simultaneously with a queue system). See [here for details](https://github.com/erew123/alltalk_tts/issues/63#issuecomment-2365329723)
 - Updated Finetuning for XTTS models
 - Audio Transcoding to about 6x formats (mp3, opus, etc)
 - About 50 gradio interface themes if you arent happy with the standard Gradio one.
