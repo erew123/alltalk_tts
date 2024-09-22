@@ -27,7 +27,7 @@ import uuid
 import hashlib
 import numpy as np
 import soundfile as sf
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 from pydantic import BaseModel, ValidationError, Field, field_validator
 ########################################################################################
 # START-UP # Silence RVC warning about torch.nn.utils.weight_norm even though not used #
@@ -667,19 +667,46 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
 #### PREVIEW VOICE API ####
 ###########################
 @app.post("/api/previewvoice/", response_class=JSONResponse)
-async def apifunction_preview_voice(request: Request, voice: str = Form(...)):
+async def apifunction_preview_voice(
+    request: Request,
+    voice: str = Form(...),
+    rvccharacter_voice_gen: Optional[str] = Form(None),
+    rvccharacter_pitch: Optional[float] = Form(None)
+):
     try:
         # Hardcoded settings
         language = "en"
-        output_file_name = "api_preview_voice"
+        output_file_name = "api_preview_voice"       
         # Clean the voice filename for inclusion in the text
         clean_voice_filename = re.sub(r'\.wav$', '', voice.replace(' ', '_'))
         clean_voice_filename = re.sub(r'[^a-zA-Z0-9]', ' ', clean_voice_filename)
-        # Generate the audio
+        # Generate the audio text
         text = f"Hello, this is a preview of voice {clean_voice_filename}."
+        # Set default values for new parameters if not provided
+        rvccharacter_voice_gen = rvccharacter_voice_gen or "Disabled"
+        rvccharacter_pitch = rvccharacter_pitch if rvccharacter_pitch is not None else 0
         # Generate the audio
         output_file_path = this_dir / output_directory / f'{output_file_name}.{model_engine.audio_format}'
-        await generate_audio(text, voice, language, model_engine.temperature_set, model_engine.repetitionpenalty_set, 1.0, 0, output_file_path, streaming=False)
+        await generate_audio(
+            text, 
+            voice, 
+            language, 
+            model_engine.temperature_set, 
+            model_engine.repetitionpenalty_set, 
+            1.0, 
+            0, 
+            output_file_path, 
+            streaming=False
+            )
+        if rvc_settings["rvc_enabled"]:
+            if rvccharacter_voice_gen.lower() in ["disabled", "disable"]:
+                print(f"[{branding}Debug] PREVIEW VOICE - Pass rvccharacter_voice_gen") if debug_tts else None
+                pass  # Skip RVC processing for character part
+            else:
+                print(f"[{branding}Debug] PREVIEW VOICE - send to rvc") if debug_tts else None
+                rvccharacter_voice_gen = this_dir / "models" / "rvc_voices" / rvccharacter_voice_gen
+                pth_path = rvccharacter_voice_gen if rvccharacter_voice_gen else rvc_settings["rvc_char_model_file"]
+                run_rvc(output_file_path, pth_path, rvccharacter_pitch, infer_pipeline)        
         # Generate the URL
         output_file_url = f'/audio/{output_file_name}.{model_engine.audio_format}'
         # Return the response with both local file path and URL
