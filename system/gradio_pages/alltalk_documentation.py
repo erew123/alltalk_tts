@@ -20,7 +20,7 @@ def alltalk_documentation():
 
     silly_tavern_support = """
     #### SillyTavern/AllTalk extension version
-    If you intend to use AllTalk V2 with SillyTavern, you will need to update the SillyTavern Extension from the `\alltalk_tts\system\SillyTavern Extension\` folder. Instructions are included within the folder.
+    If you intend to use AllTalk V2 with SillyTavern, you will need to update the SillyTavern Extension from the `alltalk_tts\system\SillyTavern Extension\` folder. Instructions are included within the folder.
     
     #### Important note for Text-generation-webui users
     You **HAVE** to disable **Enable TTS** within the Text-generation-webui AllTalk interface, otherwise Text-generation-webui will also generate TTS due to the way it sends out text. You can do this each time you start up Text-generation-webui or set it in the start-up settings at the top of this page.
