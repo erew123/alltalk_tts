@@ -542,6 +542,67 @@
             <select id="character_voice_gen"></select>
         </div>
 
+        <div class="setting voice-setting">
+            <label for="RVC_voice_gen">RVC Voice:</label>
+            <select id="RVC_voice_gen"></select>
+        </div>
+        
+        <div class="setting voice-setting">
+            <label for="RVC_voice_pitch">RVC Pitch:</label>
+            <select id="RVC_voice_pitch">
+                <!-- Loop through -24 to 24, setting 0 as the default option -->
+                <option value="-24">-24</option>
+                <option value="-23">-23</option>
+                <option value="-22">-22</option>
+                <option value="-21">-21</option>
+                <option value="-20">-20</option>
+                <option value="-19">-19</option>
+                <option value="-18">-18</option>
+                <option value="-17">-17</option>
+                <option value="-16">-16</option>
+                <option value="-15">-15</option>
+                <option value="-14">-14</option>
+                <option value="-13">-13</option>
+                <option value="-12">-12</option>
+                <option value="-11">-11</option>
+                <option value="-10">-10</option>
+                <option value="-9">-9</option>
+                <option value="-8">-8</option>
+                <option value="-7">-7</option>
+                <option value="-6">-6</option>
+                <option value="-5">-5</option>
+                <option value="-4">-4</option>
+                <option value="-3">-3</option>
+                <option value="-2">-2</option>
+                <option value="-1">-1</option>
+                <option value="0" selected>0</option> <!-- Default option -->
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+                <option value="21">21</option>
+                <option value="22">22</option>
+                <option value="23">23</option>
+                <option value="24">24</option>
+            </select>
+        </div>
+
         <div class="setting language-setting">
             <label for="language">Language:</label>
             <select id="language" name="language" class="fixed-size-dropdown">
@@ -757,6 +818,7 @@
     let preloadThreshold = 2; // Number of files to preload before starting playback
     let isStreamInitialized = false;
     let characterVoice = document.getElementById("character_voice_gen").value;
+    let RVCVoice = document.getElementById("RVC_voice_gen").value;
     let ttsList = []; // Global list to store TTS details
     let problematicIds = []; // Global list to store ProblematicIDs
     const howlInstances = {};
@@ -942,6 +1004,8 @@
             const textInput = document.getElementById("text_input").value;
             const language = document.getElementById("language").value;
             const characterVoice = document.getElementById("character_voice_gen").value;
+            const RVCVoice = document.getElementById("RVC_voice_gen").value;
+            const RVCPitch = document.getElementById("RVC_voice_pitch").value;
             const volume = parseFloat(document.getElementById("volume").value);
             const chunkSize = parseInt(document.getElementById("chunkSize").value);
             const playType = document.getElementById('playType').value; // Play type (chunk or stream)
@@ -994,13 +1058,13 @@
                     showProgress(i + 1, totalChunks, playType);
                     if (playModeValue === 'local') {
                         // Generate the chunk and play it locally
-                        await generateAndCache(chunks[i], language, characterVoice, volume, customFileName);
+                        await generateAndCache(chunks[i], language, characterVoice, RVCVoice, RVCPitch, volume, customFileName);
                     } else if (playModeValue === 'remote') {
                         // Generate the chunk and play it remotely
-                        await generateAndPlayRemote(chunks[i], language, characterVoice, volume, customFileName);
+                        await generateAndPlayRemote(chunks[i], language, characterVoice, RVCVoice, RVCPitch, volume, customFileName);
                     } else if (playModeValue === 'none') {
                         // Generate the chunk but do not play it
-                        await generateWithoutPlayback(chunks[i], language, characterVoice, customFileName);
+                        await generateWithoutPlayback(chunks[i], language, characterVoice, RVCVoice, RVCPitch, customFileName);
                     }
                 }
             }
@@ -1012,10 +1076,10 @@
         }
     }
 
-    async function processChunks(chunks, language, characterVoice, volume, customFileName) {
+    async function processChunks(chunks, language, characterVoice, RVCVoice, RVCPitch, volume, customFileName) {
         for (let i = 0; i < chunks.length; i++) {
             if (stopTTSGeneration) break;
-            await generateAndCache(chunks[i], language, characterVoice, volume, customFileName, i + 1); // Pass custom file name and chunk index
+            await generateAndCache(chunks[i], language, characterVoice, RVCVoice, RVCPitch, volume, customFileName, i + 1); // Pass custom file name and chunk index
             if (audioQueue.length >= preloadThreshold && !isPlaying) {
                 playNextLocalChunk();
             }
@@ -1030,7 +1094,7 @@
         });
     }
 
-    async function generateAndCache(chunk, language, characterVoice, volume, customFileName, chunkIndex = null, id = null) {
+    async function generateAndCache(chunk, language, characterVoice, RVCVoice, RVCPitch, volume, customFileName, chunkIndex = null, id = null) {
         try {
             let paddedChunkIndex;
 
@@ -1050,6 +1114,8 @@
                 text_input: chunk.trim(),
                 text_filtering: "standard",
                 character_voice_gen: characterVoice,
+                rvccharacter_voice_gen: RVCVoice,
+                rvccharacter_pitch: RVCPitch,                
                 narrator_enabled: "false",
                 narrator_voice_gen: characterVoice,
                 text_not_inside: "character",
@@ -1165,7 +1231,7 @@
 
 
 
-    async function generateWithoutPlayback(chunk, language, characterVoice, customFileName, chunkIndex = null) {
+    async function generateWithoutPlayback(chunk, language, characterVoice, RVCVoice, RVCPitch, customFileName, chunkIndex = null) {
         // Perform the generation process as usual but do not play the audio
         try {
             let paddedChunkIndex;
@@ -1183,6 +1249,8 @@
                 text_input: chunk.trim(),
                 text_filtering: "standard",
                 character_voice_gen: characterVoice,
+                rvccharacter_voice_gen: RVCVoice,
+                rvccharacter_pitch: RVCPitch,                
                 narrator_enabled: "false",
                 narrator_voice_gen: characterVoice,
                 text_not_inside: "character",
@@ -1281,7 +1349,7 @@
     }
 
 
-    async function generateAndPlayRemote(chunk, language, characterVoice, volume, customFileName, chunkIndex = null) {
+    async function generateAndPlayRemote(chunk, language, characterVoice, RVCVoice, RVCPitch, volume, customFileName, chunkIndex = null) {
         try {
             if (stopTTSGeneration) {
                 console.log("TTS generation stopped.");
@@ -1303,6 +1371,8 @@
                 text_input: chunk.trim(),
                 text_filtering: "standard",
                 character_voice_gen: characterVoice,
+                rvccharacter_voice_gen: RVCVoice,
+                rvccharacter_pitch: RVCPitch,
                 narrator_enabled: "false",
                 narrator_voice_gen: characterVoice,
                 text_not_inside: "character",
@@ -1407,9 +1477,13 @@
 
     async function previewVoice() {
         const characterVoice = document.getElementById("character_voice_gen").value;
+        const RVCVoice = document.getElementById("RVC_voice_gen").value;
+        const RVCPitch = document.getElementById("RVC_voice_pitch").value;
         try {
             const formData = new FormData();
             formData.append("voice", characterVoice);
+            formData.append("rvccharacter_voice_gen", RVCVoice);
+            formData.append("rvccharacter_pitch", RVCPitch);
 
             const response = await fetch(baseUrl + "/api/previewvoice/", {
                 method: "POST",
@@ -1955,6 +2029,37 @@
         }
     }
 
+        async function fetchRVCVoices() {
+        try {
+            const response = await fetch(baseUrl + "/api/rvcvoices");
+            const result = await response.json();
+            const RVCVoiceSelect = document.getElementById("RVC_voice_gen");
+
+            RVCVoiceSelect.innerHTML = ''; // Clear existing options
+
+            // Ensure 'rvcvoices' exists in the response
+            if (result.rvcvoices && Array.isArray(result.rvcvoices)) {
+                result.rvcvoices.forEach(voice => {
+                    const option = document.createElement("option");
+                    option.value = voice;
+                    option.text = voice;
+                    RVCVoiceSelect.add(option);
+                });
+            } else {
+                console.error("No valid 'rvcvoices' found in the response");
+            }
+
+            // Restore saved RVC voice preference
+            const savedRVCVoice = localStorage.getItem('RVCVoice');
+            if (savedRVCVoice) {
+                RVCVoiceSelect.value = savedRVCVoice;
+            }
+
+        } catch (error) {
+            console.error("Error fetching RVC voices:", error);
+        }
+    }
+
     // Replace stopPlayback function to stop all sounds using Howler.js
     function stopPlayback() {
         Howler.stop();
@@ -2074,6 +2179,11 @@
         characterVoice = this.value;
     });
 
+    // Event listener to update RVCVoice when the selection changes
+    document.getElementById("RVC_voice_gen").addEventListener('change', function () {
+        RVCVoice = this.value;
+    });
+
     document.getElementById('language').addEventListener('change', function () {
         // Get the selected language from the dropdown
         const selectedLanguage = this.value;
@@ -2132,6 +2242,7 @@
     function setupPage() {
         // Fetch voices or other initial data
         fetchVoices();
+        fetchRVCVoices();
         updateButtonStyles()
 
         // Check for dark mode preference in localStorage, default to enabled if not set
@@ -2154,6 +2265,12 @@
         if (savedCharacterVoice) {
             document.getElementById('character_voice_gen').value = savedCharacterVoice;
         }
+
+        // Initialize RVC voice based on preference
+        const savedRVCVoice = localStorage.getItem('RVCVoice');
+        if (savedRVCVoice) {
+            document.getElementById('RVC_voice_gen').value = savedRVCVoice;
+        }        
 
         // Initialize language based on preference
         const savedLanguage = localStorage.getItem('language');
@@ -2201,6 +2318,8 @@
             savePreferences();
         });
         document.getElementById('character_voice_gen').addEventListener('change', savePreferences);
+        document.getElementById('RVC_voice_gen').addEventListener('change', savePreferences);
+        document.getElementById('language').addEventListener('change', savePreferences);
         document.getElementById('language').addEventListener('change', savePreferences);
         document.getElementById('playType').addEventListener('change', function () {
             savePreferences(); // Save the new play type
@@ -2256,6 +2375,10 @@
         // Save character voice preference
         const characterVoice = document.getElementById('character_voice_gen').value;
         localStorage.setItem('characterVoice', characterVoice);
+
+        // Save RVC voice preference
+        const RVCVoice = document.getElementById('RVC_voice_gen').value;
+        localStorage.setItem('RVCVoice', RVCVoice);        
 
         // Save language preference
         const language = document.getElementById('language').value;
