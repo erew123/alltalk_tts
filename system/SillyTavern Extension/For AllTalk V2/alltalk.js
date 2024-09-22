@@ -20,7 +20,9 @@ class AllTalkTtsProvider {
             at_narrator_text_not_inside: this.settings.at_narrator_text_not_inside || 'narrator',
             narrator_voice_gen: this.settings.narrator_voice_gen || 'Please set a voice',
             rvc_character_voice: this.settings.rvc_character_voice || 'Disabled',
+            rvc_character_pitch: this.settings.rvc_character_pitch || '0',
             rvc_narrator_voice: this.settings.rvc_narrator_voice || 'Disabled',
+            rvc_narrator_pitch: this.settings.rvc_narrator_pitch || '0',
             finetuned_model: this.settings.finetuned_model || 'false'
         };
         // Separate property for dynamically updated settings from the server
@@ -60,7 +62,7 @@ class AllTalkTtsProvider {
     };
 
     get settingsHtml() {
-        let html = `<div class="at-settings-separator">AllTalk Settings</div>`;
+        let html = `<div class="at-settings-separator">AllTalk V2 Settings</div>`;
 
         html += `<div class="at-settings-row">
 
@@ -116,29 +118,50 @@ class AllTalkTtsProvider {
         </div>
     </div>`;
 
-    html += `<div class="at-settings-row">
+        html += `<div class="at-settings-row">
     <div class="at-settings-option">
         <label for="rvc_character_voice">RVC Character</label>
         <select id="rvc_character_voice">`;
-if (this.rvcVoices) {
-    for (let rvccharvoice of this.rvcVoices) {
-        html += `<option value="${rvccharvoice.voice_id}">${rvccharvoice.name}</option>`;
-    }
-}
-html += `</select>
+        if (this.rvcVoices) {
+            for (let rvccharvoice of this.rvcVoices) {
+                html += `<option value="${rvccharvoice.voice_id}">${rvccharvoice.name}</option>`;
+            }
+        }
+        html += `</select>
     </div>
     <div class="at-settings-option">
         <label for="rvc_narrator_voice">RVC Narrator</label>
         <select id="rvc_narrator_voice">`;
-if (this.rvcVoices) {
-    for (let rvcnarrvoice of this.rvcVoices) {
-        html += `<option value="${rvcnarrvoice.voice_id}">${rvcnarrvoice.name}</option>`;
-    }
-}
-html += `</select>
+        if (this.rvcVoices) {
+            for (let rvcnarrvoice of this.rvcVoices) {
+                html += `<option value="${rvcnarrvoice.voice_id}">${rvcnarrvoice.name}</option>`;
+            }
+        }
+        html += `</select>
     </div>
 </div>`;
 
+        // Add the RVC pitch control row
+        html += `<div class="at-settings-row">
+        <div class="at-settings-option">
+            <label for="rvc_character_pitch">RVC Character Pitch</label>
+            <select id="rvc_character_pitch">`;
+        for (let i = -24; i <= 24; i++) {
+            const selected = i === 0 ? 'selected="selected"' : '';
+            html += `<option value="${i}" ${selected}>${i}</option>`;
+        }
+        html += `</select>
+        </div>
+        <div class="at-settings-option">
+            <label for="rvc_narrator_pitch">RVC Narrator Pitch</label>
+            <select id="rvc_narrator_pitch">`;
+        for (let i = -24; i <= 24; i++) {
+            const selected = i === 0 ? 'selected="selected"' : '';
+            html += `<option value="${i}" ${selected}>${i}</option>`;
+        }
+        html += `</select>
+        </div>
+    </div>`;
 
         html += `<div class="at-model-endpoint-row">
         <div class="at-model-option">
@@ -149,7 +172,7 @@ html += `</select>
         </div>
 
         <div class="at-endpoint-option">
-            <label for="at_server">AllTalk Endpoint (Press Enter to save):</label>
+            <label for="at_server">AllTalk Endpoint:</label>
             <input id="at_server" type="text" class="text_pole" maxlength="80" value="${this.settings.provider_endpoint}"/>
         </div>
    </div>`;
@@ -175,7 +198,7 @@ html += `</select>
 
         html += `<div class="at-website-row">
         <div class="at-website-option">
-        <span>AllTalk <a target="_blank" href="${this.settings.provider_endpoint}">Config & Docs</a>.</span>
+        <span>AllTalk V2<a target="_blank" href="${this.settings.provider_endpoint}">Config & Docs</a>.</span>
     </div>
 
     <div class="at-website-option">
@@ -201,7 +224,7 @@ html += `</select>
 
     async loadSettings(settings) {
         updateStatus('Offline');
-    
+
         if (Object.keys(settings).length === 0) {
             console.info('Using default AllTalk TTS Provider settings');
         } else {
@@ -214,7 +237,7 @@ html += `</select>
                 }
             }
         }
-    
+
         // Update UI elements to reflect the loaded settings
         $('#at_server').val(this.settings.provider_endpoint);
         $('#language_options').val(this.settings.language);
@@ -224,7 +247,9 @@ html += `</select>
         $('#narrator_voice').val(this.settings.narrator_voice_gen);
         $('#rvc_character_voice').val(this.settings.rvc_character_voice);
         $('#rvc_narrator_voice').val(this.settings.rvc_narrator_voice);
-    
+        $('#rvc_character_pitch').val(this.settings.rvc_character_pitch);
+        $('#rvc_narrator_pitch').val(this.settings.rvc_narrator_pitch);        
+
         console.debug('AllTalkTTS: Settings loaded');
         try {
             // Check if TTS provider is ready
@@ -242,7 +267,7 @@ html += `</select>
             updateStatus('Offline');
         }
     }
-    
+
 
     applySettingsToHTML() {
         const narratorVoiceSelect = document.getElementById('narrator_voice');
@@ -381,9 +406,9 @@ html += `</select>
             throw error;
         }
     }
-    
-    
-    
+
+
+
     //##########################################//
     // Get Current AT Server Config & Update ST //
     //##########################################//
@@ -396,7 +421,7 @@ html += `</select>
             }
             const currentSettings = await response.json();
             currentSettings.models_available.sort((a, b) => a.name.localeCompare(b.name));
-    
+
             this.settings.enginesAvailable = currentSettings.engines_available;
             this.settings.currentEngineLoaded = currentSettings.current_engine_loaded;
             this.settings.modelsAvailable = currentSettings.models_available;
@@ -406,9 +431,9 @@ html += `</select>
             this.settings.deepspeed_enabled = currentSettings.deepspeed_enabled;
             this.settings.lowvram_capable = currentSettings.lowvram_capable;
             this.settings.lowvram_enabled = currentSettings.lowvram_enabled;
-    
+
             await this.fetchRvcVoiceObjects(); // Fetch RVC voices
-    
+
             this.updateModelDropdown();
             this.updateCheckboxes();
             this.updateRvcVoiceDropdowns(); // Update the RVC voice dropdowns
@@ -416,7 +441,7 @@ html += `</select>
             console.error(`Error updating settings from server: ${error}`);
         }
     }
-    
+
     updateRvcVoiceDropdowns() {
         const rvcCharacterVoiceSelect = document.getElementById('rvc_character_voice');
         const rvcNarratorVoiceSelect = document.getElementById('rvc_narrator_voice');
@@ -581,7 +606,7 @@ html += `</select>
                 this.onSettingsChange(); // Save the settings after change
             });
         }
-    
+
         const rvcNarratorVoiceSelect = document.getElementById('rvc_narrator_voice');
         if (rvcNarratorVoiceSelect) {
             rvcNarratorVoiceSelect.addEventListener('change', (event) => {
@@ -589,6 +614,22 @@ html += `</select>
                 this.onSettingsChange(); // Save the settings after change
             });
         }
+
+        const rvcCharacterPitchSelect = document.getElementById('rvc_character_pitch');
+        if (rvcCharacterPitchSelect) {
+            rvcCharacterPitchSelect.addEventListener('change', (event) => {
+                this.settings.rvc_character_pitch = event.target.value;
+                this.onSettingsChange(); // Save the settings after change
+            });
+        }
+
+        const rvcNarratorPitchSelect = document.getElementById('rvc_narrator_pitch');
+        if (rvcNarratorPitchSelect) {
+            rvcNarratorPitchSelect.addEventListener('change', (event) => {
+                this.settings.rvc_narrator_pitch = event.target.value;
+                this.onSettingsChange(); // Save the settings after change
+            });
+        }        
 
         const debouncedModelSelectChange = (event) => {
             clearTimeout(debounceTimeout);
@@ -694,21 +735,21 @@ html += `</select>
         const ttsPassAsterisksCheckbox = document.getElementById('tts_pass_asterisks');
         const ttsNarrateQuotedCheckbox = document.getElementById('tts_narrate_quoted');
         const ttsNarrateDialoguesCheckbox = document.getElementById('tts_narrate_dialogues');
-        
+
         if (atNarratorSelect && textNotInsideSelect && narratorVoiceSelect) {
             atNarratorSelect.addEventListener('change', (event) => {
                 const narratorOption = event.target.value;
                 this.settings.narrator_enabled = narratorOption;
-        
+
                 // Check if narrator is disabled
                 const isNarratorDisabled = narratorOption === 'false';
                 textNotInsideSelect.disabled = isNarratorDisabled;
                 narratorVoiceSelect.disabled = isNarratorDisabled;
-        
+
                 console.log(`Narrator option: ${narratorOption}`);
                 console.log(`textNotInsideSelect disabled: ${textNotInsideSelect.disabled}`);
                 console.log(`narratorVoiceSelect disabled: ${narratorVoiceSelect.disabled}`);
-        
+
                 if (narratorOption === 'true') {
                     ttsPassAsterisksCheckbox.checked = false;
                     $('#tts_pass_asterisks').click();
@@ -728,11 +769,11 @@ html += `</select>
                     $('#tts_pass_asterisks').click();
                     $('#tts_pass_asterisks').trigger('change');
                 }
-        
+
                 this.onSettingsChange();
             });
         }
-        
+
 
         // Event Listener for AT Generation Method Dropdown
         const atGenerationMethodSelect = document.getElementById('at_generation_method');
@@ -790,6 +831,8 @@ html += `</select>
         this.settings.at_narrator_text_not_inside = $('#at_narrator_text_not_inside').val();
         this.settings.rvc_character_voice = $('#rvc_character_voice').val();
         this.settings.rvc_narrator_voice = $('#rvc_narrator_voice').val();
+        this.settings.rvc_character_pitch = $('#rvc_character_pitch').val();
+        this.settings.rvc_narrator_pitch = $('#rvc_narrator_pitch').val();        
         this.settings.narrator_voice_gen = $('#narrator_voice').val();
         // Save the updated settings
         saveTtsProviderSettings();
@@ -913,9 +956,11 @@ html += `</select>
             'text_filtering': "standard",
             'character_voice_gen': voiceId,
             'rvccharacter_voice_gen': this.settings.rvccharacter_voice_gen || "Disabled",
+            'rvccharacter_pitch': this.settings.rvc_character_pitch || "0",
             'narrator_enabled': this.settings.narrator_enabled,
             'narrator_voice_gen': this.settings.narrator_voice_gen,
             'rvcnarrator_voice_gen': this.settings.rvcnarrator_voice_gen || "Disabled",
+            'rvcnarrator_pitch': this.settings.rvc_narrator_pitch || "0",
             'text_not_inside': this.settings.at_narrator_text_not_inside,
             'language': this.settings.language,
             'output_file_name': "st_output",
