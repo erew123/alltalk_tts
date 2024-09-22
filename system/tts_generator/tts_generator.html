@@ -1199,9 +1199,11 @@
         const fileNameParts = fileName.split('_');
         const customFileName = fileNameParts[0];
         const chunkIndex = parseInt(fileNameParts[1], 10);
+        const RVCVoice = document.getElementById("RVC_voice_gen").value;
+        const RVCPitch = document.getElementById("RVC_voice_pitch").value;
 
         // Call the TTS generation with the same details, current volume, and existing file name
-        const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice, currentVolume, customFileName, chunkIndex, id);
+        const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice,  RVCVoice, RVCPitch, currentVolume, customFileName, chunkIndex, id);
 
         // Call the TTS generation with the same details and current volume
         //const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice, currentVolume, id);
