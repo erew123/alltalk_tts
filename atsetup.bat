@@ -405,7 +405,11 @@ echo ** Installing PyTorch 2.2.1 **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 pytorch-cuda=12.1 -c pytorch -c nvidia
 echo.
 if errorlevel 1 (
-    echo PyTorch installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo PyTorch installation failed, errorlevel was %errorlevel%. There should be a Conda
+    echo error message above with a code and/or text explanation of the issue. Please note 
+    echo the error code to help with diagnotics. 
+    echo.
+    echo Generally speaking though, errors could be caused by:
     echo.
     echo      1. Internet connection issues/unable to download PyTorch from Conda's website.
     echo      2. Disk space related issues - Check your disk space on this drive.
@@ -428,7 +432,11 @@ echo ** Installing Faiss **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
 echo.
 if errorlevel 1 (
-    echo Faiss installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo Faiss installation failed, errorlevel was %errorlevel%. There should be a Conda
+    echo error message above with a code and/or text explanation of the issue. Please note 
+    echo the error code to help with diagnotics. 
+    echo.
+    echo Generally speaking though, errors could be caused by:
     echo.
     echo      1. Internet connection issues/unable to download Faiss from Conda's website.
     echo      2. Disk space related issues - Check your disk space on this drive.
@@ -451,7 +459,11 @@ echo ** Installing FFmpeg **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y conda-forge::ffmpeg
 echo.
 if errorlevel 1 (
-    echo FFmpeg installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo FFmpeg installation failed, errorlevel was %errorlevel%. There should be a Conda
+    echo error message above with a code and/or text explanation of the issue. Please note 
+    echo the error code to help with diagnotics. 
+    echo.
+    echo Generally speaking though, errors could be caused by:
     echo.
     echo      1. Internet connection issues/unable to download FFmpeg from Conda's website.
     echo      2. Disk space related issues - Check your disk space on this drive.
@@ -478,7 +490,11 @@ echo ** Updating Gradio **
 pip install --upgrade gradio==4.32.2
 echo.
 if errorlevel 1 (
-    echo Gradio update failed, errorlevel was %errorlevel%. This could be caused by:
+    echo Gradio update failed, errorlevel was %errorlevel%. There should be an error
+    echo message above with a code and/or text explanation of the issue. Please note 
+    echo the error code to help with diagnotics. 
+    echo.
+    echo Generally speaking though, errors could be caused by:
     echo.
     echo      1. Internet connection issues/unable to download Gradio from PyPI.
     echo      2. Disk space related issues - Check your disk space on this drive.
@@ -501,7 +517,9 @@ echo ** Downloading DeepSpeed **
 curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
 echo.
 if errorlevel 1 (
-    echo DeepSpeed download failed, errorlevel was %errorlevel%. This could be caused by:
+    echo DeepSpeed download failed, errorlevel was %errorlevel%. There should be an error
+    echo message above with a code and/or text explanation of the issue. Please note 
+    echo the error code to help with diagnotics.
     echo.
     echo      1. Internet connection issues/unable to reach GitHub.
     echo      2. Disk space related issues - Check your disk space on this drive.
@@ -523,7 +541,9 @@ echo ** Installing DeepSpeed **
 pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
 echo.
 if errorlevel 1 (
-    echo DeepSpeed installation failed, errorlevel was %errorlevel%. This could be caused by:
+    echo DeepSpeed installation failed, errorlevel was %errorlevel%. There should be an error
+    echo message above with a code and/or text explanation of the issue. Please note 
+    echo the error code to help with diagnotics.
     echo.
     echo      1. The DeepSpeed wheel file was not downloaded successfully in the previous step.
     echo      2. Microsoft C++ development tools for Python are not installed correctly.
