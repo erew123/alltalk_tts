@@ -416,8 +416,8 @@ if errorlevel 1 (
     echo      7. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the Pytorch installation?"
-    if errorlevel 1 goto install_pytorch
     if errorlevel 2 goto End
+    if errorlevel 1 goto install_pytorch
 ) else (
     echo PyTorch installation was successful.
     echo.
@@ -439,8 +439,8 @@ if errorlevel 1 (
     echo      7. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the Faiss installation?"
-    if errorlevel 1 goto install_faiss
     if errorlevel 2 goto End
+    if errorlevel 1 goto install_faiss
 ) else (
     echo Faiss installation was successful.
     echo.
@@ -462,8 +462,8 @@ if errorlevel 1 (
     echo      7. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the FFmpeg installation?"
-    if errorlevel 1 goto install_ffmpeg
     if errorlevel 2 goto End
+    if errorlevel 1 goto install_ffmpeg
 ) else (
     echo FFmpeg installation was successful.
     echo.
@@ -489,8 +489,8 @@ if errorlevel 1 (
     echo      7. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the Gradio update?"
-    if errorlevel 1 goto update_gradio
     if errorlevel 2 goto End
+    if errorlevel 1 goto update_gradio
 ) else (
     echo Gradio update was successful.
     echo.
@@ -512,8 +512,8 @@ if errorlevel 1 (
     echo      7. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the DeepSpeed download?"
-    if errorlevel 1 goto install_deepspeed
     if errorlevel 2 goto End
+    if errorlevel 1 goto install_deepspeed
 ) else (
     echo DeepSpeed download was successful.
     echo.
@@ -537,8 +537,8 @@ if errorlevel 1 (
     echo tools for Python, which is detailed on the AllTalk GitHub page.
     echo.
     choice /C YN /M "Do you want to retry the DeepSpeed installation?"
-    if errorlevel 1 goto install_deepspeed
     if errorlevel 2 goto End
+    if errorlevel 1 goto install_deepspeed
 ) else (
     echo DeepSpeed installation was successful.
     del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
