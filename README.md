@@ -157,7 +157,7 @@ If for some reason the Quick Setup instructions above are not what you wish to d
 1. Ensure you have curl installed on your system. If not, download and install it from https://curl.se/
 2. Make sure your installation path does not contain spaces or special characters.
 3. Install Microsoft C++ development tools for Python as detailed in [Windows & Python requirements for compiling packages here](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#installation-and-setup-issues)
-4. Ensure you have installed Espeak-ng as detailed above [here](https://github.com/erew123/alltalk_tts/edit/alltalkbeta/README.md#windows-systems)
+4. Ensure you have installed Espeak-ng as detailed above [here](https://github.com/erew123/alltalk_tts/tree/alltalkbeta?tab=readme-ov-file#windows-systems)
 
 ## Manual Installation Steps
 
