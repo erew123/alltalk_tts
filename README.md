@@ -145,6 +145,217 @@ To perform a Standalone installation of AllTalk:
 
 </details>
 
+<details>
+<summary>MANUAL Windows Setup - Standalone Installation</summary>
+<br>
+
+# Manual Windows Setup Instructions for AllTalk TTS
+
+If for some reason the Quick Setup instructions above are not what you wish to do, you can follow these instructions to perform a manual installation.
+
+## Prerequisites
+1. Ensure you have curl installed on your system. If not, download and install it from https://curl.se/
+2. Make sure your installation path does not contain spaces or special characters.
+3. Install Microsoft C++ development tools for Python as detailed in [Windows & Python requirements for compiling packages here](https://github.com/erew123/alltalk_tts?tab=readme-ov-file#installation-and-setup-issues)
+4. Ensure you have installed Espeak-ng as detailed above [here](https://github.com/erew123/alltalk_tts/edit/alltalkbeta/README.md#windows-systems)
+
+## Manual Installation Steps
+
+#### If at any step you get an error code or message, you can retry that step or research on the internet what the error may be.
+
+Error messages may vary, but could look like `('Connection broken: IncompleteRead(2742643 bytes read, 984095 more expected)', IncompleteRead(2742643 bytes read, 984095 more expected))` which would be a failure to fully download something from Conda (as an example). In such a situation you would re-try to the step or research on the internet, or even try later as it could be a transient fault.
+
+These are **copy/paste** instructions, for Windows and you can click on the **double square button at the right of each step to copy it**. You then **right click with your mouse on the Command prompt** window to paste it in.
+
+**Download AllTalk to your preferred folder**:
+   - **Open a Windows Command Prompt from your Start Menu**:
+     - Navigate to your preferred directory:
+       ```
+       cd C:\myfiles\
+       ```
+     - Clone the AllTalk repository:
+       ```
+       git clone -b alltalkbeta https://github.com/erew123/alltalk_tts
+       ```
+
+1. After cloning AllTalk into a folder, navigate into to the directory where you cloned AllTalk to.
+   ```
+   cd C:\myfiles\alltalk_tts
+   ```
+
+2. Create the alltalk_environment directory and navigate into it:
+   ```
+   mkdir alltalk_environment
+   ```
+   ```
+   cd alltalk_environment
+   ```
+
+3. Download Miniconda:
+   ```
+   curl -Lk "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.4.0-0-Windows-x86_64.exe" > miniconda_installer.exe
+   ```
+
+4. Install Miniconda:
+   ```
+   start /wait "" miniconda_installer.exe /InstallationType=JustMe /NoShortcuts=1 /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\conda
+   ```
+
+5. Navigate to the conda folder:
+   ```
+   cd conda
+   ```
+
+6. Create a new conda environment:
+   ```
+   .\condabin\conda create --no-shortcuts -y -k --prefix ..\env python=3.11.9
+   ```
+
+7. Activate the new environment:
+   ```
+   call .\condabin\conda.bat activate ..\env
+   ```
+
+8. Install PyTorch 2.2.1:
+   ```
+   .\Scripts\conda install -y pytorch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+   ```
+
+9. Install Faiss:
+   ```
+   .\Scripts\conda install -y pytorch::faiss-cpu
+   ```
+
+10. Install FFmpeg:
+    ```
+    .\Scripts\conda install -y conda-forge::ffmpeg
+    ```
+
+11. Navigate back to the `alltalk_tts` folder where you cloned AllTalk to, then you can install requirements from the requirements file (adjust path as needed):
+    ```
+    cd..
+    ```
+    ```
+    cd..
+    ```
+    You should now be back in your `alltalk_tts` folder e.g. `C:\myfiles\alltalk_tts`
+    ```
+    pip install -r system\requirements\requirements_standalone.txt
+    ```
+
+12. Update Gradio:
+    ```
+    pip install --upgrade gradio==4.32.2
+    ```
+
+13. Download and install DeepSpeed:
+    ```
+    curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+    ```
+    ```
+    pip install deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+    ```
+    ```
+    del deepspeed-0.14.0+ce78a63-cp311-cp311-win_amd64.whl
+    ```
+
+14. Install Parler:
+    ```
+    pip install -r system\requirements\requirements_parler.txt
+    ```
+
+Ignore the `ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+coqui-tts 0.24.1 requires transformers<4.41.0,>=4.33.0, but you have transformers 4.43.3 which is incompatible.` message
+
+
+15. Clean the conda environment:
+    ```
+    .\alltalk_environment\conda\Scripts\conda clean --all --force-pkgs-dirs -y
+    ```
+
+16. Decide whether to downgrade transformers for XTTS streaming support:
+    - If you want XTTS streaming support, run the following, ignoring the error message similar to the one on Step 14:
+      ```
+      pip install transformers==4.40.2
+      ```
+    - If you don't need XTTS streaming support, keep transformers at version 4.43.3.
+
+Note: XTTS streaming may not work with versions of transformers other than 4.40.2.
+
+
+# Detailed Guide to creating the AllTalk Batch Files
+
+These batch files are used to start different parts of the AllTalk program. You'll need to edit them to match where you installed AllTalk on your computer.
+
+## What You Need to Change
+
+1. The parts of the script that points to the drive letter and the folder path to the `alltalk_tts` folder e.g. if your path was `C:\myfiles\alltalk_tts`, you would change `{drive_letter}:\{path_to_alltalk_folder}` to `C:\myfiles\alltalk_tts`
+2. The Python script name at the end of some files
+
+## Steps to Edit the Files
+
+1. Open Notepad and create a file. You will insert the **Main Example** from below and change the `{drive_letter}:\{path_to_alltalk_folder}` to match your correct folder path.
+2. Change all instances of `{drive_letter}:\{path_to_alltalk_folder}` to your AllTalk installation folder.
+3. Add and change the Python script call name at the end of the file (except for start_environment.bat). (call's are detailed below)
+4. Save the file with the correct file after making these changes and ensure they are BAT files and not TXT files.
+
+## Main Example (for all files)
+
+```batch
+@echo off 
+cd /D "{drive_letter}:\{path_to_alltalk_folder}\alltalk_tts\" 
+set CONDA_ROOT_PREFIX={drive_letter}:\{path_to_alltalk_folder}\alltalk_tts\alltalk_environment\conda 
+set INSTALL_ENV_DIR={drive_letter}:\{path_to_alltalk_folder}\alltalk_tts\alltalk_environment\env 
+call "{drive_letter}:\{path_to_alltalk_folder}\alltalk_tts\alltalk_environment\conda\condabin\conda.bat" activate "{drive_letter}:\{path_to_alltalk_folder}\alltalk_tts\alltalk_environment\env" 
+```
+
+Replace `{drive_letter}` and `{path_to_alltalk_folder}` with your specific path.
+For example: `C:\myfiles\alltalk_tts\`
+
+## Specific Changes for Each File
+
+After the common part above, each file (except start_environment.bat) has a line to run a Python script. Add the following line to the bottom of each file as follows:
+
+### start_alltalk.bat
+```
+call python script.py 
+```
+
+### start_diagnostics.bat
+```
+call python diagnostics.py 
+```
+
+### start_finetune.bat
+```
+call python finetune.py 
+```
+
+### start_environment.bat
+This file doesn't run a Python script, so no additional line is needed.
+
+## Example of a Fully Edited File
+
+Here's how `start_alltalk.bat` might look after editing, assuming `c:\myfiles\alltalk_tts` is the path you are using:
+
+```batch
+@echo off 
+cd /D "C:\myfiles\alltalk_tts\" 
+set CONDA_ROOT_PREFIX=C:\myfiles\alltalk_tts\alltalk_environment\conda 
+set INSTALL_ENV_DIR=C:\myfiles\alltalk_tts\alltalk_environment\env 
+call "C:\myfiles\alltalk_tts\alltalk_environment\conda\condabin\conda.bat" activate "C:\myfiles\alltalk_tts\alltalk_environment\env" 
+call python script.py 
+```
+
+## Important Notes
+
+- Make sure to keep the quotes (`"`) around the file paths.
+- Don't change anything else in the files unless you're sure you know what you're doing.
+- Ensure the files do not have a TXT extension on the name, but are Windows BAT files.
+- After making these changes, the batch files should work correctly with your AllTalk installation.
+
+</details>
+
 ---
 
 
