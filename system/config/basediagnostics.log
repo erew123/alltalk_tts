@@ -1,0 +1,521 @@
+Diagnostic log created at 2024-09-27 21:36:17.848570
+==================================================
+
+OPERATING SYSTEM:
+ OS Version: Windows 10.0.22631
+ Note: Windows 11 will list as build is 10.x.22xxx
+
+HARDWARE ENVIRONMENT:
+ CPU: Physical Cores: 8, Total Cores: 16, Max Frequency: 3800.0 MHz
+ System RAM: 19.46 GB available out of 31.34 GB total
+
+GPU INFORMATION:
+ Fri Sep 27 20:50:15 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.94                 Driver Version: 560.94         CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4070      WDDM  |   00000000:01:00.0  On |                  N/A |
+|  0%   39C    P8             13W /  200W |    1071MiB /  12282MiB |      1%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A      1508    C+G   ...nt.CBS_cw5n1h2txyewy\SearchHost.exe      N/A      |
+|    0   N/A  N/A      2756    C+G   ...\cef\cef.win7x64\steamwebhelper.exe      N/A      |
+|    0   N/A  N/A      5488    C+G   ...2txyewy\StartMenuExperienceHost.exe      N/A      |
+|    0   N/A  N/A      6504    C+G   ...ekyb3d8bbwe\PhoneExperienceHost.exe      N/A      |
+|    0   N/A  N/A      7212    C+G   ...t.LockApp_cw5n1h2txyewy\LockApp.exe      N/A      |
+|    0   N/A  N/A      8604    C+G   C:\Windows\explorer.exe                     N/A      |
+|    0   N/A  N/A      8852    C+G   ...ft Office\root\Office16\OUTLOOK.EXE      N/A      |
+|    0   N/A  N/A     11964    C+G   ...5.0_x64__cv1g1gvanyjgm\WhatsApp.exe      N/A      |
+|    0   N/A  N/A     12516    C+G   ...CBS_cw5n1h2txyewy\TextInputHost.exe      N/A      |
+|    0   N/A  N/A     13376    C+G   ...\cef\cef.win7x64\steamwebhelper.exe      N/A      |
+|    0   N/A  N/A     17632    C+G   ...nr4m\radeonsoftware\AMDRSSrcExt.exe      N/A      |
+|    0   N/A  N/A     18316    C+G   ...m\radeonsoftware\RadeonSoftware.exe      N/A      |
+|    0   N/A  N/A     18908    C+G   ...siveControlPanel\SystemSettings.exe      N/A      |
+|    0   N/A  N/A     19032    C+G   ...am Files\Microsoft VS Code\Code.exe      N/A      |
+|    0   N/A  N/A     21216    C+G   ...bytes\Anti-Malware\Malwarebytes.exe      N/A      |
+|    0   N/A  N/A     21476    C+G   ...crosoft\Edge\Application\msedge.exe      N/A      |
+|    0   N/A  N/A     21604    C+G   ...ta\Local\WeMod\app-9.10.3\WeMod.exe      N/A      |
+|    0   N/A  N/A     22344    C+G   ...__8wekyb3d8bbwe\WindowsTerminal.exe      N/A      |
+|    0   N/A  N/A     25292    C+G   ...5n1h2txyewy\ShellExperienceHost.exe      N/A      |
+|    0   N/A  N/A     26220      C   ...\alltalk_environment\env\python.exe      N/A      |
+|    0   N/A  N/A     27960    C+G   ...Brave-Browser\Application\brave.exe      N/A      |
++-----------------------------------------------------------------------------------------+
+
+CUDA:
+ CUDA Working: Success - CUDA is available and working.
+ CUDA_HOME   : N/A
+ CUDA Device : NVIDIA GeForce RTX 4070
+ CUDA Memory : 11.99 GB
+ CUDA Version: 12.1
+
+DISK INFORMATION:
+Drive: C:\ | Total: 1000.95 GB | Used: 852.08 GB | Free: 148.87 GB | Type: NTFS
+
+NETWORK PORT:
+ Port Status : Port 7851 is available.
+ Cublas64_11 Path: C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages\nvidia/cublas\bin\cublas64_11.dll
+
+PYTHON & PYTORCH:
+ Torch Version: 2.2.1
+ Python Version: 3.11.10
+ Python Version Info: sys.version_info(major=3, minor=11, micro=10, releaselevel='final', serial=0)
+ Python Executable: C:\myfiles\alltalk_tts\alltalk_environment\env\python.exe
+ Python Virtual Environment: N/A (Should be N/A when in Text-generation-webui Conda Python environment)
+ Conda Environment: C:\myfiles\alltalk_tts\alltalk_environment\env
+
+Python Search Path:
+  C:\myfiles\alltalk_tts
+  C:\myfiles\alltalk_tts\alltalk_environment\env\python311.zip
+  C:\myfiles\alltalk_tts\alltalk_environment\env\DLLs
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Lib
+  C:\myfiles\alltalk_tts\alltalk_environment\env
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages\win32
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages\win32\lib
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages\Pythonwin
+
+OS SEARCHPATH ENVIRONMENT:
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages\PyQt6\Qt6\bin
+  C:\myfiles\alltalk_tts\alltalk_environment\env
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Library\mingw-w64\bin
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Library\usr\bin
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Library\bin
+  C:\myfiles\alltalk_tts\alltalk_environment\env\Scripts
+  C:\myfiles\alltalk_tts\alltalk_environment\env\bin
+  C:\Program Files (x86)\Common Files\Oracle\Java\javapath
+  C:\Windows\system32
+  C:\Windows
+  C:\Windows\System32\Wbem
+  C:\Windows\System32\WindowsPowerShell\v1.0
+  C:\Program Files\dotnet
+  C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR
+  C:\Program Files\Git\cmd
+  C:\ProgramData\chocolatey\bin
+  C:
+  C:\Program Files\nodejs
+  C:\Program Files (x86)\Windows Kits\10\App Certification Kit
+  C:\Program Files\Microsoft VS Code\bin
+  C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common
+  C:\Program Files\NVIDIA Corporation\Nsight Compute 2023.1.0
+  C:\Program Files\eSpeak NG
+  C:\Program Files (x86)\eSpeak NG
+
+CONDA INFORMATION:
+ Conda Executable: C:\myfiles\alltalk_tts\alltalk_environment\conda\condabin\..\Scripts\conda.exe
+ Conda Version: 24.4.0
+ Current Environment: C:\myfiles\alltalk_tts\alltalk_environment\env
+ Conda Environments:
+  - C:\myfiles\alltalk_tts\alltalk_environment\conda
+  - C:\myfiles\alltalk_tts\alltalk_environment\env
+
+CONDA PACKAGES IN CURRENT ENVIRONMENT:
+
+ CONDA-FORGE PACKAGES:
+  aom                            Version: 3.9.1           Channel: conda-forge
+  cairo                          Version: 1.18.0          Channel: conda-forge
+  ffmpeg                         Version: 7.0.2           Channel: conda-forge
+  fontconfig                     Version: 2.14.2          Channel: conda-forge
+  freetype                       Version: 2.12.1          Channel: conda-forge
+  harfbuzz                       Version: 9.0.0           Channel: conda-forge
+  icu                            Version: 75.1            Channel: conda-forge
+  lcms2                          Version: 2.15            Channel: conda-forge
+  libexpat                       Version: 2.6.3           Channel: conda-forge
+  libglib                        Version: 2.82.1          Channel: conda-forge
+  libiconv                       Version: 1.17            Channel: conda-forge
+  libintl                        Version: 0.22.5          Channel: conda-forge
+  libopus                        Version: 1.3.1           Channel: conda-forge
+  libpng                         Version: 1.6.44          Channel: conda-forge
+  libsqlite                      Version: 3.46.1          Channel: conda-forge
+  libxcb                         Version: 1.13            Channel: conda-forge
+  libxml2                        Version: 2.12.7          Channel: conda-forge
+  libzlib                        Version: 1.3.1           Channel: conda-forge
+  openh264                       Version: 2.4.1           Channel: conda-forge
+  openssl                        Version: 3.3.2           Channel: conda-forge
+  pcre2                          Version: 10.44           Channel: conda-forge
+  pixman                         Version: 0.43.4          Channel: conda-forge
+  python                         Version: 3.11.10         Channel: conda-forge
+  python_abi                     Version: 3.11            Channel: conda-forge
+  svt-av1                        Version: 2.2.1           Channel: conda-forge
+  tk                             Version: 8.6.13          Channel: conda-forge
+  vc14_runtime                   Version: 14.40.33810     Channel: conda-forge
+  vs2015_runtime                 Version: 14.40.33810     Channel: conda-forge
+  x264                           Version: 1!164.3095      Channel: conda-forge
+  x265                           Version: 3.5             Channel: conda-forge
+  xorg-libxau                    Version: 1.0.11          Channel: conda-forge
+  xorg-libxdmcp                  Version: 1.1.3           Channel: conda-forge
+  zlib                           Version: 1.3.1           Channel: conda-forge
+  zstd                           Version: 1.5.6           Channel: conda-forge
+
+ PKGS/MAIN PACKAGES:
+  blas                           Version: 1.0             Channel: pkgs/main
+  brotli-python                  Version: 1.0.9           Channel: pkgs/main
+  bzip2                          Version: 1.0.8           Channel: pkgs/main
+  ca-certificates                Version: 2024.7.2        Channel: pkgs/main
+  certifi                        Version: 2024.8.30       Channel: pkgs/main
+  charset-normalizer             Version: 3.3.2           Channel: pkgs/main
+  dav1d                          Version: 1.2.1           Channel: pkgs/main
+  expat                          Version: 2.6.3           Channel: pkgs/main
+  filelock                       Version: 3.13.1          Channel: pkgs/main
+  font-ttf-dejavu-sans-mono      Version: 2.37            Channel: pkgs/main
+  font-ttf-inconsolata           Version: 2.001           Channel: pkgs/main
+  font-ttf-source-code-pro       Version: 2.030           Channel: pkgs/main
+  font-ttf-ubuntu                Version: 0.83            Channel: pkgs/main
+  fonts-anaconda                 Version: 1               Channel: pkgs/main
+  fonts-conda-ecosystem          Version: 1               Channel: pkgs/main
+  gmpy2                          Version: 2.1.2           Channel: pkgs/main
+  graphite2                      Version: 1.3.14          Channel: pkgs/main
+  idna                           Version: 3.7             Channel: pkgs/main
+  intel-openmp                   Version: 2023.1.0        Channel: pkgs/main
+  jinja2                         Version: 3.1.4           Channel: pkgs/main
+  jpeg                           Version: 9e              Channel: pkgs/main
+  lerc                           Version: 3.0             Channel: pkgs/main
+  libdeflate                     Version: 1.17            Channel: pkgs/main
+  libffi                         Version: 3.4.4           Channel: pkgs/main
+  libjpeg-turbo                  Version: 2.0.0           Channel: pkgs/main
+  libtiff                        Version: 4.5.0           Channel: pkgs/main
+  libuv                          Version: 1.48.0          Channel: pkgs/main
+  libwebp-base                   Version: 1.3.2           Channel: pkgs/main
+  lz4-c                          Version: 1.9.4           Channel: pkgs/main
+  markupsafe                     Version: 2.1.3           Channel: pkgs/main
+  mkl                            Version: 2023.1.0        Channel: pkgs/main
+  mkl-service                    Version: 2.4.0           Channel: pkgs/main
+  mkl_fft                        Version: 1.3.10          Channel: pkgs/main
+  mkl_random                     Version: 1.2.7           Channel: pkgs/main
+  mpc                            Version: 1.1.0           Channel: pkgs/main
+  mpfr                           Version: 4.0.2           Channel: pkgs/main
+  mpir                           Version: 3.0.0           Channel: pkgs/main
+  mpmath                         Version: 1.3.0           Channel: pkgs/main
+  numpy                          Version: 1.26.4          Channel: pkgs/main
+  numpy-base                     Version: 1.26.4          Channel: pkgs/main
+  openjpeg                       Version: 2.5.2           Channel: pkgs/main
+  packaging                      Version: 24.1            Channel: pkgs/main
+  pip                            Version: 24.2            Channel: pkgs/main
+  pthread-stubs                  Version: 0.3             Channel: pkgs/main
+  pysocks                        Version: 1.7.1           Channel: pkgs/main
+  pyyaml                         Version: 6.0.1           Channel: pkgs/main
+  requests                       Version: 2.32.3          Channel: pkgs/main
+  setuptools                     Version: 75.1.0          Channel: pkgs/main
+  sqlite                         Version: 3.45.3          Channel: pkgs/main
+  sympy                          Version: 1.13.2          Channel: pkgs/main
+  tbb                            Version: 2021.8.0        Channel: pkgs/main
+  typing_extensions              Version: 4.11.0          Channel: pkgs/main
+  ucrt                           Version: 10.0.20348.0    Channel: pkgs/main
+  urllib3                        Version: 2.2.2           Channel: pkgs/main
+  vc                             Version: 14.40           Channel: pkgs/main
+  wheel                          Version: 0.44.0          Channel: pkgs/main
+  win_inet_pton                  Version: 1.1.0           Channel: pkgs/main
+  xz                             Version: 5.4.6           Channel: pkgs/main
+  yaml                           Version: 0.2.5           Channel: pkgs/main
+
+ PKGS/MSYS2 PACKAGES:
+  m2w64-gcc-libgfortran          Version: 5.3.0           Channel: pkgs/msys2
+  m2w64-gcc-libs                 Version: 5.3.0           Channel: pkgs/msys2
+  m2w64-gcc-libs-core            Version: 5.3.0           Channel: pkgs/msys2
+  m2w64-gmp                      Version: 6.1.0           Channel: pkgs/msys2
+  m2w64-libwinpthread-git        Version: 5.0.0.4634.697f757 Channel: pkgs/msys2
+  msys2-conda-epoch              Version: 20160418        Channel: pkgs/msys2
+
+ OTHER PACKAGES:
+  faiss-cpu                      Version: 1.8.0           Channel: pytorch
+  libfaiss                       Version: 1.8.0           Channel: pytorch
+  pytorch                        Version: 2.2.1           Channel: pytorch
+  pytorch-cuda                   Version: 12.1            Channel: pytorch
+  pytorch-mutex                  Version: 1.0             Channel: pytorch
+
+PACKAGE VERSIONS vs REQUIREMENTS FILE:
+ coqui-tts           Required: >= 0.24.1        Installed: 0.24.1
+ faster-whisper      Required: >= 1.0.3         Installed: 1.0.3
+ fuzzywuzzy          Required: >= 0.18.0        Installed: 0.18.0
+ gradio              Required: >= 4.26.0        Installed: 4.32.2
+ importlib_metadata  Required: >= 7.2.1         Installed: 8.5.0
+ inputimeout         Required: >= 1.0.4         Installed: 1.0.4
+ Jinja2              Required: >= 3.1.4         Installed: 3.1.4
+ librosa             Required: >= 0.10.2.post1  Installed: 0.10.2.post1
+ nvidia-cublas-cu11  Required: >= 11.11.3.6     Installed: 11.11.3.6
+ nvidia-cudnn-cu11   Required: >= 9.1.1.17      Installed: 9.4.0.58
+ onnxruntime-gpu     Required: >= 1.18.1        Installed: 1.19.2
+ pydantic            Required: >= 2.8.2         Installed: 2.9.2
+ python-ffmpeg       Required: >= 2.0.12        Installed: 2.0.12
+ python-Levenshtein  Required: >= 0.25.1        Installed: 0.26.0
+ praat-parselmouth   Required: >= 0.4.4         Installed: 0.4.4
+ pyworld             Required: >= 0.3.4         Installed: 0.3.4
+ sounddevice         Required: >= 0.4.7         Installed: 0.5.0
+ soundfile           Required: >= 0.12.1        Installed: 0.12.1
+ spacy               Required: >= 3.7.1         Installed: 3.7.6
+ torchcrepe          Required: >= 0.0.2         Installed: 0.0.23
+ tqdm                Required: >= 4.66.5        Installed: 4.66.5
+ unidic-lite         Required: >= 1.0.8         Installed: 1.0.8
+ uvicorn             Required: >= 0.29.0        Installed: 0.31.0
+ pillow              Required: == 10.3.0        Installed: 10.3.0
+ pypinyin            Required: >= 0.52.0        Installed: 0.53.0
+ word2number         Required: >= 1.1           Installed: 1.1
+ cutlet              Required: == 0.4.0         Installed: 0.4.0
+ fugashi             Required: == 1.3.1         Installed: 1.3.1
+ fastapi             Required: == 0.112.2       Installed: 0.112.2
+
+PYTHON PACKAGES:
+ absl-py                   = 2.1.0
+ aiofiles                  = 23.2.1
+ aiohappyeyeballs          = 2.4.2
+ aiohttp                   = 3.10.6
+ aiosignal                 = 1.3.1
+ altair                    = 5.4.1
+ annotated-types           = 0.7.0
+ antlr4-python3-runtime    = 4.9.3
+ anyascii                  = 0.3.2
+ anyio                     = 4.6.0
+ argbind                   = 0.3.9
+ asttokens                 = 2.4.1
+ attrs                     = 24.2.0
+ audioread                 = 3.0.1
+ av                        = 12.3.0
+ babel                     = 2.16.0
+ bitarray                  = 2.9.2
+ blis                      = 0.7.11
+ Brotli                    = 1.0.9
+ catalogue                 = 2.0.10
+ certifi                   = 2024.8.30
+ cffi                      = 1.17.1
+ charset-normalizer        = 3.3.2
+ click                     = 8.1.7
+ cloudpathlib              = 0.19.0
+ colorama                  = 0.4.6
+ coloredlogs               = 15.0.1
+ confection                = 0.1.5
+ contourpy                 = 1.3.0
+ coqpit                    = 0.0.17
+ coqui-tts                 = 0.24.1
+ coqui-tts-trainer         = 0.1.5
+ ctranslate2               = 4.4.0
+ cutlet                    = 0.4.0
+ cycler                    = 0.12.1
+ cymem                     = 2.0.8
+ Cython                    = 3.0.11
+ dateparser                = 1.1.8
+ decorator                 = 5.1.1
+ deepspeed                 = 0.14.0+ce78a63
+ descript-audiotools       = 0.7.2
+ descript-audio-codec      = 1.0.0
+ docopt                    = 0.6.2
+ docstring_parser          = 0.16
+ einops                    = 0.8.0
+ encodec                   = 0.1.1
+ executing                 = 2.1.0
+ fairseq                   = 0.12.4
+ faiss                     = 1.8.0
+ fastapi                   = 0.112.2
+ faster-whisper            = 1.0.3
+ ffmpy                     = 0.4.0
+ filelock                  = 3.13.1
+ fire                      = 0.6.0
+ flatbuffers               = 24.3.25
+ flatten-dict              = 0.4.2
+ fonttools                 = 4.54.1
+ frozenlist                = 1.4.1
+ fsspec                    = 2024.9.0
+ fugashi                   = 1.3.1
+ future                    = 1.0.0
+ fuzzywuzzy                = 0.18.0
+ gmpy2                     = 2.1.2
+ gradio                    = 4.32.2
+ gradio_client             = 0.17.0
+ grpcio                    = 1.66.1
+ gruut                     = 2.2.3
+ gruut-ipa                 = 0.13.0
+ gruut_lang_de             = 2.0.1
+ gruut_lang_en             = 2.0.1
+ gruut_lang_es             = 2.0.1
+ gruut_lang_fr             = 2.0.2
+ h11                       = 0.14.0
+ hangul-romanize           = 0.1.0
+ hjson                     = 3.1.0
+ httpcore                  = 1.0.5
+ httpx                     = 0.27.2
+ huggingface-hub           = 0.25.1
+ humanfriendly             = 10.0
+ hydra-core                = 1.3.2
+ idna                      = 3.7
+ importlib_metadata        = 8.5.0
+ importlib_resources       = 6.4.5
+ inflect                   = 7.4.0
+ inputimeout               = 1.0.4
+ ipython                   = 8.27.0
+ jaconv                    = 0.4.0
+ jedi                      = 0.19.1
+ Jinja2                    = 3.1.4
+ joblib                    = 1.4.2
+ jsonlines                 = 1.2.0
+ jsonschema                = 4.23.0
+ jsonschema-specifications = 2023.12.1
+ julius                    = 0.2.7
+ kiwisolver                = 1.4.7
+ langcodes                 = 3.4.1
+ language_data             = 1.2.0
+ lazy_loader               = 0.4
+ Levenshtein               = 0.26.0
+ librosa                   = 0.10.2.post1
+ llvmlite                  = 0.43.0
+ local-attention           = 1.9.15
+ lxml                      = 5.3.0
+ marisa-trie               = 1.2.0
+ Markdown                  = 3.7
+ markdown2                 = 2.5.0
+ markdown-it-py            = 3.0.0
+ MarkupSafe                = 2.1.3
+ matplotlib                = 3.9.2
+ matplotlib-inline         = 0.1.7
+ mdurl                     = 0.1.2
+ mkl_fft                   = 1.3.10
+ mkl_random                = 1.2.7
+ mkl-service               = 2.4.0
+ mojimoji                  = 0.0.13
+ more-itertools            = 10.5.0
+ mpmath                    = 1.3.0
+ msgpack                   = 1.1.0
+ multidict                 = 6.1.0
+ murmurhash                = 1.0.10
+ narwhals                  = 1.8.4
+ networkx                  = 2.8.8
+ ninja                     = 1.11.1.1
+ num2words                 = 0.5.13
+ numba                     = 0.60.0
+ numpy                     = 1.26.4
+ nvidia-cublas-cu11        = 11.11.3.6
+ nvidia-cuda-nvrtc-cu11    = 11.8.89
+ nvidia-cudnn-cu11         = 9.4.0.58
+ omegaconf                 = 2.3.0
+ onnxruntime               = 1.19.2
+ onnxruntime-gpu           = 1.19.2
+ orjson                    = 3.10.7
+ packaging                 = 24.1
+ pandas                    = 2.2.3
+ parler_tts                = 0.2
+ parso                     = 0.8.4
+ pillow                    = 10.3.0
+ pip                       = 24.2
+ platformdirs              = 4.3.6
+ pooch                     = 1.8.2
+ portalocker               = 2.10.1
+ praat-parselmouth         = 0.4.4
+ preshed                   = 3.0.9
+ prompt_toolkit            = 3.0.48
+ protobuf                  = 3.19.6
+ psutil                    = 6.0.0
+ pure_eval                 = 0.2.3
+ pycparser                 = 2.22
+ pydantic                  = 2.9.2
+ pydantic_core             = 2.23.4
+ pydub                     = 0.25.1
+ pyee                      = 12.0.0
+ Pygments                  = 2.18.0
+ pyloudnorm                = 0.1.1
+ pynndescent               = 0.5.13
+ pynvml                    = 11.5.3
+ pyparsing                 = 3.1.4
+ pypinyin                  = 0.53.0
+ PyQt6                     = 6.7.1
+ PyQt6-Qt6                 = 6.7.2
+ PyQt6_sip                 = 13.8.0
+ pyreadline3               = 3.5.4
+ pysbd                     = 0.3.4
+ PySocks                   = 1.7.1
+ pystoi                    = 0.4.1
+ python-crfsuite           = 0.9.10
+ python-dateutil           = 2.9.0.post0
+ python-ffmpeg             = 2.0.12
+ python-Levenshtein        = 0.26.0
+ python-multipart          = 0.0.10
+ pytz                      = 2024.2
+ pywin32                   = 306
+ pyworld                   = 0.3.4
+ PyYAML                    = 6.0.1
+ py-cpuinfo                = 9.0.0
+ randomname                = 0.2.1
+ RapidFuzz                 = 3.10.0
+ referencing               = 0.35.1
+ regex                     = 2024.9.11
+ requests                  = 2.32.3
+ resampy                   = 0.4.3
+ rich                      = 13.8.1
+ rotary-embedding-torch    = 0.8.3
+ rpds-py                   = 0.20.0
+ ruff                      = 0.6.8
+ sacrebleu                 = 2.4.3
+ safetensors               = 0.4.5
+ scikit-learn              = 1.5.2
+ scipy                     = 1.14.1
+ semantic-version          = 2.10.0
+ sentencepiece             = 0.2.0
+ setuptools                = 75.1.0
+ shellingham               = 1.5.4
+ six                       = 1.16.0
+ smart-open                = 7.0.4
+ sniffio                   = 1.3.1
+ sounddevice               = 0.5.0
+ soundfile                 = 0.12.1
+ soxr                      = 0.5.0.post1
+ spacy                     = 3.7.6
+ spacy-legacy              = 3.0.12
+ spacy-loggers             = 1.0.5
+ srsly                     = 2.4.8
+ stack-data                = 0.6.3
+ starlette                 = 0.38.6
+ SudachiDict-core          = 20240716
+ SudachiPy                 = 0.6.8
+ sympy                     = 1.13.2
+ tabulate                  = 0.9.0
+ tensorboard               = 2.18.0
+ tensorboard-data-server   = 0.7.2
+ termcolor                 = 2.4.0
+ thinc                     = 8.2.5
+ threadpoolctl             = 3.5.0
+ tokenizers                = 0.19.1
+ tomlkit                   = 0.12.0
+ torch                     = 2.2.1
+ torchaudio                = 2.2.1
+ torchcrepe                = 0.0.23
+ torchvision               = 0.17.1
+ torch-stoi                = 0.2.2
+ tqdm                      = 4.66.5
+ traitlets                 = 5.14.3
+ transformers              = 4.40.2
+ typeguard                 = 4.3.0
+ typer                     = 0.12.5
+ typing_extensions         = 4.11.0
+ tzdata                    = 2024.2
+ tzlocal                   = 5.2
+ umap-learn                = 0.5.6
+ unidic-lite               = 1.0.8
+ urllib3                   = 2.2.2
+ uvicorn                   = 0.31.0
+ wasabi                    = 1.1.3
+ wcwidth                   = 0.2.13
+ weasel                    = 0.4.1
+ websockets                = 11.0.3
+ Werkzeug                  = 3.0.4
+ wheel                     = 0.44.0
+ win-inet-pton             = 1.1.0
+ word2number               = 1.1
+ wrapt                     = 1.16.0
+ yarl                      = 1.13.1
+ zipp                      = 3.20.2
+
+DeepSpeed Installation Requirements:
+  OS     : Windows
+  Python : 3.11.10
+  PyTorch: 2.2.1
+  CUDA   : 12.1
+
+To install DeepSpeed, run the following command based on your environment:
+  pip install deepspeed==<version> --no-cache-dir
+Ensure to choose the correct DeepSpeed version matching your environment.
