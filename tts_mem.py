@@ -71,11 +71,13 @@ def ensure_flask_dependencies():
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "flask[async]"])
             print("Flask async support installed successfully.")
-            importlib.reload(flask)
+            import flask
+            importlib.reload(flask)  # Reload the module to ensure fresh state after install
         except subprocess.CalledProcessError as e:
             print(f"Failed to install Flask async support. Error: {e}")
             print("Please run 'pip install flask[async]' manually.")
             sys.exit(1)
+
     # Check for Flask-CORS
     try:
         import flask_cors
