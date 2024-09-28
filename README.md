@@ -46,9 +46,12 @@ There is a welcome screen that covers a few other bits, along with the built in 
 
 ---
 
-### Windows Systems
-- You need to install **Espeak-ng**. You will find a copy of this in the `...\alltalk_tts_v2\system\espeak-ng\` folder. If you dont install it, you will get a warning and various TTS engines will probably crash.
-- If you have NEVER run Python on your system EVER, Windows users must install C++ development tools for Python to compile Python packages. This ia a Python requirement not an AllTalk specifc requirement. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
+### Windows Systems Requirements
+Before installing AllTalk you will need to have or install the following:
+
+- You need to install **Git** to clone Github repositories. [Instructions here](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-WINDOWS-%E2%80%90-Git)
+- You need to install **Microsoft C++ Build Tools** and **Windows SDK** for Python to function correctly. [Instructions here](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-WINDOWS-%E2%80%90-Python-C-&-SDK-Requirements)
+- You need to install **Espeak-ng** for multiple TTS engines to function. [Instructions here](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-WINDOWS-%E2%80%90-Espeak%E2%80%90ng)
 
 ### Linux Systems
 You need to install a few bits (depending on your Linux flavour), otherwise DeepSpeed will fail and some TTS engines not work. At your terminal type the following:
