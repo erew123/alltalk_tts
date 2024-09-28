@@ -14,6 +14,9 @@ import traceback
 import signal
 from pathlib import Path
 from datetime import datetime
+import winreg
+from importlib.metadata import version as get_version, PackageNotFoundError
+from packaging import version
 
 # Check and install psutil if necessary
 try:
@@ -98,6 +101,75 @@ def get_requirements_file():
     except (ValueError, IndexError):
         return str(requirements_dir / "requirements_standalone.txt")
 
+def check_visual_cpp_build_tools():
+    possible_locations = [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio",
+        "C:\\Program Files\\Microsoft Visual Studio",
+    ]
+    
+    found_tools = []
+    
+    for base_path in possible_locations:
+        if os.path.exists(base_path):
+            for year in ["2022", "2019", "2017", "2015"]:
+                vs_path = os.path.join(base_path, year)
+                if os.path.exists(vs_path):
+                    # Check for Build Tools
+                    bt_path = os.path.join(vs_path, "BuildTools")
+                    if os.path.exists(bt_path):
+                        vcvars_path = os.path.join(bt_path, "VC", "Auxiliary", "Build", "vcvars64.bat")
+                        if os.path.exists(vcvars_path):
+                            found_tools.append(f"Visual Studio {year} Build Tools (Path: {bt_path})")
+                    
+                    # Check for full Visual Studio installation
+                    common_path = os.path.join(vs_path, "Common7", "IDE", "devenv.exe")
+                    if os.path.exists(common_path):
+                        found_tools.append(f"Visual Studio {year} (Full) (Path: {vs_path})")
+    
+    return found_tools
+
+def check_windows_sdk():
+    sdk_paths = [
+        r"C:\Program Files (x86)\Windows Kits\10",
+        r"C:\Program Files\Windows Kits\10",
+    ]
+    
+    found_sdks = []
+    for path in sdk_paths:
+        if os.path.exists(path):
+            include_path = os.path.join(path, "Include")
+            if os.path.exists(include_path):
+                sdk_versions = [d for d in os.listdir(include_path) if os.path.isdir(os.path.join(include_path, d))]
+                for sdk_version in sdk_versions:
+                    found_sdks.append((sdk_version, path))
+    
+    return found_sdks
+
+def check_windows_version():
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+        build = winreg.QueryValueEx(key, "CurrentBuildNumber")[0]
+        if int(build) >= 22000:
+            return "Windows 11"
+        else:
+            return "Windows 10"
+    except WindowsError:
+        return "Unknown Windows version"
+
+def check_setuptools_version():
+    try:
+        setuptools_version = get_version("setuptools")
+        return setuptools_version
+    except PackageNotFoundError:
+        return None
+
+def check_espeak_ng():
+    try:
+        result = subprocess.run(['espeak-ng', '--version'], capture_output=True, text=True)
+        return result.stdout.strip()
+    except FileNotFoundError:
+        return None
+
 def setup_logging():
     log_file = 'diagnostics.log'
     
@@ -126,9 +198,10 @@ def setup_logging():
 
         logging.info(f"Diagnostic log created at {datetime.now()}")
         logging.info("="*50 + "\n")
-        print(f"  New {log_file} has been set up successfully.\n\n")
+        print(f"  New {log_file} has been set up successfully.\n")
     except Exception as e:
         print(f"  Error setting up logging: {e}")
+    print(f"  Gathering System info....")        
 
 def get_gpu_info():
     try:
@@ -330,6 +403,8 @@ def log_system_info():
     path_env = os.environ.get('PATH', 'N/A')
     file_name = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
     found_paths = find_files_in_path_with_wildcard(file_name)
+    
+    
     requirements_file = get_requirements_file()
     
     if requirements_file:
@@ -375,6 +450,44 @@ def log_system_info():
         logging.info(f" Cublas64_11 Path: {', '.join(found_paths)}")
     else:
         logging.info(f" Cublas64_11 Path: Not found in any search path directories.")
+        
+    if platform.system() == "Windows":
+        windows_version = check_windows_version()
+        build_tools = check_visual_cpp_build_tools()
+        sdks = check_windows_sdk()
+        setuptools_version = check_setuptools_version()
+        espeak_ng_version = check_espeak_ng()
+        
+        logging.info("\nWindows C++ Build tools & Windows SDK:")
+        logging.info(f" Windows Version: {windows_version}")
+        
+        if build_tools:
+            logging.info(" Visual C++ Build Tools and/or Visual Studio found:")
+            for tool in build_tools:
+                logging.info(f" {tool}")
+        else:
+            logging.info(" No Visual C++ Build Tools or Visual Studio found.")
+        
+        if sdks:
+            logging.info("\nWindows SDK(s) found:")
+            for sdk_version, path in sdks:
+                logging.info(f" SDK Version: {sdk_version}")
+                logging.info(f" Path: {path}")
+        else:
+            logging.info(" No Windows SDKs found.")
+        
+        if setuptools_version:
+            logging.info(f" Python setuptools version: {setuptools_version}")
+        else:
+            logging.info(" Python setuptools not found.")
+            
+            
+        logging.info("\nWindows Espeak-ng:")            
+        if espeak_ng_version:
+            logging.info(f" Espeak-ng version: {espeak_ng_version}")
+        else:
+            logging.info(" Espeak-ng not found.")      
+           
     logging.info("\nPYTHON & PYTORCH:")
     logging.info(f" Torch Version: {torch_version}")
     logging.info(f" Python Version: {python_version}")
@@ -397,7 +510,7 @@ def log_system_info():
         logging.info(f" Current Environment: {conda_info['current_env']}")
         logging.info(" Conda Environments:")
         for env in conda_info['env_list']:
-            logging.info(f"  - {env}")
+            logging.info(f"  {env}")
         
         logging.info("\nCONDA PACKAGES IN CURRENT ENVIRONMENT:")
         for category in ['conda-forge', 'pkgs/main', 'pkgs/msys2', 'other']:
@@ -405,7 +518,7 @@ def log_system_info():
                 logging.info(f"\n {category.upper()} PACKAGES:")
                 for package, details in conda_info['packages'][category].items():
                     logging.info(f"  {package:<30} Version: {details['version']:<15} Channel: {details['channel']}")    
-        
+       
     if required_packages:
         logging.info("\nPACKAGE VERSIONS vs REQUIREMENTS FILE:")
         max_package_length = max(len(package) for package in required_packages.keys())
@@ -472,13 +585,29 @@ def log_system_info():
     print(f"\033[0m  'text-generation-webui' listed in the path of the above folders. If you dont")
     print(f"\033[0m  see them mentioned, you have probably not started the correct Python virtual")
     print(f"\033[0m  environment.")
+
+    if platform.system() == "Windows":
+        print(f"\n\033[94mWindows C++ Build tools & Windows SDK:\033[0m")
+        print(f"\033[94m Windows Version:\033[0m \033[92m{windows_version}\033[0m")
+        if sdks:
+            print("\033[94m Windows SDK:\033[0m \033[92mFound\033[0m")
+        else:
+            print("\033[94mWindows SDK:\033[0m \033[91mNot Found\033[0m")        
+        if build_tools:
+            print("\033[94m Visual C++ Build Tools:\033[0m \033[92mFound\033[0m")
+        else:
+            print("\033[94m Visual C++ Build Tools:\033[0m \033[91mNot Found\033[0m")
+        print(f"\033[94m Python setuptools version:\033[0m \033[92m{setuptools_version if setuptools_version else 'Not Found'}\033[0m")
+        print(f"\n\033[94mWindows Espeak-ng:\033[0m")
+        print(f"\033[94m Espeak-ng:\033[0m \033[92m{'Installed' if espeak_ng_version else 'Not Found'}\033[0m")    
+    
     print(f"\n\033[94mConda Information:\033[0m")
     if isinstance(conda_info, str):
         print(f"\033[92m{conda_info}\033[0m")
     else:
-        print(f"\033[94mConda Executable:\033[0m \033[92m{conda_info['conda_exe']}\033[0m")
-        print(f"\033[94mConda Version:\033[0m \033[92m{conda_info['version']}\033[0m")
-        print(f"\033[94mCurrent Environment:\033[0m \033[92m{conda_info['current_env']}\033[0m")
+        print(f"\033[94m Conda Executable:\033[0m \033[92m{conda_info['conda_exe']}\033[0m")
+        print(f"\033[94m Conda Version:\033[0m \033[92m{conda_info['version']}\033[0m")
+        print(f"\033[94m Current Environment:\033[0m \033[92m{conda_info['current_env']}\033[0m")
         
         # Check for faiss-cpu in conda-forge and pytorch, and ffmpeg in conda-forge
         print(f"\n\033[94mKey Conda Packages:\033[0m")
@@ -582,6 +711,7 @@ class PackageComparisonTool(QWidget):
         super().__init__()
         self.initUI()
 
+
     def initUI(self):
         main_layout = QVBoxLayout()  # Main layout is vertical
 
@@ -606,16 +736,29 @@ class PackageComparisonTool(QWidget):
         # Instructions
         instructions = QLabel(
             "<b>INSTRUCTIONS:</b><br><br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;1. <b>Base Diagnostics File:</b> Load the base diagnostics log file (e.g. from a working setup). Try `/system/config/basediagnostics.log`<br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;2. <b>Comparison Diagnostics File:</b> Load your current diagnostics log file<br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;3. Click the 'Compare' button to see differences<br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;4. Review results in the table and organized results<br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;5. Use 'Copy Commands' to copy pip commands to manually use at the Python command prompt.<br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;6. Optionally, use 'Run Pip Commands' to apply changes (requires AllTalk's Python environment is activated).<br>"
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can watch the installation at the terminal/command prompt.<br>"
+            "1. Base Diagnostics File: Load the base diagnostics log file (e.g. from a working setup). Try `/system/config/basediagnostics.log`<br>"
+            "2. Comparison Diagnostics File: Load your current diagnostics log file<br>"
+            "3. Click the 'Compare' button to see differences<br>"
+            "4. Review results in the table and organized results<br>"
+            "5. Use 'Copy Commands' to copy pip commands to manually use at the Python command prompt.<br>"
+            "6. Optionally, use 'Run Pip Commands' to apply changes (requires AllTalk's Python environment is activated). You can watch the installation at the terminal/command prompt.<br>"
+            "7. Windows users, if your Windows C++ tools, Windows SDK or Espeak-ng are not installed, please re-read the installation requirements on Github.<br>"
         )
         instructions.setWordWrap(True)
         main_layout.addWidget(instructions)
+
+        # Windows-specific information
+        self.windows_info_layout = QHBoxLayout()
+        self.cpp_build_tools_label = QLabel("C++ Build Tools: <span style='color: gray;'>Checking...</span>")
+        self.sdk_label = QLabel("Windows SDK: <span style='color: gray;'>Checking...</span>")
+        self.espeak_ng_label = QLabel("Espeak-ng: <span style='color: gray;'>Checking...</span>")
+        
+        self.windows_info_layout.addWidget(self.cpp_build_tools_label)
+        self.windows_info_layout.addWidget(self.sdk_label)
+        self.windows_info_layout.addWidget(self.espeak_ng_label)
+        
+        main_layout.addLayout(self.windows_info_layout)
+        main_layout.addSpacing(10)  # Add some space between Windows info and file inputs
 
         # File inputs
         file_layout = QHBoxLayout()
@@ -648,9 +791,8 @@ class PackageComparisonTool(QWidget):
         main_layout.addLayout(file_layout)
 
         # Compare button
-        compare_button = QPushButton("Compare the Base and Comparision log files")
+        compare_button = QPushButton("Compare the Base and Comparison log files")
         compare_button.clicked.connect(self.compare_packages)
-
         main_layout.addWidget(compare_button)
         main_layout.addSpacing(20)
 
@@ -708,7 +850,9 @@ class PackageComparisonTool(QWidget):
         self.setLayout(main_layout)
         self.setGeometry(100, 100, 1200, 800)
         self.setWindowTitle('Advanced Package Comparison Tool')
-        self.show()
+
+        # Run the checks immediately
+        self.update_windows_info_display()
 
     def browse_file(self, text_edit):
         file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Text Files (*.txt);;Log Files (*.log);;All Files (*)")
@@ -825,12 +969,34 @@ class PackageComparisonTool(QWidget):
                 different.append(f"{package}: {base_version} (Base) vs {compare_version} (Compare)")
 
         self.pip_commands.setText("\n".join(pip_commands))
-        
-        organized_results = "Missing in Comparison (present in Base):\n" + "\n".join(sorted(missing)) + "\n\n"
+
+        organized_results = "Missing in Comparison (present in Base):\n" + "\n".join(sorted(missing)) + "\n\n"  
         organized_results += "Different Versions:\n" + "\n".join(sorted(different)) + "\n\n"
         organized_results += "Matching Versions:\n" + "\n".join(sorted(matching)) + "\n\n"
-        organized_results += "Additional in Comparison (not in Base):\n" + "\n".join(sorted(additional))
-        self.org_results.setText(organized_results)
+        organized_results += "Additional in Comparison (not in Base):\n" + "\n".join(sorted(additional))                         
+        self.org_results.setText(organized_results)       
+
+    def update_windows_info_display(self):
+        if platform.system() == "Windows":
+            build_tools = check_visual_cpp_build_tools()
+            sdks = check_windows_sdk()
+            espeak_ng_version = check_espeak_ng()
+
+            self.update_label(self.cpp_build_tools_label, "Windows C++ Build Tools", 'Found' if build_tools else 'Not Found')
+            self.update_label(self.sdk_label, "Windows SDK", 'Found' if sdks else 'Not Found')
+            self.update_label(self.espeak_ng_label, "Windows Espeak-ng", 'Installed' if espeak_ng_version else 'Not Found')
+        else:
+            self.windows_info_layout.setVisible(False)
+
+    def update_label(self, label, title, status):
+        color = "green" if status in ['Found', 'Installed'] else "red"
+        label.setText(f"{title}: <span style='color: {color};'>{status}</span>")
+
+    def set_label_color(self, label, status):
+        if status in ['Found', 'Installed']:
+            label.setStyleSheet("color: green;")
+        else:
+            label.setStyleSheet("color: red;")  
 
     def copy_pip_commands(self):
         clipboard = QApplication.clipboard()
@@ -863,9 +1029,17 @@ def signal_handler(signum, frame):
 # Set up the signal handler at the global level
 signal.signal(signal.SIGINT, signal_handler)
 
+def clear_screen():
+    # Detect the operating system and clear the terminal screen
+    if platform.system() == "Windows":
+        os.system("cls")
+    else:
+        os.system("clear")
 
 def show_menu():
     print("\n\n\n\033[94m  AllTalk Diagnostics Tool Menu\033[0m")
+    print("\n  Ensure you have started AllTalk'a Python Environment with the start_environment file")
+    print("  before running this tool. TGWUI users will use cmd_{your-os} from the TGWUI folder.")
     print("\n  1. \033[93mGenerate a \033[92mdiagnostics.log\033[93m file\033[0m")
     print("     This option creates a new detailed log file of your system's configuration,")
     print("     including OS, hardware, Python environment, and installed packages. Use this")
@@ -901,14 +1075,17 @@ def main():
             log_system_info()
             print("\n     Diagnostics completed. Check the \033[92mdiagnostics.log\033[0m file for details.\n")
             input("  Press Enter to return to the main menu...")
+            clear_screen()
         elif choice == '2':
             try:
+                print("\n  Diagnostics GUI Window is currently open. Close it to return to the Menu.")
                 ex = PackageComparisonTool()
                 ex.show()
                 app.exec()
             except Exception as e:
                 print(f"Error initializing PackageComparisonTool: {str(e)}")
                 traceback.print_exc()
+            clear_screen()
         elif choice == '9':
             cleanup_logging()
             print("\n  Exiting...")
