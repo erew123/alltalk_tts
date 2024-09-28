@@ -367,6 +367,74 @@ There was an issue with the `.gitignore` file, so if you cannot git pull on a bu
 
 ---
 
+### 🟨 Diagnostics Help with Issues/Start-up problems etc.
+
+If you are having issues with starting AllTalk, it may well be because some of the 3rd Party packages versions have changed, or something is not right in your Python environment. Whilst its impossible to constantly ensure that everything is going to work perfectly, after installation, you can use the diagnostics tool to:
+
+1) Generate a `diagnostics.log` file which contains information about your Python environment setup and performs various checks to ensure everything is installed.
+2) Identify possible issues by comparing **your** `diagnostics.log` file to the **AllTalk base** `basediagnostics.log` stored in the `alltalk_tts/system/config/` folder.
+3) Provide some semi-automated repair of your Python environment.
+
+<details>
+<summary>Expand here for instructions</summary>
+<br>
+
+### Starting diagnostics
+Start the diagnostics from the `alltalk_tts` folder with either:
+
+- **Windows:** `start_diagnostics.bat`
+- **Linux:** `./start_diagnostics.sh`
+- **TGWUI:** use TGWUI's cmd_{your_os} file
+- **Other:** `python diagnostics.py` after starting **your** Python environment
+
+You will be presented with a menu. The first thing you will need to do is generate your own diagnostics file, with option 1. This will create your `diagnostics.log` file in the `alltalk_tts` folder.
+
+![image](https://github.com/erew123/screenshots/raw/main/gendiags1.jpg)
+<br><br>
+### Contents of the `diagnostic.log` file
+
+You are welcome to look through this file and also check the on-screen output for failure notifications or package version issues.
+
+![image](https://github.com/erew123/screenshots/raw/main/gendiags2.jpg)
+<br><br>
+### Comparing your `diagnostics.log` to the Standalone `basediagnostics.log`
+Back at the main diagnostics menu, you can compare your `diagnostics.log` file to the `basediagnostics.log`file. This comparison will show any version differences between **your** Python environment and a tested working Python environment, as well as provide the commands to align your environment with the tested environment.
+
+To do this comparison you will:
+
+1) Select option 2 from the diagnostics menu and wait for the GUI to open.
+2) Drag and drop `basediagnostics log` from the `/alltalk_tts/system/config` folder onto the **Base Diagnostics File** window.
+3) Drag and drop **your** `diagnostics log` from the `/alltalk_tts/` folder onto the **Comparison Diagnostics File** window.
+4) Click the **Compare the Base and Comparison log files** button.
+
+You will now see a comparison of the **Base** and **Comparison** versions listed in chart form.
+
+**Windows Users** note at the top of the GUI window, there are reference to Windows C++ Build Tools, Windows SDK and Espeak-ng. These are part of the base requirements and if missing you should install them as the installation of AllTalk's Python environment will have failed.
+
+At the bottom of the GUI screen you will see:
+
+- **Organised Results** this is the chart above, broken down into a text format and useful for quickly assessing what may be different from the base and useful if you need to create a issues ticket. Though the main thing required for a issues ticket is the `diagnostics.log` file.
+- **Pip Commands to align versions** this list can either be copied to manually use at the command prompt/terminal window in **your** Python environment. Or, if you are in the AllTalk Python environment, you can use the **Run Pip commands** and that will install all updates to try match the versions. After doing this you can re-run the diagnostics, generate a new `diagnostics.log` and perform the compare again.
+
+![image](https://github.com/erew123/screenshots/raw/main/gendiags3.jpg)
+<br><br>
+### Things this will not resolve or show
+
+- **Corrupted packages or a corrupted Python Environment** You can always delete your Python Environment and start afresh. It may be worth clearing the PIP cache too (as below) before starting this process.
+- **Corrupted files in your PIP download cache** Python caches installable packages so that you dont have to re-download them all the time. Sometimes these get corrupted or even sometimes, PIP will not update versions to newer versions when it finds there is already a copy in the PIP cache. You can clear the pip cache at your termina/command prompt window with `pip cache purge`
+- **Corrupted Conda packages** There are 2x packages installed by Conda. In the **Standalone** installation of AllTalk, you can re-install these manually if you wish by:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Running `start_environment` as necessary for your OS, from the `alltalk_tts` folder.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- `cd alltalk_environment`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- `cd conda`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- `cd scripts`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- `conda.exe install -y conda-forge::ffmpeg`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- `conda.exe install -y pytorch::faiss-cpu`
+- **Other environmental factors I cannot account for**
+<br><br>  
+</details>
+
+---
+
 ### 🆘 Support Requests, Troubleshooting, BETA Discussions & Feature requests
 Current concerns with the v2 BETA are around, is this working and what needs doing to bring it or the documentation up to speed and not trying to introduce lots of additional features at this time. AKA, I want to make sure its stable etc.
 
