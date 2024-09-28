@@ -1,5 +1,8 @@
-Diagnostic log created at 2024-09-27 21:36:17.848570
-==================================================
+======================================
+AllTalk Base Diagnostic log file for Standalone Installations
+======================================
+   Diagnostic log created at 2024-09-27 21:36:17.848570
+======================================
 
 OPERATING SYSTEM:
  OS Version: Windows 10.0.22631
@@ -64,6 +67,19 @@ Drive: C:\ | Total: 1000.95 GB | Used: 852.08 GB | Free: 148.87 GB | Type: NTFS
 NETWORK PORT:
  Port Status : Port 7851 is available.
  Cublas64_11 Path: C:\myfiles\alltalk_tts\alltalk_environment\env\Lib\site-packages\nvidia/cublas\bin\cublas64_11.dll
+
+Windows C++ Build tools & Windows SDK:
+ Windows Version: Windows 11
+ Visual C++ Build Tools and/or Visual Studio found:
+ Visual Studio 2019 Build Tools (Path: C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools)
+
+Windows SDK(s) found:
+ SDK Version: 10.0.22000.0
+ Path: C:\Program Files (x86)\Windows Kits\10
+ Python setuptools version: 75.1.0
+
+Windows Espeak-ng:
+ Espeak-ng version: eSpeak NG text-to-speech: 1.52-dev  Data at: C:\Program Files\eSpeak NG\/espeak-ng-data
 
 PYTHON & PYTORCH:
  Torch Version: 2.2.1
@@ -491,7 +507,7 @@ PYTHON PACKAGES:
  transformers              = 4.40.2
  typeguard                 = 4.3.0
  typer                     = 0.12.5
- typing_extensions         = 4.11.0
+ typing_extensions         = 4.12.2
  tzdata                    = 2024.2
  tzlocal                   = 5.2
  umap-learn                = 0.5.6
