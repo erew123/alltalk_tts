@@ -109,6 +109,7 @@ def check_visual_cpp_build_tools():
     
     found_tools = []
     
+    # Check file system
     for base_path in possible_locations:
         if os.path.exists(base_path):
             for year in ["2022", "2019", "2017", "2015"]:
@@ -126,6 +127,14 @@ def check_visual_cpp_build_tools():
                     if os.path.exists(common_path):
                         found_tools.append(f"Visual Studio {year} (Full) (Path: {vs_path})")
     
+    # Check registry for Visual C++ Redistributable
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64") as key:
+            version = winreg.QueryValueEx(key, "Version")[0]
+            found_tools.append(f"Visual C++ 2015-2022 Redistributable (x64) - {version}")
+    except WindowsError:
+        pass  # Key not found, redistributable might not be installed
+
     return found_tools
 
 def check_windows_sdk():
