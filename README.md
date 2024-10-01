@@ -70,7 +70,7 @@ Screenshots are available [here](https://github.com/erew123/alltalk_tts/discussi
 - No GPU acceleration for AllTalk TTS engines.
 - Some TTS engines may have limited or no support on Mac.
 
-For more details on Mac support limitations, please refer to our [Mac Support Disclaimer](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Manual-Installation-Guide).
+For more details on Mac support limitations, please refer to the [Mac Support Disclaimer](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Manual-Installation-Guide).
 
 #### GPU Support
 GPU support is provided by the developer of the individual TTS engine. If their engine support X GPU, then I can support X GPU, if it doesnt support X GPU, then I cannot support X GPU.
@@ -93,7 +93,7 @@ For a fast and straightforward installation and recommended:
 - [Text-generation-webui Installation](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Text%E2%80%90generation%E2%80%90webui-Installation)
   - For users who want to integrate AllTalk TTS as a part of [Text-generation-webui](https://github.com/oobabooga/text-generation-webui).
   - Available for Windows and Linux.
-  - Includes information on the Remote Extension option.
+  - Includes information on the optional/alternative TGWUI Remote Extension.
 
 These methods use scripts that automate most of the installation process, making it easier for users to get started quickly.
 
