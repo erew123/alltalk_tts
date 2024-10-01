@@ -303,6 +303,9 @@ def xtts_model_alltalk_settings(model_config_data):
                     
                     ### 🟧 API Local, XTTSv2 Generation methods & Speed
                     These two methods both produce sound output in slightly different ways. XTTSv2 is the perferable method a it supports DeepSpeed, which, if you have a system capable of DeepSpeed genereation, can result in a 2-3x speed gain in generation.
+                    
+                    ### 🟧 Hindi Support on XTTS
+                    Currently Hindi only works on XTTS model 2.0.3 and it has to be loaded as the API Local method.
                     """)
                 gr.Markdown("""
                     ### 🟧 How do I create a new voice sample?
