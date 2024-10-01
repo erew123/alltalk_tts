@@ -73,7 +73,7 @@ Screenshots are available [here](https://github.com/erew123/alltalk_tts/discussi
 For more details on Mac support limitations, please refer to the [Mac Support Disclaimer](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Manual-Installation-Guide).
 
 #### GPU Support
-GPU support is provided by the developer of the individual TTS engine. If their engine support X GPU, then I can support X GPU, if it doesnt support X GPU, then I cannot support X GPU.
+GPU support is provided by the developer of the individual TTS engine. If their TTS engine support's X GPU, then I can support X GPU, if it doesnt support X GPU, then I cannot support X GPU. Most of the engines will run on CPU, but some may be very slow on CPU.
 
 - NVIDIA GPUs: Full support on Windows and Linux.
 - AMD GPUs: Limited experimental support on Linux (mainly for XTTS).
