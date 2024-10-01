@@ -123,11 +123,76 @@ update_config(config_file_path, update_config_path, downgrade_config_path)
 ###########################################################################################
 tts_engines_path = this_dir / "system" / "tts_engines" / "tts_engines.json"
 new_engines_path = this_dir / "system" / "tts_engines" / "new_engines.json"
+tts_engines_backup_path = tts_engines_path.with_suffix(".backup")  # Backup file path
 
-# Load the JSON files
-with open(tts_engines_path, 'r') as f:
-    tts_engines_data = json.load(f)
+# Function to safely load JSON with error handling
+def safe_load_json(file_path, backup_path=None):
+    try:
+        # Attempt to open and load the JSON file
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        # If the file is not found, handle it by either restoring from a backup or creating a default
+        print(f"[{branding}TTS] File not found: {file_path}")
 
+        if backup_path and os.path.exists(backup_path):
+            # Load the backup if it exists
+            print(f"[{branding}TTS] Restoring from backup: {backup_path}")
+            with open(backup_path, 'r') as f:
+                data = json.load(f)
+            # Save the backup data to the original path
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=4)
+            print(f"[{branding}TTS] Restored {file_path} from backup.")
+            return data
+        else:
+            # If no backup is available, create a new default JSON structure
+            print(f"[{branding}TTS] No backup found, creating a new default tts_engine JSON structure.")
+            default_data = {
+                "engine_loaded": "piper",
+                "selected_model": "piper",
+                "engines_available": [
+                    {
+                        "name": "parler",
+                        "selected_model": "parler - parler_tts_mini_v0.1"
+                    },
+                    {
+                        "name": "piper",
+                        "selected_model": "piper"
+                    },
+                    {
+                        "name": "vits",
+                        "selected_model": "vits - tts_models--en--vctk--vits"
+                    },
+                    {
+                        "name": "xtts",
+                        "selected_model": "xtts - xttsv2_2.0.3"
+                    }
+                ]
+            }
+            with open(file_path, 'w') as f:
+                json.dump(default_data, f, indent=4)
+            print(f"[{branding}TTS] Created new default file at: {file_path}")
+            return default_data
+    except json.JSONDecodeError as e:
+        # Handle JSON corruption
+        print(f"[{branding}TTS] JSON decoding error in file {file_path}: {e}")
+        if backup_path and os.path.exists(backup_path):
+            print(f"[{branding}TTS] Restoring from backup due to corrupted file: {backup_path}")
+            with open(backup_path, 'r') as f:
+                data = json.load(f)
+            # Save the backup data to the original path
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=4)
+            print(f"[{branding}TTS] Restored {file_path} from backup.")
+            return data
+        else:
+            raise Exception(f"File {file_path} is corrupted and no backup is available.")
+
+# Load tts_engines.json with retry if corrupted
+tts_engines_data = safe_load_json(tts_engines_path, tts_engines_backup_path)
+
+# Load new_engines.json
 with open(new_engines_path, 'r') as f:
     new_engines_data = json.load(f)
 
@@ -144,11 +209,15 @@ for engine in new_engines:
         if engine_dir.is_dir():
             # Add the new engine to the list
             tts_engines_data['engines_available'].append(engine)
-            print(f"[{branding}TTS] \033[92mNew TTS Engines   : \033[91mAdded {engine_name}\033[0m")
+            print(f"[{branding}TTS] \033[92mNew TTS Engine   : \033[91mAdded {engine_name}\033[0m")
 
-# Save the updated tts_engines.json
-with open(tts_engines_path, 'w') as f:
-    json.dump(tts_engines_data, f, indent=4)
+            # Backup the current tts_engines.json before saving the updated file
+            shutil.copy(tts_engines_path, tts_engines_backup_path)
+
+            # Save the updated tts_engines.json
+            with open(tts_engines_path, 'w') as f:
+                json.dump(tts_engines_data, f, indent=4)
+                print(f"{tts_engines_path} updated and saved successfully.")
 
 ####################################################
 # START-UP # Re-load from confignew.json to params #
@@ -1303,6 +1372,7 @@ if gradio_enabled == True:
             json_file_path = os.path.join(this_dir, "system", "tts_engines", engine_name, "model_settings.json")
             with open(json_file_path, "r") as f:
                 globals()[f"{engine_name}_model_config_data"] = json.load(f)
+                
     ###########################################
     # Finishing Dynamically importing Modules #
     ###########################################
@@ -1399,21 +1469,39 @@ if gradio_enabled == True:
     # Sends request to reload the current TTS engine & set the default TTS engine loaded #
     ######################################################################################
     def set_engine_loaded(engine_name):
-        global engine_loaded, selected_model, tts_engines_data, models_available, at_update_dropdowns
-        tts_engines_file = os.path.join(this_dir, "system", "tts_engines", "tts_engines.json")
-        with open(tts_engines_file, "r") as f:
-            tts_engines_data = json.load(f)
+        global engine_loaded, selected_model, tts_engines_data, models_available, tts_engines_path, tts_engines_backup_path, at_update_dropdowns
+
+        # Load the JSON with a retry mechanism
+        safe_load_json(tts_engines_path, tts_engines_backup_path)
+        
+        # Iterate and update engines
         for engine in tts_engines_data["engines_available"]:
             if engine["name"] == engine_name:
                 tts_engines_data["engine_loaded"] = engine_name
                 tts_engines_data["selected_model"] = engine["selected_model"]
                 break
-        with open(tts_engines_file, "w") as f:
-            json.dump(tts_engines_data, f)
+
+        # Backup the existing file before writing
+        shutil.copy(tts_engines_path, tts_engines_backup_path)
+
+        # Write the updated JSON data safely
+        with open(tts_engines_path, "w") as f:
+            try:
+                json.dump(tts_engines_data, f, indent=4)
+            except Exception as e:
+                print(f"Error writing to {tts_engines_path}: {e}")
+                # Restore the backup if writing failed
+                shutil.copy(tts_engines_backup_path, tts_engines_path)
+                raise Exception("Failed to save tts_engines.json, restored from backup.")
+
         engine_loaded = engine_name
         selected_model = tts_engines_data["selected_model"]
+
+        # Add a brief delay to ensure file is fully written
+        time.sleep(0.1)  # 100ms delay
         # Restart the subprocess
         restart_subprocess()
+
         # Wait for the engine to be ready with error handling and retries
         max_retries = 80
         retry_delay = 1  # seconds
@@ -1431,15 +1519,18 @@ if gradio_enabled == True:
                 raise Exception("Failed to connect to the TTS engine after multiple retries.")
             
             time.sleep(retry_delay)
+        
         models_available = at_settings["models_available"]
+
         # Update the dropdowns directly
         print(f"[{branding}ENG]")
         print(f"[{branding}ENG] {branding}Server Ready")
         gen_stream_value, gen_char_choices, rvcgen_char_choices, gen_narr_choices, rvcgen_narr_choices, gen_speed_interactive, gen_pitch_interactive, gen_temperature_interactive, gen_repetition_interactive, gen_lang_interactive, model_choices_gr_interactive, engine_choices_interactive = at_update_dropdowns()
+
         return ("TTS Engine changed successfully!",  # This is your output message
-        gen_stream_value, gen_char_choices, rvcgen_char_choices, gen_narr_choices, rvcgen_narr_choices, gen_speed_interactive, gen_pitch_interactive, gen_temperature_interactive, gen_repetition_interactive, gen_lang_interactive, model_choices_gr_interactive, engine_choices_interactive
-        )
-        
+                gen_stream_value, gen_char_choices, rvcgen_char_choices, gen_narr_choices, rvcgen_narr_choices, gen_speed_interactive, gen_pitch_interactive, gen_temperature_interactive, gen_repetition_interactive, gen_lang_interactive, model_choices_gr_interactive, engine_choices_interactive
+            )
+            
     ###############################
     # Sends voice2rvc request off #
     ###############################

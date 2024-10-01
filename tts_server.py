@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import shutil
 import argparse
 import librosa
 import logging
@@ -247,27 +248,80 @@ async def handle_restart():
 @app.post("/api/enginereload")
 async def apifunction_reload(request: Request):
     requested_engine = request.query_params.get("engine")
+    tts_engines_file = this_dir / "system" / "tts_engines" / "tts_engines.json"
+    tts_engines_file_backup_path = tts_engines_file.with_suffix(".backup")  # Backup file path
+
     if requested_engine not in engines_available:
         return {"status": "error", "message": "Invalid TTS engine specified"}
+    
     print(f"[{branding}ENG]")
     print(f"[{branding}ENG] \033[94mChanging model loaded. Please wait.\033[00m")
     print(f"[{branding}ENG]")
-    # Update the tts_engines.json file
-    tts_engines_file = os.path.join(this_dir, "system", "tts_engines", "tts_engines.json")
-    with open(tts_engines_file, "r") as f:
-        tts_engines_data = json.load(f)
+
+    # Function to safely load JSON with error handling and backup restoration
+    def safe_load_json(file_path, backup_path=None):
+        try:
+            # Attempt to open and load the JSON file
+            with open(file_path, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            # Handle missing file case, try restoring from backup or creating default
+            print(f"File not found: {file_path}")
+            if backup_path and os.path.exists(backup_path):
+                print(f"Restoring from backup: {backup_path}")
+                with open(backup_path, 'r') as f:
+                    data = json.load(f)
+                # Restore the backup to the original file
+                with open(file_path, 'w') as f:
+                    json.dump(data, f, indent=4)
+                print(f"Restored {file_path} from backup.")
+                return data
+            else:
+                raise Exception(f"File {file_path} is missing, and no backup is available.")
+        except json.JSONDecodeError as e:
+            # Handle JSON corruption case
+            print(f"JSON decoding error in file {file_path}: {e}")
+            if backup_path and os.path.exists(backup_path):
+                print(f"Restoring from backup due to corrupted file: {backup_path}")
+                with open(backup_path, 'r') as f:
+                    data = json.load(f)
+                # Restore the backup to the original file
+                with open(file_path, 'w') as f:
+                    json.dump(data, f, indent=4)
+                print(f"Restored {file_path} from backup.")
+                return data
+            else:
+                raise Exception(f"File {file_path} is corrupted, and no backup is available.")
+
+    # Load the tts_engines.json with resilience
+    tts_engines_data = safe_load_json(tts_engines_file, tts_engines_file_backup_path)
+
+    # Update the tts_engines_data with the requested engine
     for engine in tts_engines_data["engines_available"]:
         if engine["name"] == requested_engine:
             tts_engines_data["engine_loaded"] = requested_engine
             tts_engines_data["selected_model"] = engine["selected_model"]
             break
-    with open(tts_engines_file, "w") as f:
-        json.dump(tts_engines_data, f)
-    #print(f"[{branding}ENG] Reloading the engine...")
+    
+    # Write the updated JSON data safely and create a backup
+    try:
+        # First, create a backup of the current file before writing
+        shutil.copy(tts_engines_file, tts_engines_file_backup_path)
+
+        with open(tts_engines_file, "w") as f:
+            json.dump(tts_engines_data, f, indent=4)
+        # print(f"Updated and saved {tts_engines_file}. Backup created at {tts_engines_file_backup_path}.")
+    except Exception as e:
+        print(f"Error writing to {tts_engines_file}: {e}")
+        # If writing failed, restore the backup
+        shutil.copy(tts_engines_file_backup_path, tts_engines_file)
+        raise Exception(f"Failed to save {tts_engines_file}, restored from backup.")
+
     # Start the restart process in the background
     asyncio.create_task(handle_restart())
-    # Never goes past the above asyncio as the script is killed at that point
+
     return Response(content=json.dumps({"status": "engine-success"}), media_type="application/json")
+
 
 #######################################
 # API Endpoint - /api/stop-generation #
