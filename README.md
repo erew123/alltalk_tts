@@ -191,12 +191,14 @@ At the bottom of the GUI screen you will see:
 ---
 
 ### 🆘 Support Requests, Troubleshooting, BETA Discussions & Feature requests
-Current concerns with the v2 BETA are around, is this working and what needs doing to bring it or the documentation up to speed and not trying to introduce lots of additional features at this time. AKA, I want to make sure its stable etc.
+**Documentation & Known Error codes**, please refer to the built in documentation or the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki).
 
 If you wish to code something yourself though, thats perfectly to do and youre welcome to discuss that with me if needed.
 
 General discussions on the BETA should be [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
 
-If you have a specifc technical problem, if you think its a quick/simple thing you can discuss it on the discussions board, however, if its a big issue or going to turn into one, lets keep that on an Issues ticket.
+If you have a specifc technical problem, please open an issue ticket [here in the issues area](https://github.com/erew123/alltalk_tts/issues).
+
+**Please note, my available time has become VERY limited due to unexpected family commitments. So please DYOR, look at the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki) and refer to the TTS manufacturer (Links in the Gradio interface) for issues specific to THEIR TTS engines.**
 
 ---
