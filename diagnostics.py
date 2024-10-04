@@ -14,9 +14,10 @@ import traceback
 import signal
 from pathlib import Path
 from datetime import datetime
-import winreg
 from importlib.metadata import version as get_version, PackageNotFoundError
 from packaging import version
+if platform.system() == "Windows":
+    import winreg
 
 # Check and install psutil if necessary
 try:
@@ -48,14 +49,14 @@ try:
     from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel,
                                  QFileDialog, QTableWidget, QTableWidgetItem, QHeaderView, QSplitter, QFrame)
     from PyQt6.QtGui import QColor, QDropEvent, QDragEnterEvent, QFont
-    from PyQt6.QtCore import Qt, QTimer
+    from PyQt6.QtCore import Qt, QTimer, QCoreApplication
 except ImportError:
     print("PyQt6 not found. Installing...")
     subprocess.run([sys.executable, '-m', 'pip', 'install', 'PyQt6'])
     from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel,
                                  QFileDialog, QTableWidget, QTableWidgetItem, QHeaderView, QSplitter, QFrame)
     from PyQt6.QtGui import QColor, QDropEvent, QDragEnterEvent, QFont
-    from PyQt6.QtCore import Qt, QTimer
+    from PyQt6.QtCore import Qt, QTimer, QCoreApplication
 
 
 def input_with_timeout(prompt, timeout):
@@ -109,7 +110,6 @@ def check_visual_cpp_build_tools():
     
     found_tools = []
     
-    # Check file system
     for base_path in possible_locations:
         if os.path.exists(base_path):
             for year in ["2022", "2019", "2017", "2015"]:
@@ -127,14 +127,6 @@ def check_visual_cpp_build_tools():
                     if os.path.exists(common_path):
                         found_tools.append(f"Visual Studio {year} (Full) (Path: {vs_path})")
     
-    # Check registry for Visual C++ Redistributable
-    try:
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64") as key:
-            version = winreg.QueryValueEx(key, "Version")[0]
-            found_tools.append(f"Visual C++ 2015-2022 Redistributable (x64) - {version}")
-    except WindowsError:
-        pass  # Key not found, redistributable might not be installed
-
     return found_tools
 
 def check_windows_sdk():
@@ -757,7 +749,8 @@ class PackageComparisonTool(QWidget):
         main_layout.addWidget(instructions)
 
         # Windows-specific information
-        self.windows_info_layout = QHBoxLayout()
+        self.windows_info_widget = QWidget()
+        self.windows_info_layout = QHBoxLayout(self.windows_info_widget)
         self.cpp_build_tools_label = QLabel("C++ Build Tools: <span style='color: gray;'>Checking...</span>")
         self.sdk_label = QLabel("Windows SDK: <span style='color: gray;'>Checking...</span>")
         self.espeak_ng_label = QLabel("Espeak-ng: <span style='color: gray;'>Checking...</span>")
@@ -766,8 +759,7 @@ class PackageComparisonTool(QWidget):
         self.windows_info_layout.addWidget(self.sdk_label)
         self.windows_info_layout.addWidget(self.espeak_ng_label)
         
-        main_layout.addLayout(self.windows_info_layout)
-        main_layout.addSpacing(10)  # Add some space between Windows info and file inputs
+        main_layout.addWidget(self.windows_info_widget)
 
         # File inputs
         file_layout = QHBoxLayout()
@@ -991,11 +983,12 @@ class PackageComparisonTool(QWidget):
             sdks = check_windows_sdk()
             espeak_ng_version = check_espeak_ng()
 
-            self.update_label(self.cpp_build_tools_label, "Windows C++ Build Tools", 'Found' if build_tools else 'Not Found')
+            self.update_label(self.cpp_build_tools_label, "C++ Build Tools", 'Found' if build_tools else 'Not Found')
             self.update_label(self.sdk_label, "Windows SDK", 'Found' if sdks else 'Not Found')
-            self.update_label(self.espeak_ng_label, "Windows Espeak-ng", 'Installed' if espeak_ng_version else 'Not Found')
+            self.update_label(self.espeak_ng_label, "Espeak-ng", 'Installed' if espeak_ng_version else 'Not Found')
+            self.windows_info_widget.show()
         else:
-            self.windows_info_layout.setVisible(False)
+            self.windows_info_widget.hide()
 
     def update_label(self, label, title, status):
         color = "green" if status in ['Found', 'Installed'] else "red"
@@ -1045,6 +1038,21 @@ def clear_screen():
     else:
         os.system("clear")
 
+def is_running_in_gui():
+    return os.environ.get('DISPLAY') is not None or os.environ.get('WAYLAND_DISPLAY') is not None
+
+def show_linux_instructions():
+    print("\n\033[93m  Linux System Detected\033[0m")
+    print("  If the GUI wont start, you may need to install additional dependencies.")
+    print("  Please run one of the following commands based on your distribution:\n")
+    print("\033[96m  For Ubuntu, Debian, and derivatives:\033[0m")
+    print("  sudo apt-get install libxcb-xinerama0 libxcb-cursor0 libxkbcommon-x11-0\n")
+    print("\033[96m  For Fedora, CentOS, RHEL, and other RPM-based systems:\033[0m")
+    print("  sudo dnf install libxcb libxkbcommon-x11 libxcb-xinerama libxcb-cursor")
+    print("                             - or -")
+    print("  sudo yum install libxcb libxkbcommon-x11 libxcb-xinerama libxcb-cursor\n")
+    print("\033[93m  After installing these packages, please restart the diagnostic tool.\033[0m\n")
+
 def show_menu():
     print("\n\n\n\033[94m  AllTalk Diagnostics Tool Menu\033[0m")
     print("\n  Ensure you have started AllTalk'a Python Environment with the start_environment file")
@@ -1069,9 +1077,20 @@ def main():
     print(f"\033[94m    / _ \ | | |\033[1;35m | |/ _` | | |/ / \033[0m   | |   | | \___ \ ")
     print(f"\033[94m   / ___ \| | |\033[1;35m | | (_| | |   <  \033[0m   | |   | |  ___) |")
     print(f"\033[94m  /_/   \_\_|_|\033[1;35m |_|\__,_|_|_|\_\ \033[0m   |_|   |_| |____/ ")    
-    
-    app = QApplication(sys.argv)
-    
+
+    # Check for GUI environment on non-Windows systems
+    if platform.system() != 'Windows' and not is_running_in_gui():
+        print("No graphical environment detected. Using offscreen rendering.")
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
+    try:
+        app = QApplication(sys.argv)
+    except Exception as e:
+        print(f"Failed to initialize QApplication: {e}")
+        print("Attempting to use offscreen platform...")
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
+        app = QApplication(sys.argv)
+
     # Use a timer to check for the exit flag
     timer = QTimer()
     timer.timeout.connect(lambda: check_exit(app))
@@ -1086,13 +1105,18 @@ def main():
             input("  Press Enter to return to the main menu...")
             clear_screen()
         elif choice == '2':
+            if platform.system() != "Windows":
+                show_linux_instructions()
             try:
-                print("\n  Diagnostics GUI Window is currently open. Close it to return to the Menu.")
+                print("\n  Attempting to open Diagnostics GUI Window...")
                 ex = PackageComparisonTool()
                 ex.show()
+                print("  If you don't see a window, it might be hidden or there is a display issue.")
+                print("  Press Ctrl+C to return to the menu if no window appears.")
                 app.exec()
+                print("  GUI window closed.")
             except Exception as e:
-                print(f"Error initializing PackageComparisonTool: {str(e)}")
+                print(f"Error initializing or running PackageComparisonTool: {str(e)}")
                 traceback.print_exc()
             clear_screen()
         elif choice == '9':
@@ -1101,7 +1125,8 @@ def main():
             break
         else:
             print("  Invalid choice. Please try again.")
-    
+            clear_screen()
+
     cleanup_logging()
     app.quit()
 
