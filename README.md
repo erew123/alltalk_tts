@@ -1,11 +1,13 @@
 # AllTalk TTS
 
-## AllTalk version 2 BETA availability. (How to get version 2)
+## AllTalk version 2 BETA availability. (How to get Version 2)
 AllTalk v2 BETA is out/available for download. See [this link here](https://github.com/erew123/alltalk_tts/discussions/245) for the discussion, [this link here ](https://github.com/erew123/alltalk_tts/tree/alltalkbeta) to download it and [this link here](https://github.com/erew123/alltalk_tts/discussions/237) for screenshots.
+
+### [Click here to go to AllTalk Version 2](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
 
 AllTalk v2 significantly enhances v1, introducing new features while addressing many previous issues. Although still evolving, v2 offers a stable build and is the recommended version for most users as this is where update and development work is now focused.
 
-## AllTalk version 1 (Below)
+## AllTalk version 1 (Everything below this point, on this page is for Version 1)
 AllTalk version 1 is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
 - **Can be run as a** [standalone application](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
@@ -64,7 +66,7 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 
 ---
 
-### 🟩 Quick Setup (Text-generation-webui & Standalone Installation)
+### 🟩 Quick Setup AllTalk Version 1 (Text-generation-webui & Standalone Installation)
 
 AllTalk version 1 - Quick setup scripts are available for users on Windows 10/11 and Linux. Instructional videos for both setup processes are linked below.
 
@@ -150,11 +152,11 @@ As for Google Colab, there is partial compatibility with AllTalk, though with so
 
 ---
 
-### 🟩 Manual Installation - As part of Text generation web UI (inc. macOSX)
+### 🟩 Manual Installation AllTalk Version 1 - As part of Text generation web UI (inc. macOSX)
 <details>
 	<summary>MANUAL INSTALLATION - Text-Generation-webui</summary>
 
-### Manual Installation for Text Generation Web UI
+### Manual Installation AllTalk Version 1 for Text Generation Web UI
 
 If you're using a Mac or prefer a manual installation for any other reason, please follow the steps below. This guide is compatible with the current release of Text Generation Web UI as of December 2023. Consider updating your installation if it's been a while, [update instructions here](https://github.com/oobabooga/text-generation-webui?tab=readme-ov-file#how-to-install).
 
