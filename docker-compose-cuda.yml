@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   alltalk-tts:
     image: erew123/alltalk_tts:cuda
@@ -17,4 +16,4 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [ gpu ]
+              capabilities: [gpu]
