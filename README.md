@@ -5,7 +5,7 @@ Github **discussions** on the BETA are [here in the discussion board](https://gi
 
 **Documentation**, please refer to the built in documentation or the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki)
 
-**Please note, my available time has become VERY limited due to unexpected family commitments [Please read here](https://github.com/erew123/alltalk_tts/issues/377). So please DYOR, look at the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki) and refer to the TTS manufacturer (Links in the Gradio interface) for issues specific to THEIR TTS engines.**
+**Please note, my available time has become VERY limited due to unexpected family commitments [Please read here for details](https://github.com/erew123/alltalk_tts/issues/377). So please DYOR, look at the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki) and refer to the TTS manufacturer (Links in the Gradio interface) for issues specific to THEIR TTS engines.**
 
 ---
 
