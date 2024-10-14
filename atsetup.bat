@@ -580,7 +580,7 @@ echo   ONLY streaming audio that is affected and ONLY with the Coqui XTTS engine
 echo   things like Kobold, or anywhere you use XTTS with streaming audio.
 echo.
 echo   Parler-TTS states that it wants transformers version 4.43.3 but it appears to work fine with
-echo   transformers 4.42.4, however using transformers 4.42.4 generates a dependcy error message as
+echo   transformers 4.42.4, however using transformers 4.42.4 generates a dependency error message as
 echo   Parler-TTS is untested on 4.42.4 of transformers.
 echo.
 echo   Until the Coqui-TTS engine is updated to perform streaming with newer versions of transformers, if
@@ -588,7 +588,8 @@ echo   you want to use streaming with XTTS, you will need to downgrade transform
 echo.
 echo   AllTalk is NOT responsible for the maintainance or upkeep of the Coqui-TTS engine.
 echo.
-echo   If you change your mind in future you can re-run atsetup and re-apply the requirements.
+echo   If you change your mind in future you can re-run atsetup and re-apply the requirements OR read the
+echo   instructions in the Github Wiki https://github.com/erew123/alltalk_tts/wiki
 echo  ====================================================================================================
 echo.
 choice /C YN /M " Do you want to downgrade transformers to version 4.42.4 for XTTS streaming support?"
