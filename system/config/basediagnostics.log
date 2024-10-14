@@ -504,7 +504,7 @@ PYTHON PACKAGES:
  torch-stoi                = 0.2.2
  tqdm                      = 4.66.5
  traitlets                 = 5.14.3
- transformers              = 4.40.2
+ transformers              = 4.42.4
  typeguard                 = 4.3.0
  typer                     = 0.12.5
  typing_extensions         = 4.12.2
