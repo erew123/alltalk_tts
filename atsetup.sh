@@ -397,6 +397,7 @@ install_custom_standalone() {
     pip install deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
     rm deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
     pip install -r system/requirements/requirements_parler.txt
+    pip install transformers==4.42.4
     conda clean --all --force-pkgs-dirs -y
     Create start_environment.sh to run AllTalk
     cat << EOF > start_environment.sh
