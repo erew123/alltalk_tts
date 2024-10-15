@@ -70,7 +70,7 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 
 AllTalk version 1 - Quick setup scripts are available for users on Windows 10/11 and Linux. Instructional videos for both setup processes are linked below.
 
-#### [If you want AllTalk Version 2 clck here](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
+#### [If you want AllTalk Version 2 click here. The instructions below are for version 1](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
 
 - Ensure that **Git** is installed on your system as it is required for cloning the repository. If you do not have Git installed, visit [**Git's official website**](https://git-scm.com/downloads) to download and install it.
 - Windows users must install C++ development tools for Python to compile Python packages. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
