@@ -494,6 +494,9 @@ else:
     print(f"[{branding}TTS] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{params['gradio_port_number']}?__theme=dark\033[00m")
     print(f"[{branding}TTS]")
     
+print(f"[{branding}TTS] \033[94mAllTalk WIKI:\033[00m",f"\033[92mhttps://github.com/erew123/alltalk_tts/wiki\033[00m")
+print(f"[{branding}TTS] \033[94mErrors Help :\033[00m",f"\033[92mhttps://github.com/erew123/alltalk_tts/wiki/Error-Messages-List\033[00m")
+print(f"[{branding}TTS]")
 
 #########################################
 # START-UP # Espeak-ng check on Windows #
