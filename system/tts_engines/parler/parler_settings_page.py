@@ -98,7 +98,7 @@ def parler_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, 
 def parler_model_alltalk_settings(model_config_data):
     features_list = model_config_data['model_capabilties']
     voice_list = parler_voices_file_list()
-    with gr.Blocks(title="parler TTS") as app:
+    with gr.Blocks(title="parler TTS", analytics_enabled=False) as app:
         with gr.Tab("Default Settings"):
             with gr.Row():
                 lowvram_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Low VRAM" if model_config_data["model_capabilties"]["lowvram_capable"] else "Low VRAM N/A", value="Enabled" if model_config_data["settings"]["lowvram_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["lowvram_capable"])
