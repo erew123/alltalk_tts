@@ -26,7 +26,7 @@ def alltalk_welcome(analytics_enabled=False):
     
     > **Download Voices/Models** - Go to the `TTS Engines Settings` > Choose the engine you want > `Model/Voices Download`. Additional instructions/information about each TTS engine, its specific settings, how to use it, are all stored here.<br>
     
-    > **RVC & RVC Voices** - To make RVC work, you have to enable RVC in `Gloabl Settings` > `RVC Settings`. RVC will download about 800MB of models that it needs to work. [RVC WIKI page link](https://github.com/erew123/alltalk_tts/wiki/RVC-(Retrieval%E2%80%90based-Voice-Conversion)<br>
+    > **RVC & RVC Voices** - To make RVC work, you have to enable RVC in `Gloabl Settings` > `RVC Settings`. RVC will download about 800MB of models that it needs to work. [RVC WIKI page link](https://github.com/erew123/alltalk_tts/wiki/RVC-(Retrieval%E2%80%90based-Voice-Conversion))<br>
 
     ### 🟧 Error Message at the Console/Terminal       
     > I am mantaining an up-to-date list of known error messages and fixes on the [Error Messages WIKI page](https://github.com/erew123/alltalk_tts/wiki/Error-Messages-List)<br>
