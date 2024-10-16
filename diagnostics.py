@@ -37,7 +37,7 @@ def get_requirements_file():
     this_dir = Path(__file__).parent  # Assuming 'this_dir' is defined as the script's directory
     requirements_dir = this_dir / 'system' / 'requirements'
     requirements_files = list(requirements_dir.glob('requirements*.txt'))  # Using pathlib for globbing
-    
+
     if not requirements_files:
         print("\033[91mNo requirements files found.\033[0m")
         return None
@@ -66,7 +66,7 @@ def get_gpu_info():
         return result.stdout
     except FileNotFoundError:
         return "NVIDIA GPU information not available"
-    
+
 def get_cpu_info():
     cpu_info = {
         'physical_cores': psutil.cpu_count(logical=False),
@@ -136,7 +136,7 @@ def find_files_in_path_with_wildcard(pattern):
 def log_system_info():
     # System information
     os_version = platform.system() + " " + platform.version()
-    
+
     # Get CUDA_HOME environment variable
     cuda_home = os.environ.get('CUDA_HOME', 'N/A')
 
@@ -186,7 +186,7 @@ def log_system_info():
     path_env = os.environ.get('PATH', 'N/A')
 
     # Check for cublas
-    file_name = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
+    file_name = 'cublas64_12.*' if platform.system() == "Windows" else 'libcublas.so.12*'
     found_paths = find_files_in_path_with_wildcard(file_name)
 
     # Compare with requirements file
@@ -228,9 +228,9 @@ def log_system_info():
     logging.info(f" CUDA Working: {cuda_test_result}")
     logging.info(f" CUDA_HOME: {cuda_home}")
     if found_paths:
-        logging.info(f" Cublas64_11 Path: {', '.join(found_paths)}")
+        logging.info(f" Cublas64_12 Path: {', '.join(found_paths)}")
     else:
-        logging.info(f" Cublas64_11 Path: Not found in any search path directories.")
+        logging.info(f" Cublas64_12 Path: Not found in any search path directories.")
     logging.info("\nPYTHON & PYTORCH:")
     logging.info(f" Torch Version: {torch_version}")
     logging.info(f" Python Version: {platform.python_version()}")
@@ -268,9 +268,9 @@ def log_system_info():
         print(f"\033[94mCUDA Working:\033[0m \033[92m{cuda_test_result}\033[0m")
     print(f"\033[94mCUDA_HOME:\033[0m \033[92m{cuda_home}\033[0m")
     if found_paths:
-        print(f"\033[94mCublas64_11 Path:\033[0m \033[92m{', '.join(found_paths)}\033[0m")
+        print(f"\033[94mCublas64_12 Path:\033[0m \033[92m{', '.join(found_paths)}\033[0m")
     else:
-        print(f"\033[94mCublas64_11 Path:\033[0m \033[91mNot found in any search path directories.\033[0m")    
+        print(f"\033[94mCublas64_12 Path:\033[0m \033[91mNot found in any search path directories.\033[0m")
     print(f"\033[94m\nTorch Version:\033[0m \033[92m{torch_version}\033[0m")
     print(f"\033[94mPython Version:\033[0m \033[92m{platform.python_version()}\033[0m")
     print(f"\033[94mPython Executable:\033[0m \033[92m{python_executable}\033[0m")
@@ -302,17 +302,17 @@ def log_system_info():
             # Print colored output
             print(f"  {package_name.ljust(max_package_length)}  Required: {color_required}{operator} {required_version.ljust(12)}\033[0m  Installed: {color_installed}{installed_version}\033[0m")
 
-        print("\nOn Nvidia Graphics cards machines, if your \033[92mInstalled\033[0m version of \033[92mTorch\033[0m and \033[92mTorchaudio\033[0m does")    
-        print("not have \033[92m+cu118\033[0m (Cuda 11.8) or \033[92m+cu121\033[0m (Cuda 12.1) listed after them, you do not have CUDA")
+        print("\nOn Nvidia Graphics cards machines, if your \033[92mInstalled\033[0m version of \033[92mTorch\033[0m and \033[92mTorchaudio\033[0m does")
+        print("not have \033[92m+cu124\033[0m (Cuda 12.4) listed after them, you do not have CUDA")
         print("installed for Torch or Torchaudio in this Python environment. This will cause you problems")
         print("with \033[94mAllTalk\033[0m and \033[94mFinetuning.\033[0m You may have to 'pip install' a new version of torch and")
         print("torchaudio, using '\033[94m--upgrade --force-reinstall\033[0m' with the correct version of PyTorch for\033[0m")
         print("your Python environment.\033[0m")
         print("\033[94m\nRequirements file specifier meanings:\033[0m")
         explanation = textwrap.dedent("""
-        == Exact version              != Any version except          < Less than               
+        == Exact version              != Any version except          < Less than
         <= Less than or equal to      >  Greater than                >= Greater than or equal to
-        ~ Compatible release          ;  Environment marker          AND Logical AND           
+        ~ Compatible release          ;  Environment marker          AND Logical AND
         OR Logical OR
         """)
         print(explanation.strip())
