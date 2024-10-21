@@ -444,7 +444,8 @@ if errorlevel 1 (
     echo      4. Permissions issues - Check you have enough rights on this system.
     echo      5. Firewall or proxy settings blocking access to Conda's servers.
     echo      6. Antivirus or security software interference.
-    echo      7. Other issues not mentioned above.
+    echo      7. Your Conda policy is set to `Strict` (see the Github Wiki for help with this).
+    echo      8. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the Faiss installation?"
     if errorlevel 2 goto End
@@ -471,7 +472,8 @@ if errorlevel 1 (
     echo      4. Permissions issues - Check you have enough rights on this system.
     echo      5. Firewall or proxy settings blocking access to Conda's servers.
     echo      6. Antivirus or security software interference.
-    echo      7. Other issues not mentioned above.
+    echo      7. Your Conda policy is set to `Strict` (see the Github Wiki for help with this).
+    echo      8. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the FFmpeg installation?"
     if errorlevel 2 goto End
