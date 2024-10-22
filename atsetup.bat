@@ -141,7 +141,7 @@ pip install -r system\requirements\requirements_textgen.txt
 pip install -r system\requirements\requirements_textgen2.txt
 pip install -r system\requirements\requirements_parler.txt
 echo ** Faiss **
-call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu=1.9.0=py3.11_h491596c_0_cpu
 echo ** FFmpeg **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y conda-forge::ffmpeg
 if %ERRORLEVEL% neq 0 (
@@ -429,7 +429,7 @@ if errorlevel 1 (
 
 :install_faiss
 echo ** Installing Faiss **
-call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu=1.9.0=py3.11_h491596c_0_cpu
 echo.
 if errorlevel 1 (
     echo Faiss installation failed, errorlevel was %errorlevel%. There should be a Conda
