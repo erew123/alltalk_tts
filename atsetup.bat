@@ -141,7 +141,7 @@ pip install -r system\requirements\requirements_textgen.txt
 pip install -r system\requirements\requirements_textgen2.txt
 pip install -r system\requirements\requirements_parler.txt
 echo ** Faiss **
-call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu=1.9.0=py3.11_h491596c_0_cpu
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
 echo ** FFmpeg **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y conda-forge::ffmpeg
 if %ERRORLEVEL% neq 0 (
@@ -429,7 +429,7 @@ if errorlevel 1 (
 
 :install_faiss
 echo ** Installing Faiss **
-call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu=1.9.0=py3.11_h491596c_0_cpu
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
 echo.
 if errorlevel 1 (
     echo Faiss installation failed, errorlevel was %errorlevel%. There should be a Conda
@@ -444,7 +444,7 @@ if errorlevel 1 (
     echo      4. Permissions issues - Check you have enough rights on this system.
     echo      5. Firewall or proxy settings blocking access to Conda's servers.
     echo      6. Antivirus or security software interference.
-    echo      7. Your Conda policy is set to `Strict` (see the Github Wiki for help with this).
+    echo      7. Your Conda policy is set to Strict see the Github Wiki for help with this.
     echo      8. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the Faiss installation?"
@@ -472,7 +472,7 @@ if errorlevel 1 (
     echo      4. Permissions issues - Check you have enough rights on this system.
     echo      5. Firewall or proxy settings blocking access to Conda's servers.
     echo      6. Antivirus or security software interference.
-    echo      7. Your Conda policy is set to `Strict` (see the Github Wiki for help with this).
+    echo      7. Your Conda policy is set to Strict see the Github Wiki for help with this.
     echo      8. Other issues not mentioned above.
     echo.
     choice /C YN /M "Do you want to retry the FFmpeg installation?"
