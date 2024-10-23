@@ -7,6 +7,7 @@ import faiss
 import numpy as np
 import soundfile as sf
 import librosa
+from functools import lru_cache
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -27,17 +28,9 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 config = Config()
-hubert_model = None
-tgt_sr = None
-net_g = None
-vc = None
-cpt = None
-version = None
-n_spk = None
-debug_rvc = False
 
+@lru_cache
 def load_hubert(embedder_model):
-    global hubert_model
     models, _, _ = load_embedding(embedder_model)
     hubert_model = models[0]
     hubert_model = hubert_model.to(config.device)
@@ -46,8 +39,10 @@ def load_hubert(embedder_model):
     else:
         hubert_model = hubert_model.float()
     hubert_model.eval()
+    return hubert_model
 
 def voice_conversion(
+    vc,
     sid=0,
     input_audio_path=None,
     f0_up_key=None,
@@ -64,8 +59,9 @@ def voice_conversion(
     f0autotune=False,
     filter_radius=None,
     embedder_model=None,
+    debug_rvc=False,
 ):
-    global tgt_sr, net_g, vc, hubert_model, version
+    tgt_sr = vc.tgt_sr
 
     f0_up_key = int(f0_up_key)
     try:
@@ -76,10 +72,8 @@ def voice_conversion(
         if audio_max > 1:
             audio /= audio_max
 
-        if not hubert_model:
-            print(f"Loading hubert model with {embedder_model}") if debug_rvc else None
-            load_hubert(embedder_model)
-        if_f0 = cpt.get("f0", 1)
+        print(f"Loading hubert model with {embedder_model}") if debug_rvc else None
+        hubert_model = load_hubert(embedder_model)
 
         file_index = (
             file_index.strip(" ")
@@ -109,6 +103,7 @@ def voice_conversion(
             try:
                 for path in paths:
                     voice_conversion(
+                        vc,
                         sid,
                         path,
                         f0_up_key,
@@ -124,6 +119,7 @@ def voice_conversion(
                         False,
                         f0autotune,
                         embedder_model,
+                        debug_rvc,
                     )
             except Exception as error:
                 print(f"Error processing segmented audio: {error}")
@@ -140,7 +136,6 @@ def voice_conversion(
             print("Processing audio with VC pipeline") if debug_rvc else None
             audio_opt = vc.pipeline(
                 hubert_model,
-                net_g,
                 sid,
                 audio,
                 input_audio_path,
@@ -148,12 +143,10 @@ def voice_conversion(
                 f0_method,
                 file_index,
                 index_rate,
-                if_f0,
                 filter_radius,
                 tgt_sr,
                 resample_sr,
                 rms_mix_rate,
-                version,
                 protect,
                 hop_length,
                 f0autotune,
@@ -178,9 +171,9 @@ def voice_conversion(
         return None, None
 
 
-        
+@lru_cache
 def get_vc(weight_root, sid, file_index=None, training_data_size=10000, debug_rvc=False):
-    global n_spk, tgt_sr, net_g, vc, cpt, version
+    net_g = None
     branding="AllTalk "
     
     if debug_rvc:
@@ -189,40 +182,6 @@ def get_vc(weight_root, sid, file_index=None, training_data_size=10000, debug_rv
         print(f"[{branding}Debug] sid: {sid}")
         print(f"[{branding}Debug] file_index: {file_index}")
         print(f"[{branding}Debug] training_data_size: {training_data_size}")
-    
-    if sid == "" or sid == []:
-        global hubert_model
-        if hubert_model is not None:
-            if debug_rvc:
-                print(f"[{branding}Debug] Cleaning empty cache")
-            del net_g, n_spk, vc, hubert_model, tgt_sr
-            hubert_model = net_g = n_spk = vc = hubert_model = tgt_sr = None
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-        if debug_rvc:
-            print(f"[{branding}Debug] sid is empty or an empty list")
-        
-        if_f0 = cpt.get("f0", 1)
-        version = cpt.get("version", "v1")
-        
-        if debug_rvc:
-            print(f"[{branding}Debug] Model version: {version}")
-            print(f"[{branding}Debug] f0: {if_f0}")
-        
-        if version == "v1":
-            if if_f0 == 1:
-                net_g = SynthesizerTrnMs256NSFsid(*cpt["config"], is_half=config.is_half)
-            else:
-                net_g = SynthesizerTrnMs256NSFsid_nono(*cpt["config"])
-        elif version == "v2":
-            if if_f0 == 1:
-                net_g = SynthesizerTrnMs768NSFsid(*cpt["config"], is_half=config.is_half)
-            else:
-                net_g = SynthesizerTrnMs768NSFsid_nono(*cpt["config"])
-        del net_g, cpt
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        cpt = None
 
     if debug_rvc:
         print(f"[{branding}Debug] Loading model checkpoint")
@@ -285,11 +244,10 @@ def get_vc(weight_root, sid, file_index=None, training_data_size=10000, debug_rv
             print(f"[{branding}Debug] Dimensionality: {d}")
             print(f"[{branding}Debug] Number of centroids: {nlist}")
             print(f"[{branding}Debug] Training data size: {len(train_data)}")
-        vc = VC(tgt_sr, config, data, d, train_data, debug_rvc)
+        vc = VC(tgt_sr, config, version, if_f0, net_g, data, d, train_data, debug_rvc)
     else:
-        vc = VC(tgt_sr, config)
-        
-    n_spk = cpt["config"][-3]
+        vc = VC(tgt_sr, config, version, if_f0, net_g)
+
     if debug_rvc:
         print(f"[{branding}Debug] Leaving get_vc function")
     return vc
@@ -313,17 +271,16 @@ def infer_pipeline(
     training_data_size,
     debug_rvc,
 ):
-    global tgt_sr, net_g, vc, cpt
-    debug_rvc = debug_rvc
     if index_path is None or index_path.strip() == "":
         file_index = None
     else:
         file_index = index_path
-    get_vc(model_path, 0, file_index, training_data_size, debug_rvc)
+    vc = get_vc(model_path, 0, file_index, training_data_size, debug_rvc)
     
     try:
         start_time = time.time()
         voice_conversion(
+            vc,
             sid=0,
             input_audio_path=audio_input_path,
             f0_up_key=f0up_key,
@@ -339,6 +296,7 @@ def infer_pipeline(
             f0autotune=f0autotune,
             filter_radius=filter_radius,
             embedder_model=embedder_model,
+            debug_rvc=debug_rvc
         )
         
         end_time = time.time()

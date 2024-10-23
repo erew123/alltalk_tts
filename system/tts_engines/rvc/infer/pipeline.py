@@ -75,7 +75,7 @@ from sklearn.metrics import (
 )
 
 class VC(object):
-    def __init__(self, tgt_sr, config, data=None, d=None, train_data=None, debug_rvc=False):
+    def __init__(self, tgt_sr, config, version, if_f0, net_g, data=None, d=None, train_data=None, debug_rvc=False):
         branding = "AllTalk "
         self.x_pad, self.x_query, self.x_center, self.x_max, self.is_half = (
             config.x_pad,
@@ -85,6 +85,10 @@ class VC(object):
             config.is_half,
         )
         self.sr = 16000
+        self.tgt_sr = tgt_sr
+        self.__version = version
+        self.__if_f0 = if_f0
+        self.__net_g = net_g
         self.window = 160
         self.t_pad = self.sr * self.x_pad
         self.t_pad_tgt = tgt_sr * self.x_pad
@@ -417,7 +421,6 @@ class VC(object):
     def vc(
         self,
         model,
-        net_g,
         sid,
         audio0,
         pitch,
@@ -425,7 +428,6 @@ class VC(object):
         index,
         big_npy,
         index_rate,
-        version,
         protect,
     ):
         #print("ENTERING pipeline vc")
@@ -453,7 +455,7 @@ class VC(object):
         inputs = {
             "source": feats.to(self.device),
             "padding_mask": padding_mask,
-            "output_layer": 9 if version == "v1" else 12,
+            "output_layer": 9 if self.__version == "v1" else 12,
         }
         #print(f"inputs source shape: {inputs['source'].shape}")
         #print(f"inputs source device: {inputs['source'].device}")
@@ -465,7 +467,7 @@ class VC(object):
             #print(f"logits type: {type(logits)}")
             #print(f"logits length: {len(logits)}")
             #print(f"logits[0] shape: {logits[0].shape}")
-            feats = model.final_proj(logits[0]) if version == "v1" else logits[0]
+            feats = model.final_proj(logits[0]) if self.__version == "v1" else logits[0]
             #print(f"feats shape after final_proj or logits[0]: {feats.shape}")
         #print("Pipeline vc STEP 1a:")
         if protect < 0.5 and pitch is not None and pitchf is not None:
@@ -549,14 +551,14 @@ class VC(object):
         with torch.no_grad():
             if pitch is not None and pitchf is not None:
                 audio1 = (
-                    (net_g.infer(feats, p_len, pitch, pitchf, sid)[0][0, 0])
+                    (self.__net_g.infer(feats, p_len, pitch, pitchf, sid)[0][0, 0])
                     .data.cpu()
                     .float()
                     .numpy()
                 )
             else:
                 audio1 = (
-                    (net_g.infer(feats, p_len, sid)[0][0, 0]).data.cpu().float().numpy()
+                    (self.__net_g.infer(feats, p_len, sid)[0][0, 0]).data.cpu().float().numpy()
                 )
         #print(f"audio1 shape: {audio1.shape}")
         del feats, p_len, padding_mask
@@ -573,7 +575,6 @@ class VC(object):
     def pipeline(
         self,
         model,
-        net_g,
         sid,
         audio,
         input_audio_path,
@@ -581,12 +582,10 @@ class VC(object):
         f0_method,
         file_index,
         index_rate,
-        if_f0,
         filter_radius,
         tgt_sr,
         resample_sr,
         rms_mix_rate,
-        version,
         protect,
         hop_length,
         f0autotune,
@@ -636,7 +635,7 @@ class VC(object):
                 print(error)
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = None, None
-        if if_f0 == 1:
+        if self.__if_f0 == 1:
             pitch, pitchf = self.get_f0(
                 input_audio_path,
                 audio_pad,
@@ -657,11 +656,10 @@ class VC(object):
         t2 = ttime()
         for t in opt_ts:
             t = t // self.window * self.window
-            if if_f0 == 1:
+            if self.__if_f0 == 1:
                 audio_opt.append(
                     self.vc(
                         model,
-                        net_g,
                         sid,
                         audio_pad[s : t + self.t_pad2 + self.window],
                         pitch[:, s // self.window : (t + self.t_pad2) // self.window],
@@ -669,7 +667,6 @@ class VC(object):
                         index,
                         big_npy,
                         index_rate,
-                        version,
                         protect,
                     )[self.t_pad_tgt : -self.t_pad_tgt]
                 )
@@ -677,7 +674,6 @@ class VC(object):
                 audio_opt.append(
                     self.vc(
                         model,
-                        net_g,
                         sid,
                         audio_pad[s : t + self.t_pad2 + self.window],
                         None,
@@ -685,16 +681,14 @@ class VC(object):
                         index,
                         big_npy,
                         index_rate,
-                        version,
                         protect,
                     )[self.t_pad_tgt : -self.t_pad_tgt]
                 )
             s = t
-        if if_f0 == 1:
+        if self.__if_f0 == 1:
             audio_opt.append(
                 self.vc(
                     model,
-                    net_g,
                     sid,
                     audio_pad[t:],
                     pitch[:, t // self.window :] if t is not None else pitch,
@@ -702,7 +696,6 @@ class VC(object):
                     index,
                     big_npy,
                     index_rate,
-                    version,
                     protect,
                 )[self.t_pad_tgt : -self.t_pad_tgt]
             )
@@ -710,7 +703,6 @@ class VC(object):
             audio_opt.append(
                 self.vc(
                     model,
-                    net_g,
                     sid,
                     audio_pad[t:],
                     None,
@@ -718,7 +710,6 @@ class VC(object):
                     index,
                     big_npy,
                     index_rate,
-                    version,
                     protect,
                 )[self.t_pad_tgt : -self.t_pad_tgt]
             )
