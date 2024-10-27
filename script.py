@@ -52,6 +52,7 @@ gradio_enabled = params["gradio_interface"]
 script_path = this_dir / "tts_server.py"
 tunnel_url = None
 running_on_google_colab = False
+running_in_docker = False
 
 ############################################
 # START-UP # Display initial splash screen #
@@ -415,14 +416,30 @@ signal.signal(signal.SIGINT, signal_handler)
 
 # Check if we're running in docker
 if os.path.isfile("/.dockerenv") and 'google.colab' not in sys.modules:
+    print(f"[{branding}TTS]")
     print(f"[{branding}TTS] \033[94mRunning in Docker environment. Please note:\033[0m")
-    print(f"[{branding}TTS] - Docker like environments are a work in progress.")
-    print(f"[{branding}TTS] - On a LAN environment, as long as you expose the Gradio and API ports correctly, this should work.")
-    print(f"[{branding}TTS] - On a routed Internet environment, a VPN to the host server OR secure tunnel will be required for")
-    print(f"[{branding}TTS] both addresses and additionally Gradio is yet to be re-coded to handle a custom API address, so")
-    print(f"[{branding}TTS] the Gradio interface will not work correctly as of yet.")
-    print(f"[{branding}TTS] Internal API address: http://localhost:{params['api_def']['api_port_number']}")
-    print(f"[{branding}TTS] Internal Gradio address: http://localhost:{params['gradio_port_number']}")
+    print(f"[{branding}TTS] Docker environments have various considerations:")
+    print(f"[{branding}TTS] AllTalk v2 is running 2x web servers. One webserver is the API address that exernal TTS")
+    print(f"[{branding}TTS] generation requests are sent to. The other webserver is the Gradio management interface.")
+    print(f"[{branding}TTS] If you want to access and use both API calls and the Gradio interface, in a docker style")
+    print(f"[{branding}TTS] environment, you will need to somehow make these accessable, depending on your scenario:")  
+    print(f"[{branding}TTS] 1. A Local Area Network (LAN) scenario:")
+    print(f"[{branding}TTS]    - Ensure you've exposed the Gradio and API ports correctly.")
+    print(f"[{branding}TTS]    - The application should work as expected.")
+    print(f"[{branding}TTS] 2. Internet/Remotely accessed scenario:")
+    print(f"[{branding}TTS]    - You'll need to set up a secure tunnel or VPN to the host server.")
+    print(f"[{branding}TTS]    - If you want just API requests, you can map just the API and control AllTalk via API calls.")
+    print(f"[{branding}TTS]    - If you want both API and Gradio interfaces you need to make both accessible.")
+    print(f"[{branding}TTS] 3. Default Addresses:")
+    print(f"[{branding}TTS]    - Internal API address: http://localhost:{params['api_def']['api_port_number']}")
+    print(f"[{branding}TTS]    - Internal Gradio address: http://localhost:{params['gradio_port_number']}")
+    print(f"[{branding}TTS] Tunnel Setup:")
+    print(f"[{branding}TTS]    - If using a tunnel, you'll need to provide the API external URL/Address in Gradio.")
+    print(f"[{branding}TTS]    - Look for 'API URL/Address' option in the Gradio interface `Generate` page.")
+    running_in_docker = True
+    docker_url = f"http://localhost:{params['api_def']['api_port_number']}"
+else:
+    running_in_docker = False
 
 # Start the subprocess (now unified for both Docker and non-Docker environments)
 process = subprocess.Popen([sys.executable, script_path])
@@ -608,6 +625,10 @@ def get_alltalk_settings():
         voices_url = f"{tunnel_url_1}/api/voices"
         rvcvoices_url = f"{tunnel_url_1}/api/rvcvoices"
         settings_url = f"{tunnel_url_1}/api/currentsettings"
+    elif running_in_docker:
+        voices_url = f"{docker_url}/api/voices"
+        rvcvoices_url = f"{docker_url}/api/rvcvoices"
+        settings_url = f"{docker_url}/api/currentsettings"        
     else:
         voices_url = f"{alltalk_protocol}{alltalk_ip_port}/api/voices"
         rvcvoices_url = f"{alltalk_protocol}{alltalk_ip_port}/api/rvcvoices"
@@ -726,6 +747,8 @@ at_settings = get_alltalk_settings()   # Pull all the current settings from the 
 def stop_generate_tts():
     if running_on_google_colab:
         api_url = f"{tunnel_url_1}/api/stop-generation"
+    elif running_in_docker:
+        api_url = f"{docker_url}/api/stop-generation"        
     else:
         api_url = f"{alltalk_protocol}{alltalk_ip_port}/api/stop-generation"
     try:
@@ -747,6 +770,8 @@ def send_reload_request(value_sent):
     try:
         if running_on_google_colab:
             url = f"{tunnel_url_1}/api/reload"
+        elif running_in_docker:
+            url = f"{docker_url}/api/reload"            
         else:
             url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
         payload = {"tts_method": value_sent}
@@ -1401,6 +1426,8 @@ if gradio_enabled == True:
         # Send a GET request to the /reload_config endpoint
         if running_on_google_colab:
             reload_config_url = f"{tunnel_url_1}/api/reload_config"
+        elif running_in_docker:
+            reload_config_url = f"{docker_url}/api/reload_config"            
         else:
             reload_config_url = f"http://localhost:{params['api_def']['api_port_number']}/api/reload_config"
         try:
@@ -1558,6 +1585,8 @@ if gradio_enabled == True:
         output_rvc_path = this_dir / "outputs" / "voice2rvcOutput.wav"
         if running_on_google_colab:
             url = f"{tunnel_url_1}/api/voice2rvc"
+        elif running_in_docker:
+            url = f"{docker_url}/api/voice2rvc"            
         else:
             url = f"{alltalk_protocol}{alltalk_ip_port}/api/voice2rvc"
 
@@ -1592,6 +1621,8 @@ if gradio_enabled == True:
             print(f"[{branding}ENG]")
             if running_on_google_colab:
                 url = f"{tunnel_url_1}/api/reload"
+            elif running_in_docker:
+                url = f"{docker_url}/api/reload"                
             else: 
                 url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
             payload = {"tts_method": selected_model}
@@ -1634,7 +1665,7 @@ if gradio_enabled == True:
     debugging_choices = list(debugging_options.keys())
     default_values = [key for key, value in debugging_options.items() if value]
 
-    def update_settings_at(delete_output_wavs, gradio_interface, gradio_port_number, output_folder, api_port_number, gr_debug_tts, transcode_audio_format):
+    def update_settings_at(delete_output_wavs, gradio_interface, gradio_port_number, output_folder, api_port_number, gr_debug_tts, transcode_audio_format, generate_help_page, voice2rvc_page, tts_generator_page, tts_engines_settings_page, alltalk_documentation_page, api_documentation_page):
         # Update the config_data dictionary with the new values
         params["delete_output_wavs"] = delete_output_wavs
         params["gradio_interface"] = gradio_interface == "Enabled"
@@ -1644,6 +1675,17 @@ if gradio_enabled == True:
         for key in debugging_options.keys():
             params['debugging'][key] = key in gr_debug_tts
         params["transcode_audio_format"] = transcode_audio_format
+        
+        # Update gradio_pages settings
+        params["gradio_pages"] = {
+            "Generate_Help_page": generate_help_page,
+            "Voice2RVC_page": voice2rvc_page,
+            "TTS_Generator_page": tts_generator_page,
+            "TTS_Engines_Settings_page": tts_engines_settings_page,
+            "alltalk_documentation_page": alltalk_documentation_page,
+            "api_documentation_page": api_documentation_page
+        }
+
         output_message = "Settings updated successfully!"
         print(f"[{branding}TTS] Default Settings Saved")
         save_config_data()
@@ -1731,6 +1773,8 @@ if gradio_enabled == True:
         if gen_stream == "true":
             if running_on_google_colab:
                 api_url = f"{tunnel_url_1}/api/tts-generate-streaming"
+            elif running_in_docker:
+                api_url = f"{docker_url}/api/tts-generate-streaming"                
             else:
                 api_url = f"http://{my_current_url}/api/tts-generate-streaming"
             encoded_text = requests.utils.quote(gen_text)
@@ -1778,6 +1822,8 @@ if gradio_enabled == True:
                             # Prepend the URL and PORT to the output_file_url
                             if running_on_google_colab:
                                 output_file_url = f"{tunnel_url_1}{result['output_file_url']}"
+                            elif running_in_docker:
+                                output_file_url = f"{docker_url}{result['output_file_url']}"                                
                             else:
                                 output_file_url = f"{protocol}{my_current_url}{result['output_file_url']}"
                             return output_file_url, str("TTS Audio Generated")
@@ -1799,6 +1845,9 @@ if gradio_enabled == True:
             if running_on_google_colab:
                 my_current_url = tunnel_url_1
                 return None
+            elif running_in_docker:
+                my_current_url = docker_url
+                return None            
             if request:
                 host = request.headers.get("host", "Unknown")
                 my_current_url = host.split(":")[0]  # Split the host by ":" and take the first part
@@ -1825,12 +1874,28 @@ if gradio_enabled == True:
                         // localStorage.setItem('darkMode', 'enabled');
                     }
                 }""", show_api=False)
-            if params["firstrun_splash"]:
+            if params.get("firstrun_splash", True):
                 alltalk_welcome()
             with gr.Tab("Generate TTS"):
                 with gr.Tab("Generate"):
                     with gr.Row():
                         gen_text = gr.Textbox(label="Text Input", lines=10)
+                    if running_in_docker:    
+                        with gr.Row():
+                            with gr.Accordion("Docker IP/URL for API Address updater", open=False):  
+                                with gr.Row():
+                                    docker_url = f"http://localhost:{params['api_def']['api_port_number']}"
+                                    docker_upd = gr.Textbox(label="Docker IP/URL for API Address", value=docker_url, show_label=False)
+                                    update_docker_btn = gr.Button("Update Docker IP/URL API Address")
+                                def update_docker_address(new_url):
+                                    global docker_url  # Need this to modify the global variable
+                                    docker_url = new_url
+                                    return f"Docker API address updated to: {new_url}"
+                                update_docker_btn.click(
+                                    fn=update_docker_address,
+                                    inputs=[docker_upd],
+                                    outputs=[gr.Text(label="Status")]
+                                )
                     with gr.Row():
                         with gr.Group():
                             with gr.Row():
@@ -1932,27 +1997,46 @@ if gradio_enabled == True:
                     stop_button.click(stop_generate_tts, inputs=[], outputs=[output_message])
                     submit_button.click(generate_tts, inputs=[gen_text, gen_char, rvcgen_char, rvcat_default_pitch_gr, gen_narr, rvcgen_narr, rvcat_narrator_pitch_gr, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen], outputs=[output_audio, output_message])
 
-                with gr.Tab("Generate Help"):
-                    help_content = alltalk_generation_help()
-                    gr.Markdown(help_content)
-
-            with gr.Tab("Voice2RVC"):
-                gr.Markdown("""Voice2RVC allows you to convert your spoken audio files into synthesized speech using advanced RVC (Retrieval-based Voice Conversion) models. You can either record your own speech or upload a pre-recorded audio file for processing. The tool offers features trim your input audio and undo changes if necessary. Simply record or upload your audio, select an RVC voice model, and submit it for processing. Once completed, you can download your synthesized speech.""")
-                with gr.Row():
-                    audio_input = gr.Audio(sources=["microphone", "upload"], type="numpy", label="Record audio or Upload a spoken audio file")
-                with gr.Row():
-                    rvc_voices_dropdown = gr.Dropdown(choices=at_settings["rvcvoices"], label="Select RVC Voice to generate as", value=at_settings["rvcvoices"][0], scale=1)
-                    rvc_pitch_slider = gr.Slider(minimum=-24, maximum=24, step=1, label="RVC Pitch", info="Depending on the pitch of your input audio, you will need to adjust this accordingly to change the pitch for the output voice. The higher the value, the higher the pitch.", value=0, interactive=True, scale=2)
-                with gr.Row():
-                    rvc_f0method = gr.Radio(label="Pitch Extraction Algorithm", info="Select the algorithm to be used for extracting the pitch (F0) during audio conversion. The default algorithm is rmvpe, which is generally recommended for most cases due to its balance of accuracy and performance.", choices=["crepe", "crepe-tiny", "dio", "fcpe", "harvest", "hybrid[rmvpe+fcpe]", "pm", "rmvpe"], value=params["rvc_settings"].get("f0method", "rmvpe"), interactive=True, scale=1)
-                    submit_button = gr.Button("Submit to RVC", scale=0)
-                audio_output = gr.Audio(label="Converted Audio")
-                
-                submit_button.click(fn=voice2rvc, inputs=[audio_input, rvc_voices_dropdown, rvc_pitch_slider, rvc_f0method], outputs=audio_output)
-                
-            with gr.Tab("TTS Generator"):
-                gr.Markdown("""With the TTS Generator you can create incredibly long audio e.g. entire books. Yet to be migrated into Gradio""")
-                gr.Markdown("""Please find it on the web address http://127.0.0.1:7851/static/tts_generator/tts_generator.html (Assuming you have not changed your IP Address)""")
+                if params.get("gradio_pages", {}).get("Generate_Help_page", True):
+                    with gr.Tab("Generate Help"):
+                        help_content = alltalk_generation_help()
+                        gr.Markdown(help_content)
+                        
+            if params.get("gradio_pages", {}).get("Voice2RVC_page", True):
+                with gr.Tab("Voice2RVC"):
+                    gr.Markdown("""Voice2RVC allows you to convert your spoken audio files into synthesized speech using advanced RVC (Retrieval-based Voice Conversion) models. You can either record your own speech or upload a pre-recorded audio file for processing. The tool offers features trim your input audio and undo changes if necessary. Simply record or upload your audio, select an RVC voice model, and submit it for processing. Once completed, you can download your synthesized speech.""")
+                    with gr.Row():
+                        audio_input = gr.Audio(sources=["microphone", "upload"], type="numpy", label="Record audio or Upload a spoken audio file")
+                    if running_in_docker:    
+                        with gr.Row():
+                            with gr.Accordion("Docker IP/URL for API Address updater", open=False):  
+                                with gr.Row():
+                                    docker_url = f"http://localhost:{params['api_def']['api_port_number']}"
+                                    docker_upd = gr.Textbox(label="Docker IP/URL for API Address", value=docker_url, show_label=False)
+                                    update_docker_btn = gr.Button("Update Docker IP/URL API Address")
+                                def update_docker_address(new_url):
+                                    global docker_url  # Need this to modify the global variable
+                                    docker_url = new_url
+                                    return f"Docker API address updated to: {new_url}"
+                                update_docker_btn.click(
+                                    fn=update_docker_address,
+                                    inputs=[docker_upd],
+                                    outputs=[gr.Text(label="Status")]
+                                )                        
+                    with gr.Row():
+                        rvc_voices_dropdown = gr.Dropdown(choices=at_settings["rvcvoices"], label="Select RVC Voice to generate as", value=at_settings["rvcvoices"][0], scale=1)
+                        rvc_pitch_slider = gr.Slider(minimum=-24, maximum=24, step=1, label="RVC Pitch", info="Depending on the pitch of your input audio, you will need to adjust this accordingly to change the pitch for the output voice. The higher the value, the higher the pitch.", value=0, interactive=True, scale=2)
+                    with gr.Row():
+                        rvc_f0method = gr.Radio(label="Pitch Extraction Algorithm", info="Select the algorithm to be used for extracting the pitch (F0) during audio conversion. The default algorithm is rmvpe, which is generally recommended for most cases due to its balance of accuracy and performance.", choices=["crepe", "crepe-tiny", "dio", "fcpe", "harvest", "hybrid[rmvpe+fcpe]", "pm", "rmvpe"], value=params["rvc_settings"].get("f0method", "rmvpe"), interactive=True, scale=1)
+                        submit_button = gr.Button("Submit to RVC", scale=0)
+                    audio_output = gr.Audio(label="Converted Audio")
+                    
+                    submit_button.click(fn=voice2rvc, inputs=[audio_input, rvc_voices_dropdown, rvc_pitch_slider, rvc_f0method], outputs=audio_output)
+            
+            if params.get("gradio_pages", {}).get("TTS_Generator_page", True):
+                with gr.Tab("TTS Generator"):
+                    gr.Markdown("""With the TTS Generator you can create incredibly long audio e.g. entire books. Yet to be migrated into Gradio""")
+                    gr.Markdown("""Please find it on the web address http://127.0.0.1:7851/static/tts_generator/tts_generator.html (Assuming you have not changed your IP Address)""")
                 
             with gr.Tab("Global Settings"):
                 with gr.Tab("AllTalk Settings"):
@@ -1971,11 +2055,27 @@ if gradio_enabled == True:
                             gr_debug_tts = gr.CheckboxGroup(choices=debugging_choices, label="Debugging Options list", value=default_values)
                         with gr.Column():
                             gradio_interface = gr.Dropdown(choices={"Enabled": "true", "Disabled": "false"}, label="Gradio Interface", value="Enabled" if params["gradio_interface"] else "Disabled", info="**WARNING**: This will disable the AllTalk Gradio interface from loading. To re-enable the interface, go to the API address in a web browser and enable it there. http://127.0.0.1:7851/")
+                    gr.Markdown("### Disable Gradio Interface Tabs")  # Adds a title
+                    gr.Markdown("Use the checkboxes below to enable or disable individual interface tabs or components.")                    
+                    with gr.Group():
+                        with gr.Row():
+                            generate_help_page = gr.Checkbox(label="Generate Help", value=params.get("gradio_pages", {}).get("Generate_Help_page", True))
+                            voice2rvc_page = gr.Checkbox(label="Voice2RVC", value=params.get("gradio_pages", {}).get("Voice2RVC_page", True))
+                            tts_generator_page = gr.Checkbox(label="TTS Generator", value=params.get("gradio_pages", {}).get("TTS_Generator_page", True))
+                            tts_engines_settings_page = gr.Checkbox(label="TTS Engines Settings", value=params.get("gradio_pages", {}).get("TTS_Engines_Settings_page", True))
+                            alltalk_documentation_page = gr.Checkbox(label="AllTalk Documentation", value=params.get("gradio_pages", {}).get("alltalk_documentation_page", True))
+                            api_documentation_page = gr.Checkbox(label="API Documentation", value=params.get("gradio_pages", {}).get("api_documentation_page", True))
+                    
                     with gr.Row():
                         submit_button = gr.Button("Update Settings")
                         output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
 
-                    submit_button.click(update_settings_at, inputs=[delete_output_wavs, gradio_interface, gradio_port_number, output_folder, api_port_number, gr_debug_tts, transcode_audio_format], outputs=output_message)
+                    # Update the function to include these new settings
+                    submit_button.click(
+                        update_settings_at, 
+                        inputs=[delete_output_wavs, gradio_interface, gradio_port_number, output_folder, api_port_number, gr_debug_tts, transcode_audio_format, generate_help_page, voice2rvc_page, tts_generator_page, tts_engines_settings_page, alltalk_documentation_page, api_documentation_page],
+                        outputs=output_message
+                    )
 
                 with gr.Tab("AllTalk API Defaults"):
                     gr.Markdown("""## &nbsp;&nbsp;API Version Settings""")
@@ -2147,16 +2247,18 @@ if gradio_enabled == True:
                 disk_space_page = get_disk_interface()
                 disk_space_page()
                     
+            if params.get("gradio_pages", {}).get("TTS_Engines_Settings_page", True):
+                with gr.Tab("TTS Engines Settings"):
+                        with gr.Tabs():
+                            for engine_name in engines_available:
+                                with gr.Tab(f"{engine_name.capitalize()} TTS"):
+                                    gr.Markdown(f"### &nbsp;&nbsp;{engine_name.capitalize()} TTS")
+                                    globals()[f"{engine_name}_at_gradio_settings_page"](globals()[f"{engine_name}_model_config_data"])
 
-            with gr.Tab("TTS Engines Settings"):
-                    with gr.Tabs():
-                        for engine_name in engines_available:
-                            with gr.Tab(f"{engine_name.capitalize()} TTS"):
-                                gr.Markdown(f"### &nbsp;&nbsp;{engine_name.capitalize()} TTS")
-                                globals()[f"{engine_name}_at_gradio_settings_page"](globals()[f"{engine_name}_model_config_data"])
-                        
-            alltalk_documentation()
-            api_documentation()
+            if params.get("gradio_pages", {}).get("alltalk_documentation_page", True):
+                alltalk_documentation()
+            if params.get("gradio_pages", {}).get("api_documentation_page", True):                
+                api_documentation()
             with gr.Tab("About this project"):
                 alltalk_about()
         return app
