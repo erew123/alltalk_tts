@@ -7,6 +7,8 @@ Github **discussions** on the BETA are [here in the discussion board](https://gi
 
 **Please note, my available time has become VERY limited due to unexpected family commitments [Please read here for details](https://github.com/erew123/alltalk_tts/issues/377). So please DYOR, look at the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki) and refer to the TTS manufacturer (Links in the Gradio interface) for issues specific to THEIR TTS engines.**
 
+I would also like to say a big thank you to anyone whom has contributed to this project either with PR's (list [here](https://github.com/erew123/alltalk_tts/graphs/contributors)) or in any discussion forums/issues tickets. Your input, guidance, help and thoughts are greatly appreciated.
+
 ---
 
 ## AllTalk V2 Core Functionality
