@@ -34,3 +34,4 @@ piper-tts; sys_platform == "linux"
 piper-tts; sys_platform == "darwin"
 piper-phonemize==1.1.0; sys_platform == "darwin"
 fastapi==0.112.2
+ctranslate2==4.4.0
