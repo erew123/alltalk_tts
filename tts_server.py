@@ -859,7 +859,8 @@ async def openai_tts_generate(request: Request):
             else:
                 print(f"[{branding}Debug] send to rvc") if debug_openai else None
                 pth_path = this_dir / "models" / "rvc_voices" / rvc_settings["rvc_char_model_file"]
-                run_rvc(output_file_path, pth_path, infer_pipeline)
+                pitch = rvc_settings["pitch"]
+                run_rvc(output_file_path, pth_path, pitch, infer_pipeline)
         # Transcode the audio to the requested format
         transcoded_file_path = await transcode_for_openai(output_file_path, response_format)
         print(f"[{branding}Debug] Audio transcoded to: {transcoded_file_path}")  if debug_openai else None
