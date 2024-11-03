@@ -118,6 +118,24 @@ class tts_class:
         self.params = configfile_data                                                                       # Loads in the curent "confgnew.json" file to self.params.
         self.debug_tts = configfile_data.get("debugging").get("debug_tts")                                  # Can be used within this script as a True/False flag for generally debugging the TTS generation process. 
         self.debug_tts_variables = configfile_data.get("debugging").get("debug_tts_variables")              # Can be used within this script as a True/False flag for generally debugging variables (if you wish).
+        
+        
+        # Set Parler Precision. Options are:
+        #     "float32" (full precision)
+        #     "float16" (half precision)
+        #     "bfloat16" (brain floating point)
+        self.dtype_set = "float16"  # Change this line to modify precision. Will faliback to float32 if device doesnt support float16
+        
+    def get_dtype(self):
+        """Convert dtype string setting to torch dtype with fallback safety"""
+        dtype_map = {
+            "float32": torch.float32,
+            "float16": torch.float16,
+            "bfloat16": torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        }
+        # Fallback to float32 if dtype_set is invalid
+        return dtype_map.get(self.dtype_set, torch.float32)        
+                        
     ################################################################
     # DONT CHANGE #  Print out Python, CUDA, DeepSpeed versions ####
     ################################################################
@@ -319,18 +337,29 @@ class tts_class:
         if "No Models Available" in self.available_models:
             print(f"[{self.branding}ENG] \033[91mError\033[0m: No models for this TTS engine were found to load. Please download a model.")
             return
+        
         model_path = self.main_dir / "models" / "parler" / model_name
         print("model_path is:", model_path) if self.debug_tts_variables else None
-        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-        # ↑↑↑ Keep everything above this line ↑↑↑
-        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑      
-
-        self.model = ParlerTTSForConditionalGeneration.from_pretrained(model_path).to(self.device, dtype=torch.float32)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         
-        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-        # ↓↓↓ Keep everything below this line ↓↓↓
-        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        # Get the appropriate dtype
+        dtype = self.get_dtype()
+        
+        # Print dtype information
+        dtype_name = str(dtype).split('.')[-1]
+        print(f"[{self.branding}ENG] \033[94mLoading model with dtype:\033[93m {dtype_name}\033[0m")
+        
+        try:
+            self.model = ParlerTTSForConditionalGeneration.from_pretrained(model_path).to(self.device, dtype=dtype)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+            
+            if torch.cuda.is_available():
+                memory_used = torch.cuda.memory_allocated() / 1024**2
+                print(f"[{self.branding}ENG] \033[94mGPU Memory Used:\033[93m {memory_used:.2f} MB\033[0m")
+            
+        except Exception as e:
+            print(f"[{self.branding}ENG] \033[91mError loading model:\033[0m {str(e)}")
+            return None
+        
         self.is_tts_model_loaded = True
         return self.model
 
@@ -427,7 +456,7 @@ class tts_class:
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
         # ↑↑↑ Keep everything above this line ↑↑↑
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-        
+         
         voices_file = os.path.join(self.main_dir, "system", "tts_engines", "parler", "parler_voices.json")
         if os.path.exists(voices_file):
             with open(voices_file, "r") as f:
@@ -441,9 +470,15 @@ class tts_class:
         else:
             description = f"A {voice} voice speaking in {language}."  
         input_ids = self.tokenizer(description, return_tensors="pt").input_ids.to(self.device)
-        prompt_input_ids = self.tokenizer(text, return_tensors="pt").input_ids.to(self.device)
-        generation = self.model.generate(input_ids=input_ids, prompt_input_ids=prompt_input_ids).to(torch.float32)
-        audio_arr = generation.cpu().numpy().squeeze()
+        prompt_input_ids = self.tokenizer(text, return_tensors="pt").input_ids.to(self.device)        
+        # Generate with current dtype
+        generation = self.model.generate(
+            input_ids=input_ids, 
+            prompt_input_ids=prompt_input_ids
+        )
+        
+        # Convert to float32 for audio processing
+        audio_arr = generation.to(torch.float32).cpu().numpy().squeeze()
         sf.write(output_file, audio_arr, self.model.config.sampling_rate)
 
         # Fake Streaming function here
