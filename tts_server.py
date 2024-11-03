@@ -36,6 +36,10 @@ from pydantic import BaseModel, ValidationError, Field, field_validator
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.utils.weight_norm")
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.functional", lineno=5476)
+# Filter ComplexHalf support warning
+warnings.filterwarnings("ignore", message="ComplexHalf support is experimental")
+# Filter Flash Attention warning
+warnings.filterwarnings("ignore", message="1Torch was not compiled with flash attention"
 ####################
 # Setup local path #
 ####################
