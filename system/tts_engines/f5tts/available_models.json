@@ -1,0 +1,15 @@
+{
+  "first_start_model": "f5tts_v1",
+  "models": [
+      {
+          "model_name": "f5tts_v1",
+          "folder_path": "f5tts_v1",
+          "files_to_download": {
+              "model_1200000.safetensors": "https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_Base/model_1200000.safetensors",
+              "vocab.txt": "https://raw.githubusercontent.com/SWivid/F5-TTS/refs/heads/main/src/f5_tts/infer/examples/vocab.txt",
+              "vocos/config.yaml": "https://huggingface.co/charactr/vocos-mel-24khz/resolve/main/config.yaml",
+              "vocos/pytorch_model.bin": "https://huggingface.co/charactr/vocos-mel-24khz/resolve/main/pytorch_model.bin"
+          }
+      }
+  ]
+}
