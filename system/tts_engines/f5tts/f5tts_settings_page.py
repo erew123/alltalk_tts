@@ -122,7 +122,7 @@ def f5tts_model_alltalk_settings(model_config_data):
                 temperature_set_gr = gr.Slider(value=float(model_config_data["settings"]["temperature_set"]), minimum=0, maximum=1, step=0.05, label="Temperature" if model_config_data["model_capabilties"]["temperature_capable"] else "Temperature N/A", interactive=model_config_data["model_capabilties"]["temperature_capable"])
                 repetitionpenalty_set_gr = gr.Slider(value=float(model_config_data["settings"]["repetitionpenalty_set"]), minimum=1, maximum=20, step=1, label="Repetition Penalty" if model_config_data["model_capabilties"]["repetitionpenalty_capable"] else "Repetition N/A", interactive=model_config_data["model_capabilties"]["repetitionpenalty_capable"])
                 pitch_set_gr = gr.Slider(value=float(model_config_data["settings"]["pitch_set"]), minimum=-10, maximum=10, step=1, label="Pitch" if model_config_data["model_capabilties"]["pitch_capable"] else "Pitch N/A", interactive=model_config_data["model_capabilties"]["pitch_capable"])
-                generationspeed_set_gr = gr.Slider(value=float(model_config_data["settings"]["generationspeed_set"]), minimum=0.25, maximum=2.00, step=0.25, label="Speed" if model_config_data["model_capabilties"]["generationspeed_capable"] else "Speed N/A", interactive=model_config_data["model_capabilties"]["generationspeed_capable"])
+                generationspeed_set_gr = gr.Slider(value=float(model_config_data["settings"]["generationspeed_set"]), minimum=0.30, maximum=2.00, step=0.10, label="Speed" if model_config_data["model_capabilties"]["generationspeed_capable"] else "Speed N/A", interactive=model_config_data["model_capabilties"]["generationspeed_capable"])
             with gr.Row():
                 with gr.Column():
                     gr.Markdown("### OpenAI Voice Mappings")
@@ -467,13 +467,13 @@ def f5tts_model_alltalk_settings(model_config_data):
             with gr.Row():
                 gr.Markdown("""
                     ### 🟧 Where are the f5tts models stored?
-                    This extension will download the models to `/alltalk_tts/models/f5tts/` folder.
+                    This extension will download the f5tts models to `/alltalk_tts/models/f5tts/` folder.
                     
-                    ### 🟧 How do reference voices work?
+                    ### 🟧 How do clone/reference voices work?
                     F5-TTS uses voice samples with corresponding reference text files for voice cloning:
                     1. Place your WAV voice samples in the `/alltalk_tts/voices/` folder
-                    2. Create a matching `.reference.txt` file containing the exact text spoken in the recording
-                    3. Use the Reference Text Manager tab to create and manage these text files
+                    2. Create a matching `.reference.txt` file containing the exact text spoken in the recording.
+                    3. Use the `Reference Text/Sample Manager` tab to create and manage these text files
                     4. Only voice samples with valid reference text files will be available for use
                     
                     For best results:
@@ -487,7 +487,13 @@ def f5tts_model_alltalk_settings(model_config_data):
                     > When `Disabled`, your output wav files will be left untouched.
                     > When set to a setting `1 Day` or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.
                     """)
-
+                gr.Markdown("""
+                    ### 🟧 Speed settings and voice cloning
+                    F5-TTS appears to generate audio a little faster than the audio sample. As such, in AllTalk, the speed setting for generation is set to 0.9 (see the F5-TTS `Default Settings` tab). Certainly the better the punctuation you use, the better the end result, both in the audio samples reference file and the text you send to be generated as TTS. If you wish to globally adjust this, you can make the change on the Default Settings tab.
+                    
+                    ### 🟧 Cloned audio and punctuation.
+                    When F5-TTS reproduces audio, punctuation appears to matter greatly. As such `Im` and `I'm` or `I am` will all sound a little different. Additionally it appears to want to spell out text in CAPS. You may want to look at the F5-TTS developers page for more information on this.
+                    """)
 
     return app
 

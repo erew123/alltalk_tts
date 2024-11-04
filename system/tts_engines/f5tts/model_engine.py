@@ -39,7 +39,9 @@ import sys
 
 def install_and_restart():
     try:
+        print("##########################################")
         print("F5-TTS not found. Attempting to install...")
+        print("##########################################")
         subprocess.check_call([
             sys.executable, 
             "-m", 
@@ -47,7 +49,9 @@ def install_and_restart():
             "install", 
             "git+https://github.com/SWivid/F5-TTS.git"
         ])
+        print("########################################################")
         print("F5-TTS installed successfully! Restarting application...")
+        print("########################################################")
         
         # Get the current script's path
         script_path = sys.argv[0]
@@ -56,7 +60,9 @@ def install_and_restart():
         os.execv(sys.executable, ['python'] + sys.argv)
         
     except subprocess.CalledProcessError as e:
+        print("########################################################")
         print(f"Failed to install F5-TTS: {str(e)}")
+        print("########################################################")
         raise ImportError("Could not install required package F5-TTS")
 
 try:
@@ -152,6 +158,9 @@ class tts_class:
         self.debug_tts = configfile_data.get("debugging").get("debug_tts")                                  # Can be used within this script as a True/False flag for generally debugging the TTS generation process. 
         self.debug_tts_variables = configfile_data.get("debugging").get("debug_tts_variables")              # Can be used within this script as a True/False flag for generally debugging variables (if you wish).
         
+        ############################################################################
+        # DONT CHANGE #  These settings are specific to the F5-TTS Model/Engine ####
+        ############################################################################
         # Add F5-TTS specific parameters
         self.target_sample_rate = 24000
         self.n_mel_channels = 100
@@ -444,16 +453,10 @@ class tts_class:
     
     #################################################################################
     #################################################################################
-    # CHANGE ME # Model loading # Piper does not actually load/stay resident in RAM #
+    # CHANGE ME # Model loading #####################################################
     #################################################################################
     #################################################################################
     # This function will handle the loading of your model, into VRAM/CUDA, System RAM or whatever.
-    # In XTTS, which has 2x model loader types, there are 2x loaders. They are called by "def handle_tts_method_change"
-    # In Piper we fake a model loader as Piper doesnt actually load a model into CUDA/System RAM as such. So, in that
-    # situation, api_manual_load_model is kind of a blank function. Though we do set self.is_tts_model_loaded = True
-    # as this is used elsewhere in the scripts to confirm that a model is available to be used for TTS generation.
-    # We always check for "No Models Available" being sent as that means we are trying to load in a model that 
-    # doesnt exist/wasnt found on script start-up e.g. someone deleted the model from the folder or something.
     async def api_manual_load_model(self, model_name):
         if model_name == "No Models Found":
             print(f"[{self.branding}ENG] \033[91mError\033[0m: No models for this TTS engine were found to load.")
@@ -567,11 +570,6 @@ class tts_class:
         ###############################
         ###############################
         # This function will handle the UN-loading of your model, from VRAM/CUDA, System RAM or whatever.
-        # In XTTS, that model loads into CUDA/System Ram, so when we swap models, we want to unload the current model
-        # free up the memory and then load in the new model to VRAM/CUDA. On the flip side of that, Piper doesnt
-        # doesnt load into memory, so we just need to put a fake function here that doesnt really do anything
-        # other than set "self.is_tts_model_loaded = False", which would be set back to true by the model loader. 
-        # So look at the Piper model_engine.py if you DONT need to unload models.
         async def unload_model(self):
             # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
             # ↑↑↑ Keep everything above this line ↑↑↑
@@ -597,15 +595,11 @@ class tts_class:
 
     ###################################################################################################################################    
     ###################################################################################################################################
-    # CHANGE ME # Model changing. Unload out old model and load in a new one # XTTS is very unusal as it has 2x model loading methods #
+    # CHANGE ME # Model changing. Unload out old model and load in a new one ##########################################################
     ###################################################################################################################################
     ###################################################################################################################################
     # This function is your central model loading/unloading handler that deals with the above functions as necesary, to call loading, unloading,
-    # swappng DeepSpeed, Low vram etc. This function gets called with a "engine name - model name" type call. In XTTS, because there are 2x
-    # model loader types, (XTTS and APILocal), we take tts_method and split the "engine name - model name" into a loader type and the model
-    # that it needs to load in and then we call the correct loader function. Whereas in Piper, which doesnt load models into memory at all, 
-    # we just have a fake function that doesnt really do anything. We always check to see if the model name has "No Models Available" in the
-    # name thats sent over, just to catch any potential errors. We display the start load time and end load time. Thats about it.
+    # swappng DeepSpeed, Low vram etc. This function gets called with a "engine name - model name" type call.
     async def handle_tts_method_change(self, tts_method):
         generate_start_time = time.time() # Record the start time of loading the model
         if "No Models Available" in self.available_models:
@@ -887,9 +881,9 @@ class tts_class:
 
         return chunks
 
-    ##########################################################################################################################################    
     ##########################################################################################################################################
-    # CHANGE ME # Model changing. Unload out old model and load in a new one # XTTS is very unusal as it has 2x model TTS generation methods #
+    ##########################################################################################################################################
+    # CHANGE ME # Model changing. Unload out old model and load in a new one #################################################################
     ##########################################################################################################################################
     ##########################################################################################################################################
     # In here all the possible options are sent over (text, voice to use, lanugage, speed etc etc) and its up to you how you use them, or not.
@@ -904,9 +898,7 @@ class tts_class:
     # we have to have an option for Streaming, even if our TTS engine doesnt support streaming. So in that case, we would set streaming_capable
     # as false in our model_settings.JSON file, meaning streaming will never be called. However, we have to put a fake streaming routine in our
     # function below (or a real function if it does support streaming of course). Parler has an example of a fake streaming function, which is
-    # very clearly highlighted in its model_engine.py script.
-    # Piper TTS, which uses command line based calls and therefore has different ones for Windows and Linux/Mac, has an example of doing this
-    # within its model_engine.py file.     
+    # very clearly highlighted in its model_engine.py script.   
     async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming):
         if voice == "No Voices Found":
             print(f"[{self.branding}ENG] \033[91mError\033[0m: No voices found to generate TTS.")

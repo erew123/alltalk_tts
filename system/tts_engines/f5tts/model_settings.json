@@ -2,7 +2,7 @@
     "model_details": {
         "manufacturer_name": "F5-TTS",
         "manufacturer_website": "https://github.com/SWivid/F5-TTS",
-        "model_description": "F5-TTS: A Fairytaler that Fakes Fluent and Faithful Speech with Flow Matching"
+        "model_description": "F5-TTS: A Fairytaler that Fakes Fluent and Faithful Speech with Flow Matching. Currently F5-TTS only supports English and Chinese languages. For more information, please look at the developers website (link above). Authors (Yushen Chen and Zhikang Niu and Ziyang Ma and Keqi Deng and Chunhui Wang and Jian Zhao and Kai Yu and Xie Chen). Journal (arXiv preprint arXiv:2410.06885)"
     },
     "model_capabilties": {
         "audio_format": "wav",
@@ -25,8 +25,8 @@
         "def_narrator_voice": "female_01.wav",
         "deepspeed_enabled": false,
         "engine_installed": true,
-        "generationspeed_set": 1,
-        "lowvram_enabled": false,
+        "generationspeed_set": 0.9,
+        "lowvram_enabled": true,
         "pitch_set": 0,
         "repetitionpenalty_set": 10,
         "temperature_set": 0.75
