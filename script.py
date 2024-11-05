@@ -155,7 +155,7 @@ def safe_load_json(file_path, backup_path=None):
                 "engines_available": [
                     {
                         "name": "parler",
-                        "selected_model": "parler - parler_tts_mini_v0.1"
+                        "selected_model": "parler - parler_tts_mini_v1"
                     },
                     {
                         "name": "piper",
@@ -210,7 +210,7 @@ for engine in new_engines:
         if engine_dir.is_dir():
             # Add the new engine to the list
             tts_engines_data['engines_available'].append(engine)
-            print(f"[{branding}TTS] \033[92mNew TTS Engine   : \033[91mAdded {engine_name}\033[0m")
+            print(f"[{branding}TTS] \033[92mNew TTS Engine    : \033[91mAdded {engine_name}\033[0m")
 
             # Backup the current tts_engines.json before saving the updated file
             shutil.copy(tts_engines_path, tts_engines_backup_path)
