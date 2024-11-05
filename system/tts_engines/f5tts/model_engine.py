@@ -578,34 +578,34 @@ class tts_class:
             print(f"[{self.branding}ENG] \033[91mError loading model: {str(e)}\033[0m")
             raise HTTPException(status_code=500, detail=f"Error loading model: {str(e)}")
             
-        ###############################
-        ###############################
-        # CHANGE ME # Model unloading #
-        ###############################
-        ###############################
-        # This function will handle the UN-loading of your model, from VRAM/CUDA, System RAM or whatever.
-        async def unload_model(self):
-            # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-            # ↑↑↑ Keep everything above this line ↑↑↑
-            # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+    ###############################
+    ###############################
+    # CHANGE ME # Model unloading #
+    ###############################
+    ###############################
+    # This function will handle the UN-loading of your model, from VRAM/CUDA, System RAM or whatever.
+    async def unload_model(self):
+        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+        # ↑↑↑ Keep everything above this line ↑↑↑
+        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+        
+        """Unload the F5-TTS model from memory"""
+        if hasattr(self, 'model'):
+            del self.model
+            self.model = None
+        
+        if hasattr(self, 'vocoder'):
+            del self.vocoder
+            self.vocoder = None
             
-            """Unload the F5-TTS model from memory"""
-            if hasattr(self, 'model'):
-                del self.model
-                self.model = None
-            
-            if hasattr(self, 'vocoder'):
-                del self.vocoder
-                self.vocoder = None
-                
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
-            # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-            # ↓↓↓ Keep everything below this line ↓↓↓
-            # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 
-            self.is_tts_model_loaded = False
-            return None
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        # ↓↓↓ Keep everything below this line ↓↓↓
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 
+        self.is_tts_model_loaded = False
+        return None
 
     ###################################################################################################################################    
     ###################################################################################################################################
