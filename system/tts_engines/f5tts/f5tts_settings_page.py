@@ -493,6 +493,14 @@ def f5tts_model_alltalk_settings(model_config_data):
                     
                     ### 🟧 Cloned audio and punctuation.
                     When F5-TTS reproduces audio, punctuation appears to matter greatly. As such `Im` and `I'm` or `I am` will all sound a little different. Additionally it appears to want to spell out text in CAPS. You may want to look at the F5-TTS developers page for more information on this.
+                    
+                    ### 🟧 Difference between F5-TTS and E2-TTS models.
+                    F5-TTS and E2-TTS represent two different approaches to zero-shot text-to-speech:
+                    
+                    - F5-TTS is optimized for voice fidelity and natural speech patterns. It excels at capturing the nuances and characteristics of the reference voice, producing highly natural and faithful speech output. The tradeoff is slightly longer generation times and higher computational requirements.<br>
+                    - E2-TTS prioritizes efficiency and ease of use. It offers faster generation speeds and better memory efficiency, making it ideal for longer texts or resource-constrained environments. While its voice reproduction may be slightly less precise than F5-TTS, it still produces high-quality output with good speaker similarity.
+
+                    Choose F5-TTS when voice fidelity is paramount, or E2-TTS when generation speed and efficiency are the priority.
                     """)
 
     return app
