@@ -79,7 +79,7 @@ def install_and_restart():
         raise ImportError("Could not install required packages")
 
 try:
-    from f5_tts.model import CFM, DiT
+    from f5_tts.model import CFM, DiT, UNetT
     from f5_tts.model.utils import (
         get_tokenizer,
         convert_char_to_pinyin,
