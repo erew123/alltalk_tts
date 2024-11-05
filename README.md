@@ -13,7 +13,8 @@ I would also like to say a big thank you to anyone whom has contributed to this 
 
 ## AllTalk V2 Core Functionality
 - Comprehensive setup utilities for Windows & Linux
-- Multiple TTS engine support (XTTS, Piper, Parler, VITS)
+- Multiple TTS engine support (XTTS, Piper, Parler, VITS, F5-TTS)
+- Retrieval-based Voice Conversion (RVC) pipeline
 - Easy integration of new TTS engines (some coding required)
 - Customizable settings for each TTS engine
 - In-app model downloads for each engine
@@ -26,7 +27,6 @@ I would also like to say a big thank you to anyone whom has contributed to this 
 - Clear console output for troubleshooting
 - Binds to all available IP addresses (0.0.0.0)
 - Fully customizable Global API settings
-- Retrieval-based Voice Conversion (RVC) pipeline
 
 #### Documentation and Support
 - Built-in documentation with web interface
