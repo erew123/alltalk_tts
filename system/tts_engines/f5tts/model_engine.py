@@ -27,7 +27,6 @@ deepspeed_available = False
 # In this section you will import any imports that your specific TTS Engine will use. You will provide any
 # start-up errors for those bits, as if you were starting up a normal Python script. Note the logging.disable
 # a few lines up from here, you may want to # that out while debugging!
-from vocos import Vocos
 import soundfile as sf
 import tempfile
 from pydub import AudioSegment, silence
@@ -39,9 +38,22 @@ import sys
 
 def install_and_restart():
     try:
-        print("##########################################")
-        print("F5-TTS not found. Attempting to install...")
-        print("##########################################")
+        print("#################################################################")
+        print("Installing required packages for F5-TTS... This may take a while.")
+        print("################################################################")
+        
+        # Install vocos first
+        print("Installing vocos...")
+        subprocess.check_call([
+            sys.executable, 
+            "-m", 
+            "pip", 
+            "install", 
+            "vocos"
+        ])
+        
+        # Then install F5-TTS
+        print("Installing F5-TTS...")
         subprocess.check_call([
             sys.executable, 
             "-m", 
@@ -49,9 +61,10 @@ def install_and_restart():
             "install", 
             "git+https://github.com/SWivid/F5-TTS.git"
         ])
-        print("########################################################")
-        print("F5-TTS installed successfully! Restarting application...")
-        print("########################################################")
+        
+        print("##############################################################")
+        print("All packages installed successfully! Restarting application...")
+        print("##############################################################")
         
         # Get the current script's path
         script_path = sys.argv[0]
@@ -61,9 +74,9 @@ def install_and_restart():
         
     except subprocess.CalledProcessError as e:
         print("########################################################")
-        print(f"Failed to install F5-TTS: {str(e)}")
+        print(f"Failed to install required packages: {str(e)}")
         print("########################################################")
-        raise ImportError("Could not install required package F5-TTS")
+        raise ImportError("Could not install required packages")
 
 try:
     from f5_tts.model import CFM, DiT
@@ -71,6 +84,7 @@ try:
         get_tokenizer,
         convert_char_to_pinyin,
     )
+    from vocos import Vocos
 except ImportError:
     install_and_restart()
 
