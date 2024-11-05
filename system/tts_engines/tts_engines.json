@@ -1,10 +1,10 @@
 {
-    "engine_loaded": "f5tts",
-    "selected_model": "f5tts - f5tts_v1",
+    "engine_loaded": "piper",
+    "selected_model": "piper",
     "engines_available": [
         {
             "name": "parler",
-            "selected_model": "parler - parler-tts-mini-v1"
+            "selected_model": "parler - parler_tts_mini_v0.1"
         },
         {
             "name": "piper",
@@ -17,10 +17,6 @@
         {
             "name": "xtts",
             "selected_model": "xtts - xttsv2_2.0.3"
-        },
-        {
-            "name": "bark",
-            "selected_model": "bark_v2"
         },
         {
             "name": "f5tts",
