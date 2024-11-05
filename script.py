@@ -45,6 +45,7 @@ params = load_config(config_file_path)
 branding = params['branding']
 github_site = "erew123"
 github_repository = "alltalk_tts"
+github_branch = "alltalkbeta"
 current_folder = os.path.basename(os.getcwd())
 output_folder = this_dir / params["output_folder"]
 delete_output_wavs_setting = params["delete_output_wavs"]
@@ -324,43 +325,39 @@ def ordinal(n):
     return "%d%s" % (n, "th" if 4 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th"))
 
 def format_datetime(iso_str):
-    # Parse the ISO 8601 string to datetime
     dt = datetime.strptime(iso_str, "%Y-%m-%dT%H:%M:%SZ")
-    # Format the datetime into a more readable string
     return dt.strftime(f"{ordinal(dt.day)} %B %Y at %H:%M")
 
-def fetch_latest_commit_sha_and_date(owner, repo):
-    url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+def fetch_latest_commit_sha_and_date(owner, repo, branch):
+    # Modified URL to include the branch
+    url = f"https://api.github.com/repos/{owner}/{repo}/commits/{branch}"
     try:
         response = requests.get(url)
         if response.status_code == 200:
-            latest_commit = response.json()[0]
-            latest_commit_sha = latest_commit['sha']
-            latest_commit_date = latest_commit['commit']['committer']['date']
+            commit_data = response.json()
+            latest_commit_sha = commit_data['sha']
+            latest_commit_date = commit_data['commit']['committer']['date']
             return latest_commit_sha, latest_commit_date
         else:
-            print(f"[{branding}TTS] \033[92mGithub updated    :\033[91m Failed to fetch the latest commits due to an unexpected response from GitHub")
+            print(f"[{branding}TTS] \033[92mGithub updated    :\033[91m Failed to fetch the latest commit from branch {branch} due to an unexpected response from GitHub")
             return None, None
     except ConnectionError:
-        # This block is executed when a connection error occurs
         print(f"[{branding}TTS] \033[92mGithub updated    :\033[91m Could not reach GitHub to check for updates\033[0m")
         return None, None
 
-def read_or_initialize_sha(file_path):
+def read_or_initialize_sha(file_path, owner, repo, branch):
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
             return data.get("last_known_commit_sha")
     else:
         # File doesn't exist, fetch the latest SHA and create the file
-        latest_commit_sha = fetch_latest_commit_sha_and_date(github_site, github_repository)
+        latest_commit_sha, _ = fetch_latest_commit_sha_and_date(owner, repo, branch)
         if latest_commit_sha:
             with open(file_path, 'w') as file:
                 json.dump({"last_known_commit_sha": latest_commit_sha}, file)
             return latest_commit_sha
-        else:
-            # Handle the case where GitHub couldn't be reached
-            return None
+        return None
 
 def update_sha_file(file_path, new_sha):
     with open(file_path, 'w') as file:
@@ -369,22 +366,20 @@ def update_sha_file(file_path, new_sha):
 # Define the file path based on your directory structure
 sha_file_path = this_dir / "system" / "config" / "at_github_sha.json"
 
-# Read or initialize the SHA (adjusted for handling both SHA and date)
-last_known_commit_sha = read_or_initialize_sha(sha_file_path)  # Assuming adjustment for date
+# Read or initialize the SHA
+last_known_commit_sha = read_or_initialize_sha(sha_file_path, github_site, github_repository, github_branch)
 
-# Assuming you have fetched the latest commit SHA and date
-latest_commit_sha, latest_commit_date = fetch_latest_commit_sha_and_date(github_site, github_repository)
+# Fetch the latest commit SHA and date from the specific branch
+latest_commit_sha, latest_commit_date = fetch_latest_commit_sha_and_date(github_site, github_repository, github_branch)
 
 formatted_date = format_datetime(latest_commit_date) if latest_commit_date else "an unknown date"
 
 if latest_commit_sha and latest_commit_sha != last_known_commit_sha:
-    #print(f"There's an update available for alltalk_tts.")
-    print(f"[{branding}TTS] \033[92mGithub updated    :\033[93m {formatted_date}\033[0m")
+    print(f"[{branding}TTS] \033[92mGithub updated    :\033[93m {formatted_date} \033[92mBranch:\033[93m {github_branch}\033[0m")
     # Update the file with the new SHA
     update_sha_file(sha_file_path, latest_commit_sha)
 elif latest_commit_sha == last_known_commit_sha:
-    #print(f"Your alltalk_tts software is up to date.")
-    print(f"[{branding}TTS] \033[92mGithub updated    :\033[93m {formatted_date}\033[0m")
+    print(f"[{branding}TTS] \033[92mGithub updated    :\033[93m {formatted_date} \033[92mBranch:\033[93m {github_branch}\033[0m")
 
 ##################################################
 # START-UP # Configure the subprocess hanlder ####
