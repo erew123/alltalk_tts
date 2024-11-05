@@ -7,6 +7,10 @@
         {
             "name": "xtts",
             "selected_model": "xtts - xttsv2_2.0.3"
+        },
+        {
+            "name": "f5tts",
+            "selected_model": "f5tts - f5tts_v1"
         }
     ]
 }
