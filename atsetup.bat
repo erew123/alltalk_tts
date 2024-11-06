@@ -573,49 +573,6 @@ echo Clean Environment
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" clean --all --force-pkgs-dirs -y
 echo.
 
-:transformers_choice
-echo.
-echo  ======================================== IMPORTANT NOTICE ===========================================
-echo   Currently, Coqui-TTS and the XTTS engine requires transformers version 4.42.4 to generate streaming
-echo   audio. XTTS can still generate standard non-streaming audio on any version of transformers. It is
-echo   ONLY streaming audio that is affected and ONLY with the Coqui XTTS engine. So this would affect 
-echo   things like Kobold, or anywhere you use XTTS with streaming audio.
-echo.
-echo   Parler-TTS states that it wants transformers version 4.43.3 but it appears to work fine with
-echo   transformers 4.42.4, however using transformers 4.42.4 generates a dependency error message as
-echo   Parler-TTS is untested on 4.42.4 of transformers.
-echo.
-echo   Until the Coqui-TTS engine is updated to perform streaming with newer versions of transformers, if
-echo   you want to use streaming with XTTS, you will need to downgrade transformers to 4.42.4.
-echo.
-echo   AllTalk is NOT responsible for the maintainance or upkeep of the Coqui-TTS engine.
-echo.
-echo   If you change your mind in future you can re-run atsetup and re-apply the requirements OR read the
-echo   instructions in the Github Wiki https://github.com/erew123/alltalk_tts/wiki
-echo  ====================================================================================================
-echo.
-choice /C YN /M " Do you want to downgrade transformers to version 4.42.4 for XTTS streaming support?"
-if errorlevel 2 (
-    echo.
-    echo Keeping transformers at version 4.43.3.
-    echo Note: XTTS streaming may not work with this version.
-    goto end_transformers_choice
-)
-if errorlevel 1 (
-    echo.
-    echo Downgrading transformers to version 4.42.4
-    echo.
-    pip install transformers==4.42.4
-    if errorlevel 1 (
-        echo.
-        echo Failed to downgrade transformers. Please check your internet connection and try manually later with:
-        echo pip install transformers==4.42.4
-    ) else (
-        echo.
-        echo XTTS streaming should now work correctly.
-    )
-)
-:end_transformers_choice
 echo.
 echo Installation process completed.
 
