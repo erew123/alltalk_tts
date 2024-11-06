@@ -1,4 +1,4 @@
-coqui-tts>=0.24.1
+coqui-tts>=0.24.3
 faster-whisper>=1.0.0
 fuzzywuzzy>=0.18.0
 gradio>=4.26.0
