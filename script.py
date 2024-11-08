@@ -1853,7 +1853,7 @@ if gradio_enabled == True:
             
         # Get the list of languages from languages
         languages = list(languages_list.keys())
-        with gr.Blocks(theme=selected_theme, title="AllTalk", analytics_enabled=False, fill_width=True) as app:
+        with gr.Blocks(theme=selected_theme, title="AllTalk", analytics_enabled=False) as app:
             with gr.Row():
                 gr.Markdown("## AllTalk TTS")
                 gr.Markdown("")
