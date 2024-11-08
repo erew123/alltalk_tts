@@ -1691,7 +1691,7 @@ if gradio_enabled == True:
         params["api_def"]["api_length_stripping"] = api_length_stripping
         params["api_def"]["api_allowed_filter"] = api_allowed_filter
         params["api_def"]["api_max_characters"] = api_max_characters
-        params["api_def"]["api_use_legacy_api"] = api_use_legacy_api == "Legacy API"
+        params["api_def"]["api_use_legacy_api"] = api_use_legacy_api == "AllTalk v1 API (Legacy)"
         params["api_def"]["api_legacy_ip_address"] = api_legacy_ip_address
         params["api_def"]["api_text_filtering"] = api_text_filtering
         params["api_def"]["api_narrator_enabled"] = api_narrator_enabled
@@ -1853,7 +1853,7 @@ if gradio_enabled == True:
             
         # Get the list of languages from languages
         languages = list(languages_list.keys())
-        with gr.Blocks(theme=selected_theme, title="AllTalk", analytics_enabled=False) as app:
+        with gr.Blocks(theme=selected_theme, title="AllTalk", analytics_enabled=False, fill_width=True) as app:
             with gr.Row():
                 gr.Markdown("## AllTalk TTS")
                 gr.Markdown("")
@@ -2249,7 +2249,6 @@ if gradio_enabled == True:
                                 with gr.Tab(f"{engine_name.capitalize()} TTS"):
                                     gr.Markdown(f"### &nbsp;&nbsp;{engine_name.capitalize()} TTS")
                                     globals()[f"{engine_name}_at_gradio_settings_page"](globals()[f"{engine_name}_model_config_data"])
-
             if params.get("gradio_pages", {}).get("alltalk_documentation_page", True):
                 alltalk_documentation()
             if params.get("gradio_pages", {}).get("api_documentation_page", True):                
