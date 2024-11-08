@@ -69,5 +69,13 @@
         "debug_concat": false,
         "debug_tts_variables": false,
         "debug_rvc": false
+    },
+    "gradio_pages": {
+        "Generate_Help_page": true,
+        "Voice2RVC_page": true,
+        "TTS_Generator_page": true,
+        "TTS_Engines_Settings_page": true,
+        "alltalk_documentation_page": true,
+        "api_documentation_page": true
     }
 }
