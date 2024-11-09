@@ -13,7 +13,13 @@ I would also like to say a big thank you to anyone whom has contributed to this 
 
 ## AllTalk V2 Core Functionality
 - Comprehensive setup utilities for Windows & Linux
-- Multiple TTS engine support (XTTS, Piper, Parler, VITS, F5-TTS)
+- Multiple TTS engine support
+    - Coqui XTTS TTS
+    - Coqui VITS TTS
+    - Piper TTS
+    - Parler TTS
+    - F5 TTS
+    - Other TTS engines can be coded in
 - Retrieval-based Voice Conversion (RVC) pipeline
 - Easy integration of new TTS engines (some coding required)
 - Customizable settings for each TTS engine
