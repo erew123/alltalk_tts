@@ -1,5 +1,5 @@
-# AllTalk TTS v2 BETA
-Github **discussions** on the BETA are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
+# AllTalk TTS v2
+Github **discussions** on the AllTalk V2 are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
 
 **Issues/Bugs/Support**, please open an issue ticket [here in the issues area](https://github.com/erew123/alltalk_tts/issues)
 
