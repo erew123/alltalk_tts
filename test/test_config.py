@@ -117,10 +117,17 @@ class TestAlltalkConfig(unittest.TestCase):
     def test_tts_engines(self):
         self.assertEqual(self.ttsEnginesConfig.engine_loaded, "piper")
         self.assertEqual(self.ttsEnginesConfig.selected_model, "piper")
-        self.assertListEqual(self.ttsEnginesConfig.engines_available, ["parler", "piper", "vits", "xtts"])
+        self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), ["parler", "piper", "vits", "xtts"])
 
     def test_tts_engines_default_config_path(self):
         expected_config_path = os.path.join(Path(__file__).parent.parent.resolve(), "system", "tts_engines", "tts_engines.json")
         self.assertEqual(self.ttsEnginesConfig.get_config_path(), Path(expected_config_path))
+
+    def test_tts_engines_save(self):
+        with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
+            self.ttsEnginesConfig.engine_loaded = "foo"
+            self.ttsEnginesConfig.save(tmp.name)
+            new_config = AlltalkTTSEnginesConfig(tmp.name)
+            self.assertEqual(new_config.engine_loaded, "foo")
 
 

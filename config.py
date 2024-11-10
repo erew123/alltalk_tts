@@ -2,11 +2,13 @@ import os
 import json
 import time
 import inspect
+import shutil
 from pathlib import Path
+from filelock import FileLock
 from types import SimpleNamespace
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import Callable, Any
+from typing import Callable, Any, MutableSequence
 
 
 @dataclass
@@ -76,6 +78,12 @@ class AlltalkConfigDebug:
     debug_tts_variables = False
     debug_rvc = False
 
+@dataclass
+class AlltalkAvailableEngine:
+    name = ""
+    selected_model = ""
+
+
 class AbstractConfig(ABC):
 
     def __init__(self, config_path: Path | str, file_check_interval: int):
@@ -99,21 +107,58 @@ class AbstractConfig(ABC):
                     self.reload()
             except Exception as e:
                 print(f"Error checking config file: {e}")
-        return self
 
     def _load_config(self):
         self.__last_read_time = self.get_config_path().stat().st_mtime
-        with open(self.get_config_path(), "r") as configfile:
-            data = json.load(configfile, object_hook=self._object_hook())
-
-        self._handle_loaded_config(data)
+        def __load():
+            with open(self.get_config_path(), "r") as configfile:
+                data = json.load(configfile, object_hook=self._object_hook())
+            self._handle_loaded_config(data)
+        self.__with_lock_and_backup(self.get_config_path(), False, __load)
 
     def _object_hook(self) -> Callable[[dict[Any, Any]], Any] | None:
         return None
 
+    def _save_file(self, path: Path | None | str, default = None, indent = 4):
+        file_path = (Path(path) if type(path) is str else path) if path is not None else self.get_config_path()
+
+        # Remove private fields:
+        without_private_fields = {}
+        for attr, value in self.__dict__.items():
+            if not attr.startswith("_"):
+                without_private_fields[attr] = value
+
+        def __save():
+            with open(file_path, "w") as file:
+                json.dump(without_private_fields, file, indent=indent,  default=default)
+        self.__with_lock_and_backup(file_path, True, __save)
+
+    def __with_lock_and_backup(self, path: Path, backup: bool, callable: Callable[[], None]):
+        lock_path = path.with_suffix('.lock')
+        try:
+            with FileLock(lock_path):
+                # Create backup:
+                if path.exists() and backup:
+                    backup_path = path.with_suffix('.backup')
+                    shutil.copy(path, backup_path)
+
+                try:
+                    callable()
+                except Exception as e:
+                    if backup_path.exists():
+                        shutil.copy(backup_path, path)
+                    raise Exception(f"Failed to save config: {e}")
+        finally:
+            # Cleanup lock and backup files:
+            lock_path.unlink()
+            if backup and backup_path.exists():
+                backup_path.unlink()
+
+
     @abstractmethod
     def _handle_loaded_config(self, data):
         pass
+
 
 class AlltalkTTSEnginesConfig(AbstractConfig):
     __instance = None
@@ -121,24 +166,33 @@ class AlltalkTTSEnginesConfig(AbstractConfig):
 
     def __init__(self, config_path: Path | str = os.path.join(__this_dir, "system", "tts_engines", "tts_engines.json")):
         super().__init__(config_path, 5)
-        self.engines_available = []
+        self.engines_available: MutableSequence[AlltalkAvailableEngine] = []
         self.engine_loaded = ""
         self.selected_model = ""
         self._load_config()
+
+    def get_engine_names_available(self):
+        return self.__engines_names_available
 
     @staticmethod
     def get_instance():
         if AlltalkTTSEnginesConfig.__instance is None:
             AlltalkTTSEnginesConfig.__instance = AlltalkTTSEnginesConfig()
-        return AlltalkTTSEnginesConfig.__instance._reload_on_change()
+        AlltalkTTSEnginesConfig.__instance._reload_on_change()
+        return AlltalkTTSEnginesConfig.__instance
 
     def _handle_loaded_config(self, data):
         # List of the available TTS engines from tts_engines.json
-        self.engines_available = [engine["name"] for engine in data["engines_available"]]
+        self.engines_available = data["engines_available"]
+        self.__engines_names_available = [engine["name"] for engine in data["engines_available"]]
 
         # The currently set TTS engine from tts_engines.json
         self.engine_loaded = data["engine_loaded"]
         self.selected_model = data["selected_model"]
+
+    def save(self, path: Path | str | None = None):
+        self._save_file(path)
+
 
 class AlltalkConfig(AbstractConfig):
     __instance = None
@@ -166,19 +220,11 @@ class AlltalkConfig(AbstractConfig):
     def get_instance():
         if AlltalkConfig.__instance is None:
             AlltalkConfig.__instance = AlltalkConfig()
-        return AlltalkConfig.__instance._reload_on_change()
+        AlltalkConfig.__instance._reload_on_change()
+        return AlltalkConfig.__instance
 
-    def save(self, path: Path | None = None):
-        configfile_path = path if path is not None else self.get_config_path()
-
-        # Remove private fields:
-        without_privates = {}
-        for attr, value in self.__dict__.items():
-            if not attr.startswith("_"):
-                without_privates[attr] = value
-
-        with open(configfile_path, "w") as json_file:
-            json.dump(without_privates, json_file, indent=4,  default=lambda o: o.__dict__)
+    def save(self, path: Path | str | None = None):
+        self._save_file(path, lambda o: o.__dict__)
 
     def _object_hook(self) -> Callable[[dict[Any, Any]], Any] | None:
         return lambda d: SimpleNamespace(**d)
@@ -192,6 +238,6 @@ class AlltalkConfig(AbstractConfig):
         # Special properties (cannot use 'class' as property name):
         self.theme.clazz = data.theme.__dict__["class"]
 
-        # As a side effect, create the output directory
+        # As a side effect, create the output directory:
         output_directory = self.__this_dir / self.output_folder
         output_directory.mkdir(parents=True, exist_ok=True)

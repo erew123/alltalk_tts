@@ -1,5 +1,6 @@
 coqui-tts>=0.24.3
 faster-whisper>=1.0.0
+filelock>=3.16.1
 fuzzywuzzy
 gradio==4.32.2
 importlib_metadata>=7.1.0
