@@ -13,6 +13,7 @@ class AllTalkTtsProvider {
         // Initialize with default settings if they are not already set
         this.settings = {
             provider_endpoint: this.settings.provider_endpoint || 'http://localhost:7851',
+            server_version: this.settings.server_version || 'v2', 
             language: this.settings.language || 'en',
             voiceMap: this.settings.voiceMap || {},
             at_generation_method: this.settings.at_generation_method || 'standard_generation',
@@ -177,6 +178,15 @@ class AllTalkTtsProvider {
         </div>
    </div>`;
 
+    html += `<div class="at-settings-row">
+        <div class="at-settings-option">
+            <label for="server_version">AllTalk Server Version</label>
+            <select id="server_version">
+                <option value="v1">AllTalk V1</option>
+                <option value="v2">AllTalk V2</option>
+            </select>
+        </div>
+    </div>`;
 
         html += `<div class="at-model-endpoint-row">
     <div class="at-settings-option">
@@ -379,6 +389,11 @@ class AllTalkTtsProvider {
     }
 
     async fetchRvcVoiceObjects() {
+        if (this.settings.server_version !== 'v2') {
+            console.log('Skipping RVC voices fetch for V1 server');
+            return [];
+        }
+    
         console.log('Fetching RVC Voices');
         try {
             const response = await fetch(`${this.settings.provider_endpoint}/api/rvcvoices`);
@@ -387,27 +402,33 @@ class AllTalkTtsProvider {
                 console.error('Error text:', errorText);
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
+    
             const data = await response.json();
             if (!data || !data.rvcvoices) {
                 console.error('Invalid data format:', data);
                 throw new Error('Invalid data format received from /api/rvcvoices');
             }
+    
             const voices = data.rvcvoices.map(filename => {
                 return {
                     name: filename,
                     voice_id: filename,
                 };
             });
+    
             console.log('RVC voices:', voices);
             this.rvcVoices = voices; // Assign to the class property
+            this.updateRvcVoiceDropdowns(); // Update UI after fetching voices
             return voices; // Also return this list
         } catch (error) {
             console.error('Error fetching RVC voices:', error);
+            this.rvcVoices = [{ name: 'Disabled', voice_id: 'Disabled' }]; // Set default on error
             throw error;
+        } finally {
+            // Ensure dropdowns are updated even if there was an error
+            this.updateRvcVoiceDropdowns();
         }
     }
-
-
 
     //##########################################//
     // Get Current AT Server Config & Update ST //
@@ -443,25 +464,59 @@ class AllTalkTtsProvider {
     }
 
     updateRvcVoiceDropdowns() {
+        // Handle all RVC-related elements
+        const rvcElements = document.querySelectorAll('.rvc-setting');
+        const isV2 = this.settings.server_version === 'v2';
+        
+        rvcElements.forEach(element => {
+            element.style.display = isV2 ? 'block' : 'none';
+        });
+    
+        // Update and disable/enable character voice dropdown
         const rvcCharacterVoiceSelect = document.getElementById('rvc_character_voice');
-        const rvcNarratorVoiceSelect = document.getElementById('rvc_narrator_voice');
-        if (rvcCharacterVoiceSelect && this.rvcVoices) {
-            rvcCharacterVoiceSelect.innerHTML = '';
-            for (let voice of this.rvcVoices) {
-                const option = document.createElement('option');
-                option.value = voice.voice_id;
-                option.textContent = voice.name;
-                rvcCharacterVoiceSelect.appendChild(option);
+        if (rvcCharacterVoiceSelect) {
+            rvcCharacterVoiceSelect.disabled = !isV2;
+            if (this.rvcVoices) {
+                rvcCharacterVoiceSelect.innerHTML = '';
+                for (let voice of this.rvcVoices) {
+                    const option = document.createElement('option');
+                    option.value = voice.voice_id;
+                    option.textContent = voice.name;
+                    if (voice.voice_id === this.settings.rvc_character_voice) {
+                        option.selected = true;
+                    }
+                    rvcCharacterVoiceSelect.appendChild(option);
+                }
             }
         }
-        if (rvcNarratorVoiceSelect && this.rvcVoices) {
-            rvcNarratorVoiceSelect.innerHTML = '';
-            for (let voice of this.rvcVoices) {
-                const option = document.createElement('option');
-                option.value = voice.voice_id;
-                option.textContent = voice.name;
-                rvcNarratorVoiceSelect.appendChild(option);
+    
+        // Update and disable/enable narrator voice dropdown
+        const rvcNarratorVoiceSelect = document.getElementById('rvc_narrator_voice');
+        if (rvcNarratorVoiceSelect) {
+            rvcNarratorVoiceSelect.disabled = !isV2;
+            if (this.rvcVoices) {
+                rvcNarratorVoiceSelect.innerHTML = '';
+                for (let voice of this.rvcVoices) {
+                    const option = document.createElement('option');
+                    option.value = voice.voice_id;
+                    option.textContent = voice.name;
+                    if (voice.voice_id === this.settings.rvc_narrator_voice) {
+                        option.selected = true;
+                    }
+                    rvcNarratorVoiceSelect.appendChild(option);
+                }
             }
+        }
+    
+        // Update pitch inputs
+        const characterPitch = document.getElementById('rvc_character_pitch');
+        if (characterPitch) {
+            characterPitch.disabled = !isV2;
+        }
+    
+        const narratorPitch = document.getElementById('rvc_narrator_pitch');
+        if (narratorPitch) {
+            narratorPitch.disabled = !isV2;
         }
     }
 
@@ -598,6 +653,19 @@ class AllTalkTtsProvider {
             // Handle response or error
         };
 
+        // AllTalk Server version change listener
+        const serverVersionSelect = document.getElementById('server_version');
+        if (serverVersionSelect) {
+            serverVersionSelect.addEventListener('change', async (event) => {
+                this.settings.server_version = event.target.value;
+                // Clear and refetch voices if needed
+                if (event.target.value === 'v2') {
+                    await this.fetchRvcVoiceObjects();
+                }
+                this.updateRvcVoiceDropdowns();
+                this.onSettingsChange();
+            });
+        }        
 
         const rvcCharacterVoiceSelect = document.getElementById('rvc_character_voice');
         if (rvcCharacterVoiceSelect) {
@@ -864,6 +932,13 @@ class AllTalkTtsProvider {
             // Prepare data for POST request
             const postData = new URLSearchParams();
             postData.append("voice", `${voiceName}`);
+    
+            // Add RVC parameters for V2 if applicable
+            if (this.settings.server_version === 'v2' && this.settings.rvc_character_voice !== 'Disabled') {
+                postData.append("rvccharacter_voice_gen", this.settings.rvc_character_voice);
+                postData.append("rvccharacter_pitch", this.settings.rvc_character_pitch || "0");
+            }
+            
             // Making the POST request
             const response = await fetch(`${this.settings.provider_endpoint}/api/previewvoice/`, {
                 method: "POST",
@@ -872,24 +947,26 @@ class AllTalkTtsProvider {
                 },
                 body: postData,
             });
+    
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`[previewTtsVoice] Error Response Text:`, errorText);
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
-            // Assuming the server returns a URL to the .wav file
+    
             const data = await response.json();
             if (data.output_file_url) {
-                // Prepend the provider endpoint to the output file URL
-                const fullUrl = `${this.settings.provider_endpoint}${data.output_file_url}`;
-                // Use an audio element to play the .wav file
+                // Handle V1/V2 URL differences
+                const fullUrl = this.settings.server_version === 'v1'
+                    ? data.output_file_url
+                    : `${this.settings.provider_endpoint}${data.output_file_url}`;
+    
                 const audioElement = new Audio(fullUrl);
                 audioElement.play().catch(e => console.error("Error playing audio:", e));
             } else {
                 console.warn("[previewTtsVoice] No output file URL received in the response");
                 throw new Error("No output file URL received in the response");
             }
-
         } catch (error) {
             console.error("[previewTtsVoice] Exception caught during preview generation:", error);
             throw error;
@@ -955,20 +1032,28 @@ class AllTalkTtsProvider {
             'text_input': inputText,
             'text_filtering': "standard",
             'character_voice_gen': voiceId,
-            'rvccharacter_voice_gen': this.settings.rvccharacter_voice_gen || "Disabled",
-            'rvccharacter_pitch': this.settings.rvc_character_pitch || "0",
             'narrator_enabled': this.settings.narrator_enabled,
             'narrator_voice_gen': this.settings.narrator_voice_gen,
-            'rvcnarrator_voice_gen': this.settings.rvcnarrator_voice_gen || "Disabled",
-            'rvcnarrator_pitch': this.settings.rvc_narrator_pitch || "0",
             'text_not_inside': this.settings.at_narrator_text_not_inside,
             'language': this.settings.language,
             'output_file_name': "st_output",
             'output_file_timestamp': "true",
             'autoplay': "false",
             'autoplay_volume': "0.8"
-        }).toString();
-
+        });
+    
+        // Add RVC parameters only for V2
+        if (this.settings.server_version === 'v2') {
+            if (this.settings.rvc_character_voice !== 'Disabled') {
+                requestBody.append('rvccharacter_voice_gen', this.settings.rvc_character_voice);
+                requestBody.append('rvccharacter_pitch', this.settings.rvc_character_pitch || "0");
+            }
+            if (this.settings.rvc_narrator_voice !== 'Disabled') {
+                requestBody.append('rvcnarrator_voice_gen', this.settings.rvc_narrator_voice);
+                requestBody.append('rvcnarrator_pitch', this.settings.rvc_narrator_pitch || "0");
+            }
+        }
+    
         try {
             const response = await doExtrasFetch(
                 `${this.settings.provider_endpoint}/api/tts-generate`,
@@ -981,18 +1066,23 @@ class AllTalkTtsProvider {
                     body: requestBody
                 }
             );
-
+    
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`[fetchTtsGeneration] Error Response Text:`, errorText);
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
             const data = await response.json();
-            const outputUrl = `${this.settings.provider_endpoint}${data.output_file_url}`;
-            return outputUrl; // Return only the output_file_url
+    
+            // Handle V1/V2 URL differences
+            const outputUrl = this.settings.server_version === 'v1'
+                ? data.output_file_url  // V1 returns full URL
+                : `${this.settings.provider_endpoint}${data.output_file_url}`; // V2 returns relative path
+    
+            return outputUrl;
         } catch (error) {
             console.error("[fetchTtsGeneration] Exception caught:", error);
-            throw error; // Rethrow the error for further handling
+            throw error;
         }
     }
 }
