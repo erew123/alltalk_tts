@@ -634,57 +634,214 @@ def load_and_display_mismatches():
         metadata_dfs = []
         for csv_path in csv_paths:
             metadata_df = pd.read_csv(csv_path, sep='|')
-            metadata_dfs.append(metadata_df) 
+            # Add a column to track which CSV file each row came from
+            metadata_df['source_csv'] = csv_path
+            # Add a column for the row index in original CSV
+            metadata_df['row_index'] = metadata_df.index
+            metadata_dfs.append(metadata_df)
+        
         metadata_df = pd.concat(metadata_dfs, ignore_index=True)
         device = "cuda" if torch.cuda.is_available() else "cpu"
         asr_model = WhisperModel(whisper_model, device=device, compute_type="float32")
         mismatches = []
         missing_files = []
         total_files = metadata_df.shape[0]
+        
         if progress is not None:
             progress((0, total_files), desc="Processing files")
+            
         for index, row in tqdm(metadata_df.iterrows(), total=total_files, unit="file", disable=False, leave=True):
             audio_file = row['audio_file']
             expected_text = row['text']
             audio_file_name = audio_file.replace("wavs/", "")
             audio_path = os.path.normpath(os.path.join(audio_folder, audio_file_name))
+            
             if not os.path.exists(audio_path):
                 missing_files.append(audio_file_name)
                 if progress is not None:
-                    progress((index + 1, total_files), desc="Processing files")  # Update progress bar for skipped files
+                    progress((index + 1, total_files), desc="Processing files")
                 continue
-            wav, sr = torchaudio.load(audio_path)
+
             segments, _ = asr_model.transcribe(audio_path, vad_filter=True, word_timestamps=True, language=target_language)
             transcribed_text = " ".join([segment.text for segment in segments]).strip()
             normalized_expected_text = normalize_text(expected_text)
             normalized_transcribed_text = normalize_text(transcribed_text)
+            
             if normalized_transcribed_text != normalized_expected_text:
-                mismatches.append([
-                    row['text'],  # expected_text
-                    transcribed_text,
-                    audio_file_name,  # Just the filename for display
-                    audio_path  # Full path for playback
-                ])
+                mismatches.append({
+                    'expected_text': row['text'],
+                    'transcribed_text': transcribed_text,
+                    'filename': audio_file_name,
+                    'full_path': audio_path,
+                    'row_index': row['row_index'],
+                    'source_csv': row['source_csv']
+                })
+                
             if progress is not None:
-                progress((index + 1, total_files), desc="Processing files")  # Update progress bar for each file
+                progress((index + 1, total_files), desc="Processing files")
+
         if missing_files:
             print("[FINETUNE]")
             print("[FINETUNE] The following files are missing and should be removed from the CSV files:")
             for file_name in missing_files:
-                print(f"[FINETUNE] - {file_name}")                
+                print(f"[FINETUNE] - {file_name}")
+                
         return mismatches
-    def load_mismatches(csv_paths, audio_folder, whisper_model, target_language, progress):
-        mismatches_list = validate_audio_transcriptions(csv_paths, audio_folder, whisper_model, target_language, progress)
-        return pd.DataFrame(mismatches_list, columns=["Expected Text", "Transcribed Text", "Filename", "Audio Path"])
-    progress = gr.Progress(track_tqdm=True)
-    if validate_train_metadata_path and validate_eval_metadata_path and validate_audio_folder and validate_whisper_model and validate_target_language:
-        mismatches = load_mismatches([validate_train_metadata_path, validate_eval_metadata_path], validate_audio_folder, validate_whisper_model, validate_target_language, progress)
-        file_list = get_audio_file_list(mismatches)
-        file_list_select = file_list[0] if file_list else "No Mismatched Audio Files"
-        return mismatches[["Expected Text", "Transcribed Text", "Filename"]], gr.Dropdown(choices=file_list, value=file_list_select), ""
-    else:
-        return pd.DataFrame(columns=["Expected Text", "Transcribed Text", "Filename"]), [], ""
 
+    progress = gr.Progress(track_tqdm=True)
+    
+    if validate_train_metadata_path and validate_eval_metadata_path and validate_audio_folder and validate_whisper_model and validate_target_language:
+        mismatches = validate_audio_transcriptions(
+            [validate_train_metadata_path, validate_eval_metadata_path],
+            validate_audio_folder,
+            validate_whisper_model,
+            validate_target_language,
+            progress
+        )
+        
+        # Convert mismatches list to DataFrame
+        df = pd.DataFrame(mismatches)
+        
+        # Ensure all fields are single values, not series
+        for col in df.columns:
+            if isinstance(df[col].iloc[0], pd.Series):
+                df[col] = df[col].apply(lambda x: x.iloc[0] if isinstance(x, pd.Series) else x)
+        
+        # Clean all text columns
+        df['expected_text'] = df['expected_text'].astype(str).apply(lambda x: x.strip())
+        df['transcribed_text'] = df['transcribed_text'].astype(str).apply(lambda x: x.strip())
+        df['full_path'] = df['full_path'].astype(str).apply(lambda x: x.strip())
+        
+        # Create display version with only visible columns
+        display_df = df[['expected_text', 'transcribed_text', 'filename']].copy()
+        
+        return df, display_df, ""
+    else:
+        empty_df = pd.DataFrame(columns=["Expected Text", "Transcribed Text", "Filename"])
+        return empty_df, empty_df, "Please generate your dataset first"
+
+def save_correction_to_csv(csv_path, row_index, new_text):
+    try:
+        # Ensure we have single values, not Series
+        if isinstance(csv_path, pd.Series):
+            csv_path = str(csv_path.iloc[0])
+        else:
+            csv_path = str(csv_path)
+            
+        if isinstance(row_index, pd.Series):
+            row_index = int(row_index.iloc[0])
+        else:
+            row_index = int(row_index)
+            
+        if isinstance(new_text, pd.Series):
+            new_text = str(new_text.iloc[0])
+        else:
+            new_text = str(new_text)
+
+        # print(f"[FINETUNE] Attempting to save correction to {csv_path}")
+        # print(f"[FINETUNE] Row index type: {type(row_index)}, value: {row_index}")
+        # print(f"[FINETUNE] New text type: {type(new_text)}, value: {new_text}")
+        
+        # Read the CSV file
+        df = pd.read_csv(csv_path, sep='|')
+        # print(f"[FINETUNE] Original text at index {row_index}: {df.loc[row_index, 'text']}")
+        
+        # Update the text
+        df.loc[row_index, 'text'] = new_text
+        
+        # Save back to CSV
+        df.to_csv(csv_path, sep='|', index=False)
+        
+        # Verify the save
+        df_check = pd.read_csv(csv_path, sep='|')
+        if df_check.loc[row_index, 'text'] == new_text:
+            print(f"[FINETUNE] Successfully verified save. New text at index {row_index}: {df_check.loc[row_index, 'text']}")
+            return f"Successfully updated transcription in {os.path.basename(csv_path)}"
+        else:
+            print(f"[FINETUNE] Save verification failed. Text mismatch.")
+            return "Error: Save verification failed"
+            
+    except Exception as e:
+        print(f"[FINETUNE] Error saving correction: {str(e)}")
+        print(f"[FINETUNE] CSV path: {csv_path}")
+        print(f"[FINETUNE] Row index: {row_index}")
+        print(f"[FINETUNE] Full error traceback:")
+        traceback.print_exc()
+        return f"Error updating CSV: {str(e)}"
+
+def save_selected_text(choice, manual_text, df, current_idx):
+    if current_idx is None:
+        return {
+            mismatch_table: df[['expected_text', 'transcribed_text', 'filename']],
+            current_expected: "",
+            save_status: "Please select a row first"
+        }
+    
+    try:
+        # Debug the current_idx type
+        # print(f"[FINETUNE] Current index type: {type(current_idx)}, value: {current_idx}")
+        
+        # Ensure current_idx is a single integer
+        if isinstance(current_idx, list):
+            current_idx = current_idx[0]
+        current_idx = int(current_idx)
+        
+        row = df.iloc[current_idx]
+        # print(f"[FINETUNE] Selected row for saving: {row}")
+        
+        # Get single values for each field
+        source_csv = row['source_csv']
+        if isinstance(source_csv, pd.Series):
+            source_csv = source_csv.iloc[0]
+            
+        row_index = row['row_index']
+        if isinstance(row_index, pd.Series):
+            row_index = row_index.iloc[0]
+        row_index = int(row_index)  # Ensure it's an integer
+            
+        # Determine which text to use
+        if choice == "Use Original":
+            new_text = str(row['expected_text'])  # Ensure it's a string
+        elif choice == "Use Whisper":
+            new_text = str(row['transcribed_text'])  # Ensure it's a string
+        elif choice == "Edit Manually":
+            new_text = str(manual_text)  # Ensure it's a string
+        else:
+            return {
+                mismatch_table: df[['expected_text', 'transcribed_text', 'filename']],
+                current_expected: row['expected_text'],
+                save_status: f"Invalid choice: {choice}"
+            }
+        
+        # print(f"[FINETUNE] Choice: {choice}")
+        # print(f"[FINETUNE] New text to save: {new_text}")
+        # print(f"[FINETUNE] CSV file: {source_csv}")
+        # print(f"[FINETUNE] Row index: {row_index}")
+        
+        # Save the correction
+        result = save_correction_to_csv(source_csv, row_index, new_text)
+        # print(f"[FINETUNE] Save result: {result}")
+        
+        if "Successfully" in result:
+            # Update the DataFrame with the new text
+            df.loc[current_idx, 'expected_text'] = new_text
+            
+        return {
+            mismatch_table: df[['expected_text', 'transcribed_text', 'filename']],
+            current_expected: new_text if "Successfully" in result else row['expected_text'],
+            save_status: result
+        }
+        
+    except Exception as e:
+        error_msg = f"Error saving correction: {str(e)}"
+        print(f"[FINETUNE] {error_msg}")
+        print(f"[FINETUNE] Full error traceback:")
+        traceback.print_exc()
+        return {
+            mismatch_table: df[['expected_text', 'transcribed_text', 'filename']],
+            current_expected: row['expected_text'] if 'row' in locals() else "",
+            save_status: error_msg
+        }
 
 ######################
 #### STEP 2 BITS #####
@@ -1086,7 +1243,6 @@ def get_available_voices(minimum_size_kb=1200, speaker_name=None):
     directory = out_path
     if speaker_name and speaker_name != 'personsname':
         directory = this_dir / "finetune" / speaker_name
-
     voice_files = [
         voice for voice in Path(f"{directory}/wavs").glob("*.wav")
         if voice.stat().st_size > minimum_size_kb * 1200  # Convert KB to bytes
@@ -1096,16 +1252,26 @@ def get_available_voices(minimum_size_kb=1200, speaker_name=None):
 def find_best_models(directory, speaker_name=None):
     if speaker_name and speaker_name != 'personsname':
         directory = this_dir / "finetune" / speaker_name
-
-    """Find files named 'best_model.pth' in the given directory."""
-    return [str(file) for file in Path(directory).rglob("best_model.pth")]
-
-def find_models(directory, extension,  speaker_name=None):
-    if speaker_name and speaker_name != 'personsname':
-        directory = this_dir / "finetune" / speaker_name
-
-    """Find files with a specific extension in the given directory."""
-    return [str(file) for file in Path(directory).rglob(f"*.{extension}")]
+    
+    # Look in both the base directory and the training subdirectory
+    model_files = []
+    
+    # Check the training directory first
+    training_dir = directory / "training"
+    if training_dir.exists():
+        # Look in all subdirectories of training
+        for subdir in training_dir.glob("*"):
+            if subdir.is_dir():
+                model_path = subdir / "best_model.pth"
+                if model_path.exists():
+                    model_files.append(str(model_path))
+    
+    # Also check the base directory
+    for model_path in directory.glob("**/best_model.pth"):
+        if "training" not in str(model_path):  # Avoid duplicates
+            model_files.append(str(model_path))
+            
+    return sorted(model_files)
 
 def find_jsons(directory, filename, speaker_name=None):
     if speaker_name and speaker_name != 'personsname':
@@ -1129,55 +1295,191 @@ import shutil
 from pathlib import Path
 import torch
 
+import torch
+import torchaudio
+import shutil
+from pathlib import Path
+
 def compact_custom_model(xtts_checkpoint_copy, folder_path, overwrite_existing):
     this_dir = Path(__file__).parent.resolve()
     if not xtts_checkpoint_copy:
         error_message = "No trained model was selected. Please click Refresh Dropdowns and try again."
         print("[FINETUNE]", error_message)
         return error_message
+    
     target_dir = this_dir / "models" / "xtts" / folder_path
     if overwrite_existing == "Do not overwrite existing files" and target_dir.exists():
         error_message = "The target folder already exists. Please change folder name or allow overwrites."
         print("[FINETUNE]", error_message)
         return error_message
+
     xtts_checkpoint_copy = Path(xtts_checkpoint_copy)
+    # Get the source directory (either tmp-trn or custom named directory)
+    source_dir = xtts_checkpoint_copy.parent.parent.parent  # Go up to the base directory
+    
+    print(f"[FINETUNE] Source directory: {source_dir}")
+    print(f"[FINETUNE] Target directory: {target_dir}")
+
     try:
         checkpoint = torch.load(xtts_checkpoint_copy, map_location=torch.device("cpu"))
     except Exception as e:
         print("[FINETUNE] Error loading checkpoint:", e)
         raise
+
     del checkpoint["optimizer"]
     target_dir.mkdir(parents=True, exist_ok=True)
+    
     # Remove dvae-related keys from checkpoint
     for key in list(checkpoint["model"].keys()):
         if "dvae" in key:
             del checkpoint["model"][key]
+    
     torch.save(checkpoint, target_dir / "model.pth")
+
     def copy_files(src_folder, dest_folder, files):
         for file_name in files:
             src_path = src_folder / file_name
             dest_path = dest_folder / file_name
             if src_path.exists():
                 shutil.copy2(src_path, dest_path)
+                print(f"[FINETUNE] Copied {src_path} to {dest_path}")
             else:
                 print(f"[FINETUNE] Warning: {src_path} does not exist and will not be copied.")
+
     # Copy first set of files
     folder_path_new = xtts_checkpoint_copy.parent
     files_to_copy = ["vocab.json", "config.json"]
     copy_files(folder_path_new, target_dir, files_to_copy)
-    # Copy second set of files
-    chkptandnorm_path = out_path / "chkptandnorm"
+
+    # Copy second set of files from chkptandnorm directory
+    chkptandnorm_path = source_dir / "chkptandnorm"
+    print(f"[FINETUNE] Looking for support files in: {chkptandnorm_path}")
     files_to_copy2 = ["speakers_xtts.pth", "mel_stats.pth", "dvae.pth"]
     copy_files(chkptandnorm_path, target_dir, files_to_copy2)
-    # Copy large wav files
-    source_wavs_dir = out_path / "wavs"
+
+    # Create directories for different categories of WAV files
     target_wavs_dir = target_dir / "wavs"
     target_wavs_dir.mkdir(parents=True, exist_ok=True)
+    
+    too_short_dir = target_wavs_dir / "too_short"
+    too_long_dir = target_wavs_dir / "too_long"
+    suitable_dir = target_wavs_dir / "suitable"
+    
+    for dir_path in [too_short_dir, too_long_dir, suitable_dir]:
+        dir_path.mkdir(parents=True, exist_ok=True)
+
+    # Process WAV files
+    source_wavs_dir = source_dir / "wavs"
+    print(f"[FINETUNE] Processing WAV files from: {source_wavs_dir}")
+    
+    file_stats = {
+        "too_short": [],
+        "too_long": [],
+        "suitable": []
+    }
+
+    if not source_wavs_dir.exists():
+        print(f"[FINETUNE] Warning: Source WAV directory {source_wavs_dir} does not exist")
+        return f"Model files copied to '/models/xtts/{folder_path}/' but no WAV files were found to process"
+
     for file_path in source_wavs_dir.iterdir():
-        if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:  # File size greater than 1000 KB
-            shutil.copy2(file_path, target_wavs_dir / file_path.name)
-    print(f"[FINETUNE] Model & Suitable WAV samples copied to '/models/xtts/{folder_path}/'")
-    return f"Model & Suitable WAV samples copied to '/models/xtts/{folder_path}/'"
+        if file_path.is_file() and file_path.suffix.lower() == '.wav':
+            try:
+                # Load audio file and get duration
+                waveform, sample_rate = torchaudio.load(file_path)
+                duration = waveform.size(1) / sample_rate  # Duration in seconds
+                
+                # Determine category and target directory
+                if duration < 6:
+                    category = "too_short"
+                    target_subdir = too_short_dir
+                elif duration > 30:
+                    category = "too_long"
+                    target_subdir = too_long_dir
+                else:
+                    category = "suitable"
+                    target_subdir = suitable_dir
+                
+                # Copy file to appropriate directory
+                shutil.copy2(file_path, target_subdir / file_path.name)
+                
+                # Store file info
+                file_stats[category].append({
+                    "name": file_path.name,
+                    "duration": round(duration, 2)
+                })
+                
+            except Exception as e:
+                print(f"[FINETUNE] Error processing {file_path.name}: {str(e)}")
+
+    # Create report file
+    report_content = """WAV Files Processing Report
+===========================
+
+This folder contains WAV files categorized by their duration for use with Coqui TTS.
+Suitable files for voice cloning should be between 6 and 30 seconds in length.
+
+Directory Structure:
+------------------
+- 'suitable': Contains files between 6-30 seconds - ideal for voice cloning
+- 'too_short': Files under 6 seconds - may not contain enough voice characteristics
+- 'too_long': Files over 30 seconds - may cause processing issues
+
+Voice Sample Usage:
+-----------------
+1. The 'suitable' directory contains the ideal voice samples:
+   - These files are ready to use for voice cloning
+   - Copy your preferred samples to '/alltalk_tts/voices/' for use in the main interface
+   - Clean, clear samples with minimal background noise work best
+   - Consider using multiple samples to test which gives the best results
+
+2. Files in 'too_long':
+   - Can be used but may cause issues or inconsistent results
+   - Recommended: Use audio editing software (like Audacity) to:
+     * Split these into 6-30 second segments
+     * Remove any silence, background noise, or unwanted sounds
+     * Save segments as individual WAV files
+     * Consider overlap in sentences for more natural breaks
+
+3. Files in 'too_short':
+   - Not recommended for voice cloning as they lack sufficient voice characteristics
+   - If most/all files are here, consider:
+     * Recording longer samples of continuous speech
+     * Combining multiple short segments (if they flow naturally)
+     * Using audio editing software to create longer cohesive samples
+     * Aim for clear, natural speech between 6-30 seconds
+
+Best Practices:
+-------------
+- Choose samples with clear, consistent speech
+- Avoid background noise, music, or other speakers
+- Natural speaking pace and tone usually work best
+- Multiple samples of varying lengths (within 6-30s) can provide better results
+- Test different samples to find which produces the best voice cloning results
+
+Summary:
+--------
+"""
+    
+    for category, files in file_stats.items():
+        report_content += f"\n{category.replace('_', ' ').title()} files ({len(files)}):\n"
+        for file_info in files:
+            report_content += f"- {file_info['name']}: {file_info['duration']} seconds\n"
+    
+    report_content += """
+Notes:
+------
+- Files in 'suitable' are ready for use with Coqui TTS
+- Files in 'too_short' are under 6 seconds and may need to be checked or excluded
+- Files in 'too_long' are over 30 seconds and may need to be split or excluded
+
+Please review the files in 'too_short' and 'too_long' directories."""
+
+    with open(target_wavs_dir / "audio_report.txt", "w") as f:
+        f.write(report_content)
+
+    print(f"[FINETUNE] Model & WAV samples processed and copied to '/models/xtts/{folder_path}/'")
+    return f"Model & WAV samples processed and copied to '/models/xtts/{folder_path}/'"
 
 def delete_training_data():
     # Define the folder to be deleted
@@ -1243,8 +1545,11 @@ class Logger:
         self.log = open(self.log_file, "w")
 
     def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)
+        # Filter out problematic whitespace characters
+        filtered_message = ''.join(char for char in message 
+                                 if char.isprintable() or char in '\n\r\t')
+        self.terminal.write(filtered_message)
+        self.log.write(filtered_message)
 
     def flush(self):
         self.terminal.flush()
@@ -1273,7 +1578,10 @@ def load_metrics():
 def read_logs():
     sys.stdout.flush()
     with open(sys.stdout.log_file, "r") as f:
-        return f.read()
+        content = f.read()
+        # Additional filtering when reading the file
+        return ''.join(char for char in content 
+                      if char.isprintable() or char in '\n\r\t')
 
 def cleanup_before_exit(signum, frame):
     print("[FINETUNE] Received interrupt signal. Cleaning up and exiting...")
@@ -1305,12 +1613,18 @@ def create_refresh_button(refresh_components, refresh_methods, elem_class, inter
 def create_refresh_button_next(refresh_components, refresh_methods, elem_class, interactive=True):
     def refresh_export(speaker_name):
         global out_path
-        out_path = this_dir / "finetune" / speaker_name
+        if speaker_name and speaker_name != 'personsname':
+            out_path = this_dir / "finetune" / speaker_name
+        else:
+            out_path = this_dir / "finetune" / "tmp-trn"
+        
+        print(f"[FINETUNE] Refresh using directory: {out_path}")
+        
         updates = {}
         for component, method in zip(refresh_components, refresh_methods):
             args = method(speaker_name=speaker_name) if callable(method) else method
             if args and 'choices' in args:
-                # Select the most recent file (last in the sorted list)
+                print(f"[FINETUNE] Found files: {args['choices']}")
                 args['value'] = args['choices'][-1] if args['choices'] else ""
             for k, v in args.items():
                 setattr(component, k, v)
@@ -1323,7 +1637,6 @@ def create_refresh_button_next(refresh_components, refresh_methods, elem_class, 
         inputs=[speaker_name_input_export],
         outputs=refresh_components
     )
-
     return refresh_button
 
 
@@ -1703,21 +2016,134 @@ if __name__ == "__main__":
                 return None
         
             with gr.TabItem("Dataset Validation"):
-                gr.Markdown("""# Audio Transcription Validation
-                            This feature allows you to validate the transcriptions in your dataset by comparing the generated audio files against the expected transcriptions provided in the training and evaluation CSV files. It uses the Whisper model to transcribe each audio file and checks if the transcribed text matches the corresponding text in the CSV files. Any mismatches found during the validation process are highlighted in a list, and you can select and play the mismatched audio files from a dropdown menu to manually compare them with the transcriptions. If necessary, you'll need to manually edit and update the CSV files to correct any discrepancies identified during the validation process. Whisper is a Best Effort helper for generating a dataset and editing the dataset or manual dataset generation will be the only way to get a 100% perfect dataset.
-                            """)
+                with gr.Row():
+                    gr.Markdown("""# Audio Transcription Validation
+
+                    This tool helps validate and correct transcriptions in your dataset by comparing:
+                    - The original transcriptions stored in your CSV files
+                    - New Whisper transcriptions of the same audio files
+
+                    Only mismatched transcriptions are shown here for review.
+
+                    ### Understanding the Display:
+                    - **Original Text**: Current transcription from metadata_eval.csv/metadata_train.csv
+                    - **Whisper Text**: New transcription from Whisper
+                    - **Filename**: The audio file being transcribed""")
+                    gr.Markdown("""
+                    ### How to Use:
+                    1. Click any row in the table to:
+                    - Listen to the audio
+                    - View both transcriptions
+                    2. Choose how to correct the transcription:
+                    - **Use Original**: No need to update if you are happy with the current transcription.
+                    - **Use Whisper**: Update with the new Whisper transcription
+                    - **Edit Manually**: Write your own corrected transcription
+
+                    When you save a correction, it will update the appropriate CSV file and refresh the display. This helps ensure your training dataset has the most accurate transcriptions possible.""")                    
                 
                 with gr.Row():
                     load_button = gr.Button("Run Validation")
                     progress_box = gr.Textbox(label="Progress", interactive=False)
+
                 with gr.Row():
-                    audio_dropdown = gr.Dropdown(label="Select Audio File to Play", choices=["Please Generate Your Dataset"], value="Please Generate Your Dataset", allow_custom_value=True)
-                    audio_output = gr.Audio(label="Audio Player", interactive=False)
+                    with gr.Column(scale=2):
+                        # Store full DataFrame in state
+                        state = gr.State()
+                        # Display DataFrame shows only visible columns
+                        mismatch_table = gr.DataFrame(
+                            headers=["Original Text", "Whisper Text", "Filename"],
+                            datatype=["str", "str", "str"],
+                            interactive=False,
+                            wrap=True
+                        )
+                    
+                    with gr.Column(scale=1):
+                        audio_player = gr.Audio(label="Audio Player", interactive=False)
+                        current_expected = gr.Textbox(label="Original Text", interactive=False)
+                        current_transcribed = gr.Textbox(label="Whisper Text", interactive=False)
+                        text_choice = gr.Radio(
+                            choices=["Use Original", "Use Whisper", "Edit Manually"],
+                            label="Choose Transcription",
+                            value="Use Original"
+                        )
+                        manual_edit = gr.Textbox(
+                            label="Manual Edit",
+                            interactive=True,
+                            visible=False
+                        )
+                        current_index = gr.Number(visible=False)
+                        save_button = gr.Button("Save Correction")
+                        save_status = gr.Textbox(label="Save Status", interactive=False)
+
+                def update_audio_player(evt: gr.SelectData, df):
+                    try:
+                        selected_row = df.iloc[evt.index]
+                        audio_path = selected_row['full_path']
+                        
+                        # If it's a Series, get the first value
+                        if isinstance(audio_path, pd.Series):
+                            audio_path = audio_path.iloc[0]
+                        
+                        # Clean the path string
+                        audio_path = str(audio_path).strip()
+                        print(f"[FINETUNE] Selected audio path: {audio_path}")
+                        
+                        # Get the text values directly from the row, ensuring we get strings not Series
+                        expected = str(selected_row['expected_text']).strip() if isinstance(selected_row['expected_text'], str) else selected_row['expected_text'].iloc[0]
+                        transcribed = str(selected_row['transcribed_text']).strip() if isinstance(selected_row['transcribed_text'], str) else selected_row['transcribed_text'].iloc[0]
+                        
+                        if not os.path.exists(audio_path):
+                            print(f"[FINETUNE] Warning: Audio file not found: {audio_path}")
+                            return {
+                                audio_player: None,
+                                current_expected: "",
+                                current_transcribed: "",
+                                current_index: None,
+                                save_status: f"Error: Audio file not found"
+                            }
+                        
+                        return {
+                            audio_player: audio_path,
+                            current_expected: expected,
+                            current_transcribed: transcribed,
+                            current_index: evt.index,
+                            save_status: "Ready to save correction"
+                        }
+                    except Exception as e:
+                        print(f"[FINETUNE] Error in update_audio_player: {str(e)}")
+                        print(f"[FINETUNE] Selected row data: {selected_row if 'selected_row' in locals() else 'Not available'}")
+                        return {
+                            audio_player: None,
+                            current_expected: "",
+                            current_transcribed: "",
+                            current_index: None,
+                            save_status: f"Error: {str(e)}"
+                        }
+
+                # Event handlers
+                text_choice.change(
+                    lambda x: gr.update(visible=x=="Edit Manually"),
+                    text_choice,
+                    manual_edit
+                )
                 
-                mismatch_table = gr.Dataframe(headers=["Text in the CSV Files", "Whisper Transcribed Text", "Filename"], datatype=["str", "str", "str"], interactive=False, wrap=True)
-            
-                load_button.click(load_and_display_mismatches, [], [mismatch_table, audio_dropdown, progress_box])           
-                audio_dropdown.change(play_selected_audio, [audio_dropdown], audio_output)
+                mismatch_table.select(
+                    update_audio_player,
+                    [state],  # Use full DataFrame from state
+                    [audio_player, current_expected, current_transcribed, current_index, save_status]
+                )
+                
+                save_button.click(
+                    save_selected_text,
+                    inputs=[text_choice, manual_edit, state, current_index],
+                    outputs=[mismatch_table, current_expected, save_status]  # Add mismatch_table and current_expected to outputs
+                )
+                
+                # Store both display and full DataFrame
+                load_button.click(
+                    load_and_display_mismatches,
+                    outputs=[state, mismatch_table, progress_box]  # state gets full df, mismatch_table gets display_df
+                )
             
             with gr.Tab("Generate Dataset Instructions"):
                 gr.Markdown(
@@ -2268,7 +2694,7 @@ if __name__ == "__main__":
                 ◽ **Compact &amp; move model:** This will compress the raw finetuned model and move it, along with any large enough wav files created to the folder name of your choice.<br>
                 ◽ **Delete Generated Training data:** This will delete the finetuned model and any other training data generated during this process. You will more than likely want to do this after you have Compacted &amp; moved the model.<br>
                 ◽ **Delete original voice samples:** This will delete the voice samples you placed in put-voice-samples-in-here (if you no longer have a use for them).<br>
-                ◽ **Note:** Your sample wav files will be copied into the model folder. You will need to **MANUALLY** copy/move the WAV file(s) you want to use to the AllTalk **voices** folder, to make them available within the interface.<br>
+                ◽ **Note:** Your sample wav files will be copied into the model folder and organized into 'suitable', 'too_short', and 'too_long' directories. Read the **audio_report.txt** file in that folder. You will need to **MANUALLY** copy/move the WAV file(s) you want to use from the 'suitable' directory to the AllTalk **voices** folder to make them available within the interface.<br>
                 ### 🟨 <u>Clearing up disk space</u>
                 ◽ If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) <br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Linux:** <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span><br>
