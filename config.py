@@ -79,6 +79,16 @@ class AlltalkConfigDebug:
     debug_rvc = False
 
 @dataclass
+class AlltalkConfigGradioPages:
+    Generate_Help_page = False
+    Voice2RVC_page = False
+    TTS_Generator_page = False
+    TTS_Engines_Settings_page = False
+    alltalk_documentation_page = False
+    api_documentation_page = False
+
+
+@dataclass
 class AlltalkAvailableEngine:
     name = ""
     selected_model = ""
@@ -214,6 +224,7 @@ class AlltalkConfig(AbstractConfig):
         self.tgwui = AlltalkConfigTgwUi()
         self.api_def = AlltalkConfigApiDef()
         self.debugging = AlltalkConfigDebug()
+        self.gradio_pages = AlltalkConfigGradioPages()
         self._load_config()
 
     @staticmethod

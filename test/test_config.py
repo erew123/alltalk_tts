@@ -107,6 +107,14 @@ class TestAlltalkConfig(unittest.TestCase):
         self.assertFalse(self.config.debugging.debug_tts_variables)
         self.assertFalse(self.config.debugging.debug_rvc)
 
+    def test_gradio_pages(self):
+        self.assertTrue(self.config.gradio_pages.Generate_Help_page)
+        self.assertTrue(self.config.gradio_pages.Voice2RVC_page)
+        self.assertTrue(self.config.gradio_pages.TTS_Generator_page)
+        self.assertTrue(self.config.gradio_pages.TTS_Engines_Settings_page)
+        self.assertTrue(self.config.gradio_pages.alltalk_documentation_page)
+        self.assertTrue(self.config.gradio_pages.api_documentation_page)
+
     def test_save_config(self):
         with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
             self.config.branding = "foo"
@@ -117,7 +125,7 @@ class TestAlltalkConfig(unittest.TestCase):
     def test_tts_engines(self):
         self.assertEqual(self.ttsEnginesConfig.engine_loaded, "piper")
         self.assertEqual(self.ttsEnginesConfig.selected_model, "piper")
-        self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), ["parler", "piper", "vits", "xtts"])
+        self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), ["parler", "piper", "vits", "xtts", "f5tts"])
 
     def test_tts_engines_default_config_path(self):
         expected_config_path = os.path.join(Path(__file__).parent.parent.resolve(), "system", "tts_engines", "tts_engines.json")
