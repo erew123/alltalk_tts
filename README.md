@@ -1,11 +1,13 @@
 # AllTalk TTS v2
-**Documentation/WIKI:** please refer to the built in documentation or the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki)
+**Documentation/Wiki:** Refer to the built-in documentation or view the extensive [Wiki here](https://github.com/erew123/alltalk_tts/wiki).
 
-**Known Errors List:** [Known Errors page is here](https://github.com/erew123/alltalk_tts/wiki/Error-Messages-List)
+**Known Errors:** See the [Known Errors page here](https://github.com/erew123/alltalk_tts/wiki/Error-Messages-List) for troubleshooting.
 
-**Issues/Bugs/Support:** support tickets can be opened [here in the issues area](https://github.com/erew123/alltalk_tts/issues)
+**Issues & Support:** Report issues or bugs by opening a [support ticket here](https://github.com/erew123/alltalk_tts/issues).
 
-**Github discussions:** on AllTalk V2 are [here in the discussion board](https://github.com/erew123/alltalk_tts/discussions/245)
+**Feature Requests:** View current feature requests on the [Feature Requests page here](https://github.com/erew123/alltalk_tts/discussions/74).
+
+**Community Discussions:** Join discussions on AllTalk V2 in the [Discussion Board here](https://github.com/erew123/alltalk_tts/discussions/245). 
 
 **Please note, my available time has become VERY limited due to unexpected family commitments [Please read here for details](https://github.com/erew123/alltalk_tts/issues/377). So please DYOR, look at the [Wiki here ](https://github.com/erew123/alltalk_tts/wiki) and refer to the TTS manufacturer (Links in the Gradio interface) for issues specific to THEIR TTS engines.**
 
