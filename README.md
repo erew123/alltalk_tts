@@ -1,9 +1,8 @@
 # AllTalk TTS
 
-## AllTalk version 2 BETA availability. (How to get Version 2)
-AllTalk v2 BETA is out/available for download. See [this link here](https://github.com/erew123/alltalk_tts/discussions/245) for the discussion, [this link here ](https://github.com/erew123/alltalk_tts/tree/alltalkbeta) to download it and [this link here](https://github.com/erew123/alltalk_tts/discussions/237) for screenshots.
+## AllTalk version 2 (How to get Version 2)
 
-### [Click here to go to AllTalk Version 2](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
+# [Click here to go to AllTalk Version 2](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
 
 AllTalk v2 significantly enhances v1, introducing new features while addressing many previous issues. Although still evolving, v2 offers a stable build and is the recommended version for most users as this is where update and development work is now focused.
 
@@ -66,11 +65,13 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 
 ---
 
+# [Click here if you want AllTalk Version 2](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
+
+## Everything on this page is for AllTalk Version 1 not Version 2
+
 ### 🟩 Quick Setup AllTalk Version 1 (Text-generation-webui & Standalone Installation)
 
 AllTalk version 1 - Quick setup scripts are available for users on Windows 10/11 and Linux. Instructional videos for both setup processes are linked below.
-
-#### [If you want AllTalk Version 2 click here. The instructions below are for version 1](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
 
 - Ensure that **Git** is installed on your system as it is required for cloning the repository. If you do not have Git installed, visit [**Git's official website**](https://git-scm.com/downloads) to download and install it.
 - Windows users must install C++ development tools for Python to compile Python packages. Detailed information and a link to these tools can be found in the help section [**Windows & Python requirements for compiling packages**](https://github.com/erew123/alltalk_tts#-help-with-problems).
