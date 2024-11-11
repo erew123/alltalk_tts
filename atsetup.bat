@@ -419,6 +419,8 @@ if errorlevel 1 (
     echo      6. Antivirus or security software interference.
     echo      7. Other issues not mentioned above.
     echo.
+    echo      Known errors are in the AllTalk Github Wiki > Error Messages Help/Support
+    echo.
     choice /C YN /M "Do you want to retry the Pytorch installation?"
     if errorlevel 2 goto End
     if errorlevel 1 goto install_pytorch
@@ -447,6 +449,8 @@ if errorlevel 1 (
     echo      7. Your Conda policy is set to Strict see the Github Wiki for help with this.
     echo      8. Other issues not mentioned above.
     echo.
+    echo      Known errors are in the AllTalk Github Wiki > Error Messages Help/Support
+    echo.
     choice /C YN /M "Do you want to retry the Faiss installation?"
     if errorlevel 2 goto End
     if errorlevel 1 goto install_faiss
@@ -474,6 +478,8 @@ if errorlevel 1 (
     echo      6. Antivirus or security software interference.
     echo      7. Your Conda policy is set to Strict see the Github Wiki for help with this.
     echo      8. Other issues not mentioned above.
+    echo.
+    echo      Known errors are in the AllTalk Github Wiki > Error Messages Help/Support
     echo.
     choice /C YN /M "Do you want to retry the FFmpeg installation?"
     if errorlevel 2 goto End
@@ -506,6 +512,8 @@ if errorlevel 1 (
     echo      6. Antivirus or security software interference.
     echo      7. Other issues not mentioned above.
     echo.
+    echo      Known errors are in the AllTalk Github Wiki > Error Messages Help/Support
+    echo.
     choice /C YN /M "Do you want to retry the Gradio update?"
     if errorlevel 2 goto End
     if errorlevel 1 goto update_gradio
@@ -521,7 +529,9 @@ echo.
 if errorlevel 1 (
     echo DeepSpeed download failed, errorlevel was %errorlevel%. There should be an error
     echo message above with a code and/or text explanation of the issue. Please note 
-    echo the error code to help with diagnotics.
+    echo the error code to help with diagnotics. 
+    echo.
+    echo Generally speaking though, errors could be caused by:
     echo.
     echo      1. Internet connection issues/unable to reach GitHub.
     echo      2. Disk space related issues - Check your disk space on this drive.
@@ -530,6 +540,8 @@ if errorlevel 1 (
     echo      5. Antivirus or security software interference.
     echo      6. The file may have been moved or deleted from the GitHub repository.
     echo      7. Other issues not mentioned above.
+    echo.
+    echo      Known errors are in the AllTalk Github Wiki > Error Messages Help/Support
     echo.
     choice /C YN /M "Do you want to retry the DeepSpeed download?"
     if errorlevel 2 goto End
@@ -545,7 +557,9 @@ echo.
 if errorlevel 1 (
     echo DeepSpeed installation failed, errorlevel was %errorlevel%. There should be an error
     echo message above with a code and/or text explanation of the issue. Please note 
-    echo the error code to help with diagnotics.
+    echo the error code to help with diagnotics. General issues may be:
+    echo.
+    echo Generally speaking though, errors could be caused by:
     echo.
     echo      1. The DeepSpeed wheel file was not downloaded successfully in the previous step.
     echo      2. Microsoft C++ development tools for Python are not installed correctly.
@@ -554,6 +568,8 @@ if errorlevel 1 (
     echo      5. Permissions issues - Check you have enough rights on this system.
     echo      6. Antivirus or security software interference.
     echo      7. Other issues not mentioned above.
+    echo.
+    echo      Known errors are in the AllTalk Github Wiki > Error Messages Help/Support
     echo.
     echo Please ensure you have followed the instructions to install the Microsoft C++ development
     echo tools for Python, which is detailed on the AllTalk GitHub page.
@@ -827,6 +843,7 @@ exit /b
 :End
 echo Exiting AllTalk Setup Utility...
 Echo.
-Echo    Documentation is built into the Gradio interface. Please explore the documentation for
-Echo    tips, troubleshooing and explanations as most common questions are answered there.
+Echo    Documentation is built into the Gradio interface and the AllTalk Wiki page on Github.
+Echo    Please explore the documentation for tips, troubleshooing and explanations on the most
+Echo    common questions.
 exit /b
