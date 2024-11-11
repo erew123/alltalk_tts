@@ -79,7 +79,7 @@ def install_and_restart():
         raise ImportError("Could not install required packages")
 
 try:
-    from f5_tts.model import CFM, DiT, UNetT
+    from f5_tts.model import CFM, DiT
     from f5_tts.model.utils import (
         get_tokenizer,
         convert_char_to_pinyin,
@@ -190,21 +190,14 @@ class tts_class:
         self.sway_sampling_coef = -1.0
         self.speed = 1.0
         # F5-TTS model configuration
-        self.f5_model_cfg = dict(
+        self.model_cfg = dict(
             dim=1024,
             depth=22,
             heads=16,
             ff_mult=2,
             text_dim=512,
             conv_layers=4
-        )
-        # Add E2-TTS model configuration
-        self.e2_model_cfg = dict(
-            dim=1024,
-            depth=24,
-            heads=16,
-            ff_mult=4
-        )       
+        )          
     ################################################################
     # DONT CHANGE #  Print out Python, CUDA, DeepSpeed versions ####
     ################################################################
@@ -394,7 +387,7 @@ class tts_class:
             return self.available_models
             
         # Look for model directories that match the pattern f5tts_v*
-        for model_dir in models_dir.glob("*tts_v*"):
+        for model_dir in models_dir.glob("f5tts_v*"):
             if model_dir.is_dir():
                 # First try to find model_*.safetensors files
                 model_files = list(model_dir.glob("model_*.safetensors"))
@@ -501,6 +494,8 @@ class tts_class:
                 model_files = list(model_dir.glob("*.safetensors"))
                 
             if not model_files:
+                print(f"[{self.branding}ENG] \033[91mError\033[0m: No model's safetensors file was found in the F5-TTS models directory.")
+                print(f"[{self.branding}ENG] \033[93mPlease download an F5-TTS model file in the Gradio interface section for the F5-TTS engine.\033[0m")
                 raise FileNotFoundError("No safetensors model file found in the model directory")
                 
             # Use the first found model file
@@ -514,10 +509,7 @@ class tts_class:
             self.vocoder.load_state_dict(vocoder_state)
             self.vocoder = self.vocoder.eval()
             
-            # Determine if this is an E2-TTS model from the folder name
-            is_e2_model = "e2tts" in model_folder.lower()
-            
-            # Initialize model with appropriate architecture
+            # Initialize F5-TTS model with same mel_spec_kwargs as original
             vocab_char_map, vocab_size = get_tokenizer(str(vocab_path), "custom")
             
             mel_spec_kwargs = dict(
@@ -529,34 +521,14 @@ class tts_class:
                 mel_spec_type=self.mel_spec_type,
             )
             
-            if is_e2_model:
-                print(f"[{self.branding}ENG] Initializing E2-TTS model") if self.debug_tts else None
-                self.model = CFM(
-                    transformer=UNetT(
-                        **self.e2_model_cfg,
-                        text_num_embeds=vocab_size,
-                        mel_dim=self.n_mel_channels
-                    ),
-                    mel_spec_kwargs=mel_spec_kwargs,
-                    odeint_kwargs=dict(
-                        method=self.ode_method,
-                    ),
-                    vocab_char_map=vocab_char_map
-                ).float()  # Ensure float32
-            else:
-                print(f"[{self.branding}ENG] Initializing F5-TTS model") if self.debug_tts else None
-                self.model = CFM(
-                    transformer=DiT(
-                        **self.f5_model_cfg,
-                        text_num_embeds=vocab_size,
-                        mel_dim=self.n_mel_channels
-                    ),
-                    mel_spec_kwargs=mel_spec_kwargs,
-                    odeint_kwargs=dict(
-                        method=self.ode_method,
-                    ),
-                    vocab_char_map=vocab_char_map
-                ).float()  # Ensure float32
+            self.model = CFM(
+                transformer=DiT(**self.model_cfg, text_num_embeds=vocab_size, mel_dim=self.n_mel_channels),
+                mel_spec_kwargs=mel_spec_kwargs,
+                odeint_kwargs=dict(
+                    method=self.ode_method,
+                ),
+                vocab_char_map=vocab_char_map
+            ).float()  # Ensure float32
             
             # Load model weights
             if str(model_path).endswith('.safetensors'):
@@ -602,8 +574,7 @@ class tts_class:
                 self.vocoder = self.vocoder.to(self.device)
                 
             self.is_tts_model_loaded = True
-            model_type = "E2-TTS" if is_e2_model else "F5-TTS"
-            print(f"[{self.branding}ENG] {model_type} model loaded successfully") if self.debug_tts else None
+            print(f"[{self.branding}ENG] F5-TTS model loaded successfully") if self.debug_tts else None
             
         except Exception as e:
             print(f"[{self.branding}ENG] \033[91mError loading model: {str(e)}\033[0m")
@@ -926,38 +897,6 @@ class tts_class:
 
         return chunks
 
-    #############################################################################################################################
-    #############################################################################################################################
-    # DONT CHANGE ME # De-Capitalise words (Not used currently) #################################################################
-    #############################################################################################################################
-    #############################################################################################################################
-    def process_text_for_tts(self, text):
-        """
-        Process text by converting fully capitalized words to lowercase,
-        while preserving other words' capitalization.
-        
-        Args:
-            self: The class instance
-            text (str): Input text string
-            
-        Returns:
-            str: Processed text with fully capitalized words converted to lowercase
-        """
-        # Split text into words
-        words = text.split()
-        
-        # Process each word
-        processed_words = []
-        for word in words:
-            # Check if word is fully uppercase and longer than 1 character
-            if word.isupper() and len(word) > 1:
-                processed_words.append(word.lower())
-            else:
-                processed_words.append(word)
-        
-        # Join words back together
-        return ' '.join(processed_words)
-
     ##########################################################################################################################################
     ##########################################################################################################################################
     # CHANGE ME # Model changing. Unload out old model and load in a new one #################################################################
@@ -1043,8 +982,6 @@ class tts_class:
             ref_audio, processed_ref_text = await self.preprocess_ref_audio_text(
                 str(ref_audio_path), ref_text
             )
-            
-            text = self.process_text_for_tts(text)
             
             # Generate the audio using infer_process
             final_wave, final_sample_rate, _ = await self.infer_process(
