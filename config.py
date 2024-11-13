@@ -203,6 +203,19 @@ class AlltalkTTSEnginesConfig(AbstractConfig):
     def save(self, path: Path | str | None = None):
         self._save_file(path)
 
+    def is_valid_engine(self, engine_name):
+        return engine_name in self.get_engine_names_available()
+
+    def change_engine(self, requested_engine):
+        if requested_engine == self.engine_loaded:
+            return self
+        for engine in self.engines_available:
+            if engine["name"] == requested_engine:
+                self.engine_loaded = requested_engine
+                self.selected_model = engine["selected_model"]
+                return self
+        return self
+
 
 class AlltalkConfig(AbstractConfig):
     __instance = None
@@ -234,6 +247,9 @@ class AlltalkConfig(AbstractConfig):
         AlltalkConfig.__instance._reload_on_change()
         return AlltalkConfig.__instance
 
+    def get_output_directory(self):
+        return self.__this_dir / self.output_folder
+
     def save(self, path: Path | str | None = None):
         self._save_file(path, lambda o: o.__dict__)
 
@@ -250,5 +266,4 @@ class AlltalkConfig(AbstractConfig):
         self.theme.clazz = data.theme.__dict__["class"]
 
         # As a side effect, create the output directory:
-        output_directory = self.__this_dir / self.output_folder
-        output_directory.mkdir(parents=True, exist_ok=True)
+        self.get_output_directory().mkdir(parents=True, exist_ok=True)

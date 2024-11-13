@@ -9,8 +9,8 @@ from config import AlltalkConfig, AlltalkTTSEnginesConfig
 class TestAlltalkConfig(unittest.TestCase):
 
     def setUp(self):
-        self.config = AlltalkConfig.get_instance()
-        self.ttsEnginesConfig = AlltalkTTSEnginesConfig.get_instance()
+        self.config = AlltalkConfig.get_instance().reload()
+        self.ttsEnginesConfig = AlltalkTTSEnginesConfig.get_instance().reload()
 
     def test_default_config_path(self):
         expected_config_path = Path(__file__).parent.parent.resolve() / "confignew.json"
@@ -126,6 +126,17 @@ class TestAlltalkConfig(unittest.TestCase):
         self.assertEqual(self.ttsEnginesConfig.engine_loaded, "piper")
         self.assertEqual(self.ttsEnginesConfig.selected_model, "piper")
         self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), ["parler", "piper", "vits", "xtts", "f5tts"])
+
+    def test_is_valid_engine(self):
+        for engine in ["parler", "piper", "vits", "xtts", "f5tts"]:
+            self.assertTrue(self.ttsEnginesConfig.is_valid_engine(engine))
+
+        self.assertFalse(self.ttsEnginesConfig.is_valid_engine("foo"))
+
+    def test_change_tts_engine(self):
+        self.ttsEnginesConfig.change_engine("vits")
+        self.assertEqual(self.ttsEnginesConfig.engine_loaded, "vits")
+        self.assertEqual(self.ttsEnginesConfig.selected_model, "vits - tts_models--en--vctk--vits")
 
     def test_tts_engines_default_config_path(self):
         expected_config_path = os.path.join(Path(__file__).parent.parent.resolve(), "system", "tts_engines", "tts_engines.json")
