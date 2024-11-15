@@ -1612,19 +1612,14 @@ app.mount("/static", StaticFiles(directory=str(this_dir / "system")), name="stat
 ########################################
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
-def get_json_data():
-    with open(this_dir / "confignew.json", "r") as json_file:
-        data = json.load(json_file)
-    return data
 
 @app.get("/settings")
 async def get_settings(request: Request):
-    data = get_json_data()
-    return templates.TemplateResponse("admin.html", {"request": request, "data": data})
+    return templates.TemplateResponse("admin.html", {"request": request, "data": config.to_dict()})
 
 @app.get("/settings-json")
 async def get_settings_json():
-    return get_json_data()
+    return config.to_dict()
 
 @app.post("/update-settings")
 async def update_settings(
@@ -1634,24 +1629,24 @@ async def update_settings(
     gradio_port_number: int = Form(...),
     api_port_number: int = Form(...),
 ):
-    data = get_json_data()
     # Update the settings based on the form values
-    data["delete_output_wavs"] = delete_output_wavs
-    data["gradio_interface"] = gradio_interface.lower() == 'true'
-    data["gradio_port_number"] = gradio_port_number
-    data["api_def"]["api_port_number"] = api_port_number
+    config.delete_output_wavs = delete_output_wavs
+    config.gradio_interface = gradio_interface.lower() == 'true'
+    config.gradio_port_number = gradio_port_number
+    config.api_def.api_port_number = api_port_number
+
     # Save the updated settings back to the JSON file
-    with open(this_dir / "confignew.json", "w") as json_file:
-        json.dump(data, json_file, indent=4)
+    config.save()
+
     # Redirect to the settings page to display the updated settings
-    return templates.TemplateResponse("admin.html", {"request": request, "data": data})
+    return templates.TemplateResponse("admin.html", {"request": request, "data": config.to_dict()})
  
 # Create an instance of Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=this_dir / "system")
 # Get the admin interface template
 template = templates.get_template("admin.html")
 # Render the template with the dynamic values
-rendered_html = template.render(params=config.__dict__)
+rendered_html = template.render(params=config.to_dict())
  
 ###################################################
 #### Webserver Startup & Initial model Loading ####

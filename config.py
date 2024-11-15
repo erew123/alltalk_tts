@@ -108,6 +108,14 @@ class AbstractJsonConfig(ABC):
         self._load_config()
         return self
 
+    def to_dict(self):
+        # Remove private fields:
+        without_private_fields = {}
+        for attr, value in self.__dict__.items():
+            if not attr.startswith("_"):
+                without_private_fields[attr] = value
+        return without_private_fields
+
     def _reload_on_change(self):
         # Check if config file has been modified and reload if needed
         if time.time() - self.__last_read_time >= self.__file_check_interval:
@@ -132,15 +140,9 @@ class AbstractJsonConfig(ABC):
     def _save_file(self, path: Path | None | str, default = lambda o: o.__dict__, indent = 4):
         file_path = (Path(path) if type(path) is str else path) if path is not None else self.get_config_path()
 
-        # Remove private fields:
-        without_private_fields = {}
-        for attr, value in self.__dict__.items():
-            if not attr.startswith("_"):
-                without_private_fields[attr] = value
-
         def __save():
             with open(file_path, "w") as file:
-                json.dump(without_private_fields, file, indent=indent,  default=default)
+                json.dump(self.to_dict(), file, indent=indent, default=default)
         self.__with_lock_and_backup(file_path, True, __save)
 
     def __with_lock_and_backup(self, path: Path, backup: bool, callable: Callable[[], None]):

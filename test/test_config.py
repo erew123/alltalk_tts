@@ -122,36 +122,40 @@ class TestAlltalkConfig(unittest.TestCase):
             new_config = AlltalkConfig(tmp.name)
             self.assertEqual(new_config.branding, "foo")
 
+    def test_no_private_fields(self):
+        for attr in self.config.to_dict().keys():
+            self.assertTrue(not attr.startswith("_"))
+
 class TestAlltalkTTSEnginesConfig(unittest.TestCase):
 
     def setUp(self):
-        self.ttsEnginesConfig = AlltalkTTSEnginesConfig.get_instance()
-        self.ttsEnginesConfig.reload()
+        self.tts_engines_config = AlltalkTTSEnginesConfig.get_instance()
+        self.tts_engines_config.reload()
 
     def test_tts_engines(self):
-        self.assertEqual(self.ttsEnginesConfig.engine_loaded, "piper")
-        self.assertEqual(self.ttsEnginesConfig.selected_model, "piper")
-        self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), ["parler", "piper", "vits", "xtts", "f5tts"])
+        self.assertEqual(self.tts_engines_config.engine_loaded, "piper")
+        self.assertEqual(self.tts_engines_config.selected_model, "piper")
+        self.assertListEqual(self.tts_engines_config.get_engine_names_available(), ["parler", "piper", "vits", "xtts", "f5tts"])
 
     def test_is_valid_engine(self):
         for engine in ["parler", "piper", "vits", "xtts", "f5tts"]:
-            self.assertTrue(self.ttsEnginesConfig.is_valid_engine(engine))
+            self.assertTrue(self.tts_engines_config.is_valid_engine(engine))
 
-        self.assertFalse(self.ttsEnginesConfig.is_valid_engine("foo"))
+        self.assertFalse(self.tts_engines_config.is_valid_engine("foo"))
 
     def test_change_tts_engine(self):
-        self.ttsEnginesConfig.change_engine("vits")
-        self.assertEqual(self.ttsEnginesConfig.engine_loaded, "vits")
-        self.assertEqual(self.ttsEnginesConfig.selected_model, "vits - tts_models--en--vctk--vits")
+        self.tts_engines_config.change_engine("vits")
+        self.assertEqual(self.tts_engines_config.engine_loaded, "vits")
+        self.assertEqual(self.tts_engines_config.selected_model, "vits - tts_models--en--vctk--vits")
 
     def test_tts_engines_default_config_path(self):
         expected_config_path = os.path.join(Path(__file__).parent.parent.resolve(), "system", "tts_engines", "tts_engines.json")
-        self.assertEqual(self.ttsEnginesConfig.get_config_path(), Path(expected_config_path))
+        self.assertEqual(self.tts_engines_config.get_config_path(), Path(expected_config_path))
 
     def test_tts_engines_save(self):
         with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
-            self.ttsEnginesConfig.engine_loaded = "foo"
-            self.ttsEnginesConfig.save(tmp.name)
+            self.tts_engines_config.engine_loaded = "foo"
+            self.tts_engines_config.save(tmp.name)
             new_config = AlltalkTTSEnginesConfig(tmp.name)
             self.assertEqual(new_config.engine_loaded, "foo")
             self.assertListEqual(new_config.get_engine_names_available(), ["parler", "piper", "vits", "xtts", "f5tts"])
@@ -159,25 +163,33 @@ class TestAlltalkTTSEnginesConfig(unittest.TestCase):
 
     def test_merge_with_new_engines(self):
         with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
-            self.ttsEnginesConfig.engines_available = []
-            self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), [])
+            self.tts_engines_config.engines_available = []
+            self.assertListEqual(self.tts_engines_config.get_engine_names_available(), [])
 
-            self.ttsEnginesConfig.save(tmp.name)
+            self.tts_engines_config.save(tmp.name)
 
             new_config = AlltalkTTSEnginesConfig(tmp.name)
             self.assertEqual(new_config.get_engine_names_available(), ["parler", "xtts", "f5tts"])
             self.assertEqual(len(new_config.engines_available), len(new_config.get_engine_names_available()))
 
+    def test_no_private_fields(self):
+        for attr in self.tts_engines_config.to_dict().keys():
+            self.assertTrue(not attr.startswith("_"))
+
 
 class TestAlltalkNewEnginesConfig(unittest.TestCase):
 
     def setUp(self):
-        self.newEnginesConfig = AlltalkNewEnginesConfig.get_instance()
-        self.newEnginesConfig.reload()
+        self.new_engines_config = AlltalkNewEnginesConfig.get_instance()
+        self.new_engines_config.reload()
 
     def test_engine_names(self):
-        self.assertListEqual(self.newEnginesConfig.get_engine_names_available(), ["parler", "xtts", "f5tts"])
+        self.assertListEqual(self.new_engines_config.get_engine_names_available(), ["parler", "xtts", "f5tts"])
 
     def test_get_engine_names_matching(self):
-        result = self.newEnginesConfig.get_engines_matching(lambda x: "tts" in x.name)
+        result = self.new_engines_config.get_engines_matching(lambda x: "tts" in x.name)
         self.assertEqual(len(result), 2)
+
+    def test_no_private_fields(self):
+        for attr in self.new_engines_config.to_dict().keys():
+            self.assertTrue(not attr.startswith("_"))
