@@ -3,14 +3,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from config import AlltalkConfig, AlltalkTTSEnginesConfig
+from config import AlltalkConfig, AlltalkTTSEnginesConfig, AlltalkNewEnginesConfig
 
 
 class TestAlltalkConfig(unittest.TestCase):
 
     def setUp(self):
-        self.config = AlltalkConfig.get_instance().reload()
-        self.ttsEnginesConfig = AlltalkTTSEnginesConfig.get_instance().reload()
+        self.config = AlltalkConfig.get_instance()
+        self.config.reload()
 
     def test_default_config_path(self):
         expected_config_path = Path(__file__).parent.parent.resolve() / "confignew.json"
@@ -122,6 +122,12 @@ class TestAlltalkConfig(unittest.TestCase):
             new_config = AlltalkConfig(tmp.name)
             self.assertEqual(new_config.branding, "foo")
 
+class TestAlltalkTTSEnginesConfig(unittest.TestCase):
+
+    def setUp(self):
+        self.ttsEnginesConfig = AlltalkTTSEnginesConfig.get_instance()
+        self.ttsEnginesConfig.reload()
+
     def test_tts_engines(self):
         self.assertEqual(self.ttsEnginesConfig.engine_loaded, "piper")
         self.assertEqual(self.ttsEnginesConfig.selected_model, "piper")
@@ -148,5 +154,30 @@ class TestAlltalkConfig(unittest.TestCase):
             self.ttsEnginesConfig.save(tmp.name)
             new_config = AlltalkTTSEnginesConfig(tmp.name)
             self.assertEqual(new_config.engine_loaded, "foo")
+            self.assertListEqual(new_config.get_engine_names_available(), ["parler", "piper", "vits", "xtts", "f5tts"])
+            self.assertEqual(len(new_config.engines_available), len(new_config.get_engine_names_available()))
+
+    def test_merge_with_new_engines(self):
+        with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
+            self.ttsEnginesConfig.engines_available = []
+            self.assertListEqual(self.ttsEnginesConfig.get_engine_names_available(), [])
+
+            self.ttsEnginesConfig.save(tmp.name)
+
+            new_config = AlltalkTTSEnginesConfig(tmp.name)
+            self.assertEqual(new_config.get_engine_names_available(), ["parler", "xtts", "f5tts"])
+            self.assertEqual(len(new_config.engines_available), len(new_config.get_engine_names_available()))
 
 
+class TestAlltalkNewEnginesConfig(unittest.TestCase):
+
+    def setUp(self):
+        self.newEnginesConfig = AlltalkNewEnginesConfig.get_instance()
+        self.newEnginesConfig.reload()
+
+    def test_engine_names(self):
+        self.assertListEqual(self.newEnginesConfig.get_engine_names_available(), ["parler", "xtts", "f5tts"])
+
+    def test_get_engine_names_matching(self):
+        result = self.newEnginesConfig.get_engines_matching(lambda x: "tts" in x.name)
+        self.assertEqual(len(result), 2)

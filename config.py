@@ -94,7 +94,7 @@ class AlltalkAvailableEngine:
     selected_model = ""
 
 
-class AbstractConfig(ABC):
+class AbstractJsonConfig(ABC):
 
     def __init__(self, config_path: Path | str, file_check_interval: int):
         self.__config_path = Path(config_path) if type(config_path) is str else config_path
@@ -127,9 +127,9 @@ class AbstractConfig(ABC):
         self.__with_lock_and_backup(self.get_config_path(), False, __load)
 
     def _object_hook(self) -> Callable[[dict[Any, Any]], Any] | None:
-        return None
+        return lambda d: SimpleNamespace(**d)
 
-    def _save_file(self, path: Path | None | str, default = None, indent = 4):
+    def _save_file(self, path: Path | None | str, default = lambda o: o.__dict__, indent = 4):
         file_path = (Path(path) if type(path) is str else path) if path is not None else self.get_config_path()
 
         # Remove private fields:
@@ -169,8 +169,33 @@ class AbstractConfig(ABC):
     def _handle_loaded_config(self, data):
         pass
 
+class AlltalkNewEnginesConfig(AbstractJsonConfig):
+    __instance = None
+    __this_dir = Path(__file__).parent.resolve()
 
-class AlltalkTTSEnginesConfig(AbstractConfig):
+    def __init__(self, config_path: Path | str = os.path.join(__this_dir, "system", "tts_engines", "new_engines.json")):
+        super().__init__(config_path, 5)
+        self.engines_available: MutableSequence[AlltalkAvailableEngine] = []
+        self._load_config()
+
+    def get_engine_names_available(self):
+        return [engine.name for engine in self.engines_available]
+
+    @staticmethod
+    def get_instance():
+        if AlltalkNewEnginesConfig.__instance is None:
+            AlltalkNewEnginesConfig.__instance = AlltalkNewEnginesConfig()
+        AlltalkNewEnginesConfig.__instance._reload_on_change()
+        return AlltalkNewEnginesConfig.__instance
+
+    def _handle_loaded_config(self, data):
+        self.engines_available = data.engines_available
+
+    def get_engines_matching(self, condition: Callable[[AlltalkAvailableEngine], bool]):
+        return [x for x in self.engines_available if condition(x)]
+
+
+class AlltalkTTSEnginesConfig(AbstractJsonConfig):
     __instance = None
     __this_dir = Path(__file__).parent.resolve()
 
@@ -182,7 +207,7 @@ class AlltalkTTSEnginesConfig(AbstractConfig):
         self._load_config()
 
     def get_engine_names_available(self):
-        return self.__engines_names_available
+        return [engine.name for engine in self.engines_available]
 
     @staticmethod
     def get_instance():
@@ -192,13 +217,23 @@ class AlltalkTTSEnginesConfig(AbstractConfig):
         return AlltalkTTSEnginesConfig.__instance
 
     def _handle_loaded_config(self, data):
-        # List of the available TTS engines from tts_engines.json
-        self.engines_available = data["engines_available"]
-        self.__engines_names_available = [engine["name"] for engine in data["engines_available"]]
+        # List of the available TTS engines:
+        self.engines_available = self.__handle_loaded_config_engines(data)
 
         # The currently set TTS engine from tts_engines.json
-        self.engine_loaded = data["engine_loaded"]
-        self.selected_model = data["selected_model"]
+        self.engine_loaded = data.engine_loaded
+        self.selected_model = data.selected_model
+
+    def __handle_loaded_config_engines(self, data):
+        available_engines = data.engines_available
+        available_engine_names = [engine.name for engine in available_engines]
+
+        # Getting the engines that are not already part of the available engines:
+        new_engines_config = AlltalkNewEnginesConfig.get_instance()
+        new_engines = new_engines_config.get_engines_matching(lambda eng: eng.name not in available_engine_names)
+
+        # Merge engines:
+        return available_engines + new_engines
 
     def save(self, path: Path | str | None = None):
         self._save_file(path)
@@ -210,14 +245,14 @@ class AlltalkTTSEnginesConfig(AbstractConfig):
         if requested_engine == self.engine_loaded:
             return self
         for engine in self.engines_available:
-            if engine["name"] == requested_engine:
+            if engine.name == requested_engine:
                 self.engine_loaded = requested_engine
-                self.selected_model = engine["selected_model"]
+                self.selected_model = engine.selected_model
                 return self
         return self
 
 
-class AlltalkConfig(AbstractConfig):
+class AlltalkConfig(AbstractJsonConfig):
     __instance = None
     __this_dir = Path(__file__).parent.resolve()
 
@@ -251,10 +286,7 @@ class AlltalkConfig(AbstractConfig):
         return self.__this_dir / self.output_folder
 
     def save(self, path: Path | str | None = None):
-        self._save_file(path, lambda o: o.__dict__)
-
-    def _object_hook(self) -> Callable[[dict[Any, Any]], Any] | None:
-        return lambda d: SimpleNamespace(**d)
+        self._save_file(path)
 
     def _handle_loaded_config(self, data):
         # Copy those fields for which there are members in this class:
