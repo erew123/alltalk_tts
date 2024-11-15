@@ -210,10 +210,15 @@ class AlltalkTTSEnginesConfig(AbstractJsonConfig):
         return [engine.name for engine in self.engines_available]
 
     @staticmethod
-    def get_instance():
+    def get_instance(force_reload = False):
         if AlltalkTTSEnginesConfig.__instance is None:
+            force_reload = False
             AlltalkTTSEnginesConfig.__instance = AlltalkTTSEnginesConfig()
-        AlltalkTTSEnginesConfig.__instance._reload_on_change()
+
+        if force_reload:
+            AlltalkTTSEnginesConfig.__instance.reload()
+        else:
+            AlltalkTTSEnginesConfig.__instance._reload_on_change()
         return AlltalkTTSEnginesConfig.__instance
 
     def _handle_loaded_config(self, data):
@@ -276,10 +281,15 @@ class AlltalkConfig(AbstractJsonConfig):
         self._load_config()
 
     @staticmethod
-    def get_instance():
+    def get_instance(force_reload = False):
         if AlltalkConfig.__instance is None:
+            force_reload = False
             AlltalkConfig.__instance = AlltalkConfig()
-        AlltalkConfig.__instance._reload_on_change()
+
+        if force_reload:
+            AlltalkConfig.__instance.reload()
+        else:
+            AlltalkConfig.__instance._reload_on_change()
         return AlltalkConfig.__instance
 
     def get_output_directory(self):
