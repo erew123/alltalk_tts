@@ -1,5 +1,4 @@
 coqui-tts>=0.24.3
-faster-whisper>=1.0.3
 fuzzywuzzy>=0.18.0
 gradio>=4.44.1
 importlib_metadata>=7.2.1
@@ -7,8 +6,7 @@ inputimeout>=1.0.4
 Jinja2>=3.1.4
 librosa>=0.10.2.post1
 local_attention>=1.9.0
-nvidia-cublas-cu11>=11.11.3.6
-nvidia-cudnn-cu11>=9.1.1.17
+openai-whisper
 onnxruntime-gpu>=1.18.1
 pydantic>=2.8.2
 python-ffmpeg>=2.0.12
@@ -34,4 +32,3 @@ piper-tts; sys_platform == "linux"
 piper-tts; sys_platform == "darwin"
 piper-phonemize==1.1.0; sys_platform == "darwin"
 fastapi==0.112.2
-ctranslate2==4.4.0
