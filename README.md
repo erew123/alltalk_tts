@@ -134,6 +134,7 @@ For users who want to run AllTalk TTS in a cloud environment:
 
 As long as you did the `git clone` method to setup initially, you will be able to go into the folder and use `git pull` to download updates.
 
+You can use `atsetup` to re-apply the settings file for any necessary module updates.
 ---
 
 ### 🟨 Diagnostics Help with Issues/Start-up problems etc.
