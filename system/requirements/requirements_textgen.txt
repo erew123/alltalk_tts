@@ -1,6 +1,5 @@
 coqui-tts>=0.24.3
 fuzzywuzzy>=0.18.0
-gradio>=4.26.0
 importlib_metadata>=7.1.0
 inputimeout>=1.0.4
 Jinja2>=3.1.0
