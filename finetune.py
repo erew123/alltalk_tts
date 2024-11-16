@@ -255,6 +255,7 @@ class DebugLevels:
     AUDIO = False  # Audio processing statistics and info
     SEGMENTS = False  # Detailed segment information
     DUPLICATES = False  # Duplicate handling information
+    VALIDATION = False  # DataSet validation handling
 
 
 def debug_print(
@@ -286,6 +287,8 @@ def debug_print(
         print(f"{prefix} [SEG] {message}")
     elif level == "DUPLICATES" and DebugLevels.DUPLICATES:
         print(f"{prefix} [DUP] {message}")
+    elif level == "VALIDATION" and DebugLevels.VALIDATION:
+        print(f"{prefix} [VAL] {message}")        
 
 
 class AudioStats:
@@ -1968,13 +1971,17 @@ def load_and_display_mismatches():
         # Load and combine metadata from CSV files
         metadata_dfs = []
         for csv_path in vat_csv_paths:
+            debug_print(f"Reading CSV file: {csv_path}", "VALIDATION", is_info=True)
             metadata_df = pd.read_csv(csv_path, sep="|")
+            debug_print(f"CSV columns: {metadata_df.columns.tolist()}", "VALIDATION", is_info=True)
+            debug_print(f"Number of rows: {len(metadata_df)}", "VALIDATION", is_info=True)
             # Add source CSV tracking
             metadata_df["source_csv"] = csv_path
             metadata_df["row_index"] = metadata_df.index
             metadata_dfs.append(metadata_df)
 
         metadata_df = pd.concat(metadata_dfs, ignore_index=True)
+        debug_print(f"Total combined rows: {len(metadata_df)}", "VALIDATION", is_info=True)
 
         # Load Whisper model
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1991,6 +1998,8 @@ def load_and_display_mismatches():
         ), total=total_files, unit="file", disable=False, leave=True):
             audio_file = row["audio_file"]
             expected_text = row["text"]
+            debug_print(f"Processing file {index + 1}/{total_files}: {audio_file}", "VALIDATION", is_info=True)
+            debug_print(f"Expected text length: {len(expected_text)}", "VALIDATION", is_info=True)                
             audio_file_name = audio_file.replace("wavs/", "")
             audio_path = os.path.normpath(
                 os.path.join(
@@ -1999,6 +2008,7 @@ def load_and_display_mismatches():
 
             if not os.path.exists(audio_path):
                 missing_files.append(audio_file_name)
+                debug_print(f"File not found: {audio_path}", "GENERAL", is_warning=True)                
                 if vat_progress is not None:
                     vat_progress((index + 1, total_files),
                                  desc="Processing files")
@@ -2013,25 +2023,39 @@ def load_and_display_mismatches():
 
             # Get the full transcription from the result
             transcribed_text = result["text"].strip()
+            debug_print(f"Transcribed text length: {len(transcribed_text)}", "VALIDATION", is_info=True)
 
             # Normalize and compare texts
             normalized_expected_text = normalize_text(expected_text)
             normalized_transcribed_text = normalize_text(transcribed_text)
+            debug_print(f"Normalized expected text length: {len(normalized_expected_text)}", "VALIDATION", is_info=True)
+            debug_print(f"Normalized transcribed text length: {len(normalized_transcribed_text)}", "VALIDATION", is_info=True)
 
             if normalized_transcribed_text != normalized_expected_text:
-                mismatches.append(
-                    {
-                        "expected_text": row["text"],
-                        "transcribed_text": transcribed_text,
-                        "filename": audio_file_name,
-                        "full_path": audio_path,
-                        "row_index": row["row_index"],
-                        "source_csv": row["source_csv"],
-                    }
-                )
-
+                debug_print("Mismatch found! Adding to mismatches list", "VALIDATION", is_info=True)
+                mismatch_entry = {
+                    "expected_text": row["text"],
+                    "transcribed_text": transcribed_text,
+                    "filename": audio_file_name,
+                    "full_path": audio_path,
+                    "row_index": row["row_index"],
+                    "source_csv": row["source_csv"],
+                }
+                debug_print(f"Mismatch entry keys: {mismatch_entry.keys()}", "VALIDATION", is_info=True)
+                mismatches.append(mismatch_entry)
+                
             if vat_progress is not None:
                 vat_progress((index + 1, total_files), desc="Processing files")
+
+        debug_print(f"Total mismatches found: {len(mismatches)}", "GENERAL", is_info=True)
+        if mismatches:
+            debug_print("Sample mismatch entry:", "VALIDATION", is_info=True)
+            debug_print(str(mismatches[0]), "VALIDATION", is_info=True)
+
+        if missing_files:
+            debug_print("Missing files:", "GENERAL", is_warning=True)
+            for file_name in missing_files:
+                debug_print(f"- {file_name}", "GENERAL", is_warning=True)
 
         if missing_files:
             debug_print("", "GENERAL")
@@ -2058,6 +2082,14 @@ def load_and_display_mismatches():
             VALIDATE_TARGET_LANGUAGE,
             vat_progress,
         )
+
+        if not mismatches:
+            debug_print("No transcription mismatches found!", "GENERAL", is_info=True)
+            empty_df = pd.DataFrame(columns=["expected_text", "transcribed_text", "filename", 
+                                           "full_path", "row_index", "source_csv"])
+            display_df = pd.DataFrame(columns=["expected_text", "transcribed_text", "filename"])
+            display_df.loc[0] = ["No bad transcriptions", "No bad transcriptions", "N/A"]
+            return empty_df, display_df, "No transcription mismatches found - all transcriptions match!"
 
         # Convert mismatches list to DataFrame
         df = pd.DataFrame(mismatches)
@@ -3486,10 +3518,11 @@ if __name__ == "__main__":
                 with gr.Accordion("🔍 Dataset Creation Debug Settings", open=False):
 
                     def update_debug_levels(
-                            gpu, model, data, general, audio, segments, duplicates):
+                            gpu, model, data, validation, general, audio, segments, duplicates):
                         DebugLevels.GPU_MEMORY = gpu
                         DebugLevels.MODEL_OPS = model
                         DebugLevels.DATA_PROCESS = data
+                        DebugLevels.VALIDATION = validation
                         DebugLevels.GENERAL = general
                         DebugLevels.AUDIO = audio
                         DebugLevels.SEGMENTS = segments
@@ -3501,6 +3534,7 @@ if __name__ == "__main__":
                             debug_gpu: True,
                             debug_model: True,
                             debug_data: True,
+                            debug_validation: True,
                             debug_general: True,
                             debug_audio: True,
                             debug_segments: True,
@@ -3512,6 +3546,7 @@ if __name__ == "__main__":
                             debug_gpu: False,
                             debug_model: False,
                             debug_data: False,
+                            debug_validation: False,
                             debug_general: False,
                             debug_audio: False,
                             debug_segments: False,
@@ -3543,6 +3578,11 @@ if __name__ == "__main__":
                                 value=DebugLevels.DATA_PROCESS,
                                 info="Data processing, words, sentences",
                             )
+                            debug_validation = gr.Checkbox(
+                                label="Dataset Validation",
+                                value=DebugLevels.VALIDATION,
+                                info="Dataset Validation, amount, sentences, files",
+                            )                            
 
                         with gr.Column(scale=1):
                             debug_general = gr.Checkbox(
@@ -3575,6 +3615,7 @@ if __name__ == "__main__":
                         debug_gpu,
                         debug_model,
                         debug_data,
+                        debug_validation,
                         debug_general,
                         debug_audio,
                         debug_segments,
@@ -3586,6 +3627,7 @@ if __name__ == "__main__":
                                 debug_gpu,
                                 debug_model,
                                 debug_data,
+                                debug_validation,
                                 debug_general,
                                 debug_audio,
                                 debug_segments,
@@ -3602,6 +3644,7 @@ if __name__ == "__main__":
                             debug_gpu,
                             debug_model,
                             debug_data,
+                            debug_validation,
                             debug_general,
                             debug_audio,
                             debug_segments,
@@ -3616,6 +3659,7 @@ if __name__ == "__main__":
                             debug_gpu,
                             debug_model,
                             debug_data,
+                            debug_validation,
                             debug_general,
                             debug_audio,
                             debug_segments,
