@@ -1009,20 +1009,6 @@ def format_audio_list(
     original_samples_folder = os.path.join(
         out_path, "..", "put-voice-samples-in-here")
 
-    # Handle language file
-    lang_file_path = os.path.join(out_path, "lang.txt")
-    current_language = None
-    if os.path.exists(lang_file_path):
-        with open(lang_file_path, 'r', encoding='utf-8') as existing_lang_file:
-            current_language = existing_lang_file.read().strip()
-
-    if current_language != fal_target_language:
-        with open(lang_file_path, 'w', encoding='utf-8') as lang_file:
-            lang_file.write(fal_target_language + '\n')
-        debug_print(f"Updated language to: {fal_target_language}", "GENERAL")
-    else:
-        debug_print("Using existing language setting", "GENERAL")
-
     # Load Whisper model with specified precision
     fal_gradio_progress((1, 10), desc="Loading Whisper Model")
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1062,6 +1048,10 @@ def format_audio_list(
     eval_metadata_path = os.path.join(out_path, "metadata_eval.csv")
     existing_metadata = {'train': None, 'eval': None}
 
+    # Handle language file
+    lang_file_path = os.path.join(out_path, "lang.txt")
+    current_language = None
+
     if os.path.exists(train_metadata_path):
         existing_metadata['train'] = pd.read_csv(train_metadata_path, sep="|")
         debug_print("Loaded existing training metadata", "DATA_PROCESS")
@@ -1069,7 +1059,27 @@ def format_audio_list(
     if os.path.exists(eval_metadata_path):
         existing_metadata['eval'] = pd.read_csv(eval_metadata_path, sep="|")
         debug_print("Loaded existing evaluation metadata", "DATA_PROCESS")
+    
+    if os.path.exists(train_metadata_path) and os.path.exists(eval_metadata_path):
+        # If dataset exists, read but don't modify the language
+        if os.path.exists(lang_file_path):
+            with open(lang_file_path, 'r', encoding='utf-8') as existing_lang_file:
+                current_language = existing_lang_file.read().strip()
+            debug_print(f"Using existing dataset language: {current_language}", "GENERAL")
+            fal_target_language = current_language  # Update our target language to match existing
+    else:
+        # Only create/update language file for new datasets
+        if os.path.exists(lang_file_path):
+            with open(lang_file_path, 'r', encoding='utf-8') as existing_lang_file:
+                current_language = existing_lang_file.read().strip()
 
+        if current_language != fal_target_language:
+            with open(lang_file_path, 'w', encoding='utf-8') as lang_file:
+                lang_file.write(fal_target_language + '\n')
+            debug_print(f"Updated language to: {fal_target_language}", "GENERAL")
+        else:
+            debug_print("Using existing language setting", "GENERAL")
+        
     # Get audio files list
     original_audio_files = [os.path.join(original_samples_folder, file)
                             for file in os.listdir(original_samples_folder)
@@ -2304,6 +2314,23 @@ def train_gpt(
     dashboard_logger = "tensorboard"
     logger_uri = None
     model_path = this_dir / "models" / "xtts" / model_to_train
+
+    # Check for lang.txt in the same directory as train_csv
+    dataset_dir = os.path.dirname(train_csv)
+    lang_file = os.path.join(dataset_dir, "lang.txt")
+    
+    if os.path.exists(lang_file):
+        try:
+            with open(lang_file, 'r', encoding='utf-8') as f:
+                dataset_language = f.read().strip()
+            debug_print(f"Found language file, using language: {dataset_language}", "GENERAL", is_info=True)
+            # Override the input language with the one from lang.txt
+            language = dataset_language
+        except Exception as e:
+            debug_print(f"Error reading lang.txt: {str(e)}", "GENERAL", is_warning=True)
+            debug_print(f"Falling back to provided language: {language}", "GENERAL", is_warning=True)
+    else:
+        debug_print("No lang.txt found, using provided language setting", "GENERAL", is_warning=True)
 
     # Set here the path that the checkpoints will be saved. Default:
     # ./training/
