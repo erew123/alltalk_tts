@@ -45,7 +45,7 @@ I would also like to say a big thank you to anyone whom has contributed to this 
 - GitHub Wiki documentation
 
 #### Performance and Optimization (Depending on TTS engine used)
-- DeepSpeed integration for 2-3x performance boost
+- DeepSpeed integration for 2-3x performance boost (Depending on TTS engine)
 - Low VRAM mode for systems with limited GPU memory 
 
 #### Voice Customization and Enhancement
