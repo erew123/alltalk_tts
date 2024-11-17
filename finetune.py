@@ -960,13 +960,14 @@ def format_audio_list(
         fal_target_language,
         fal_whisper_model,
         fal_max_sample_length,
+        fal_min_sample_length,
         fal_eval_split_number,
         fal_speaker_name_input,
         fal_create_bpe_tokenizer,
         fal_gradio_progress=gr.Progress(),
         fal_use_vad=True,
         fal_precision="mixed",
-        fal_min_sample_length=6):
+        ):
     """
     Process and format audio files for XTTS training. Handles audio segmentation, transcription,
     and metadata creation with optional VAD and precision settings.
@@ -1526,32 +1527,32 @@ def merge_short_segments(segments, min_duration, max_gap=0.5):
 
     merged = []
     current_group = []
+    target_duration = (min_duration + 10.0) / 2  # Target middle of range
 
     for i, segment in enumerate(segments):
-        current_duration = sum(s["end"] - s["start"]
-                               for s in current_group) if current_group else 0
+        current_duration = sum(s["end"] - s["start"] 
+                             for s in current_group) if current_group else 0
 
         # If this is a continuation of current group
-        if current_group and (
-                segment["start"] - current_group[-1]["end"]) <= max_gap:
-            current_group.append(segment)
-        # If starting new group but previous was too short
-        elif current_group and current_duration < min_duration:
-            # Look ahead for close segments
-            # Look up to 3 segments ahead
-            look_ahead = min(3, len(segments) - i)
-            for j in range(i, i + look_ahead):
-                if (j < len(segments) and (
-                        segments[j]["start"] - current_group[-1]["end"]) <= max_gap * 2):
-                    current_group.append(segments[j])
-                else:
-                    break
+        if current_group and (segment["start"] - current_group[-1]["end"]) <= max_gap:
+            # Check if adding this segment gets us closer to target duration
+            new_duration = current_duration + (segment["end"] - segment["start"])
+            if abs(new_duration - target_duration) < abs(current_duration - target_duration):
+                current_group.append(segment)
+            else:
+                # Save current group and start new one
+                merged_segment = {
+                    "start": current_group[0]["start"],
+                    "end": current_group[-1]["end"]
+                }
+                merged.append(merged_segment)
+                current_group = [segment]
         else:
             # Save previous group if it exists
             if current_group:
                 merged_segment = {
                     "start": current_group[0]["start"],
-                    "end": current_group[-1]["end"],
+                    "end": current_group[-1]["end"]
                 }
                 merged.append(merged_segment)
             current_group = [segment]
@@ -1559,12 +1560,14 @@ def merge_short_segments(segments, min_duration, max_gap=0.5):
     # Handle last group
     if current_group:
         merged_segment = {
-            "start": current_group[0]["start"], "end": current_group[-1]["end"]}
+            "start": current_group[0]["start"],
+            "end": current_group[-1]["end"]
+        }
         merged.append(merged_segment)
 
     debug_print(
-        f"Merged {len(segments) - len(merged)} segments into {len(merged)} longer segments",
-        "SEGMENTS",
+        f"Merged {len(segments) - len(merged)} segments into {len(merged)} segments with mid-range preference",
+        "SEGMENTS"
     )
     return merged
 
@@ -2285,6 +2288,22 @@ def basemodel_or_finetunedmodel_choice(value):
     elif value == "Existing finetuned model":
         basemodel_or_finetunedmodel = False
 
+def check_model_requirements(model_folder):
+    """Check if all required files exist in the model folder"""
+    required_files = {
+        "model.pth": False,
+        "config.json": False,
+        "vocab.json": False,
+        "dvae.pth": False,
+        "mel_stats.pth": False,
+        "speakers_xtts.pth": False
+    }
+    
+    if model_folder.exists():
+        for file in required_files:
+            required_files[file] = (model_folder / file).exists()
+    
+    return required_files
 
 def train_gpt(
         language,
@@ -2303,60 +2322,75 @@ def train_gpt(
         warm_up,
         max_audio_length=255995,
         progress=gr.Progress()):
+    
+    # First check if a model was selected
     if "No Models Available" in model_to_train:
-        print("[FINETUNE] Error: No XTTS model selected for training.")
-        print("[FINETUNE] Please download a model using AllTalk's main interface > TTS Engine Settings > XTTS > Model/Voices Download")
+        debug_print("No XTTS model selected for training.", "MODEL_OPS", is_error=True)
+        debug_print("Please download a model using AllTalk's main interface > TTS Engine Settings > XTTS > Model/Voices Download", "MODEL_OPS", is_info=True)
+        return
+    
+    # Check if selected model exists and has required files
+    model_path = this_dir / "models" / "xtts" / model_to_train
+    if not model_path.exists():
+        debug_print(f"Selected model folder not found: {model_path}", "MODEL_OPS", is_error=True)
+        debug_print("Please ensure you have downloaded the model correctly", "MODEL_OPS", is_info=True)
         return
 
-    #  Logging parameters
-    project_run_name = "XTTS_FT"
-    project_name = "XTTS_trainer"
-    dashboard_logger = "tensorboard"
-    logger_uri = None
-    model_path = this_dir / "models" / "xtts" / model_to_train
-
-    # Check for lang.txt in the same directory as train_csv
-    dataset_dir = os.path.dirname(train_csv)
-    lang_file = os.path.join(dataset_dir, "lang.txt")
+    # Check for required files
+    files = check_model_requirements(model_path)
+    missing_files = [file for file, exists in files.items() if not exists]
     
-    if os.path.exists(lang_file):
-        try:
-            with open(lang_file, 'r', encoding='utf-8') as f:
-                dataset_language = f.read().strip()
-            debug_print(f"Found language file, using language: {dataset_language}", "GENERAL", is_info=True)
-            # Override the input language with the one from lang.txt
-            language = dataset_language
-        except Exception as e:
-            debug_print(f"Error reading lang.txt: {str(e)}", "GENERAL", is_warning=True)
-            debug_print(f"Falling back to provided language: {language}", "GENERAL", is_warning=True)
-    else:
-        debug_print("No lang.txt found, using provided language setting", "GENERAL", is_warning=True)
+    if missing_files:
+        debug_print(f"Missing required files in {model_to_train}:", "MODEL_OPS", is_error=True)
+        for file in missing_files:
+            debug_print(f"❌ {file}", "MODEL_OPS", is_error=True)
+        debug_print("\nPlease redownload the model using AllTalk's interface", "MODEL_OPS", is_info=True)
+        return
+    
+    # Confirm all model files found and continue with training
+    debug_print(f"✓ All required files found for model: {model_to_train}", "MODEL_OPS", is_info=True)
 
-    # Set here the path that the checkpoints will be saved. Default:
-    # ./training/
-    project_path = os.path.join(out_path, "training")
-    debug_print(
-        "Starting Step 2 - Fine-tuning the XTTS Model",
-        level="GENERAL",
-        is_info=True)
-    debug_print("Configuration Summary:", level="GENERAL", is_info=True)
-    debug_print(f"- Language: {language}", level="GENERAL", is_info=True)
-    debug_print(
-        f"- Training Epochs: {num_epochs}",
-        level="GENERAL",
-        is_info=True)
-    debug_print(f"- Batch Size: {batch_size}", level="GENERAL", is_info=True)
-    debug_print(
-        f"- Gradient Accumulation Steps: {grad_acumm}",
-        level="GENERAL",
-        is_info=True)
-    debug_print("File Paths:", level="GENERAL", is_info=True)
-    debug_print(f"- Training Data: {train_csv}", level="GENERAL", is_info=True)
-    debug_print(
-        f"- Evaluation Data: {eval_csv}",
-        level="GENERAL",
-        is_info=True)
-    debug_print(f"- Base Model: {model_path}", level="GENERAL", is_info=True)
+    # Dataset validation
+    if not train_csv or not eval_csv:
+        debug_print("Missing training or evaluation CSV files", "MODEL_OPS", is_error=True)
+        debug_print(f"Train CSV: {train_csv}", "MODEL_OPS", is_error=True)
+        debug_print(f"Eval CSV: {eval_csv}", "MODEL_OPS", is_error=True)
+        return
+
+    # Training parameter validation
+    debug_print("***********************", "MODEL_OPS", is_info=True)
+    debug_print("Training Configuration:", "MODEL_OPS", is_info=True)
+    debug_print("***********************", "MODEL_OPS", is_info=True)
+    debug_print(f"- Language: {language}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Epochs: {num_epochs}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Batch Size: {batch_size}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Gradient Accumulation: {grad_acumm}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Learning Rate: {learning_rate}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Learning Rate Scheduler: {learning_rate_scheduler}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Optimizer: {optimizer}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Number of Workers: {num_workers}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Warm Up: {warm_up}", "MODEL_OPS", is_info=True)
+    debug_print(f"- Max Audio Length: {max_audio_length}", "MODEL_OPS", is_info=True)
+
+    # GPU/Memory information
+    if torch.cuda.is_available():
+        gpu_id = torch.cuda.current_device()
+        debug_print("****************", "GPU_MEMORY", is_info=True)
+        debug_print("GPU Information:", "GPU_MEMORY", is_info=True)
+        debug_print("****************", "GPU_MEMORY", is_info=True)
+        debug_print(f"- Device: {torch.cuda.get_device_name(gpu_id)}", "GPU_MEMORY", is_info=True)
+        debug_print(f"- CUDA Version: {torch.version.cuda}", "GPU_MEMORY", is_info=True)
+        total_memory = torch.cuda.get_device_properties(gpu_id).total_memory / (1024**3)
+        free_memory = total_memory - (torch.cuda.memory_allocated(gpu_id) / (1024**3))
+        debug_print(f"- Total VRAM: {total_memory:.2f}GB", "GPU_MEMORY", is_info=True)
+        debug_print(f"- Free VRAM: {free_memory:.2f}GB", "GPU_MEMORY", is_info=True)
+        
+        # Memory warnings
+        if free_memory < 3:
+            debug_print("WARNING: Very low available VRAM!", "GPU_MEMORY", is_warning=True)
+            debug_print("Consider reducing batch size or using gradient accumulation", "GPU_MEMORY", is_warning=True)
+    else:
+        debug_print("No GPU detected - training will be very slow!", "GPU_MEMORY", is_warning=True)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -2364,16 +2398,19 @@ def train_gpt(
         gpu_device_id = torch.cuda.current_device()
         gpu_available_mem_gb = (torch.cuda.get_device_properties(
             gpu_device_id).total_memory - torch.cuda.memory_allocated(gpu_device_id)) / (1024 ** 3)
-        debug_print("GPU Memory Status:", level="GPU_MEMORY", is_info=True)
-        debug_print(
-            f"- Available VRAM: {gpu_available_mem_gb:.2f} GB",
-            level="GPU_MEMORY",
-            is_info=True)
         if gpu_available_mem_gb < 12:
             debug_print(
-                "*** IMPORTANT MEMORY CONSIDERATION ***",
+                "******************************",
+                level="GPU_MEMORY",
+                is_warning=True)            
+            debug_print(
+                "IMPORTANT MEMORY CONSIDERATION",
                 level="GPU_MEMORY",
                 is_warning=True)
+            debug_print(
+                "******************************",
+                level="GPU_MEMORY",
+                is_warning=True)            
             debug_print(
                 "Your available VRAM is below the recommended 12GB threshold.",
                 level="GPU_MEMORY",
@@ -2423,6 +2460,79 @@ def train_gpt(
                 level="GPU_MEMORY",
                 is_warning=True)
 
+    # Dataset statistics
+    try:
+        train_df = pd.read_csv(train_csv, sep="|")
+        eval_df = pd.read_csv(eval_csv, sep="|")
+        debug_print("*******************", "DATA_PROCESS", is_info=True)
+        debug_print("Dataset Statistics:", "DATA_PROCESS", is_info=True)
+        debug_print("*******************", "DATA_PROCESS", is_info=True)
+        debug_print(f"- Training samples: {len(train_df)}", "DATA_PROCESS", is_info=True)
+        debug_print(f"- Evaluation samples: {len(eval_df)}", "DATA_PROCESS", is_info=True)
+        if (out_path / "bpe_tokenizer-vocab.json").exists():
+            debug_print(
+                "- Using custom BPE tokenizer",
+                level="DATA_PROCESS",
+                is_info=True)
+            training_assets = {
+                'Tokenizer': str(out_path / "bpe_tokenizer-vocab.json")
+            }        
+        # Check for potential issues
+        if len(train_df) < 100:
+            debug_print("Very small training dataset", "DATA_PROCESS", is_warning=True)
+        if len(eval_df) < 10:
+            debug_print("Very small evaluation dataset", "DATA_PROCESS", is_warning=True)
+    except Exception as e:
+        debug_print(f"Error reading dataset files: {str(e)}", "DATA_PROCESS", is_error=True)
+        return
+
+    #  Logging parameters
+    project_run_name = "XTTS_FT"
+    project_name = "XTTS_trainer"
+    dashboard_logger = "tensorboard"
+    logger_uri = None
+
+    # Check for lang.txt in the same directory as train_csv
+    dataset_dir = os.path.dirname(train_csv)
+    lang_file = os.path.join(dataset_dir, "lang.txt")
+    
+    # Set here the path that the checkpoints will be saved. Default:
+    # ./training/
+    project_path = os.path.join(out_path, "training")
+    # Project path information
+    debug_print("**********************", "GENERAL", is_info=True)
+    debug_print("Project Configuration:", "GENERAL", is_info=True)
+    debug_print("**********************", "GENERAL", is_info=True)
+    debug_print(f"- Project Path: {project_path}", "GENERAL", is_info=True)
+    debug_print(f"- Model Path: {model_path}", "GENERAL", is_info=True)
+    debug_print(f"- Training Data: {train_csv}", level="GENERAL", is_info=True)
+    debug_print(
+        f"- Evaluation Data: {eval_csv}",
+        level="GENERAL",
+        is_info=True)  
+    debug_print(f"- Language: {language}", level="GENERAL", is_info=True)
+    if os.path.exists(lang_file):
+        try:
+            with open(lang_file, 'r', encoding='utf-8') as f:
+                dataset_language = f.read().strip()
+            debug_print(f"- Found language file, using language: {dataset_language}", "GENERAL", is_info=True)
+            # Override the input language with the one from lang.txt
+            language = dataset_language
+        except Exception as e:
+            debug_print(f"- Error reading lang.txt: {str(e)}", "GENERAL", is_warning=True)
+            debug_print(f"- Falling back to provided language: {language}", "GENERAL", is_warning=True)
+    else:
+        debug_print("- No lang.txt found, using provided language setting", "GENERAL", is_warning=True)    
+    debug_print(f"- Batch Size: {batch_size}", level="GENERAL", is_info=True)
+    debug_print(
+        f"- Grad Steps: {grad_acumm}",
+        level="GENERAL",
+        is_info=True)        
+    debug_print(
+        f"- Training Epochs: {num_epochs}",
+        level="GENERAL",
+        is_info=True)
+
     # Create the directory
     os.makedirs(project_path, exist_ok=True)
 
@@ -2455,14 +2565,6 @@ def train_gpt(
     dataset_speakers_file = model_path / "speakers_xtts.pth"
 
     training_assets = None
-    if (out_path / "bpe_tokenizer-vocab.json").exists():
-        debug_print(
-            "Using custom BPE tokenizer",
-            level="DATA_PROCESS",
-            is_info=True)
-        training_assets = {
-            'Tokenizer': str(out_path / "bpe_tokenizer-vocab.json")
-        }
 
     continue_path = None
     if continue_run:
@@ -2480,7 +2582,7 @@ def train_gpt(
                         dataset_xtts_checkpoint = None
                         continue_path = last_run
                         print(
-                            f"[FINETUNE] Continuing previous fine tuning {latest_checkpoint}")
+                            f"[FINETUNE] - Continuing previous fine tuning {latest_checkpoint}")
 
     # Copy the supporting files
     destination_dir = out_path / "chkptandnorm"
@@ -2653,9 +2755,15 @@ def train_gpt(
 
     optimizer_params = OPTIMIZER_PARAMS.get(optimizer, {})
 
-    print(
-        f"[FINETUNE] [INFO] Learning Scheduler {lr_scheduler}, params {lr_scheduler_params}")
-
+    debug_print(
+        f"- Learning Scheduler {lr_scheduler} Parameters",
+        level="GENERAL",
+        is_info=True)
+    debug_print(
+        f"- {lr_scheduler_params}",
+        level="GENERAL",
+        is_info=True)
+    
     # training parameters config
     config = GPTTrainerConfig(
         epochs=num_epochs,
@@ -2695,12 +2803,14 @@ def train_gpt(
     # init the model from config
     model = GPTTrainer.init_from_config(config)
     # load training samples
+    debug_print("Loading training samples...", "MODEL_OPS", is_info=True)
     train_samples, eval_samples = load_tts_samples(
         dataset_config_list,
         eval_split=True,
         eval_split_max_size=config.eval_split_max_size,
         eval_split_size=config.eval_split_size,
     )
+    debug_print(f"Loaded {len(train_samples)} training and {len(eval_samples)} eval samples\n", "MODEL_OPS", is_info=True)
 
     global c_logger
     c_logger = MetricsLogger()
@@ -2728,10 +2838,18 @@ def train_gpt(
 
     if disable_shared_memory:
         # Limit training to GPU memory instead of shared memory
-        print("[FINETUNE] [INFO] Limiting GPU memory to 95% to prevent spillover")
+        debug_print("Limiting GPU memory to 95%", "GPU_MEMORY", is_info=True)
         torch.cuda.set_per_process_memory_fraction(0.95)
-
+    
+    print("\n")
+    debug_print("********************************", "MODEL_OPS", is_info=True)
+    debug_print("Starting training the XTTS model", "MODEL_OPS", is_info=True)
+    debug_print("********************************\n", "MODEL_OPS", is_info=True)
     trainer.fit()
+    print("\n")
+    debug_print("********************************", "MODEL_OPS", is_info=True)
+    debug_print("Training completed successfully", "MODEL_OPS", is_info=True)
+    debug_print("********************************", "MODEL_OPS", is_info=True)
 
     # get the longest text audio file to use as speaker reference
     samples_len = [len(item["text"].split(" ")) for item in train_samples]
@@ -2739,6 +2857,10 @@ def train_gpt(
     speaker_ref = train_samples[longest_text_idx]["audio_file"]
 
     trainer_out_path = trainer.output_path
+
+    # Before cleanup
+    debug_print("GPU Memory Before Cleanup:", "GPU_MEMORY")
+    get_gpu_memory()
 
     # deallocate VRAM and RAM
     del model, trainer, train_samples, eval_samples, config, model_args, config_dataset
@@ -2752,8 +2874,9 @@ def train_gpt(
     try:
         return dataset_xtts_config_file, dataset_xtts_checkpoint, dataset_tokenizer_file, trainer_out_path, speaker_ref
     except Exception as e:
-        print(f"Error returning values: {e}")
-        return "Error", "Error", "Error", "Error", "Error"
+        debug_print(f"Error during training: {str(e)}", "MODEL_OPS", is_error=True)
+        debug_print(traceback.format_exc(), "MODEL_OPS", is_error=True)
+        return
 
 ##########################
 #### STEP 3 AND OTHER ####
@@ -2764,6 +2887,8 @@ def clear_gpu_cache():
     """clear the GPU cache"""
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        debug_print("GPU Memory After Cleanup:", "GPU_MEMORY")
+        get_gpu_memory()
 
 
 def find_a_speaker_file(folder_path):
@@ -3474,8 +3599,11 @@ if __name__ == "__main__":
                             ("large-v3-turbo", "large-v3-turbo"),
                             ("turbo", "turbo"),
                         ],
-                        scale=2,
+                        scale=1,
                     )
+                    precision = gr.Dropdown(
+                        label="Model Precision", value="mixed", choices=[
+                            ("Mixed", "mixed"), ("FP16", "float16"), ("FP32", "float32")], scale=1)                    
                     lang = gr.Dropdown(
                         label="Dataset Language",
                         value="en",
@@ -3499,48 +3627,43 @@ if __name__ == "__main__":
                         ],
                         scale=1,
                     )
-                    max_sample_length = gr.Dropdown(
-                        label="Max Audio Length (in seconds)",
-                        value="30",
-                        choices=[
-                            "10",
-                            "15",
-                            "20",
-                            "25",
-                            "30",
-                            "35",
-                            "40",
-                            "45",
-                            "50",
-                            "55",
-                            "60",
-                            "65",
-                            "70",
-                            "75",
-                            "80",
-                            "85",
-                            "90",
-                        ],
-                        scale=2,
-                    )
                     eval_split_number = gr.Number(
                         label="Evaluation Data Split",
-                        value=15,  # Default value
-                        minimum=5,  # Minimum value
-                        maximum=95,  # Maximum value
-                        step=1,  # Increment step
+                        value=15,
+                        minimum=5,
+                        maximum=95,
+                        step=1,
                         scale=1,
                     )
-                    create_bpe_tokenizer = gr.Checkbox(
-                        label="BPE Tokenizer", value=False, info="Custom Tokenizer for training")
-                    use_vad = gr.Checkbox(
-                        label="VAD",
-                        value=True,
-                        info="Enable Silero VAD for better speech detection",
+                with gr.Row():                    
+                    create_bpe_tokenizer = gr.Dropdown(
+                        label="BPE Tokenizer",
+                        value="False",
+                        choices=[("Enabled", "True"), ("Disabled", "False")],
+                        info="Custom Tokenizer for training",
+                        scale=1,
                     )
-                    precision = gr.Dropdown(
-                        label="Model Precision", value="mixed", choices=[
-                            ("Mixed", "mixed"), ("FP16", "float16"), ("FP32", "float32")], )
+                    use_vad = gr.Dropdown(
+                        label="VAD",
+                        value="True",
+                        choices=[("Enabled", "True"), ("Disabled", "False")],
+                        info="Enable Silero VAD for better speech detection",
+                        scale=1,
+                    )
+                    min_sample_length = gr.Dropdown(
+                        label="Min Audio Length (seconds)", 
+                        value="2",
+                        choices=["1", "2", "3", "4", "5"],
+                        info="Split large audio into a minimum of",
+                        scale=1,
+                    )                    
+                    max_sample_length = gr.Dropdown(
+                        label="Max Audio Length (seconds)",
+                        value="10", 
+                        choices=["8","9","10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
+                        info="Split large audio into a maximum of",
+                        scale=1,
+                    )                    
 
                 with gr.Accordion("🔍 Dataset Creation Debug Settings", open=False):
 
@@ -3712,6 +3835,7 @@ if __name__ == "__main__":
                     pd_language,
                     pd_whisper_model,
                     pd_max_sample_length,
+                    pd_min_sample_length,
                     pd_eval_split_number,
                     pd_speaker_name_input,
                     pd_create_bpe_tokenizer,
@@ -3741,6 +3865,7 @@ if __name__ == "__main__":
                             fal_target_language=pd_language,
                             fal_whisper_model=pd_whisper_model,
                             fal_max_sample_length=pd_max_sample_length,
+                            fal_min_sample_length=pd_min_sample_length,
                             fal_eval_split_number=pd_eval_split_number,
                             fal_speaker_name_input=pd_speaker_name_input,
                             fal_create_bpe_tokenizer=pd_create_bpe_tokenizer,
@@ -4125,6 +4250,85 @@ if __name__ == "__main__":
                         value=args.max_audio_length,
                     )
 
+
+                with gr.Accordion("🔍 Training Debug Settings", open=False):
+                    gr.Markdown("""
+                        Enable or disable different types of debug messages during model training.
+                        These settings will apply to the current training session only.
+                    """)
+
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            debug_gpu = gr.Checkbox(
+                                label="GPU Memory",
+                                value=DebugLevels.GPU_MEMORY,
+                                info="GPU memory and CUDA related debugging",
+                            )
+                            debug_model = gr.Checkbox(
+                                label="Model Operations",
+                                value=DebugLevels.MODEL_OPS,
+                                info="Model loading, training operations, cleanup",
+                            )
+                        with gr.Column(scale=1):                            
+                            debug_general = gr.Checkbox(
+                                label="General",
+                                value=DebugLevels.GENERAL,
+                                info="Training flow, file operations",
+                            )
+                            debug_data = gr.Checkbox(
+                                label="Data Processing",
+                                value=DebugLevels.DATA_PROCESS,
+                                info="Data processing, files, folders",
+                            )                         
+
+                    with gr.Row():
+                        debug_select_all = gr.Button("Select All")
+                        debug_clear_all = gr.Button("Clear All")
+
+                    # Debug update functions
+                    def train_update_debug_levels(gpu, model, general, data):
+                        DebugLevels.GPU_MEMORY = gpu
+                        DebugLevels.MODEL_OPS = model
+                        DebugLevels.GENERAL = general
+                        DebugLevels.DATA_PROCESS = data
+                        return "Debug settings updated"
+
+                    def train_select_all_debug():
+                        return {
+                            debug_gpu: True,
+                            debug_model: True,
+                            debug_general: True,
+                            debug_data: True,
+                        }
+
+                    def train_clear_all_debug():
+                        return {
+                            debug_gpu: False,
+                            debug_model: False,
+                            debug_general: False,
+                            debug_data: False,
+                        }
+
+                    # Connect the debugging controls
+                    for checkbox in [debug_gpu, debug_model, debug_general, debug_data]:
+                        checkbox.change(
+                            fn=train_update_debug_levels,
+                            inputs=[debug_gpu, debug_model, debug_general, debug_data],
+                            outputs=[gr.Textbox(visible=False)],
+                        )
+
+                    debug_select_all.click(
+                        fn=train_select_all_debug,
+                        inputs=[],
+                        outputs=[debug_gpu, debug_model, debug_general, debug_data],
+                    )
+
+                    debug_clear_all.click(
+                        fn=train_clear_all_debug,
+                        inputs=[],
+                        outputs=[debug_gpu, debug_model, debug_general, debug_data],
+                    )
+                
                 progress_train = gr.Label(label="Progress:")
 
                 with gr.Row():
@@ -4512,6 +4716,7 @@ if __name__ == "__main__":
                         lang,
                         whisper_model,
                         max_sample_length,
+                        min_sample_length,
                         eval_split_number,
                         speaker_name_input,
                         create_bpe_tokenizer,
