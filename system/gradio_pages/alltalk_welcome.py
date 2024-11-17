@@ -1,15 +1,12 @@
-import os
-import json
-import pathlib as Path
 import gradio as gr
 
+from config import AlltalkConfig
+
+
 def modify_config():
-    config_file = os.path.join("confignew.json")
-    with open(config_file, "r") as f:
-        config = json.load(f)
-    config["firstrun_splash"] = False
-    with open(config_file, "w") as f:
-        json.dump(config, f, indent=4)
+    config = AlltalkConfig.get_instance()
+    config.firstrun_splash = False
+    config.save()
     return f"Welcome screen is disabled."
 
 def alltalk_welcome(analytics_enabled=False):

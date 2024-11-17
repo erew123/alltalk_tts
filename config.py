@@ -283,6 +283,10 @@ class AlltalkConfig(AbstractJsonConfig):
         self._load_config()
 
     @staticmethod
+    def default_config_path():
+        return AlltalkConfig.__this_dir / "confignew.json"
+
+    @staticmethod
     def get_instance(force_reload = False):
         if AlltalkConfig.__instance is None:
             force_reload = False

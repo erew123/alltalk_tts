@@ -15,6 +15,7 @@ class TestAlltalkConfig(unittest.TestCase):
     def test_default_config_path(self):
         expected_config_path = Path(__file__).parent.parent.resolve() / "confignew.json"
         self.assertEqual(self.config.get_config_path(), expected_config_path)
+        self.assertEqual(AlltalkConfig.default_config_path(), expected_config_path)
 
     def test_branding(self):
         self.assertEqual(self.config.branding, "AllTalk ")
