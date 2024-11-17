@@ -604,19 +604,17 @@ class FinetuneContent:
         * Start with 4-8 workers
 
     #### Shared Memory Option:
-    The shared memory option affects how your system handles memory overflow:
+    Controls GPU memory allocation during training:
 
-    - **Disable Shared Memory Use:**
-        * Limits GPU to 95% VRAM usage
-        * Prevents system RAM spillover
-        * Recommended for high-VRAM GPUs
-        * Clearer error messages
+    **Disable Shared Memory Use (Enabled/Checked):**
+    * Reserves 5% of GPU VRAM, limiting maximum usage to 95%
+    * Can help prevent some out-of-memory crashes
+    * May be useful on systems experiencing memory issues
 
-    - **Keep Enabled for:**
-        * Windows with low VRAM GPUs
-        * Systems with plenty of RAM
-        * When encountering OOM errors
-        * Better fallback options
+    * **Disable Shared Memory Use (Default/Unchecked):**
+    * Allows PyTorch to use full GPU VRAM
+    * Maximum training performance
+    * May use more VRAM
     """
 
     STEP2_BATCH_SIZE = """
