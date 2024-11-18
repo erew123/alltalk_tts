@@ -2,13 +2,14 @@ import os
 import sys
 import json
 import time
-import shutil
 import argparse
 import librosa
 import logging
 import importlib
 import subprocess
 from pathlib import Path
+from config import AlltalkConfig, AlltalkTTSEnginesConfig
+
 logging.disable(logging.WARNING)
 #####################
 # Webserver Imports #
@@ -45,71 +46,24 @@ warnings.filterwarnings("ignore", message="1Torch was not compiled with flash at
 ####################
 this_dir = Path(__file__).parent.resolve()  # Set this_dir as the current alltalk_tts folder
 
-####################################################
-# Load params and api_defailts from confignew.json #
-####################################################
-def load_config():
-    global branding, output_directory, debug_transcode, debug_tts, debug_tts_variables, engines_available, engine_loaded, debug_rvc, debug_concat, debug_openai
-    # Define the path to the confignew.json file & load in api_defaults & params
-    configfile_path = this_dir / "confignew.json"
-    with open(configfile_path, "r") as configfile:
-        configfile_data = json.load(configfile)
-    api_defaults = {
-        "api_text_filtering": configfile_data["api_def"]["api_text_filtering"],
-        "api_narrator_enabled": configfile_data["api_def"]["api_narrator_enabled"],
-        "api_text_not_inside": configfile_data["api_def"]["api_text_not_inside"],
-        "api_language": configfile_data["api_def"]["api_language"],
-        "api_output_file_name": configfile_data["api_def"]["api_output_file_name"],
-        "api_output_file_timestamp": configfile_data["api_def"]["api_output_file_timestamp"],
-        "api_autoplay": configfile_data["api_def"]["api_autoplay"],
-        "api_autoplay_volume": configfile_data["api_def"]["api_autoplay_volume"],
-        "api_port_number": configfile_data["api_def"]["api_port_number"],
-        "api_allowed_filter": configfile_data["api_def"]["api_allowed_filter"],
-        "api_length_stripping": configfile_data["api_def"]["api_length_stripping"],
-        "api_max_characters": configfile_data["api_def"]["api_max_characters"],
-        "api_use_legacy_api": configfile_data["api_def"]["api_use_legacy_api"],
-        "api_legacy_ip_address": configfile_data["api_def"]["api_legacy_ip_address"],
-    }
-    rvc_settings = {
-        "rvc_enabled": configfile_data["rvc_settings"]["rvc_enabled"],
-        "rvc_char_model_file": configfile_data["rvc_settings"]["rvc_char_model_file"],
-        "rvc_narr_model_file": configfile_data["rvc_settings"]["rvc_narr_model_file"],
-        "split_audio": configfile_data["rvc_settings"]["split_audio"],
-        "autotune": configfile_data["rvc_settings"]["autotune"],
-        "pitch": configfile_data["rvc_settings"]["pitch"],
-        "filter_radius": configfile_data["rvc_settings"]["filter_radius"],
-        "index_rate": configfile_data["rvc_settings"]["index_rate"],
-        "rms_mix_rate": configfile_data["rvc_settings"]["rms_mix_rate"],
-        "protect": configfile_data["rvc_settings"]["protect"],
-        "hop_length": configfile_data["rvc_settings"]["hop_length"],
-        "f0method": configfile_data["rvc_settings"]["f0method"],
-        "embedder_model": configfile_data["rvc_settings"]["embedder_model"],
-        "training_data_size": configfile_data["rvc_settings"]["training_data_size"],
-    }
-    branding = configfile_data.get("branding", "")
-    debug_transcode = configfile_data.get("debugging").get("debug_transcode")
-    debug_tts = configfile_data.get("debugging").get("debug_tts")
-    debug_tts_variables = configfile_data.get("debugging").get("debug_tts_variables")
-    debug_rvc = configfile_data.get("debugging").get("debug_rvc")
-    debug_concat = configfile_data.get("debugging").get("debug_concat")
-    debug_openai = configfile_data.get("debugging").get("debug_openai")
-    output_directory = this_dir / configfile_data.get("output_folder", "")
-    output_directory.mkdir(parents=True, exist_ok=True)
-    tts_engines_file = os.path.join(this_dir, "system", "tts_engines", "tts_engines.json")
-    with open(tts_engines_file, "r") as f:
-        tts_engines_data = json.load(f)
-    engines_available = [engine["name"] for engine in tts_engines_data["engines_available"]] # List of the available TTS engines from tts_engines.json
-    engine_loaded = tts_engines_data["engine_loaded"]                                       # The currently set TTS engine from tts_engines.json
-    selected_model = tts_engines_data["selected_model"]
-    # Conditionally import infer_pipeline if rvc_enabled is true
-    if rvc_settings["rvc_enabled"]:
+infer_pipeline = None
+config: AlltalkConfig | None = None
+tts_engines_config: AlltalkTTSEnginesConfig | None = None
+
+def load_config(force_reload = False):
+    global config, tts_engines_config
+    config = AlltalkConfig.get_instance(force_reload)
+    tts_engines_config = AlltalkTTSEnginesConfig.get_instance(force_reload)
+    after_config_load()
+
+def after_config_load():
+    global infer_pipeline
+    if config.rvc_settings.rvc_enabled:
         from system.tts_engines.rvc.infer.infer import infer_pipeline
     else:
         infer_pipeline = None
-    return configfile_data, api_defaults, rvc_settings, infer_pipeline
 
-# Call to load in the params and api_defaults
-params, api_defaults, rvc_settings, infer_pipeline = load_config()
+load_config()
 
 ####################
 # Check for FFMPEG #
@@ -133,25 +87,25 @@ def check_ffmpeg(this_dir):
 ffmpeg_installed = check_ffmpeg(this_dir)
 
 if not ffmpeg_installed:
-    print(f"[{branding}ENG] \033[92mTranscoding       :\033[94m ffmpeg not found\033[0m")
-    print(f"[{branding}ENG] FFmpeg is not installed. Transcoding will be disabled.")
-    print(f"[{branding}ENG] Please install FFmpeg on your system.")
+    print(f"[{config.branding}ENG] \033[92mTranscoding       :\033[94m ffmpeg not found\033[0m")
+    print(f"[{config.branding}ENG] FFmpeg is not installed. Transcoding will be disabled.")
+    print(f"[{config.branding}ENG] Please install FFmpeg on your system.")
     
     if sys.platform == "win32":
-        print(f"[{branding}ENG] \033[92mTranscoding       :\033[94m ffmpeg not found\033[0m")
-        print(f"[{branding}ENG] Installation instructions for Windows:")
-        print(f"[{branding}ENG] Copy the 'ffmpeg.exe' file to '{os.path.join(this_dir, 'system', 'win_ffmpeg')}'")
+        print(f"[{config.branding}ENG] \033[92mTranscoding       :\033[94m ffmpeg not found\033[0m")
+        print(f"[{config.branding}ENG] Installation instructions for Windows:")
+        print(f"[{config.branding}ENG] Copy the 'ffmpeg.exe' file to '{os.path.join(this_dir, 'system', 'win_ffmpeg')}'")
     else:
-        print(f"[{branding}ENG] \033[92mTranscoding       :\033[94m ffmpeg not found\033[0m")
-        print(f"[{branding}ENG] Installation instructions:")
-        print(f"[{branding}ENG] Linux (Debian-based systems): Run 'sudo apt-get install ffmpeg' in the terminal.")
-        print(f"[{branding}ENG] macOS: Run 'brew install ffmpeg' in the terminal (requires Homebrew).")
+        print(f"[{config.branding}ENG] \033[92mTranscoding       :\033[94m ffmpeg not found\033[0m")
+        print(f"[{config.branding}ENG] Installation instructions:")
+        print(f"[{config.branding}ENG] Linux (Debian-based systems): Run 'sudo apt-get install ffmpeg' in the terminal.")
+        print(f"[{config.branding}ENG] macOS: Run 'brew install ffmpeg' in the terminal (requires Homebrew).")
     # You can choose to exit the script or continue without FFmpeg
     # exit(1)
 
 if ffmpeg_installed:
     from ffmpeg.asyncio import FFmpeg
-    print(f"[{branding}ENG] \033[92mTranscoding       :\033[93m ffmpeg found\033[0m")
+    print(f"[{config.branding}ENG] \033[92mTranscoding       :\033[93m ffmpeg found\033[0m")
     
 ################################
 # Check for portaudio on Linux #
@@ -160,24 +114,24 @@ try:
     import sounddevice as sd
     sounddevice_installed=True
 except OSError:
-    print(f"[{branding}Startup] \033[91mInfo\033[0m PortAudio library not found. If you wish to play TTS in standalone mode through the API suite")
-    print(f"[{branding}Startup] \033[91mInfo\033[0m please install PortAudio. This will not affect any other features or use of Alltalk.")
-    print(f"[{branding}Startup] \033[91mInfo\033[0m If you don't know what the API suite is, then this message is nothing to worry about.")
+    print(f"[{config.branding}Startup] \033[91mInfo\033[0m PortAudio library not found. If you wish to play TTS in standalone mode through the API suite")
+    print(f"[{config.branding}Startup] \033[91mInfo\033[0m please install PortAudio. This will not affect any other features or use of Alltalk.")
+    print(f"[{config.branding}Startup] \033[91mInfo\033[0m If you don't know what the API suite is, then this message is nothing to worry about.")
     sounddevice_installed=False
     if sys.platform.startswith('linux'):
-        print(f"[{branding}Startup] \033[91mInfo\033[0m On Linux, you can use the following command to install PortAudio:")
-        print(f"[{branding}Startup] \033[91mInfo\033[0m sudo apt-get install portaudio19-dev")
+        print(f"[{config.branding}Startup] \033[91mInfo\033[0m On Linux, you can use the following command to install PortAudio:")
+        print(f"[{config.branding}Startup] \033[91mInfo\033[0m sudo apt-get install portaudio19-dev")
 
 #######################################################################
 # Attempt to import the ModelLoader class for the selected TTS engine #
 #######################################################################
-if engine_loaded in engines_available:
-    loader_module = importlib.import_module(f"system.tts_engines.{engine_loaded}.model_engine")
+if tts_engines_config.is_valid_engine(tts_engines_config.engine_loaded):
+    loader_module = importlib.import_module(f"system.tts_engines.{tts_engines_config.engine_loaded}.model_engine")
     tts_class = getattr(loader_module, "tts_class")
     # Setup model_engine as the way to call the functions within the Class.
     model_engine = tts_class()
 else:
-    raise ValueError(f"Invalid TTS engine: {engine_loaded}")
+    raise ValueError(f"Invalid TTS engine: {tts_engines_config.engine_loaded}")
 
 ##########################################
 # Run setup function in the model_engine #
@@ -235,13 +189,13 @@ import asyncio
 uvicorn_server = None
 def restart_self():
     """Restart the current script."""
-    #print(f"[{branding}ENG] Restarting subprocess...")
+    #print(f"[{config.branding}ENG] Restarting subprocess...")
     os.execv(sys.executable, ['python'] + sys.argv)
 
 async def handle_restart():
     global uvicorn_server
     if uvicorn_server:
-        print(f"[{branding}ENG] Stopping uvicorn server...")
+        print(f"[{config.branding}ENG] Stopping uvicorn server...")
         uvicorn_server.should_exit = True
         uvicorn_server.force_exit = True
         # Check if the server has stopped
@@ -252,74 +206,19 @@ async def handle_restart():
 @app.post("/api/enginereload")
 async def apifunction_reload(request: Request):
     requested_engine = request.query_params.get("engine")
-    tts_engines_file = this_dir / "system" / "tts_engines" / "tts_engines.json"
-    tts_engines_file_backup_path = tts_engines_file.with_suffix(".backup")  # Backup file path
-
-    if requested_engine not in engines_available:
+    if not tts_engines_config.is_valid_engine(requested_engine):
         return {"status": "error", "message": "Invalid TTS engine specified"}
     
-    print(f"[{branding}ENG]")
-    print(f"[{branding}ENG] \033[94mChanging model loaded. Please wait.\033[00m")
-    print(f"[{branding}ENG]")
+    print(f"[{config.branding}ENG]")
+    print(f"[{config.branding}ENG] \033[94mChanging model loaded. Please wait.\033[00m")
+    print(f"[{config.branding}ENG]")
 
-    # Function to safely load JSON with error handling and backup restoration
-    def safe_load_json(file_path, backup_path=None):
-        try:
-            # Attempt to open and load the JSON file
-            with open(file_path, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            # Handle missing file case, try restoring from backup or creating default
-            print(f"File not found: {file_path}")
-            if backup_path and os.path.exists(backup_path):
-                print(f"Restoring from backup: {backup_path}")
-                with open(backup_path, 'r') as f:
-                    data = json.load(f)
-                # Restore the backup to the original file
-                with open(file_path, 'w') as f:
-                    json.dump(data, f, indent=4)
-                print(f"Restored {file_path} from backup.")
-                return data
-            else:
-                raise Exception(f"File {file_path} is missing, and no backup is available.")
-        except json.JSONDecodeError as e:
-            # Handle JSON corruption case
-            print(f"JSON decoding error in file {file_path}: {e}")
-            if backup_path and os.path.exists(backup_path):
-                print(f"Restoring from backup due to corrupted file: {backup_path}")
-                with open(backup_path, 'r') as f:
-                    data = json.load(f)
-                # Restore the backup to the original file
-                with open(file_path, 'w') as f:
-                    json.dump(data, f, indent=4)
-                print(f"Restored {file_path} from backup.")
-                return data
-            else:
-                raise Exception(f"File {file_path} is corrupted, and no backup is available.")
-
-    # Load the tts_engines.json with resilience
-    tts_engines_data = safe_load_json(tts_engines_file, tts_engines_file_backup_path)
-
-    # Update the tts_engines_data with the requested engine
-    for engine in tts_engines_data["engines_available"]:
-        if engine["name"] == requested_engine:
-            tts_engines_data["engine_loaded"] = requested_engine
-            tts_engines_data["selected_model"] = engine["selected_model"]
-            break
-    
-    # Write the updated JSON data safely and create a backup
+    # Update the tts_engines_data with the requested engine:
     try:
-        # First, create a backup of the current file before writing
-        shutil.copy(tts_engines_file, tts_engines_file_backup_path)
-
-        with open(tts_engines_file, "w") as f:
-            json.dump(tts_engines_data, f, indent=4)
-        # print(f"Updated and saved {tts_engines_file}. Backup created at {tts_engines_file_backup_path}.")
-    except Exception as e:
-        print(f"Error writing to {tts_engines_file}: {e}")
-        # If writing failed, restore the backup
-        shutil.copy(tts_engines_file_backup_path, tts_engines_file)
-        raise Exception(f"Failed to save {tts_engines_file}, restored from backup.")
+        tts_engines_config.change_engine(requested_engine).save()
+    finally:
+        # Reload just to be sure the right config is used (e.g. in case of an exception):
+        tts_engines_config.reload()
 
     # Start the restart process in the background
     asyncio.create_task(handle_restart())
@@ -343,7 +242,7 @@ async def apifunction_stop_generation():
 # Gives web access to the output files as downloads
 @app.get("/audio/{filename}")
 async def apifunction_get_audio(filename: str):
-    audio_path = this_dir / output_directory / filename
+    audio_path = this_dir / config.get_output_directory() / filename
     return FileResponse(audio_path)
 
 ##################################
@@ -351,7 +250,7 @@ async def apifunction_get_audio(filename: str):
 ##################################
 @app.get("/audiocache/{filename}")
 async def apifunction_get_audio(filename: str):
-    audio_path = Path({output_directory}) / filename
+    audio_path = Path({config.get_output_directory()}) / filename
     if not audio_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     response = FileResponse(path=audio_path, media_type='audio/wav', filename=filename)
@@ -376,9 +275,8 @@ async def apifunction_get_voices():
 #################################
 @app.get("/api/rvcvoices")
 async def apifunction_get_voices():
-    global params, api_defaults, rvc_settings, infer_pipeline
-    params, api_defaults, rvc_settings, infer_pipeline = load_config()
-    if not rvc_settings["rvc_enabled"]:
+    load_config()
+    if not config.rvc_settings.rvc_enabled:
         return {"status": "success", "rvcvoices": ["Disabled"]}  
     # Define the directory path
     directory = os.path.join(this_dir, "models", "rvc_voices")
@@ -405,9 +303,7 @@ async def apifunction_get_voices():
 #####################################
 @app.get("/api/reload_config")
 async def apifunction_reload_config():
-    global params, api_defaults, rvc_settings, infer_pipeline
-    model_engine.available_models = model_engine.scan_models_folder()
-    params, api_defaults, rvc_settings, infer_pipeline = load_config()
+    load_config(True)
     return Response("Config file reloaded successfully")
 
 #############################
@@ -426,7 +322,7 @@ async def apifunction_ready():
 @app.get('/api/currentsettings')
 def apifunction_get_current_settings():
     settings = {
-        "engines_available": engines_available,                                 # Lists the currently available TTS engines
+        "engines_available": tts_engines_config.get_engine_names_available(),                                 # Lists the currently available TTS engines
         "current_engine_loaded": model_engine.engine_loaded,                    # Lists the currently loaded TTS engine
         "models_available": [{"name": name} for name in model_engine.available_models.keys()],  # Lists the currently available models that can be loaded on this TTS engine.
         "current_model_loaded": model_engine.current_model_loaded,              # Lists the currently loaded model
@@ -464,21 +360,21 @@ async def apifunction_low_vram(request: Request, new_low_vram_value: bool):
         if new_low_vram_value is None:
             raise ValueError("Missing 'low_vram' parameter")
         if model_engine.lowvram_enabled == new_low_vram_value:
-            return Response(content=json.dumps({"status": "success", "message": f"[{branding}Model] LowVRAM is already {'enabled' if new_low_vram_value else 'disabled'}.",}))
+            return Response(content=json.dumps({"status": "success", "message": f"[{config.branding}Model] LowVRAM is already {'enabled' if new_low_vram_value else 'disabled'}.",}))
         model_engine.lowvram_enabled = new_low_vram_value
         await model_engine.unload_model()
         
         if model_engine.cuda_is_available:
             if model_engine.lowvram_enabled:
                 model_engine.device = "cpu"
-                print(f"[{branding}Engine] \033[94mLowVRAM Enabled.\033[0m Model will move between \033[93mVRAM(cuda) <> System RAM(cpu)\033[0m")
+                print(f"[{config.branding}Engine] \033[94mLowVRAM Enabled.\033[0m Model will move between \033[93mVRAM(cuda) <> System RAM(cpu)\033[0m")
             else:
                 model_engine.device = "cuda"
-                print(f"[{branding}Engine] \033[94mLowVRAM Disabled.\033[0m Model will stay in \033[93mVRAM(cuda)\033[0m")
+                print(f"[{config.branding}Engine] \033[94mLowVRAM Disabled.\033[0m Model will stay in \033[93mVRAM(cuda)\033[0m")
             await model_engine.setup()
         else:
             # Handle the case where CUDA is not available
-            print(f"[{branding}Engine] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode.")
+            print(f"[{config.branding}Engine] \033[91mError:\033[0m Nvidia CUDA is not available on this system. Unable to use LowVRAM mode.")
             model_engine.lowvram_enabled = False
         
         return Response(content=json.dumps({"status": "lowvram-success"}))
@@ -512,7 +408,7 @@ async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form
     try:
         # Handle "Disabled" case
         if pth_name.lower() in ["disabled", "disable"]:
-            print(f"[{branding}TTS] \033[94mVoice2RVC Convert: No voice was specified or the name was Disabled\033[0m")
+            print(f"[{config.branding}TTS] \033[94mVoice2RVC Convert: No voice was specified or the name was Disabled\033[0m")
             return {"status": "error", "message": "No voice was specified or the name was Disabled"}
         input_tts_path = Path(input_tts_path)
         output_rvc_path = Path(output_rvc_path) 
@@ -536,19 +432,19 @@ async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form
 
 # Define the run_rvc function
 def run_voice2rvc(input_tts_path, output_rvc_path, pth_path, pitch, method):
-    print(f"[{branding}GEN] \033[94mVoice2RVC Convert: Started\033[0m")
+    print(f"[{config.branding}GEN] \033[94mVoice2RVC Convert: Started\033[0m")
     generate_start_time = time.time()
     f0up_key = pitch
-    filter_radius = rvc_settings["filter_radius"]
-    index_rate = rvc_settings["index_rate"]
-    rms_mix_rate = rvc_settings["rms_mix_rate"]
-    protect = rvc_settings["protect"]
-    hop_length = rvc_settings["hop_length"]
+    filter_radius = config.rvc_settings.filter_radius
+    index_rate = config.rvc_settings.index_rate
+    rms_mix_rate = config.rvc_settings.rms_mix_rate
+    protect = config.rvc_settings.protect
+    hop_length = config.rvc_settings.hop_length
     f0method = method
-    split_audio = rvc_settings["split_audio"]
-    f0autotune = rvc_settings["autotune"]
-    embedder_model = rvc_settings["embedder_model"]
-    training_data_size = rvc_settings["training_data_size"]
+    split_audio = config.rvc_settings.split_audio
+    f0autotune = config.rvc_settings.autotune
+    embedder_model = config.rvc_settings.embedder_model
+    training_data_size = config.rvc_settings.training_data_size
     # Convert path variables to strings
     input_tts_path = str(input_tts_path)
     pth_path = str(pth_path)
@@ -566,102 +462,102 @@ def run_voice2rvc(input_tts_path, output_rvc_path, pth_path, pitch, method):
         index_path = ""
     # Call the infer_pipeline function
     infer_pipeline(f0up_key, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0method,
-                input_tts_path, output_rvc_path, pth_path, index_path, split_audio, f0autotune, embedder_model, training_data_size, debug_rvc)
+                input_tts_path, output_rvc_path, pth_path, index_path, split_audio, f0autotune, embedder_model, training_data_size, config.debugging.debug_rvc)
     generate_end_time = time.time()
     generate_elapsed_time = generate_end_time - generate_start_time
-    print(f"[{branding}GEN] \033[94mVoice2RVC Convert: \033[91m{generate_elapsed_time:.2f} seconds.\033[0m")
+    print(f"[{config.branding}GEN] \033[94mVoice2RVC Convert: \033[91m{generate_elapsed_time:.2f} seconds.\033[0m")
     return output_rvc_path
 
 ##################################
 # Transcode between file formats #
 ##################################
 async def transcode_audio(input_file, output_format):
-    print(f"[{branding}Debug] *************************************************",) if debug_transcode else None
-    print(f"[{branding}Debug] transcode_audio function called (debug_transcode)",) if debug_transcode else None
-    print(f"[{branding}Debug] *************************************************",) if debug_transcode else None
-    print(f"[{branding}Debug] Input file    : {input_file}") if debug_transcode else None
-    print(f"[{branding}Debug] Output format : {output_format}") if debug_transcode else None
+    print(f"[{config.branding}Debug] *************************************************",) if config.debugging.debug_transcode else None
+    print(f"[{config.branding}Debug] transcode_audio function called (debug_transcode)",) if config.debugging.debug_transcode else None
+    print(f"[{config.branding}Debug] *************************************************",) if config.debugging.debug_transcode else None
+    print(f"[{config.branding}Debug] Input file    : {input_file}") if config.debugging.debug_transcode else None
+    print(f"[{config.branding}Debug] Output format : {output_format}") if config.debugging.debug_transcode else None
     if output_format == "Disabled":
-        print(f"[{branding}Debug] Transcode format is set to Disabled so skipping transcode.") if debug_transcode else None
+        print(f"[{config.branding}Debug] Transcode format is set to Disabled so skipping transcode.") if config.debugging.debug_transcode else None
         return input_file
     if not ffmpeg_installed:
-        print(f"[{branding}TTS] FFmpeg is not installed. Format conversion is not possible.")
+        print(f"[{config.branding}TTS] FFmpeg is not installed. Format conversion is not possible.")
         raise Exception("FFmpeg is not installed. Format conversion is not possible.")
     # Get the file extension of the input file
     input_extension = os.path.splitext(input_file)[1][1:].lower()
-    print(f"[{branding}Debug] Input file extension: {input_extension}") if debug_transcode else None
+    print(f"[{config.branding}Debug] Input file extension: {input_extension}") if config.debugging.debug_transcode else None
     # Check if the input extension matches the requested output format
     if input_extension == output_format.lower():
-        print(f"[{branding}Debug] Input file is already in the requested format: {output_format}") if debug_transcode else None
+        print(f"[{config.branding}Debug] Input file is already in the requested format: {output_format}") if config.debugging.debug_transcode else None
         return input_file
     output_file = os.path.splitext(input_file)[0] + f".{output_format}"
-    print(f"[{branding}Debug] Output file: {output_file}") if debug_transcode else None
+    print(f"[{config.branding}Debug] Output file: {output_file}") if config.debugging.debug_transcode else None
     ffmpeg_path = "ffmpeg"  # Default path for Linux and macOS
     if sys.platform == "win32":
         ffmpeg_path = os.path.join(this_dir, "system", "win_ffmpeg", "ffmpeg.exe")
     ffmpeg = (FFmpeg(ffmpeg_path).option("y").input(input_file).output(output_file))
-    print(f"[{branding}Debug] Transcoding to {output_format}") if debug_transcode else None
+    print(f"[{config.branding}Debug] Transcoding to {output_format}") if config.debugging.debug_transcode else None
     if output_format == "opus":
-        print(f"[{branding}Debug] Configuring Opus options") if debug_transcode else None
+        print(f"[{config.branding}Debug] Configuring Opus options") if config.debugging.debug_transcode else None
         ffmpeg.output(output_file, {"codec:a": "libopus", "b:a": "128k", "vbr": "on", "compression_level": 10, "frame_duration": 60, "application": "voip"})
     elif output_format == "aac":
-        print(f"[{branding}Debug] Configuring AAC options") if debug_transcode else None
+        print(f"[{config.branding}Debug] Configuring AAC options") if config.debugging.debug_transcode else None
         ffmpeg.output(output_file, {"codec:a": "aac", "b:a": "192k"})
     elif output_format == "flac":
-        print(f"[{branding}Debug] Configuring FLAC options") if debug_transcode else None
+        print(f"[{config.branding}Debug] Configuring FLAC options") if config.debugging.debug_transcode else None
         ffmpeg.output(output_file, {"codec:a": "flac", "compression_level": 8})
     elif output_format == "wav":
-        print(f"[{branding}Debug] Configuring WAV options") if debug_transcode else None
+        print(f"[{config.branding}Debug] Configuring WAV options") if config.debugging.debug_transcode else None
         ffmpeg.output(output_file, {"codec:a": "pcm_s16le"})
     elif output_format == "mp3":
-        print(f"[{branding}Debug] Configuring MP3 options") if debug_transcode else None
+        print(f"[{config.branding}Debug] Configuring MP3 options") if config.debugging.debug_transcode else None
         ffmpeg.output(output_file, {"codec:a": "libmp3lame", "b:a": "192k"})
     else:
-        print(f"[{branding}TTS] Unsupported output format: {output_format}")
+        print(f"[{config.branding}TTS] Unsupported output format: {output_format}")
         raise ValueError(f"Unsupported output format: {output_format}")
     try:
-        print(f"[{branding}Debug] Starting transcoding process") if debug_transcode else None
+        print(f"[{config.branding}Debug] Starting transcoding process") if config.debugging.debug_transcode else None
         await ffmpeg.execute()
-        print(f"[{branding}Debug] Transcoding completed successfully") if debug_transcode else None
+        print(f"[{config.branding}Debug] Transcoding completed successfully") if config.debugging.debug_transcode else None
     except Exception as e:
-        print(f"[{branding}TTS] Error occurred during transcoding: {str(e)}")
+        print(f"[{config.branding}TTS] Error occurred during transcoding: {str(e)}")
         raise
-    print(f"[{branding}Debug] Deleting original input file") if debug_transcode else None
+    print(f"[{config.branding}Debug] Deleting original input file") if config.debugging.debug_transcode else None
     os.remove(input_file)
-    print(f"[{branding}Debug] Transcoding process completed") if debug_transcode else None
-    print(f"[{branding}Debug] Transcoded file: {output_file}") if debug_transcode else None
+    print(f"[{config.branding}Debug] Transcoding process completed") if config.debugging.debug_transcode else None
+    print(f"[{config.branding}Debug] Transcoded file: {output_file}") if config.debugging.debug_transcode else None
     return output_file
 
 ##############################
 # Central Transcode function #
 ##############################
 async def transcode_audio_if_necessary(output_file, model_audio_format, output_audio_format):
-    if debug_transcode:
-        print(f"[{branding}Debug] model_engine.audio_format is:", model_audio_format)
-        print(f"[{branding}Debug] audio format is:", output_audio_format)
-        print(f"[{branding}Debug] Entering the transcode condition")
+    if config.debugging.debug_transcode:
+        print(f"[{config.branding}Debug] model_engine.audio_format is:", model_audio_format)
+        print(f"[{config.branding}Debug] audio format is:", output_audio_format)
+        print(f"[{config.branding}Debug] Entering the transcode condition")
     try:
-        if debug_transcode:
-            print(f"[{branding}Debug] Calling transcode_audio function")
+        if config.debugging.debug_transcode:
+            print(f"[{config.branding}Debug] Calling transcode_audio function")
         output_file = await transcode_audio(output_file, output_audio_format)
-        if debug_transcode:
-            print(f"[{branding}Debug] Transcode completed successfully")
+        if config.debugging.debug_transcode:
+            print(f"[{config.branding}Debug] Transcode completed successfully")
     except Exception as e:
-        print(f"[{branding}Debug] Error occurred during transcoding:", str(e))
+        print(f"[{config.branding}Debug] Error occurred during transcoding:", str(e))
         raise
-    if debug_transcode:
-        print(f"[{branding}Debug] Transcode condition completed")
+    if config.debugging.debug_transcode:
+        print(f"[{config.branding}Debug] Transcode condition completed")
     # Update the output file path and URLs based on the transcoded file
-    if debug_tts:
-        print(f"[{branding}Debug] Updating output file paths and URLs")
-    if params["api_def"]["api_use_legacy_api"]:
-        output_file_url = f'http://{api_defaults["api_legacy_ip_address"]}:{api_defaults["api_port_number"]}/audio/{os.path.basename(output_file)}'
-        output_cache_url = f'http://{api_defaults["api_legacy_ip_address"]}:{api_defaults["api_port_number"]}/audiocache/{os.path.basename(output_file)}'
+    if config.debugging.debug_tts:
+        print(f"[{config.branding}Debug] Updating output file paths and URLs")
+    if config.api_def.api_use_legacy_api:
+        output_file_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audio/{os.path.basename(output_file)}'
+        output_cache_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audiocache/{os.path.basename(output_file)}'
     else:
         output_file_url = f'/audio/{os.path.basename(output_file)}'
         output_cache_url = f'/audiocache/{os.path.basename(output_file)}'
-    if debug_tts:
-        print(f"[{branding}Debug] Output file paths and URLs updated")
+    if config.debugging.debug_tts:
+        print(f"[{config.branding}Debug] Output file paths and URLs updated")
     return output_file, output_file_url, output_cache_url
 
 ##############################
@@ -670,11 +566,11 @@ async def transcode_audio_if_necessary(output_file, model_audio_format, output_a
 @app.get("/api/tts-generate-streaming", response_class=StreamingResponse)
 async def apifunction_generate_streaming(text: str, voice: str, language: str, output_file: str):
     if model_engine.streaming_capable == False:
-        print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
-        print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
-        print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
+        print(f"[{config.branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
+        print(f"[{config.branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
+        print(f"[{config.branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
     try:
-        output_file_path = f'{this_dir / output_directory / output_file}.{model_engine.audio_format}'
+        output_file_path = f'{this_dir / config.get_output_directory() / output_file}.{model_engine.audio_format}'
         stream = await generate_audio(text, voice, language, model_engine.temperature_set, model_engine.repetitionpenalty_set, 1.0, 1.0, output_file_path, streaming=True)
         return StreamingResponse(stream, media_type="audio/wav")
     except Exception as e:
@@ -684,11 +580,11 @@ async def apifunction_generate_streaming(text: str, voice: str, language: str, o
 @app.post("/api/tts-generate-streaming", response_class=JSONResponse)
 async def tts_generate_streaming(request: Request, text: str = Form(...), voice: str = Form(...), language: str = Form(...), output_file: str = Form(...)):
     if model_engine.streaming_capable == False:
-        print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
-        print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
-        print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
+        print(f"[{config.branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
+        print(f"[{config.branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
+        print(f"[{config.branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
     try:
-        output_file_path = f'{this_dir / output_directory / output_file}.{model_engine.audio_format}'
+        output_file_path = f'{this_dir / config.get_output_directory() / output_file}.{model_engine.audio_format}'
         await generate_audio(text, voice, language, model_engine.temperature_set, model_engine.repetitionpenalty_set, "1.0", "1.0", output_file_path, streaming=False)
         return JSONResponse(content={"output_file_path": str(output_file)}, status_code=200)
     except Exception as e:
@@ -700,9 +596,9 @@ async def tts_generate_streaming(request: Request, text: str = Form(...), voice:
 ###################################
 async def generate_audio(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False):
     if model_engine.streaming_capable == False and streaming==True:
-        print(f"[{branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
-        print(f"[{branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
-        print(f"[{branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
+        print(f"[{config.branding}GEN] The selected TTS Engine does not support streaming. To use streaming, please select a TTS")
+        print(f"[{config.branding}GEN] Engine that has streaming capability. You can find the streaming support information for")
+        print(f"[{config.branding}GEN] each TTS Engine in the 'Engine Information' section of the Gradio interface.")
     # Get the async generator from the internal function
     response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming)
     # If streaming, then return the generator as-is, otherwise just exhaust it and return
@@ -718,7 +614,7 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
             async for _ in response:
                 pass
         except Exception as e:
-            print(f"{branding}[GEN] Error during audio generation: {str(e)}")
+            print(f"{config.branding}[GEN] Error during audio generation: {str(e)}")
             raise
 
 ###########################
@@ -744,7 +640,7 @@ async def apifunction_preview_voice(
         rvccharacter_voice_gen = rvccharacter_voice_gen or "Disabled"
         rvccharacter_pitch = rvccharacter_pitch if rvccharacter_pitch is not None else 0
         # Generate the audio
-        output_file_path = this_dir / output_directory / f'{output_file_name}.{model_engine.audio_format}'
+        output_file_path = this_dir / config.get_output_directory() / f'{output_file_name}.{model_engine.audio_format}'
         await generate_audio(
             text, 
             voice, 
@@ -756,14 +652,14 @@ async def apifunction_preview_voice(
             output_file_path, 
             streaming=False
             )
-        if rvc_settings["rvc_enabled"]:
+        if config.rvc_settings.rvc_enabled:
             if rvccharacter_voice_gen.lower() in ["disabled", "disable"]:
-                print(f"[{branding}Debug] PREVIEW VOICE - Pass rvccharacter_voice_gen") if debug_tts else None
+                print(f"[{config.branding}Debug] PREVIEW VOICE - Pass rvccharacter_voice_gen") if config.debugging.debug_tts else None
                 pass  # Skip RVC processing for character part
             else:
-                print(f"[{branding}Debug] PREVIEW VOICE - send to rvc") if debug_tts else None
+                print(f"[{config.branding}Debug] PREVIEW VOICE - send to rvc") if config.debugging.debug_tts else None
                 rvccharacter_voice_gen = this_dir / "models" / "rvc_voices" / rvccharacter_voice_gen
-                pth_path = rvccharacter_voice_gen if rvccharacter_voice_gen else rvc_settings["rvc_char_model_file"]
+                pth_path = rvccharacter_voice_gen if rvccharacter_voice_gen else config.rvc_settings.rvc_char_model_file
                 run_rvc(output_file_path, pth_path, rvccharacter_pitch, infer_pipeline)        
         # Generate the URL
         output_file_url = f'/audio/{output_file_name}.{model_engine.audio_format}'
@@ -819,19 +715,19 @@ class OpenAIGenerator:
 async def openai_tts_generate(request: Request):
     try:
         json_data = await request.json()
-        print(f"[{branding}Debug] Received JSON data: {json_data}")  if debug_openai else None
+        print(f"[{config.branding}Debug] Received JSON data: {json_data}")  if config.debugging.debug_openai else None
         validation_error = OpenAIGenerator.validate_input(json_data)
         if validation_error:
-            print(f"Validation error: {validation_error}")  if debug_openai else None
+            print(f"Validation error: {validation_error}")  if config.debugging.debug_openai else None
             return JSONResponse(content={"error": validation_error}, status_code=400)
         model = json_data["model"]  # Currently ignored
         input_text = json_data["input"]
         voice = json_data["voice"]
         response_format = json_data.get("response_format", "wav").lower()
         speed = json_data.get("speed", 1.0)
-        print(f"[{branding}Debug] Input text: {input_text}")  if debug_openai else None
-        print(f"[{branding}Debug] Voice: {voice}")  if debug_openai else None
-        print(f"[{branding}Debug] Speed: {speed}")  if debug_openai else None
+        print(f"[{config.branding}Debug] Input text: {input_text}")  if config.debugging.debug_openai else None
+        print(f"[{config.branding}Debug] Voice: {voice}")  if config.debugging.debug_openai else None
+        print(f"[{config.branding}Debug] Speed: {speed}")  if config.debugging.debug_openai else None
         cleaned_string = html.unescape(standard_filtering(input_text))
         # Map the OpenAI voice to the corresponding internal voice
         voice_mapping = {
@@ -846,94 +742,94 @@ async def openai_tts_generate(request: Request):
         if not mapped_voice:
             print(f"Unsupported voice: {voice}")
             return JSONResponse(content={"error": "Unsupported voice"}, status_code=400)
-        print(f"[{branding}Debug]Mapped voice: {mapped_voice}")  if debug_openai else None
+        print(f"[{config.branding}Debug]Mapped voice: {mapped_voice}")  if config.debugging.debug_openai else None
         # Generate the audio
         # Generate a unique filename
         unique_id = uuid.uuid4()
         timestamp = int(time.time())
-        output_file_path = f'{this_dir / output_directory / f"openai_output_{unique_id}_{timestamp}.{model_engine.audio_format}"}'
+        output_file_path = f'{this_dir / config.get_output_directory() / f"openai_output_{unique_id}_{timestamp}.{model_engine.audio_format}"}'
         await generate_audio(cleaned_string, mapped_voice, "en", model_engine.temperature_set,
                              model_engine.repetitionpenalty_set, speed, model_engine.pitch_set,
                              output_file_path, streaming=False)
-        print(f"[{branding}Debug] Audio generated at: {output_file_path}")  if debug_openai else None
-        if rvc_settings["rvc_enabled"]:
-            if rvc_settings["rvc_char_model_file"].lower() in ["disabled", "disable"]:
-                print(f"[{branding}Debug] Pass rvccharacter_voice_gen") if debug_openai else None
+        print(f"[{config.branding}Debug] Audio generated at: {output_file_path}")  if config.debugging.debug_openai else None
+        if config.rvc_settings.rvc_enabled:
+            if config.rvc_settings.rvc_char_model_file.lower() in ["disabled", "disable"]:
+                print(f"[{config.branding}Debug] Pass rvccharacter_voice_gen") if config.debugging.debug_openai else None
                 pass  # Skip RVC processing for character part
             else:
-                print(f"[{branding}Debug] send to rvc") if debug_openai else None
-                pth_path = this_dir / "models" / "rvc_voices" / rvc_settings["rvc_char_model_file"]
-                pitch = rvc_settings["pitch"]
+                print(f"[{config.branding}Debug] send to rvc") if config.debugging.debug_openai else None
+                pth_path = this_dir / "models" / "rvc_voices" / config.rvc_settings.rvc_char_model_file
+                pitch = config.rvc_settings.pitch
                 run_rvc(output_file_path, pth_path, pitch, infer_pipeline)
         # Transcode the audio to the requested format
         transcoded_file_path = await transcode_for_openai(output_file_path, response_format)
-        print(f"[{branding}Debug] Audio transcoded to: {transcoded_file_path}")  if debug_openai else None
+        print(f"[{config.branding}Debug] Audio transcoded to: {transcoded_file_path}")  if config.debugging.debug_openai else None
         # Return the audio file
         return FileResponse(transcoded_file_path, media_type=f"audio/{response_format}", filename=f"output.{response_format}")
     except Exception as e:
-        print(f"[{branding}Debug] An error occurred: {str(e)}")  if debug_openai else None
+        print(f"[{config.branding}Debug] An error occurred: {str(e)}")  if config.debugging.debug_openai else None
         return JSONResponse(content={"error": "An error occurred"}, status_code=500)
 
 ###########################################################################
 # API Endpoint - OpenAI Speech API compatable endpoint Transcode Function #
 ###########################################################################
 async def transcode_for_openai(input_file, output_format):
-    print(f"[{branding}Debug] ************************************") if debug_openai else None
-    print(f"[{branding}Debug] transcode_for_openai function called") if debug_openai else None
-    print(f"[{branding}Debug] ************************************") if debug_openai else None
-    print(f"[{branding}Debug] Input file    : {input_file}") if debug_openai else None
-    print(f"[{branding}Debug] Output format : {output_format}") if debug_openai else None
+    print(f"[{config.branding}Debug] ************************************") if config.debugging.debug_openai else None
+    print(f"[{config.branding}Debug] transcode_for_openai function called") if config.debugging.debug_openai else None
+    print(f"[{config.branding}Debug] ************************************") if config.debugging.debug_openai else None
+    print(f"[{config.branding}Debug] Input file    : {input_file}") if config.debugging.debug_openai else None
+    print(f"[{config.branding}Debug] Output format : {output_format}") if config.debugging.debug_openai else None
     if not ffmpeg_installed:
-        print(f"[{branding}TTS] FFmpeg is not installed. Format conversion is not possible.")
+        print(f"[{config.branding}TTS] FFmpeg is not installed. Format conversion is not possible.")
         raise Exception("FFmpeg is not installed. Format conversion is not possible.")
     # Get the file extension of the input file
     input_extension = os.path.splitext(input_file)[1][1:].lower()
-    print(f"[{branding}Debug] Input file extension: {input_extension}") if debug_openai else None
+    print(f"[{config.branding}Debug] Input file extension: {input_extension}") if config.debugging.debug_openai else None
     # Check if the input extension matches the requested output format
     if input_extension == output_format.lower():
-        print(f"[{branding}Debug] Input file is already in the requested format: {output_format}") if debug_openai else None
+        print(f"[{config.branding}Debug] Input file is already in the requested format: {output_format}") if config.debugging.debug_openai else None
         return input_file
     output_file = os.path.splitext(input_file)[0] + f".{output_format}"
-    print(f"[{branding}Debug] Output file: {output_file}") if debug_openai else None
+    print(f"[{config.branding}Debug] Output file: {output_file}") if config.debugging.debug_openai else None
     ffmpeg_path = "ffmpeg"  # Default path for Linux and macOS
     if sys.platform == "win32":
         ffmpeg_path = os.path.join(this_dir, "system", "win_ffmpeg", "ffmpeg.exe")
     ffmpeg = (FFmpeg(ffmpeg_path).option("y").input(input_file).output(output_file))
-    print(f"[{branding}Debug] Transcoding to {output_format}") if debug_openai else None
+    print(f"[{config.branding}Debug] Transcoding to {output_format}") if config.debugging.debug_openai else None
     if output_format == "opus":
-        print(f"[{branding}Debug] Configuring Opus options") if debug_openai else None
+        print(f"[{config.branding}Debug] Configuring Opus options") if config.debugging.debug_openai else None
         ffmpeg.output(output_file, {"codec:a": "libopus", "b:a": "128k", "vbr": "on", "compression_level": 10, "frame_duration": 60, "application": "voip"})
     elif output_format == "aac":
-        print(f"[{branding}Debug] Configuring AAC options") if debug_openai else None
+        print(f"[{config.branding}Debug] Configuring AAC options") if config.debugging.debug_openai else None
         ffmpeg.output(output_file, {"codec:a": "aac", "b:a": "192k"})
     elif output_format == "flac":
-        print(f"[{branding}Debug] Configuring FLAC options") if debug_openai else None
+        print(f"[{config.branding}Debug] Configuring FLAC options") if config.debugging.debug_openai else None
         ffmpeg.output(output_file, {"codec:a": "flac", "compression_level": 8})
     elif output_format == "wav":
-        print(f"[{branding}Debug] Configuring WAV options") if debug_openai else None
+        print(f"[{config.branding}Debug] Configuring WAV options") if config.debugging.debug_openai else None
         ffmpeg.output(output_file, {"codec:a": "pcm_s16le"})
     elif output_format == "mp3":
-        print(f"[{branding}Debug] Configuring MP3 options") if debug_openai else None
+        print(f"[{config.branding}Debug] Configuring MP3 options") if config.debugging.debug_openai else None
         ffmpeg.output(output_file, {"codec:a": "libmp3lame", "b:a": "192k"})
     elif output_format in ["ogg", "m4a"]:
         if output_format == "ogg":
-            print(f"[{branding}Debug] Configuring OGG options") if debug_openai else None
+            print(f"[{config.branding}Debug] Configuring OGG options") if config.debugging.debug_openai else None
             ffmpeg.output(output_file, {"codec:a": "libvorbis"})
         elif output_format == "m4a":
-            print(f"[{branding}Debug] Configuring M4A options") if debug_openai else None
+            print(f"[{config.branding}Debug] Configuring M4A options") if config.debugging.debug_openai else None
             ffmpeg.output(output_file, {"codec:a": "aac", "b:a": "192k"})
     else:
-        print(f"[{branding}TTS] Unsupported output format: {output_format}")
+        print(f"[{config.branding}TTS] Unsupported output format: {output_format}")
         raise ValueError(f"Unsupported output format: {output_format}")
     try:
-        print(f"[{branding}Debug] Starting transcoding process") if debug_openai else None
+        print(f"[{config.branding}Debug] Starting transcoding process") if config.debugging.debug_openai else None
         await ffmpeg.execute()
-        print(f"[{branding}Debug] Transcoding completed successfully") if debug_openai else None
+        print(f"[{config.branding}Debug] Transcoding completed successfully") if config.debugging.debug_openai else None
     except Exception as e:
-        print(f"[{branding}TTS] Error occurred during transcoding: {str(e)}")
+        print(f"[{config.branding}TTS] Error occurred during transcoding: {str(e)}")
         raise
-    print(f"[{branding}Debug] Transcoding process completed") if debug_openai else None
-    print(f"[{branding}Debug] Transcoded file: {output_file}") if debug_openai else None
+    print(f"[{config.branding}Debug] Transcoding process completed") if config.debugging.debug_openai else None
+    print(f"[{config.branding}Debug] Transcoded file: {output_file}") if config.debugging.debug_openai else None
     return output_file
 
 ######################################################################################
@@ -973,29 +869,29 @@ async def update_openai_voice_mappings(mappings: VoiceMappings):
 # Play at the console #
 #######################
 def play_audio(file_path, volume):
-    print(f"[{branding}GEN] \033[94m File path is: {file_path}") if debug_tts else None
-    print(f"[{branding}GEN] \033[94m Volume is: {volume}") if debug_tts else None
+    print(f"[{config.branding}GEN] \033[94m File path is: {file_path}") if config.debugging.debug_tts else None
+    print(f"[{config.branding}GEN] \033[94m Volume is: {volume}") if config.debugging.debug_tts else None
     normalized_file_path = os.path.normpath(file_path)
-    print(f"[{branding}GEN] \033[94m Normalized file path is: {normalized_file_path}") if debug_tts else None
+    print(f"[{config.branding}GEN] \033[94m Normalized file path is: {normalized_file_path}") if config.debugging.debug_tts else None
     directory = os.path.dirname(normalized_file_path)
     if os.path.isdir(directory):
-        print(f"[{branding}GEN] \033[94m Directory contents: {os.listdir(directory)}") if debug_tts else None
+        print(f"[{config.branding}GEN] \033[94m Directory contents: {os.listdir(directory)}") if config.debugging.debug_tts else None
     else:
-        print(f"[{branding}GEN] \033[94mError: Directory does not exist: {directory}") if debug_tts else None
+        print(f"[{config.branding}GEN] \033[94mError: Directory does not exist: {directory}") if config.debugging.debug_tts else None
     if not os.path.isfile(normalized_file_path):
-        print(f"[{branding}GEN] \033[94mError: File does not exist: {normalized_file_path}\033[0m") if debug_tts else None
+        print(f"[{config.branding}GEN] \033[94mError: File does not exist: {normalized_file_path}\033[0m") if config.debugging.debug_tts else None
         return
     # Check for AAC format
     if normalized_file_path.lower().endswith('.aac'):
-        print(f"[{branding}GEN] \033[94mPlay Audio  : \033[0mAAC format files cannot be played at the console. Please choose another format")
+        print(f"[{config.branding}GEN] \033[94mPlay Audio  : \033[0mAAC format files cannot be played at the console. Please choose another format")
         return
     try:
-        print(f"[{branding}GEN] \033[94mPlay Audio  : \033[0mPlaying audio at console")
+        print(f"[{config.branding}GEN] \033[94mPlay Audio  : \033[0mPlaying audio at console")
         data, fs = sf.read(normalized_file_path)
         sd.play(volume * data, fs)
         sd.wait()
     except Exception as e:
-        print(f"[{branding}GEN] \033[94mError playing audio file: {e}\033[0m")
+        print(f"[{config.branding}GEN] \033[94mError playing audio file: {e}\033[0m")
 
 class Request(BaseModel):
     # Define the structure of the 'Request' class if needed
@@ -1073,17 +969,17 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
     try:
         for audio_file in audio_files:
             normalized_audio_file = os.path.normpath(audio_file)
-            print(f"[{branding}Debug] Processing file: {normalized_audio_file}") if debug_concat else None
+            print(f"[{config.branding}Debug] Processing file: {normalized_audio_file}") if config.debugging.debug_concat else None
             # Check if the file exists
             if not os.path.isfile(normalized_audio_file):
-                print(f"[{branding}Debug] Error: File does not exist: {normalized_audio_file}") if debug_concat else None
+                print(f"[{config.branding}Debug] Error: File does not exist: {normalized_audio_file}") if config.debugging.debug_concat else None
                 return None, None
             # Read the audio file
             audio_data, current_sample_rate = sf.read(normalized_audio_file)
-            print(f"[{branding}Debug] Read file: {normalized_audio_file}, Sample rate: {current_sample_rate}, Data shape: {audio_data.shape}") if debug_concat else None
+            print(f"[{config.branding}Debug] Read file: {normalized_audio_file}, Sample rate: {current_sample_rate}, Data shape: {audio_data.shape}") if config.debugging.debug_concat else None
             # Resample if necessary
             if current_sample_rate != target_sample_rate:
-                print(f"[{branding}Debug] Resampling file from {current_sample_rate} to {target_sample_rate} Hz") if debug_concat else None
+                print(f"[{config.branding}Debug] Resampling file from {current_sample_rate} to {target_sample_rate} Hz") if config.debugging.debug_concat else None
                 audio_data = librosa.resample(audio_data, orig_sr=current_sample_rate, target_sr=target_sample_rate)
             # Concatenate audio data
             if audio.size == 0:
@@ -1095,9 +991,9 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
             output_file_path = os.path.join(this_dir / "outputs" / f'{output_file_name}_{timestamp}_combined.wav')
             sf.write(output_file_path, audio, target_sample_rate)
             # Legacy API or New API return
-            if params["api_def"]["api_use_legacy_api"]:
-                output_file_url = f"http://{api_defaults['api_legacy_ip_address']}:{params['api_def']['api_port_number']}/audio/{output_file_name}_{timestamp}_combined.wav"
-                output_cache_url = f"http://{api_defaults['api_legacy_ip_address']}:{params['api_def']['api_port_number']}/audiocache/{output_file_name}_{timestamp}_combined.wav"
+            if config.api_def.api_use_legacy_api:
+                output_file_url = f"http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audio/{output_file_name}_{timestamp}_combined.wav"
+                output_cache_url = f"http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audiocache/{output_file_name}_{timestamp}_combined.wav"
             else:
                 output_file_url = f'/audio/{output_file_name}_{timestamp}_combined.wav'
                 output_cache_url = f'/audiocache/{output_file_name}_{timestamp}_combined.wav'
@@ -1105,15 +1001,15 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
             output_file_path = os.path.join(this_dir / "outputs" / f'{output_file_name}_combined.wav')
             sf.write(output_file_path, audio, target_sample_rate)
             # Legacy API or New API return
-            if params["api_def"]["api_use_legacy_api"]:
-                output_file_url = f"http://{api_defaults['api_legacy_ip_address']}:{api_defaults['api_port_number']}/audio/{output_file_name}_combined.wav"
-                output_cache_url = f"http://{api_defaults['api_legacy_ip_address']}:{api_defaults['api_port_number']}/audiocache/{output_file_name}_combined.wav"
+            if config.api_def.api_use_legacy_api:
+                output_file_url = f"http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audio/{output_file_name}_combined.wav"
+                output_cache_url = f"http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audiocache/{output_file_name}_combined.wav"
             else:
                 output_file_url = f'/audio/{output_file_name}_combined.wav'
                 output_cache_url = f'/audiocache/{output_file_name}_combined.wav'
-        print(f"[{branding}Debug] Output file changed to:", output_file_path) if debug_concat else None
-        print(f"[{branding}Debug] Output file changed to:", output_file_url) if debug_concat else None
-        print(f"[{branding}Debug] Output file changed to:", output_cache_url) if debug_concat else None
+        print(f"[{config.branding}Debug] Output file changed to:", output_file_path) if config.debugging.debug_concat else None
+        print(f"[{config.branding}Debug] Output file changed to:", output_file_url) if config.debugging.debug_concat else None
+        print(f"[{config.branding}Debug] Output file changed to:", output_cache_url) if config.debugging.debug_concat else None
     except Exception as e:
         print(f"Error occurred: {e}")
     return output_file_path, output_file_url, output_cache_url
@@ -1124,16 +1020,16 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
 def run_rvc(input_tts_path, pth_path, pitch, infer_pipeline):
     generate_start_time = time.time()
     f0up_key = pitch
-    filter_radius = rvc_settings["filter_radius"]
-    index_rate = rvc_settings["index_rate"]
-    rms_mix_rate = rvc_settings["rms_mix_rate"]
-    protect = rvc_settings["protect"]
-    hop_length = rvc_settings["hop_length"]
-    f0method = rvc_settings["f0method"]
-    split_audio = rvc_settings["split_audio"]
-    f0autotune = rvc_settings["autotune"]
-    embedder_model = rvc_settings["embedder_model"]
-    training_data_size = rvc_settings["training_data_size"]
+    filter_radius = config.rvc_settings.filter_radius
+    index_rate = config.rvc_settings.index_rate
+    rms_mix_rate = config.rvc_settings.rms_mix_rate
+    protect = config.rvc_settings.protect
+    hop_length = config.rvc_settings.hop_length
+    f0method = config.rvc_settings.f0method
+    split_audio = config.rvc_settings.split_audio
+    f0autotune = config.rvc_settings.autotune
+    embedder_model = config.rvc_settings.embedder_model
+    training_data_size = config.rvc_settings.training_data_size
     # Convert path variables to strings
     input_tts_path = str(input_tts_path)
     pth_path = str(pth_path)
@@ -1154,8 +1050,8 @@ def run_rvc(input_tts_path, pth_path, pitch, infer_pipeline):
         index_filename_print = index_filename
         index_size_print = training_data_size
     elif len(index_files) > 1:
-        print(f"[{branding}GEN] \033[94mRVC Convert :\033[0m Multiple RVC index files found in the models folder where \033[93m{pth_filename}\033[0m is")
-        print(f"[{branding}GEN] \033[94mRVC Convert :\033[0m located. Unable to determine which index to use. Continuing without an index file.")
+        print(f"[{config.branding}GEN] \033[94mRVC Convert :\033[0m Multiple RVC index files found in the models folder where \033[93m{pth_filename}\033[0m is")
+        print(f"[{config.branding}GEN] \033[94mRVC Convert :\033[0m located. Unable to determine which index to use. Continuing without an index file.")
         index_path = ""
         index_filename = None
         index_filename_print = "None used"
@@ -1167,36 +1063,36 @@ def run_rvc(input_tts_path, pth_path, pitch, infer_pipeline):
         index_size_print = "N/A"
     # Set the output path to be the same as the input path
     output_rvc_path = input_tts_path
-    if debug_rvc:
+    if config.debugging.debug_rvc:
         debug_lines = [
-            f"[{branding}Debug] ************************************",
-            f"[{branding}Debug] run_rvc function called (debug_rvc)",
-            f"[{branding}Debug] ***********************************",
-            f"[{branding}Debug] f0up_key        : {f0up_key}",
-            f"[{branding}Debug] filter_radius   : {filter_radius}",
-            f"[{branding}Debug] index_rate      : {index_rate}",
-            f"[{branding}Debug] rms_mix_rate    : {rms_mix_rate}",
-            f"[{branding}Debug] protect         : {protect}",
-            f"[{branding}Debug] hop_length      : {hop_length}",
-            f"[{branding}Debug] f0method        : {f0method}",
-            f"[{branding}Debug] input_tts_path  : {input_tts_path}",
-            f"[{branding}Debug] output_rvc_path : {output_rvc_path}",
-            f"[{branding}Debug] pth_path        : {pth_path}",
-            f"[{branding}Debug] index_path      : {index_path}",
-            f"[{branding}Debug] split_audio     : {split_audio}",
-            f"[{branding}Debug] f0autotune      : {f0autotune}",
-            f"[{branding}Debug] embedder_model  : {embedder_model}",
-            f"[{branding}Debug] training_data_size: {training_data_size}"
+            f"[{config.branding}Debug] ************************************",
+            f"[{config.branding}Debug] run_rvc function called (debug_rvc)",
+            f"[{config.branding}Debug] ***********************************",
+            f"[{config.branding}Debug] f0up_key        : {f0up_key}",
+            f"[{config.branding}Debug] filter_radius   : {filter_radius}",
+            f"[{config.branding}Debug] index_rate      : {index_rate}",
+            f"[{config.branding}Debug] rms_mix_rate    : {rms_mix_rate}",
+            f"[{config.branding}Debug] protect         : {protect}",
+            f"[{config.branding}Debug] hop_length      : {hop_length}",
+            f"[{config.branding}Debug] f0method        : {f0method}",
+            f"[{config.branding}Debug] input_tts_path  : {input_tts_path}",
+            f"[{config.branding}Debug] output_rvc_path : {output_rvc_path}",
+            f"[{config.branding}Debug] pth_path        : {pth_path}",
+            f"[{config.branding}Debug] index_path      : {index_path}",
+            f"[{config.branding}Debug] split_audio     : {split_audio}",
+            f"[{config.branding}Debug] f0autotune      : {f0autotune}",
+            f"[{config.branding}Debug] embedder_model  : {embedder_model}",
+            f"[{config.branding}Debug] training_data_size: {training_data_size}"
         ]
         debug_info = "\n".join(debug_lines)
         print(debug_info)   
     # Call the infer_pipeline function
     infer_pipeline(f0up_key, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0method,
-                   input_tts_path, output_rvc_path, pth_path, index_path, split_audio, f0autotune, embedder_model, training_data_size, debug_rvc)
+                   input_tts_path, output_rvc_path, pth_path, index_path, split_audio, f0autotune, embedder_model, training_data_size, config.debugging.debug_rvc)
     generate_end_time = time.time()
     generate_elapsed_time = generate_end_time - generate_start_time
-    print(f"[{branding}GEN] \033[94mRVC Convert : \033[94mModel: \033[93m{pth_filename} \033[94mIndex: \033[93m{index_filename_print}\033[0m")
-    print(f"[{branding}GEN] \033[94mRVC Convert : \033[93m{generate_elapsed_time:.2f} seconds. \033[94mMethod: \033[93m{f0method} \033[94mIndex size used \033[93m{index_size_print}\033[0m")
+    print(f"[{config.branding}GEN] \033[94mRVC Convert : \033[94mModel: \033[93m{pth_filename} \033[94mIndex: \033[93m{index_filename_print}\033[0m")
+    print(f"[{config.branding}GEN] \033[94mRVC Convert : \033[93m{generate_elapsed_time:.2f} seconds. \033[94mMethod: \033[93m{f0method} \033[94mIndex size used \033[93m{index_size_print}\033[0m")
     return
 
 ####################################################################
@@ -1214,7 +1110,7 @@ def process_rvc_narrator(part_type, voice_gen, pitch, default_model_file, output
 # /api/tts-generate Generation API Endpoint JSON validation #
 #############################################################
 class JSONInput(BaseModel):
-    text_input: str = Field(..., max_length=int(api_defaults["api_max_characters"]), description=f"text_input needs to be {api_defaults['api_max_characters']} characters or less.")
+    text_input: str = Field(..., max_length=int(config.api_def.api_max_characters), description=f"text_input needs to be {config.api_def.api_max_characters} characters or less.")
     text_filtering: str = Field(..., pattern="^(none|standard|html)$", description="text_filtering needs to be 'none', 'standard' or 'html'.")
     #character_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvccharacter_voice_gen: str = Field(..., description="rvccharacter_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
@@ -1275,7 +1171,7 @@ def validate_json_input(json_input_data):
             description = JSONInput.__fields__[field].description
             error_messages.append(f"{field}: {description}")
         error_message = "\n".join(error_messages)
-        print(f"[{branding}API] \033[91mError with API request:\033[0m", error_message)
+        print(f"[{config.branding}API] \033[91mError with API request:\033[0m", error_message)
         return error_message
     return None
 
@@ -1283,21 +1179,21 @@ def validate_json_input(json_input_data):
 # /api/tts-generate Generation API Endpoint pull fresh values #
 ###############################################################
 def get_api_text_filtering():
-    return api_defaults["api_text_filtering"]
+    return config.api_def.api_text_filtering
 def get_api_narrator_enabled():
-    return api_defaults["api_narrator_enabled"]
+    return config.api_def.api_narrator_enabled
 def get_api_text_not_inside():
-    return api_defaults["api_text_not_inside"]
+    return config.api_def.api_text_not_inside
 def get_api_language():
-    return api_defaults["api_language"]
+    return config.api_def.api_language
 def get_api_output_file_name():
-    return api_defaults["api_output_file_name"]
+    return config.api_def.api_output_file_name
 def get_api_output_file_timestamp():
-    return api_defaults["api_output_file_timestamp"]
+    return config.api_def.api_output_file_timestamp
 def get_api_autoplay():
-    return api_defaults["api_autoplay"]
+    return config.api_def.api_autoplay
 def get_api_autoplay_volume():
-    return api_defaults["api_autoplay_volume"]
+    return config.api_def.api_autoplay_volume
 def get_params_speed():
     return model_engine.generationspeed_set
 def get_params_temperature():
@@ -1310,15 +1206,15 @@ def get_params_pitch():
 def get_character_voice_gen():
     return model_engine.def_character_voice
 def get_rvccharacter_voice_gen():
-    return rvc_settings["rvc_char_model_file"]
+    return config.rvc_settings.rvc_char_model_file
 def get_rvccharacter_pitch():
-    return rvc_settings["pitch"]
+    return config.rvc_settings.pitch
 def get_narrator_voice_gen():
     return model_engine.def_narrator_voice
 def get_rvcnarrator_voice_gen():
-    return rvc_settings["rvc_narr_model_file"]
+    return config.rvc_settings.rvc_narr_model_file
 def get_rvcnarrator_pitch():
-    return rvc_settings["pitch"]
+    return config.rvc_settings.pitch
 
 #############################################
 # /api/tts-generate Generation API Endpoint #
@@ -1364,37 +1260,37 @@ async def apifunction_generate_tts_standard(
     _repetition_penalty: float = Depends(get_params_repetition),
     _pitch: float = Depends(get_params_pitch),
 ):
-    if debug_tts or debug_tts_variables:
+    if config.debugging.debug_tts or config.debugging.debug_tts_variables:
         debug_lines = [
-            f"[{branding}Debug] *******************************************************",
-            f"[{branding}Debug] /api/tts_generate function called (debug_tts_variables)",
-            f"[{branding}Debug]         **** PRE validation checks ****",            
-            f"[{branding}Debug] *******************************************************",
-            f"[{branding}Debug] Defaults will be pulled from Settings if not specified in API Request!",
-            f"[{branding}Debug] max_characters         : {api_defaults['api_max_characters']}",
-            f"[{branding}Debug] length_stripping       : {api_defaults['api_length_stripping']}",
-            f"[{branding}Debug] legacy_api             : {api_defaults['api_use_legacy_api']}",
-            f"[{branding}Debug] legacy_api IPadd       : {api_defaults['api_legacy_ip_address']}",
-            f"[{branding}Debug] allowed_filter         : {api_defaults['api_allowed_filter']}",
-            f"[{branding}Debug] text_filtering         : {text_filtering}",
-            f"[{branding}Debug] character_voice_gen    : {character_voice_gen}",
-            f"[{branding}Debug] rvccharacter_voice_gen : {rvccharacter_voice_gen}",
-            f"[{branding}Debug] rvccharacter_pitch     : {rvccharacter_pitch}",
-            f"[{branding}Debug] narrator_enabled       : {narrator_enabled}",
-            f"[{branding}Debug] narrator_voice_gen     : {narrator_voice_gen}",
-            f"[{branding}Debug] rvcnarrator_voice_gen  : {rvcnarrator_voice_gen}",
-            f"[{branding}Debug] rvcnarrator_pitch      : {rvcnarrator_pitch}",
-            f"[{branding}Debug] text_not_inside        : {text_not_inside}",
-            f"[{branding}Debug] language               : {language}",
-            f"[{branding}Debug] output_file_name       : {output_file_name}",
-            f"[{branding}Debug] output_file_timestamp  : {output_file_timestamp}",
-            f"[{branding}Debug] autoplay               : {autoplay}",
-            f"[{branding}Debug] autoplay_volume        : {autoplay_volume}",
-            f"[{branding}Debug] streaming              : {streaming}",
-            f"[{branding}Debug] speed                  : {speed}",
-            f"[{branding}Debug] temperature            : {temperature}",
-            f"[{branding}Debug] repetition_penalty     : {repetition_penalty}",
-            f"[{branding}Debug] pitch : {pitch}"
+            f"[{config.branding}Debug] *******************************************************",
+            f"[{config.branding}Debug] /api/tts_generate function called (debug_tts_variables)",
+            f"[{config.branding}Debug]         **** PRE validation checks ****",            
+            f"[{config.branding}Debug] *******************************************************",
+            f"[{config.branding}Debug] Defaults will be pulled from Settings if not specified in API Request!",
+            f"[{config.branding}Debug] max_characters         : {config.api_def.api_max_characters}",
+            f"[{config.branding}Debug] length_stripping       : {config.api_def.api_length_stripping}",
+            f"[{config.branding}Debug] legacy_api             : {config.api_def.api_use_legacy_api}",
+            f"[{config.branding}Debug] legacy_api IPadd       : {config.api_def.api_legacy_ip_address}",
+            f"[{config.branding}Debug] allowed_filter         : {config.api_def.api_allowed_filter}",
+            f"[{config.branding}Debug] text_filtering         : {text_filtering}",
+            f"[{config.branding}Debug] character_voice_gen    : {character_voice_gen}",
+            f"[{config.branding}Debug] rvccharacter_voice_gen : {rvccharacter_voice_gen}",
+            f"[{config.branding}Debug] rvccharacter_pitch     : {rvccharacter_pitch}",
+            f"[{config.branding}Debug] narrator_enabled       : {narrator_enabled}",
+            f"[{config.branding}Debug] narrator_voice_gen     : {narrator_voice_gen}",
+            f"[{config.branding}Debug] rvcnarrator_voice_gen  : {rvcnarrator_voice_gen}",
+            f"[{config.branding}Debug] rvcnarrator_pitch      : {rvcnarrator_pitch}",
+            f"[{config.branding}Debug] text_not_inside        : {text_not_inside}",
+            f"[{config.branding}Debug] language               : {language}",
+            f"[{config.branding}Debug] output_file_name       : {output_file_name}",
+            f"[{config.branding}Debug] output_file_timestamp  : {output_file_timestamp}",
+            f"[{config.branding}Debug] autoplay               : {autoplay}",
+            f"[{config.branding}Debug] autoplay_volume        : {autoplay_volume}",
+            f"[{config.branding}Debug] streaming              : {streaming}",
+            f"[{config.branding}Debug] speed                  : {speed}",
+            f"[{config.branding}Debug] temperature            : {temperature}",
+            f"[{config.branding}Debug] repetition_penalty     : {repetition_penalty}",
+            f"[{config.branding}Debug] pitch : {pitch}"
         ]
         debug_info = "\n".join(debug_lines)
         print(debug_info)  
@@ -1445,109 +1341,109 @@ async def apifunction_generate_tts_standard(
         else:
             return JSONResponse(content={"error": JSONresult}, status_code=400)
         
-        if debug_tts or debug_tts_variables:
+        if config.debugging.debug_tts or config.debugging.debug_tts_variables:
             debug_lines = [
-                f"[{branding}Debug] *******************************************************",
-                f"[{branding}Debug] /api/tts_generate function called (debug_tts_variables)",
-                f"[{branding}Debug]        **** POST validation checks ****",
-                f"[{branding}Debug] *******************************************************",
-                f"[{branding}Debug] Defaults will be pulled from Settings if not specified in API Request!",
-                f"[{branding}Debug] max_characters         : {api_defaults['api_max_characters']}",
-                f"[{branding}Debug] length_stripping       : {api_defaults['api_length_stripping']}",
-                f"[{branding}Debug] legacy_api             : {api_defaults['api_use_legacy_api']}",
-                f"[{branding}Debug] legacy_api IPadd       : {api_defaults['api_legacy_ip_address']}",
-                f"[{branding}Debug] allowed_filter         : {api_defaults['api_allowed_filter']}",
-                f"[{branding}Debug] text_filtering         : {text_filtering}",
-                f"[{branding}Debug] character_voice_gen    : {character_voice_gen}",
-                f"[{branding}Debug] rvccharacter_voice_gen : {rvccharacter_voice_gen}",
-                f"[{branding}Debug] rvccharacter_pitch     : {rvccharacter_pitch}",
-                f"[{branding}Debug] narrator_enabled       : {narrator_enabled}",
-                f"[{branding}Debug] narrator_voice_gen     : {narrator_voice_gen}",
-                f"[{branding}Debug] rvcnarrator_voice_gen  : {rvcnarrator_voice_gen}",
-                f"[{branding}Debug] rvcnarrator_pitch      : {rvcnarrator_pitch}",
-                f"[{branding}Debug] text_not_inside        : {text_not_inside}",
-                f"[{branding}Debug] language               : {language}",
-                f"[{branding}Debug] output_file_name       : {output_file_name}",
-                f"[{branding}Debug] output_file_timestamp  : {output_file_timestamp}",
-                f"[{branding}Debug] autoplay               : {autoplay}",
-                f"[{branding}Debug] autoplay_volume        : {autoplay_volume}",
-                f"[{branding}Debug] streaming              : {streaming}",
-                f"[{branding}Debug] speed                  : {speed}",
-                f"[{branding}Debug] temperature            : {temperature}",
-                f"[{branding}Debug] repetition_penalty     : {repetition_penalty}",
-                f"[{branding}Debug] pitch : {pitch}"
+                f"[{config.branding}Debug] *******************************************************",
+                f"[{config.branding}Debug] /api/tts_generate function called (debug_tts_variables)",
+                f"[{config.branding}Debug]        **** POST validation checks ****",
+                f"[{config.branding}Debug] *******************************************************",
+                f"[{config.branding}Debug] Defaults will be pulled from Settings if not specified in API Request!",
+                f"[{config.branding}Debug] max_characters         : {config.api_def.api_max_characters}",
+                f"[{config.branding}Debug] length_stripping       : {config.api_def.api_length_stripping}",
+                f"[{config.branding}Debug] legacy_api             : {config.api_def.api_use_legacy_api}",
+                f"[{config.branding}Debug] legacy_api IPadd       : {config.api_def.api_legacy_ip_address}",
+                f"[{config.branding}Debug] allowed_filter         : {config.api_def.api_allowed_filter}",
+                f"[{config.branding}Debug] text_filtering         : {text_filtering}",
+                f"[{config.branding}Debug] character_voice_gen    : {character_voice_gen}",
+                f"[{config.branding}Debug] rvccharacter_voice_gen : {rvccharacter_voice_gen}",
+                f"[{config.branding}Debug] rvccharacter_pitch     : {rvccharacter_pitch}",
+                f"[{config.branding}Debug] narrator_enabled       : {narrator_enabled}",
+                f"[{config.branding}Debug] narrator_voice_gen     : {narrator_voice_gen}",
+                f"[{config.branding}Debug] rvcnarrator_voice_gen  : {rvcnarrator_voice_gen}",
+                f"[{config.branding}Debug] rvcnarrator_pitch      : {rvcnarrator_pitch}",
+                f"[{config.branding}Debug] text_not_inside        : {text_not_inside}",
+                f"[{config.branding}Debug] language               : {language}",
+                f"[{config.branding}Debug] output_file_name       : {output_file_name}",
+                f"[{config.branding}Debug] output_file_timestamp  : {output_file_timestamp}",
+                f"[{config.branding}Debug] autoplay               : {autoplay}",
+                f"[{config.branding}Debug] autoplay_volume        : {autoplay_volume}",
+                f"[{config.branding}Debug] streaming              : {streaming}",
+                f"[{config.branding}Debug] speed                  : {speed}",
+                f"[{config.branding}Debug] temperature            : {temperature}",
+                f"[{config.branding}Debug] repetition_penalty     : {repetition_penalty}",
+                f"[{config.branding}Debug] pitch : {pitch}"
             ]
             debug_info = "\n".join(debug_lines)
             print(debug_info)        
         if narrator_enabled.lower() == "silent" and text_not_inside.lower() == "silent":
-            print(f"[{branding}GEN] \033[92mBoth Narrator & Text-not-inside are set to \033[91msilent\033[92m. If you get no TTS, this is why.\033[0m")
+            print(f"[{config.branding}GEN] \033[92mBoth Narrator & Text-not-inside are set to \033[91msilent\033[92m. If you get no TTS, this is why.\033[0m")
         if narrator_enabled.lower() in ["true", "silent"]:
             if model_engine.lowvram_enabled and model_engine.device == "cpu":
                 await model_engine.handle_lowvram_change()
             model_engine.tts_narrator_generatingtts = True
-            print(f"[{branding}Debug] Moved into Narrator") if debug_tts else None
-            print(f"[{branding}Debug] original text         : {text_input}") if debug_tts else None
+            print(f"[{config.branding}Debug] Moved into Narrator") if config.debugging.debug_tts else None
+            print(f"[{config.branding}Debug] original text         : {text_input}") if config.debugging.debug_tts else None
             processed_parts = process_text(text_input)
             audio_files_all_paragraphs = []
             for part_type, part in processed_parts:
                 # Skip parts that are too short
-                if len(part.strip()) <= int(params["api_def"]["api_length_stripping"]):
+                if len(part.strip()) <= int(config.api_def.api_length_stripping):
                     continue
                 # Determine the voice to use based on the part type
                 if part_type == 'narrator':
                     if narrator_enabled.lower() == "silent":
-                        print(f"[{branding}GEN] \033[95mNarrator Silent:\033[0m", part)  # Green
+                        print(f"[{config.branding}GEN] \033[95mNarrator Silent:\033[0m", part)  # Green
                         continue  # Skip generating audio for narrator parts if set to "silent"
                     voice_to_use = narrator_voice_gen
-                    print(f"[{branding}GEN] \033[92mNarrator:\033[0m", part)  # Purple
+                    print(f"[{config.branding}GEN] \033[92mNarrator:\033[0m", part)  # Purple
                 elif part_type == 'character':
                     voice_to_use = character_voice_gen
-                    print(f"[{branding}GEN] \033[36mCharacter:\033[0m", part)  # Yellow
+                    print(f"[{config.branding}GEN] \033[36mCharacter:\033[0m", part)  # Yellow
                 else:
                     # Handle ambiguous parts based on user preference
                     if text_not_inside == "silent":
-                        print(f"[{branding}GEN] \033[95mText-not-inside Silent:\033[0m", part)  # Purple
+                        print(f"[{config.branding}GEN] \033[95mText-not-inside Silent:\033[0m", part)  # Purple
                         continue  # Skip generating audio for ambiguous parts if set to "silent"
                     voice_to_use = character_voice_gen if text_not_inside == "character" else narrator_voice_gen
                     voice_description = "\033[36mCharacter (Text-not-inside)\033[0m" if text_not_inside == "character" else "\033[92mNarrator (Text-not-inside)\033[0m"
-                    print(f"[{branding}GEN] {voice_description}:", part)
+                    print(f"[{config.branding}GEN] {voice_description}:", part)
                 # Replace multiple exclamation marks, question marks, or other punctuation with a single instance
                 cleaned_part = re.sub(r'([!?.])\1+', r'\1', part)
                 # Further clean to remove any other unwanted characters
-                cleaned_part = re.sub(rf'{api_defaults["api_allowed_filter"]}', '', cleaned_part)
-                print(f"[{branding}Debug] text after api_allowed: {text_input}") if debug_tts else None
+                cleaned_part = re.sub(rf'{config.api_def.api_allowed_filter}', '', cleaned_part)
+                print(f"[{config.branding}Debug] text after api_allowed: {text_input}") if config.debugging.debug_tts else None
                 # Remove all newline characters (single or multiple)
                 cleaned_part = re.sub(r'\n+', ' ', cleaned_part)
-                output_file = this_dir / output_directory / f'{output_file_name}_{uuid.uuid4()}_{int(time.time())}.{model_engine.audio_format}'
+                output_file = this_dir / config.get_output_directory() / f'{output_file_name}_{uuid.uuid4()}_{int(time.time())}.{model_engine.audio_format}'
                 output_file_str = output_file.as_posix()
                 response = await generate_audio(cleaned_part, voice_to_use, language,temperature, repetition_penalty, speed, pitch, output_file_str, streaming)
                 audio_path = output_file_str
-                if rvc_settings["rvc_enabled"]:
+                if config.rvc_settings.rvc_enabled:
                     if part_type == 'character':
-                        process_rvc_narrator(part_type, rvccharacter_voice_gen, rvccharacter_pitch, rvc_settings["rvc_char_model_file"], output_file, infer_pipeline)
+                        process_rvc_narrator(part_type, rvccharacter_voice_gen, rvccharacter_pitch, config.rvc_settings.rvc_char_model_file, output_file, infer_pipeline)
                     elif part_type == 'narrator':
-                        process_rvc_narrator(part_type, rvcnarrator_voice_gen, rvcnarrator_pitch, rvc_settings["rvc_narr_model_file"], output_file, infer_pipeline)
+                        process_rvc_narrator(part_type, rvcnarrator_voice_gen, rvcnarrator_pitch, config.rvc_settings.rvc_narr_model_file, output_file, infer_pipeline)
                     else:
                         if text_not_inside == 'character':
-                            process_rvc_narrator('character', rvccharacter_voice_gen, rvccharacter_pitch, rvc_settings["rvc_char_model_file"], output_file, infer_pipeline)
+                            process_rvc_narrator('character', rvccharacter_voice_gen, rvccharacter_pitch, config.rvc_settings.rvc_char_model_file, output_file, infer_pipeline)
                         elif text_not_inside == 'narrator':
-                            process_rvc_narrator('narrator', rvcnarrator_voice_gen, rvcnarrator_pitch, rvc_settings["rvc_narr_model_file"], output_file, infer_pipeline)
-                print(f"[{branding}Debug] Appending audio path to list") if debug_tts else None               
+                            process_rvc_narrator('narrator', rvcnarrator_voice_gen, rvcnarrator_pitch, config.rvc_settings.rvc_narr_model_file, output_file, infer_pipeline)
+                print(f"[{config.branding}Debug] Appending audio path to list") if config.debugging.debug_tts else None
                 audio_files_all_paragraphs.append(audio_path) 
             # Combine audio files across paragraphs
             model_engine.tts_narrator_generatingtts = False
-            print(f"[{branding}Debug] Narrator sending to combine") if debug_tts else None
+            print(f"[{config.branding}Debug] Narrator sending to combine") if config.debugging.debug_tts else None
             output_file_path, output_file_url, output_cache_url = combine(output_file_timestamp, output_file_name, audio_files_all_paragraphs)
             # Transcode audio if necessary
             model_audio_format = str(model_engine.audio_format).lower()
-            output_audio_format = str(params["transcode_audio_format"]).lower()
+            output_audio_format = str(config.transcode_audio_format).lower()
             if output_audio_format == "disabled":
                 pass
             else:
                 if model_audio_format != output_audio_format and not model_engine.tts_narrator_generatingtts:
-                    print(f"[{branding}Debug] Pre Transcode call - Output file: {output_file_path}") if debug_tts else None
+                    print(f"[{config.branding}Debug] Pre Transcode call - Output file: {output_file_path}") if config.debugging.debug_tts else None
                     output_file_path, output_file_url, output_cache_url = await transcode_audio_if_necessary(output_file_path, model_audio_format, output_audio_format)
-                    print(f"[{branding}Debug] Post Transcode call - Output file: {output_file_path}") if debug_tts else None
+                    print(f"[{config.branding}Debug] Post Transcode call - Output file: {output_file_path}") if config.debugging.debug_tts else None
             if sounddevice_installed == False:
                 autoplay = False
             if autoplay:
@@ -1557,8 +1453,8 @@ async def apifunction_generate_tts_standard(
                 await model_engine.handle_lowvram_change()
             return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url), "output_cache_url": str(output_cache_url)}, status_code=200)
         else:
-            print(f"[{branding}Debug] Moved into Standard generation") if debug_tts else None
-            print(f"[{branding}Debug] original text         : {text_input}") if debug_tts else None
+            print(f"[{config.branding}Debug] Moved into Standard generation") if config.debugging.debug_tts else None
+            print(f"[{config.branding}Debug] original text         : {text_input}") if config.debugging.debug_tts else None
             if output_file_timestamp:
                 timestamp = int(time.time())
                 # Generate a standard UUID
@@ -1568,20 +1464,20 @@ async def apifunction_generate_tts_standard(
                 hashed_uuid = hash_object.hexdigest()
                 # Truncate to the desired length, for example, 16 characters
                 short_uuid = hashed_uuid[:5]
-                output_file_path = this_dir / output_directory / f'{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
+                output_file_path = this_dir / config.get_output_directory() / f'{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
                 #Legacy API or New API return
-                if params["api_def"]["api_use_legacy_api"]:
-                    output_file_url = f'http://{api_defaults["api_legacy_ip_address"]}:{api_defaults["api_port_number"]}/audio/{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
-                    output_cache_url = f'http://{api_defaults["api_legacy_ip_address"]}:{api_defaults["api_port_number"]}/audiocache/{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
+                if config.api_def.api_use_legacy_api:
+                    output_file_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audio/{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
+                    output_cache_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audiocache/{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
                 else:
                     output_file_url = f'/audio/{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
                     output_cache_url = f'/audiocache/{output_file_name}_{timestamp}{short_uuid}.{model_engine.audio_format}'
             else:
-                output_file_path = this_dir / output_directory / f"{output_file_name}.{model_engine.audio_format}"
+                output_file_path = this_dir / config.get_output_directory() / f"{output_file_name}.{model_engine.audio_format}"
                 # Legacy API or New API return
-                if params["api_def"]["api_use_legacy_api"]:
-                    output_file_url = f'http://{api_defaults["api_legacy_ip_address"]}:{api_defaults["api_port_number"]}/audio/{output_file_name}.{model_engine.audio_format}'
-                    output_cache_url = f'http://{api_defaults["api_legacy_ip_address"]}:{api_defaults["api_port_number"]}/audiocache/{output_file_name}.{model_engine.audio_format}'
+                if config.api_def.api_use_legacy_api:
+                    output_file_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audio/{output_file_name}.{model_engine.audio_format}'
+                    output_cache_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}/audiocache/{output_file_name}.{model_engine.audio_format}'
                 else:
                     output_file_url = f'/audio/{output_file_name}.{model_engine.audio_format}'
                     output_cache_url = f'/audiocache/{output_file_name}.{model_engine.audio_format}'
@@ -1589,48 +1485,48 @@ async def apifunction_generate_tts_standard(
                 cleaned_string = html.unescape(standard_filtering(text_input))
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', cleaned_string)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(rf'{api_defaults["api_allowed_filter"]}', '', cleaned_string)
-                print(f"[{branding}Debug] HTML Filtering - text after api_allowed: {cleaned_string}") if debug_tts else None
+                cleaned_string = re.sub(rf'{config.api_def.api_allowed_filter}', '', cleaned_string)
+                print(f"[{config.branding}Debug] HTML Filtering - text after api_allowed: {cleaned_string}") if config.debugging.debug_tts else None
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             elif text_filtering == "standard":
                 cleaned_string = re.sub(r'([!?.])\1+', r'\1', text_input)
                 # Further clean to remove any other unwanted characters
-                cleaned_string = re.sub(rf'{api_defaults["api_allowed_filter"]}', '', cleaned_string)
-                print(f"[{branding}Debug] Standard Filtering - text after api_allowed: {cleaned_string}") if debug_tts else None
+                cleaned_string = re.sub(rf'{config.api_def.api_allowed_filter}', '', cleaned_string)
+                print(f"[{config.branding}Debug] Standard Filtering - text after api_allowed: {cleaned_string}") if config.debugging.debug_tts else None
                 # Remove all newline characters (single or multiple)
                 cleaned_string = re.sub(r'\n+', ' ', cleaned_string)
             else:
-                print(f"[{branding}Debug] No filtering text     : {text_input}") if debug_tts else None
+                print(f"[{config.branding}Debug] No filtering text     : {text_input}") if config.debugging.debug_tts else None
                 cleaned_string = text_input
-            print(f"[{branding}GEN]", cleaned_string)
-            print(f"[{branding}Debug] Sending request to generate_audio in tts_server.py") if debug_tts else None
+            print(f"[{config.branding}GEN]", cleaned_string)
+            print(f"[{config.branding}Debug] Sending request to generate_audio in tts_server.py") if config.debugging.debug_tts else None
             try:
                 if streaming:
                     response = await generate_audio(cleaned_string, character_voice_gen, language, temperature, repetition_penalty, speed, pitch, output_file_path, streaming)
                     return StreamingResponse(response, media_type="audio/wav")
                 else:
                     response = await generate_audio(cleaned_string, character_voice_gen, language, temperature, repetition_penalty, speed, pitch, output_file_path, streaming)
-                    if rvc_settings["rvc_enabled"]:
+                    if config.rvc_settings.rvc_enabled:
                         if rvccharacter_voice_gen.lower() in ["disabled", "disable"]:
-                            print(f"[{branding}Debug] Pass rvccharacter_voice_gen") if debug_tts else None
+                            print(f"[{config.branding}Debug] Pass rvccharacter_voice_gen") if config.debugging.debug_tts else None
                             pass  # Skip RVC processing for character part
                         else:
-                            print(f"[{branding}Debug] send to rvc") if debug_tts else None
+                            print(f"[{config.branding}Debug] send to rvc") if config.debugging.debug_tts else None
                             rvccharacter_voice_gen = this_dir / "models" / "rvc_voices" / rvccharacter_voice_gen
-                            pth_path = rvccharacter_voice_gen if rvccharacter_voice_gen else rvc_settings["rvc_char_model_file"]
+                            pth_path = rvccharacter_voice_gen if rvccharacter_voice_gen else config.rvc_settings.rvc_char_model_file
                             run_rvc(output_file_path, pth_path, rvccharacter_pitch, infer_pipeline)
                     # Transcode audio if necessary
                     model_audio_format = str(model_engine.audio_format).lower()
-                    output_audio_format = str(params["transcode_audio_format"]).lower()
-                    print(f"[{branding}Debug] At Model audio format") if debug_tts else None
+                    output_audio_format = str(config.transcode_audio_format).lower()
+                    print(f"[{config.branding}Debug] At Model audio format") if config.debugging.debug_tts else None
                     if output_audio_format == "disabled":
                         pass
                     else:
                         if model_audio_format != output_audio_format and not model_engine.tts_narrator_generatingtts:
-                            print(f"[{branding}Debug] Pre Transcode call - Output file: {output_file_path}") if debug_tts else None
+                            print(f"[{config.branding}Debug] Pre Transcode call - Output file: {output_file_path}") if config.debugging.debug_tts else None
                             output_file_path, output_file_url, output_cache_url = await transcode_audio_if_necessary(output_file_path, model_audio_format, output_audio_format)
-                            print(f"[{branding}Debug] Post Transcode call - Output file: {output_file_path}") if debug_tts else None
+                            print(f"[{config.branding}Debug] Post Transcode call - Output file: {output_file_path}") if config.debugging.debug_tts else None
                     if sounddevice_installed == False:
                         autoplay = False
                     if autoplay:
@@ -1667,7 +1563,7 @@ async def apifunction_save_tts_data(tts_data: List[TTSItem]):
     tts_data_list = [item.dict() for item in tts_data]
     # Serialize the list of dictionaries to a JSON string
     tts_data_json = json.dumps(tts_data_list, indent=4)
-    async with aiofiles.open(this_dir / output_directory / "ttsList.json", 'w') as f:
+    async with aiofiles.open(this_dir / config.get_output_directory() / "ttsList.json", 'w') as f:
         await f.write(tts_data_json)
     return {"message": "Data saved successfully"}
 
@@ -1679,12 +1575,12 @@ async def apifunction_trigger_analysis(threshold: int = Query(default=98)):
     venv_path = sys.prefix
     env = os.environ.copy()
     env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
-    ttslist_path = this_dir / output_directory / "ttsList.json"
-    wavfile_path = this_dir / output_directory
+    ttslist_path = this_dir / config.get_output_directory() / "ttsList.json"
+    wavfile_path = this_dir / config.get_output_directory()
     subprocess.run([sys.executable, "tts_diff.py", f"--threshold={threshold}", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_diff", env=env)
     # Read the analysis summary
     try:
-        with open(this_dir / output_directory / "analysis_summary.json", "r") as summary_file:
+        with open(this_dir / config.get_output_directory() / "analysis_summary.json", "r") as summary_file:
             summary_data = json.load(summary_file)
     except FileNotFoundError:
         summary_data = {"error": "Analysis summary file not found."}
@@ -1698,10 +1594,10 @@ async def apifunction_srt_generation():
     venv_path = sys.prefix
     env = os.environ.copy()
     env["PATH"] = os.path.join(venv_path, "bin") + ":" + env["PATH"]
-    ttslist_path = this_dir / output_directory / "ttsList.json"
-    wavfile_path = this_dir / output_directory
+    ttslist_path = this_dir / config.get_output_directory() / "ttsList.json"
+    wavfile_path = this_dir / config.get_output_directory()
     subprocess.run([sys.executable, "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
-    srt_file_path = this_dir / output_directory / "subtitles.srt"
+    srt_file_path = this_dir / config.get_output_directory() / "subtitles.srt"
     if not srt_file_path.exists():
         raise HTTPException(status_code=404, detail="Subtitle file not found.")
     return FileResponse(path=srt_file_path, filename="subtitles.srt", media_type='application/octet-stream')
@@ -1716,19 +1612,14 @@ app.mount("/static", StaticFiles(directory=str(this_dir / "system")), name="stat
 ########################################
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
-def get_json_data():
-    with open(this_dir / "confignew.json", "r") as json_file:
-        data = json.load(json_file)
-    return data
 
 @app.get("/settings")
 async def get_settings(request: Request):
-    data = get_json_data()
-    return templates.TemplateResponse("admin.html", {"request": request, "data": data})
+    return templates.TemplateResponse("admin.html", {"request": request, "data": config.to_dict()})
 
 @app.get("/settings-json")
 async def get_settings_json():
-    return get_json_data()
+    return config.to_dict()
 
 @app.post("/update-settings")
 async def update_settings(
@@ -1738,24 +1629,24 @@ async def update_settings(
     gradio_port_number: int = Form(...),
     api_port_number: int = Form(...),
 ):
-    data = get_json_data()
     # Update the settings based on the form values
-    data["delete_output_wavs"] = delete_output_wavs
-    data["gradio_interface"] = gradio_interface.lower() == 'true'
-    data["gradio_port_number"] = gradio_port_number
-    data["api_def"]["api_port_number"] = api_port_number
+    config.delete_output_wavs = delete_output_wavs
+    config.gradio_interface = gradio_interface.lower() == 'true'
+    config.gradio_port_number = gradio_port_number
+    config.api_def.api_port_number = api_port_number
+
     # Save the updated settings back to the JSON file
-    with open(this_dir / "confignew.json", "w") as json_file:
-        json.dump(data, json_file, indent=4)
+    config.save()
+
     # Redirect to the settings page to display the updated settings
-    return templates.TemplateResponse("admin.html", {"request": request, "data": data})
+    return templates.TemplateResponse("admin.html", {"request": request, "data": config.to_dict()})
  
 # Create an instance of Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=this_dir / "system")
 # Get the admin interface template
 template = templates.get_template("admin.html")
 # Render the template with the dynamic values
-rendered_html = template.render(params=params)
+rendered_html = template.render(params=config.to_dict())
  
 ###################################################
 #### Webserver Startup & Initial model Loading ####
@@ -1765,7 +1656,7 @@ async def read_root():
     return HTMLResponse(content=rendered_html, status_code=200)
 
 # Start Uvicorn Webserver
-# port_parameter = int(params["api_def"]["api_port_number"])
+# port_parameter = int(config.api_def.api_port_number)
 
 if __name__ == "__main__":
     import uvicorn
@@ -1774,7 +1665,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, help="Port number for the server")
     args = parser.parse_args()
     # Determine the port to use
-    config_port = int(params["api_def"]["api_port_number"])
+    config_port = int(config.api_def.api_port_number)
     port_to_use = args.port if args.port is not None else config_port
     # Start Uvicorn Webserver
     uvicorn_server = uvicorn.run(app, host="0.0.0.0", port=port_to_use, log_level="debug")

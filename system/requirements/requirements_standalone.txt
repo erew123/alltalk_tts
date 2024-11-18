@@ -1,4 +1,5 @@
 coqui-tts>=0.24.3
+filelock>=3.16.1
 fuzzywuzzy>=0.18.0
 gradio>=4.44.1
 importlib_metadata>=7.2.1
