@@ -82,7 +82,7 @@ class AlltalkConfigDebug:
     debug_func: bool = False
     debug_api: bool = False
     debug_fullttstext: bool = False
-    debug_narrator: bool = True
+    debug_narrator: bool = False
 
 @dataclass
 class AlltalkConfigGradioPages:
@@ -307,6 +307,10 @@ class AlltalkConfig(AbstractJsonConfig):
         self.debugging = AlltalkConfigDebug()
         self.gradio_pages = AlltalkConfigGradioPages()
         self._load_config()
+
+    @staticmethod
+    def default_config_path():
+        return AlltalkConfig.__this_dir / "confignew.json"
 
     @staticmethod
     def get_instance(force_reload = False):
