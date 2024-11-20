@@ -18,74 +18,80 @@ class AlltalkConfigTheme:
 
 @dataclass
 class AlltalkConfigRvcSettings:
-    rvc_enabled = False
-    rvc_char_model_file = ""
-    rvc_narr_model_file = ""
-    split_audio = False
-    autotune = False
-    pitch = 0
-    filter_radius = 0
-    index_rate = 0.0
-    rms_mix_rate = 0
-    protect = 0
-    hop_length = 0
-    f0method = ""
-    embedder_model = ""
-    training_data_size = 0
+    rvc_enabled: bool = False
+    rvc_char_model_file: str = "Disabled"
+    rvc_narr_model_file: str = "Disabled" 
+    split_audio: bool = True
+    autotune: bool = False
+    pitch: int = 0
+    filter_radius: int = 3
+    index_rate: float = 0.75
+    rms_mix_rate: int = 1
+    protect: float = 0.5
+    hop_length: int = 130
+    f0method: str = "fcpe"
+    embedder_model: str = "hubert"
+    training_data_size: int = 45000
 
-@dataclass
+@dataclass 
 class AlltalkConfigTgwUi:
-    tgwui_activate_tts = False
-    tgwui_autoplay_tts = False
-    tgwui_narrator_enabled = ""
-    tgwui_non_quoted_text_is = ""
-    tgwui_deepspeed_enabled = False
-    tgwui_language = ""
-    tgwui_lowvram_enabled = False
-    tgwui_pitch_set = 0
-    tgwui_temperature_set = 0.0
-    tgwui_repetitionpenalty_set = 0
-    tgwui_generationspeed_set = 0
-    tgwui_narrator_voice = ""
-    tgwui_show_text = False
-    tgwui_character_voice = ""
-    tgwui_rvc_char_voice = ""
-    tgwui_rvc_narr_voice = ""
+    tgwui_activate_tts: bool = True
+    tgwui_autoplay_tts: bool = True
+    tgwui_narrator_enabled: str = "false"
+    tgwui_non_quoted_text_is: str = "character"
+    tgwui_deepspeed_enabled: bool = False
+    tgwui_language: str = "English"
+    tgwui_lowvram_enabled: bool = False
+    tgwui_pitch_set: int = 0
+    tgwui_temperature_set: float = 0.75
+    tgwui_repetitionpenalty_set: int = 10
+    tgwui_generationspeed_set: int = 1
+    tgwui_narrator_voice: str = "female_01.wav"
+    tgwui_show_text: bool = True
+    tgwui_character_voice: str = "female_01.wav"
+    tgwui_rvc_char_voice: str = "Disabled"
+    tgwui_rvc_char_pitch: int = 0
+    tgwui_rvc_narr_voice: str = "Disabled"
+    tgwui_rvc_narr_pitch: int = 0
 
 @dataclass
 class AlltalkConfigApiDef:
-    api_port_number = 0
-    api_allowed_filter = ""
-    api_length_stripping = 0
-    api_max_characters = 0
-    api_use_legacy_api = False
-    api_legacy_ip_address = ""
-    api_text_filtering = ""
-    api_narrator_enabled = ""
-    api_text_not_inside = ""
-    api_language = ""
-    api_output_file_name = ""
-    api_output_file_timestamp = False
-    api_autoplay = False
-    api_autoplay_volume = 0.0
+    api_port_number: int = 7851
+    api_allowed_filter: str = "[^a-zA-Z0-9\\s.,;:!?\\-\\'\"$\\u0400-\\u04FF\\u00C0-\\u017F\\u0150\\u0151\\u0170\\u0171\\u011E\\u011F\\u0130\\u0131\\u0900-\\u097F\\u2018\\u2019\\u201C\\u201D\\u3001\\u3002\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FFF\\u3400-\\u4DBF\\uF900-\\uFAFF\\u0600-\\u06FF\\u0750-\\u077F\\uFB50-\\uFDFF\\uFE70-\\uFEFF\\uAC00-\\uD7A3\\u1100-\\u11FF\\u3130-\\u318F\\uFF01\\uFF0c\\uFF1A\\uFF1B\\uFF1F]"
+    api_length_stripping: int = 3
+    api_max_characters: int = 2000
+    api_use_legacy_api: bool = False
+    api_legacy_ip_address: str = "127.0.0.1"
+    api_text_filtering: str = "standard"
+    api_narrator_enabled: str = "false"
+    api_text_not_inside: str = "character"
+    api_language: str = "en"
+    api_output_file_name: str = "myoutputfile"
+    api_output_file_timestamp: bool = True
+    api_autoplay: bool = False
+    api_autoplay_volume: float = 0.5
 
 @dataclass
 class AlltalkConfigDebug:
-    debug_transcode = False
-    debug_tts = False
-    debug_openai = False
-    debug_concat = False
-    debug_tts_variables = False
-    debug_rvc = False
+    debug_transcode: bool = False
+    debug_tts: bool = False
+    debug_openai: bool = False
+    debug_concat: bool = False
+    debug_tts_variables: bool = False
+    debug_rvc: bool = False
+    debug_func: bool = False
+    debug_api: bool = False
+    debug_fullttstext: bool = False
+    debug_narrator: bool = True
 
 @dataclass
 class AlltalkConfigGradioPages:
-    Generate_Help_page = False
-    Voice2RVC_page = False
-    TTS_Generator_page = False
-    TTS_Engines_Settings_page = False
-    alltalk_documentation_page = False
-    api_documentation_page = False
+    Generate_Help_page: bool = True
+    Voice2RVC_page: bool = True
+    TTS_Generator_page: bool = True
+    TTS_Engines_Settings_page: bool = True
+    alltalk_documentation_page: bool = True
+    api_documentation_page: bool = True
 
 
 @dataclass
@@ -137,16 +143,29 @@ class AbstractJsonConfig(ABC):
     def _object_hook(self) -> Callable[[dict[Any, Any]], Any] | None:
         return lambda d: SimpleNamespace(**d)
 
-    def _save_file(self, path: Path | None | str, default = lambda o: o.__dict__, indent = 4):
+    def _save_file(self, path: Path | None | str, default=None, indent=4):
         file_path = (Path(path) if type(path) is str else path) if path is not None else self.get_config_path()
-
+        
+        def custom_default(o):
+            if isinstance(o, Path):
+                return str(o)  # Convert Path objects to strings
+            elif hasattr(o, '__dict__'):
+                return o.__dict__  # Use the object's __dict__ if it exists
+            else:
+                raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+        
+        default = default or custom_default
+        
         def __save():
-            with open(file_path, "w") as file:
+            with open(file_path, 'w') as file:
                 json.dump(self.to_dict(), file, indent=indent, default=default)
+        
         self.__with_lock_and_backup(file_path, True, __save)
+
 
     def __with_lock_and_backup(self, path: Path, backup: bool, callable: Callable[[], None]):
         lock_path = path.with_suffix('.lock')
+        backup_path = None
         try:
             with FileLock(lock_path):
                 # Create backup:
@@ -157,15 +176,22 @@ class AbstractJsonConfig(ABC):
                 try:
                     callable()
                 except Exception as e:
-                    if backup_path.exists():
+                    if backup_path and backup_path.exists():
                         shutil.copy(backup_path, path)
                     raise Exception(f"Failed to save config: {e}")
         finally:
             # Cleanup lock and backup files:
-            lock_path.unlink()
-            if backup and backup_path.exists():
-                backup_path.unlink()
-
+            if lock_path.exists():  # Only try to delete if it exists
+                try:
+                    lock_path.unlink()
+                except FileNotFoundError:
+                    pass  # Ignore if file doesn't exist
+            
+            if backup and backup_path and backup_path.exists():
+                try:
+                    backup_path.unlink()
+                except FileNotFoundError:
+                    pass  # Ignore if file doesn't exist
 
     @abstractmethod
     def _handle_loaded_config(self, data):
@@ -258,7 +284,7 @@ class AlltalkTTSEnginesConfig(AbstractJsonConfig):
                 return self
         return self
 
-
+@dataclass
 class AlltalkConfig(AbstractJsonConfig):
     __instance = None
     __this_dir = Path(__file__).parent.resolve()
@@ -283,10 +309,6 @@ class AlltalkConfig(AbstractJsonConfig):
         self._load_config()
 
     @staticmethod
-    def default_config_path():
-        return AlltalkConfig.__this_dir / "confignew.json"
-
-    @staticmethod
     def get_instance(force_reload = False):
         if AlltalkConfig.__instance is None:
             force_reload = False
@@ -305,13 +327,81 @@ class AlltalkConfig(AbstractJsonConfig):
         self._save_file(path)
 
     def _handle_loaded_config(self, data):
-        # Copy those fields for which there are members in this class:
+        from dataclasses import fields, is_dataclass, asdict
+        debug_me =False
+        if debug_me:
+            print("=== Loading Config ===")
+            print(f"Initial data state: {vars(data)}")
+
+        # Create new instances with defaults
+        default_instances = {
+            'debugging': AlltalkConfigDebug(),
+            'rvc_settings': AlltalkConfigRvcSettings(),
+            'tgwui': AlltalkConfigTgwUi(),
+            'api_def': AlltalkConfigApiDef(),
+            'theme': AlltalkConfigTheme(),
+            'gradio_pages': AlltalkConfigGradioPages()
+        }
+        if debug_me:
+            print("\nDefault values for each class:")
+        for name, instance in default_instances.items():
+            if debug_me:
+                print(f"{name}: {asdict(instance)}")        
+                # Show actual default values from dataclass
+                print(f"Default values: {[(f.name, getattr(instance, f.name)) for f in fields(instance)]}")
+            if hasattr(data, name):
+                source = getattr(data, name)
+                if debug_me:
+                    print(f"Source data: {vars(source) if hasattr(source, '__dict__') else source}")
+
+                for field in fields(instance):
+                    if hasattr(source, field.name):
+                        setattr(instance, field.name, getattr(source, field.name))
+                    if debug_me:
+                        print(f"Field {field.name}: {getattr(instance, field.name)}")
+
+            setattr(self, name, instance)
+
+        # Handle non-dataclass fields
         for n, v in inspect.getmembers(data):
-            if hasattr(self, n) and not n.startswith("__"):
+            if hasattr(self, n) and not n.startswith("__") and not is_dataclass(type(getattr(self, n))):
                 setattr(self, n, v)
 
-        # Special properties (cannot use 'class' as property name):
-        self.theme.clazz = data.theme.__dict__["class"]
-
-        # As a side effect, create the output directory:
+        self.theme.clazz = data.theme.__dict__.get("class", data.theme.__dict__.get("clazz", ""))
         self.get_output_directory().mkdir(parents=True, exist_ok=True)
+
+    def to_dict(self):
+        from dataclasses import is_dataclass, asdict
+        debug_me =False
+        if debug_me:
+            print("=== Converting to dict ===")
+        result = {}
+
+        for key, value in vars(self).items():
+            if not key.startswith('_'):
+                # print(f"\nProcessing {key}:")
+                if is_dataclass(value):
+                    # print(f"Dataclass value before conversion: {vars(value)}")
+                    result[key] = asdict(value)
+                    # print(f"Converted to dict: {result[key]}")
+                elif isinstance(value, SimpleNamespace):
+                    # print(f"SimpleNamespace value: {value.__dict__}")
+                    result[key] = value.__dict__
+                else:
+                    # print(f"Regular value: {value}")
+                    result[key] = value
+
+        if 'theme' in result:
+            if debug_me:
+                print("\nProcessing theme:")
+                print(f"Before class handling: {result['theme']}")
+            result['theme']['class'] = self.theme.clazz
+            result['theme'].pop('clazz', None)
+            if debug_me:
+                print(f"After class handling: {result['theme']}")
+        if debug_me:
+            print(f"\nFinal dict: {result}")           
+        return result
+
+
+
