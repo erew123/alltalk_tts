@@ -83,6 +83,7 @@ class AlltalkConfigDebug:
     debug_api: bool = False
     debug_fullttstext: bool = False
     debug_narrator: bool = False
+    debug_gradio_IP: bool = False
 
 @dataclass
 class AlltalkConfigGradioPages:

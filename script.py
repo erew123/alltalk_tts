@@ -31,15 +31,24 @@ Reserved names:
 TGWUI_AVAILABLE = False
 def output_modifier(string, state):
     """Modify chat output (required for TGWUI)"""
-    from system.TGWUI_Extension.script import output_modifier as tgwui_output_modifier
+    try:
+        from .system.TGWUI_Extension.script import output_modifier as tgwui_output_modifier
+    except ImportError:        
+        from system.TGWUI_Extension.script import output_modifier as tgwui_output_modifier
     return tgwui_output_modifier(string, state)
 def input_modifier(string, state):
     """Modify chat input (required for TGWUI)"""
-    from system.TGWUI_Extension.script import input_modifier as tgwui_input_modifier
+    try:
+        from .system.TGWUI_Extension.script import input_modifier as tgwui_input_modifier
+    except ImportError:
+        from system.TGWUI_Extension.script import input_modifier as tgwui_input_modifier
     return tgwui_input_modifier(string, state)
 def state_modifier(state):
     """Modify chat state (required for TGWUI)"""
-    from system.TGWUI_Extension.script import state_modifier as tgwui_state_modifier
+    try:
+        from .system.TGWUI_Extension.script import state_modifier as tgwui_state_modifier
+    except ImportError:        
+        from system.TGWUI_Extension.script import state_modifier as tgwui_state_modifier
     return tgwui_state_modifier(state)
 def ui():
     """Create extension UI (required for TGWUI)"""
@@ -52,15 +61,24 @@ def ui():
         return gr.Blocks()
 def history_modifier(history):
     """Modify chat history (required for TGWUI)"""
-    from system.TGWUI_Extension.script import history_modifier as tgwui_history_modifier
+    try:
+        from .system.TGWUI_Extension.script import history_modifier as tgwui_history_modifier
+    except ImportError:        
+        from system.TGWUI_Extension.script import history_modifier as tgwui_history_modifier
     return tgwui_history_modifier(history)
 def remove_tts_from_history(history):
     """Remove TTS from history (required for TGWUI)"""
-    from system.TGWUI_Extension.script import remove_tts_from_history as tgwui_remove_tts
+    try:
+        from .system.TGWUI_Extension.script import remove_tts_from_history as tgwui_remove_tts
+    except ImportError:        
+        from system.TGWUI_Extension.script import remove_tts_from_history as tgwui_remove_tts
     return tgwui_remove_tts(history)
 def toggle_text_in_history(history):
     """Toggle text in history (required for TGWUI)"""
-    from system.TGWUI_Extension.script import toggle_text_in_history as tgwui_toggle_text
+    try:
+        from .system.TGWUI_Extension.script import toggle_text_in_history as tgwui_toggle_text
+    except ImportError:    
+        from system.TGWUI_Extension.script import toggle_text_in_history as tgwui_toggle_text
     return tgwui_toggle_text(history)
 try:
     from modules import chat, shared, ui_chat
@@ -81,8 +99,10 @@ except ImportError:
 # Confguration file management for confignew.json 
 try:
     from .config import AlltalkConfig, AlltalkTTSEnginesConfig, AlltalkNewEnginesConfig # TGWUI import
+    from .system.gradio_pages.help_content import AllTalkHelpContent
 except ImportError:
     from config import AlltalkConfig, AlltalkTTSEnginesConfig, AlltalkNewEnginesConfig # Standalone import
+    from system.gradio_pages.help_content import AllTalkHelpContent
 
 def initialize_configs():
     """Initialize all configuration instances"""
@@ -122,7 +142,7 @@ def print_message(message, message_type="standard", component="TTS"):
             
         if message_type == "debug_func" and "Function entry:" in message:
             message_parts = message.split("Function entry:", 1)
-            print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} Function entry:{GREEN}{message_parts[1]}{RESET}")
+            print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} Function entry:{GREEN}{message_parts[1]}{RESET} script.py")
         else:
             print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} {message}")
         
@@ -346,6 +366,7 @@ script_path = this_dir / "tts_server.py"
 tunnel_url = None
 running_on_google_colab = False
 running_in_docker = False
+docker_url = f"http://localhost:{config.api_def.api_port_number}"
 
 ############################################
 # START-UP # Display initial splash screen #
@@ -578,7 +599,6 @@ if os.path.isfile("/.dockerenv") and 'google.colab' not in sys.modules:
     print_message("    - If using a tunnel, you'll need to provide the API external URL/Address in Gradio.")
     print_message("    - Look for 'API URL/Address' option in the Gradio interface `Generate` page.")
     running_in_docker = True
-    docker_url = f"http://localhost:{config.api_def.api_port_number}"
 else:
     running_in_docker = False
 
@@ -762,6 +782,105 @@ current_model_loaded = None     # Gets populated with the name of the current lo
 # Used to detect if a model is loaded in to AllTalk server to block TTS genereation if needed.
 tts_model_loaded = None
 
+
+#########################
+# Endpoint API Builders #
+#########################
+def build_url(endpoint, include_api=True):
+    """
+    Build URL for standard API endpoints using static predefined URLs.
+    Used for endpoints that don't need dynamic domain handling.
+
+    Examples:
+        - voice2rvc
+        - reload 
+        - stop-generation
+
+    Args:
+        endpoint (str): The API endpoint to append to the base URL
+        include_api (bool): Whether to include /api/ in the URL
+            True: Uses '/api/'
+            False: Uses ''        
+
+    Returns:
+        str: Complete URL in format: {base_url}/api/{endpoint}
+            where base_url is determined by runtime environment:
+            - Colab: tunnel_url_1
+            - Docker: docker_url 
+            - Local: alltalk_protocol + alltalk_ip_port
+    """
+    debug_func_entry()
+    global running_on_google_colab, running_in_docker, tunnel_url_1, docker_url, alltalk_protocol, alltalk_ip_port
+    print_message(f"\033[94mRunning on Docker is: \033[0m{running_in_docker}", message_type="debug_gradio_IP")
+    print_message(f"\033[94mRunning on Google is: \033[0m{running_on_google_colab}", message_type="debug_gradio_IP")
+
+    if running_on_google_colab:
+        base_url = tunnel_url_1
+    elif running_in_docker:
+        base_url = docker_url
+    else:
+        base_url = f"{alltalk_protocol}{alltalk_ip_port}"
+
+    prefix = "/api/" if include_api else "/"
+    final_url = f"{base_url}{prefix}{endpoint.lstrip('/')}"
+    print_message(f"\033[94mBase URL is set as  : \033[0m{final_url}", message_type="debug_gradio_IP")
+    return final_url
+
+def build_dynamic_url(endpoint, include_protocol=True, include_api=True):
+    """
+    Build URL for endpoints that may need the current domain.
+    Used when the URL needs to reference the actual server domain
+    rather than predefined static URLs.
+
+    Examples:
+        - tts-generate
+        - tts-generate-streaming  
+        - File URLs (with include_protocol=True)
+
+    Args:
+        endpoint (str): The API endpoint or path to append
+        include_protocol (bool): Whether to include protocol prefix
+            True: Uses 'protocol' global variable
+            False: Uses 'http://'
+        include_api (bool): Whether to include /api/ in the URL
+            True: Uses '/api/'
+            False: Uses ''
+
+    Returns:
+        str: Complete URL with format depending on environment:
+            - Colab: tunnel_url_1/api/{endpoint}
+            - Docker: docker_url/api/{endpoint}
+            - Local: {protocol_prefix}{my_current_url}/api/{endpoint}
+    """
+    debug_func_entry()
+    global running_on_google_colab, running_in_docker, tunnel_url_1, docker_url, my_current_url, protocol
+    print_message(f"\033[94mRunning on Docker is: \033[0m{running_in_docker}", message_type="debug_gradio_IP")
+    print_message(f"\033[94mRunning on Google is: \033[0m{running_on_google_colab}", message_type="debug_gradio_IP")
+
+    prefix = "/api/" if include_api else "/"
+
+    if running_on_google_colab:
+        base_url = tunnel_url_1
+    elif running_in_docker:
+        base_url = docker_url
+    else:
+        protocol_prefix = f"{protocol}" if include_protocol else "http://"
+        base_url = f"{protocol_prefix}{my_current_url}"
+
+    final_url = f"{base_url}{prefix}{endpoint.lstrip('/')}"
+    print_message(f"\033[94mBase URL is set as  : \033[0m{final_url}", message_type="debug_gradio_IP")
+    return final_url
+
+def update_docker_address(new_url):
+    """
+    Used within the gradio interface to update the IP/URL
+    when running inside a docker environment.
+    """
+    global docker_url
+    docker_url = new_url
+    print_message(f"\033[94mDocker IP/URL for API set to: \033[0m{new_url}")                                 
+    return f"Docker IP/URL for API set to: {new_url}"
+
 #################################################
 # Pull all the settings from the AllTalk Server #
 #################################################
@@ -770,20 +889,9 @@ def get_alltalk_settings():
     Returns a dictionary of settings with default values if server is unreachable.
     """
     debug_func_entry()
-    # Determine the appropriate base URL based on environment
-    if running_on_google_colab:
-        base_url = tunnel_url_1
-    elif running_in_docker:
-        base_url = docker_url
-    else:
-        base_url = f"{alltalk_protocol}{alltalk_ip_port}"
 
     # Define endpoints
-    endpoints = {
-        "voices": f"{base_url}/api/voices",
-        "rvcvoices": f"{base_url}/api/rvcvoices",
-        "settings": f"{base_url}/api/currentsettings"
-    }
+    endpoints = {name: build_url(name) for name in ['voices', 'rvcvoices', 'currentsettings']}
 
     # Default settings in case of failure
     default_settings = {
@@ -828,13 +936,16 @@ def get_alltalk_settings():
                               if r.status_code != 200]
             print_message(f"Failed to retrieve data from: {', '.join(failed_endpoints)}", 
                          message_type="warning", 
-                         component="Server")
+                         component="TTS")
+            print_message(f"Please confirm you have the correct IP/URL & that the system isnt currenly restarting", 
+                message_type="warning", 
+                component="TTS")
             return default_settings
 
         # Parse responses
         voices_data = responses["voices"].json()
         rvcvoices_data = responses["rvcvoices"].json()
-        settings_data = responses["settings"].json()
+        settings_data = responses["currentsettings"].json()
 
         # Update global variables
         global engines_available, current_engine_loaded, models_available, current_model_loaded
@@ -860,7 +971,10 @@ def get_alltalk_settings():
     except (RequestException, ConnectionError) as e:
         print_message(f"Unable to connect to the {branding} server: {str(e)}", 
                      message_type="warning", 
-                     component="Server")
+                     component="TTS")
+        print_message(f"Please confirm you have the correct IP/URL & that the system isnt currenly restarting", 
+                     message_type="warning", 
+                     component="TTS")        
         return default_settings
 
 # Pull all the current settings from the AllTalk server, if its online.
@@ -871,12 +985,7 @@ at_settings = get_alltalk_settings()
 #############################
 def stop_generate_tts():
     debug_func_entry()
-    if running_on_google_colab:
-        api_url = f"{tunnel_url_1}/api/stop-generation"
-    elif running_in_docker:
-        api_url = f"{docker_url}/api/stop-generation"
-    else:
-        api_url = f"{alltalk_protocol}{alltalk_ip_port}/api/stop-generation"
+    api_url = build_url('stop-generation')
     try:
         response = requests.put(api_url, timeout=connection_timeout)
         if response.status_code == 200:
@@ -903,12 +1012,7 @@ def send_api_request(endpoint, payload=None, headers=None, params=None):
     debug_func_entry()
     try:
         # Construct base URL based on environment
-        if running_on_google_colab:
-            base_url = f"{tunnel_url_1}{endpoint}"
-        elif running_in_docker:
-            base_url = f"{docker_url}{endpoint}"
-        else:
-            base_url = f"{alltalk_protocol}{alltalk_ip_port}{endpoint}"
+        base_url = build_url(endpoint.lstrip('/'))
 
         response = requests.post(
             base_url,
@@ -1023,23 +1127,11 @@ if gradio_enabled == True:
     if __name__ == "__main__" or "text-generation-webui" not in this_dir.parts:
         # Standalone execution
         base_package = None  # No base package needed for absolute imports
-        from system.gradio_pages.alltalk_documentation import alltalk_documentation
-        from system.gradio_pages.alltalk_generation_help import alltalk_generation_help
-        from system.gradio_pages.alltalk_about import alltalk_about
         from system.gradio_pages.alltalk_diskspace import get_disk_interface
-        from system.gradio_pages.api_documentation import api_documentation
-        if config.firstrun_splash:
-            from system.gradio_pages.alltalk_welcome import alltalk_welcome
     else:
         # Running within text-generation-webui
         # Dynamically build the base package using the current folder name
-        from .system.gradio_pages.alltalk_documentation import alltalk_documentation
-        from .system.gradio_pages.alltalk_generation_help import alltalk_generation_help
-        from .system.gradio_pages.alltalk_about import alltalk_about
         from .system.gradio_pages.alltalk_diskspace import get_disk_interface
-        from .system.gradio_pages.api_documentation import api_documentation
-        if config.firstrun_splash:
-            from .system.gradio_pages.alltalk_welcome import alltalk_welcome
         current_folder_name = this_dir.name
         base_package = f"extensions.{current_folder_name}"
 
@@ -1219,12 +1311,7 @@ if gradio_enabled == True:
 
         # Define the output path for the processed audio
         output_rvc_path = this_dir / "outputs" / "voice2rvcOutput.wav"
-        if running_on_google_colab:
-            url = f"{tunnel_url_1}/api/voice2rvc"
-        elif running_in_docker:
-            url = f"{docker_url}/api/voice2rvc"
-        else:
-            url = f"{alltalk_protocol}{alltalk_ip_port}/api/voice2rvc"
+        url = build_url('voice2rvc')
 
         # Submit the paths to the API endpoint
         response = requests.post(url, data={
@@ -1256,12 +1343,7 @@ if gradio_enabled == True:
             print_message("")
             print_message("\033[94mChanging model loaded. Please wait.\033[00m")
             print_message("")
-            if running_on_google_colab:
-                url = f"{tunnel_url_1}/api/reload"
-            elif running_in_docker:
-                url = f"{docker_url}/api/reload"
-            else:
-                url = f"{alltalk_protocol}{alltalk_ip_port}/api/reload"
+            url = build_url('reload')
             payload = {"tts_method": selected_model}
             response = requests.post(url, params=payload)
             response.raise_for_status()  # Raises an HTTPError for bad responses
@@ -1293,22 +1375,19 @@ if gradio_enabled == True:
 
     def generate_tts(gen_text, gen_char, rvcgen_char, rvcgen_char_pitch, gen_narr, rvcgen_narr, rvcgen_narr_pitch, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen):
         debug_func_entry()
-        if running_on_google_colab:
-            api_url = f"{tunnel_url_1}/api/tts-generate"
-        else:
-            api_url = f"http://{my_current_url}/api/tts-generate"
+        api_url = build_dynamic_url('tts-generate', include_protocol=False)
+        if  api_url == "http://null/api/tts-generate": # Check if api_url is null
+            print_message("The URL in the API request was not set. This is usually because of a TTS request from", message_type="error")
+            print_message("the Gradio web interface when the AllTalk server has been resarted but the Gradio page", message_type="error")
+            print_message("was not re-loaded. Please refresh your Gradio page and try again.", message_type="error")
+            return None, str("Error: Did you restart the AllTalk Server and not refresh your Gradio page? Please see the console/terminal message.")
         if gen_text == "":
             print_message("No Text was sent to generate as TTS")
             return None, str("No Text was sent to generate as TTS")
         if gen_stopcurrentgen:
             stop_generate_tts()
         if gen_stream == "true":
-            if running_on_google_colab:
-                api_url = f"{tunnel_url_1}/api/tts-generate-streaming"
-            elif running_in_docker:
-                api_url = f"{docker_url}/api/tts-generate-streaming"
-            else:
-                api_url = f"http://{my_current_url}/api/tts-generate-streaming"
+            api_url = build_dynamic_url('tts-generate-streaming', include_protocol=False)
             encoded_text = requests.utils.quote(gen_text)
             streaming_url = f"{api_url}?text={encoded_text}&voice={gen_char}&language={gen_lang}&output_file={gen_filen}"
             return streaming_url, str("TTS Streaming Audio Generated")
@@ -1352,15 +1431,8 @@ if gradio_enabled == True:
                         if config.api_def.api_use_legacy_api:
                             return result['output_file_url'], str("TTS Audio Generated")
                         else:
-                            # Set the protocol type
-                            protocol = "http://"  # or "https://" if using HTTPS
                             # Prepend the URL and PORT to the output_file_url
-                            if running_on_google_colab:
-                                output_file_url = f"{tunnel_url_1}{result['output_file_url']}"
-                            elif running_in_docker:
-                                output_file_url = f"{docker_url}{result['output_file_url']}"
-                            else:
-                                output_file_url = f"{protocol}{my_current_url}{result['output_file_url']}"
+                            output_file_url = build_dynamic_url(result['output_file_url'].lstrip('/'), include_protocol=False,  include_api=False)
                             return output_file_url, str("TTS Audio Generated")
                 except requests.exceptions.Timeout:
                     retries += 1
@@ -1405,11 +1477,9 @@ if gradio_enabled == True:
             else:
                 return "Unable to retrieve the domain name."
 
-        # Get the list of languages from languages
-        languages = list(languages_list.keys())
-        with gr.Blocks(theme=selected_theme, title="AllTalk", analytics_enabled=False) as app:
+        with gr.Blocks(css=AllTalkHelpContent.custom_css, theme=selected_theme, title="AllTalk", analytics_enabled=False) as app:
             with gr.Row():
-                gr.Markdown("## AllTalk TTS")
+                gr.Markdown("## AllTalk TTS V2")
                 gr.Markdown("")
                 gr.Markdown("")
                 dark_mode_btn = gr.Button("Light/Dark Mode", variant="primary", size="sm")
@@ -1424,27 +1494,30 @@ if gradio_enabled == True:
                     }
                 }""", show_api=False)
             if config.firstrun_splash:
-                alltalk_welcome()
-            with gr.Tab("Generate TTS"):
-                with gr.Tab("Generate"):
+                with gr.Tab("AllTalk v2 Welcome page"):
+                    def modify_config():
+                        config.firstrun_splash = False
+                        config.save()
+                        return f"Welcome screen is disabled."
+                    gr.Markdown(AllTalkHelpContent.WELCOME, elem_classes="custom-markdown")
                     with gr.Row():
-                        gen_text = gr.Textbox(label="Text Input", lines=10)
-                    if running_in_docker:
+                        gr.Markdown(AllTalkHelpContent.WELCOME1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.WELCOME2, elem_classes="custom-markdown")
+                    update_btn = gr.Button("Click here to hide welcome screen on the next startup")
+                    update_btn.click(fn=modify_config, inputs=None, outputs=None)
+            with gr.Tab("Generate TTS"):
+                    with gr.Row():
+                        gen_text = gr.Textbox(label="Text Input", lines=6)
+                    if running_in_docker:           
                         with gr.Row():
                             with gr.Accordion("Docker IP/URL for API Address updater", open=False):
-                                with gr.Row():
-                                    docker_url = f"http://localhost:{config.api_def.api_port_number}"
-                                    docker_upd = gr.Textbox(label="Docker IP/URL for API Address", value=docker_url, show_label=False)
-                                    update_docker_btn = gr.Button("Update Docker IP/URL API Address")
-                                def update_docker_address(new_url):
-                                    global docker_url  # Need this to modify the global variable
-                                    docker_url = new_url
-                                    return f"Docker API address updated to: {new_url}"
-                                update_docker_btn.click(
-                                    fn=update_docker_address,
-                                    inputs=[docker_upd],
-                                    outputs=[gr.Text(label="Status")]
-                                )
+                                with gr.Row():                                                        
+                                            docker_url = f"http://localhost:{config.api_def.api_port_number}"
+                                            docker_upd = gr.Textbox(label="Docker IP/URL for API Address", value=docker_url, show_label=False, scale=2)
+                                            update_docker_btn = gr.Button("Update Docker IP/URL API Address", scale=1)
+                                with gr.Accordion("HELP - 🐳 Docker IP/URL for API Addresss", open=False):
+                                    with gr.Row():
+                                        gr.Markdown(AllTalkHelpContent.DOCKER_EXPLAINER, elem_classes="custom-markdown")          
                     with gr.Row():
                         with gr.Group():
                             with gr.Row():
@@ -1546,7 +1619,7 @@ if gradio_enabled == True:
                     gen_stream.change(update_narren_and_autopl, inputs=[gen_stream], outputs=[gen_narren, gen_autopl])
                     with gr.Row():
                         output_audio = gr.Audio(show_label=False, label="Generated Audio", autoplay=True, scale=3)
-                        output_message = gr.Textbox( label="TTS Result", lines=5, scale=1)
+                        output_message = gr.Textbox( label="Status/Result", lines=5, scale=1)
                     with gr.Row():
                         dark_mode_btn = gr.Button("Light/Dark Mode", variant="primary")
                         refresh_button = gr.Button("Refresh Server Settings", elem_id="refresh_button")
@@ -1569,15 +1642,24 @@ if gradio_enabled == True:
                     refresh_button.click(at_update_dropdowns, None, [gen_stream, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_speed, gen_pitch, gen_temperature, gen_repetition, gen_lang, model_choices_gr, engine_choices])
                     stop_button.click(stop_generate_tts, inputs=[], outputs=[output_message])
                     submit_button.click(generate_tts, inputs=[gen_text, gen_char, rvcgen_char, rvcat_default_pitch_gr, gen_narr, rvcgen_narr, rvcat_narrator_pitch_gr, gen_narren, gen_textni, gen_repetition, gen_lang, gen_filter, gen_speed, gen_pitch, gen_autopl, gen_autoplvol, gen_filen, gen_temperature, gen_filetime, gen_stream, gen_stopcurrentgen], outputs=[output_audio, output_message])
-
-                if config.gradio_pages.Generate_Help_page:
-                    with gr.Tab("Generate Help"):
-                        help_content = alltalk_generation_help()
-                        gr.Markdown(help_content)
+                    if running_in_docker:
+                        update_docker_btn.click(
+                            fn=update_docker_address,
+                            inputs=[docker_upd],
+                            outputs=[output_message]
+                        )
+                    if config.gradio_pages.Generate_Help_page:
+                        with gr.Accordion("HELP - 🎯 TTS Generation Basics", open=False):
+                            with gr.Row():
+                                gr.Markdown(AllTalkHelpContent.GENERATE_SCREEN1, elem_classes="custom-markdown")
+                                gr.Markdown(AllTalkHelpContent.GENERATE_SCREEN2, elem_classes="custom-markdown")
+                        with gr.Accordion("HELP - ⚙️ Advanced TTS Features", open=False):
+                            with gr.Row():                        
+                                gr.Markdown(AllTalkHelpContent.GENERATE_SCREEN3, elem_classes="custom-markdown")
+                                gr.Markdown(AllTalkHelpContent.GENERATE_SCREEN4, elem_classes="custom-markdown")
 
             if config.gradio_pages.Voice2RVC_page:
                 with gr.Tab("Voice2RVC"):
-                    gr.Markdown("""Voice2RVC allows you to convert your spoken audio files into synthesized speech using advanced RVC (Retrieval-based Voice Conversion) models. You can either record your own speech or upload a pre-recorded audio file for processing. The tool offers features trim your input audio and undo changes if necessary. Simply record or upload your audio, select an RVC voice model, and submit it for processing. Once completed, you can download your synthesized speech.""")
                     with gr.Row():
                         audio_input = gr.Audio(sources=["microphone", "upload"], type="numpy", label="Record audio or Upload a spoken audio file")
                     if running_in_docker:
@@ -1601,11 +1683,22 @@ if gradio_enabled == True:
                     audio_output = gr.Audio(label="Converted Audio")
 
                     submit_button.click(fn=voice2rvc, inputs=[audio_input, rvc_voices_dropdown, rvc_pitch_slider, rvc_f0method], outputs=audio_output)
+                    with gr.Accordion("HELP - 🎯 Voice2RVC Basics", open=False):
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.VOICE2RVC, elem_classes="custom-markdown")                        
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.VOICE2RVC1, elem_classes="custom-markdown")
+                            gr.Markdown(AllTalkHelpContent.VOICE2RVC2, elem_classes="custom-markdown")                    
 
             if config.gradio_pages.TTS_Generator_page:
                 with gr.Tab("TTS Generator"):
-                    gr.Markdown("""With the TTS Generator you can create incredibly long audio e.g. entire books. Yet to be migrated into Gradio""")
-                    gr.Markdown("""Please find it on the web address http://127.0.0.1:7851/static/tts_generator/tts_generator.html (Assuming you have not changed your IP Address)""")
+                    gr.Markdown("""### TTS Generator for long audio generation tasks. [Click here for access](http://127.0.0.1:7851/static/tts_generator/tts_generator.html)""")
+                    with gr.Accordion("HELP -  🎯 TTS Generator Basics", open=False):
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.TTS_GENERATOR, elem_classes="custom-markdown")                        
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.TTS_GENERATOR1, elem_classes="custom-markdown")
+                            gr.Markdown(AllTalkHelpContent.TTS_GENERATOR2, elem_classes="custom-markdown")                         
 
             with gr.Tab("Global Settings"):
                 with gr.Tab("AllTalk Settings"):
@@ -1658,94 +1751,142 @@ if gradio_enabled == True:
                     with gr.Row():
                         submit_button = gr.Button("Update Settings")
                         output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
-
+ 
+                    with gr.Accordion("⚙️ HELP - AllTalk Settings Page", open=False):
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.ALLTALK_SETTINGS_PAGE1, elem_classes="custom-markdown")
+                            gr.Markdown(AllTalkHelpContent.ALLTALK_SETTINGS_PAGE2, elem_classes="custom-markdown")
+                        
+                    with gr.Accordion("🔍 HELP - AllTalk Debug Settings", open=False):
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.DEBUG_HELP1, elem_classes="custom-markdown")
+                            gr.Markdown(AllTalkHelpContent.DEBUG_HELP2, elem_classes="custom-markdown")
+                            
                     # Update the function to include these new settings
                     submit_button.click(
                         update_settings_at,
                         inputs=[delete_output_wavs, gradio_interface, gradio_port_number, output_folder, api_port_number, gr_debug_tts, transcode_audio_format, generate_help_page, voice2rvc_page, tts_generator_page, tts_engines_settings_page, alltalk_documentation_page, api_documentation_page],
                         outputs=output_message
                     )
-
                 with gr.Tab("AllTalk API Defaults"):
-                    gr.Markdown("""## &nbsp;&nbsp;API Version Settings""")
-                    with gr.Group():
-                        with gr.Row():
-                            api_use_legacy_api = gr.Dropdown(choices=["AllTalk v2 API", "AllTalk v1 API (Legacy)"], label=f"{branding} API version", value=config.api_def.api_use_legacy_api, scale=1, allow_custom_value=True)
-                            gr.Textbox(value="Determines the API version to use. The legacy API includes the full URL (protocol, IP address, and port) in the output responses, while the new API returns only the relative path of the output file. Default: AllTalk v2 API", interactive=False, show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_legacy_ip_address = gr.Textbox(value=config.api_def.api_legacy_ip_address, label="AllTalk v1 API IP address")
-                            gr.Textbox(value="Specifies the IP address to be included in the output responses when using the legacy API. Default: 127.0.0.1", interactive=False,show_label=False, lines=2, scale=4)
-                    gr.Markdown("""## &nbsp;&nbsp;API Default Settings""")
-                    with gr.Group():
-                        with gr.Row():
-                            api_length_stripping =  gr.Slider(minimum=1, maximum=20, step=1, value=int(config.api_def.api_length_stripping), label="Strip sentences shorter than", scale=1)
-                            gr.Textbox(value="Defines the minimum length of a sentence (in characters) that will be processed for text-to-speech. Sentences shorter than the X characters value will be filtered out by the Narrator to remove unwanted text characters. Default: 3", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_max_characters = gr.Slider(minimum=50, maximum=10000, step=50, value=int(config.api_def.api_max_characters), label="Maximum amount of characters")
-                            gr.Textbox(value="Sets the maximum number of characters allowed in a single text-to-speech generation request. Requests exceeding this limit will be rejected. Default: 2000", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_text_filtering = gr.Dropdown(value=config.api_def.api_text_filtering, label="Text filtering", choices=["none", "standard", "html"])
-                            gr.Textbox(value="Determines the text filtering method applied to the input text before processing. Available options are 'none' (no filtering), 'standard' (basic filtering), and 'html' (HTML-specific filtering). Default: Standard", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_language = gr.Dropdown(value=config.api_def.api_language, label="Language", choices=["ar", "zh", "cs", "nl", "en", "fr", "de", "hi", "hu", "it", "ja", "ko", "pl", "pt", "ru", "es", "tr"])
-                            gr.Textbox(value="Sets the default language for text-to-speech if no language is explicitly provided in the request. Default: en", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_narrator_enabled = gr.Dropdown(
-                                choices={("Enabled", "true"), ("Disabled", "false"), ("Enabled (Silent)", "silent")},
-                                label="Narrator Enabled/Disable/Silent",
-                                value=config.api_def.api_narrator_enabled
-                            )
-                            gr.Textbox(value="Determines whether the narrator functionality is enabled by default when not explicitly specified in the request. Please note, if you set `Enabled` or `Enabled (silent)` as the APi defaults, then all text will go into the narrator function unless `disabled` is sent as part of the TTS generation request, possibly resulting in silenced TTS. Default: Disabled", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_text_not_inside = gr.Dropdown(choices={"character", "narrator", "silent"}, label="Narrator Text-not-inside", value=config.api_def.api_text_not_inside)
-                            gr.Textbox(value="Defines how narrated text is split and processed when not explicitly specified in the request. The available options are 'character' (text is associated with the character) and 'narrator' (text is associated with the narrator). Default: Narrator", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_output_file_name = gr.Textbox(value=config.api_def.api_output_file_name, label="Output file name")
-                            gr.Textbox(value="Specifies the default name for the output file when no filename is provided in the request. Default: myoutputfile", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_output_file_timestamp = gr.Dropdown(choices={"Timestamp files", "Dont Timestamp (Over-write)"}, label="Include Timestamp", value="Timestamp files" if config.api_def.api_output_file_timestamp else "Dont Timestamp (Over-write)", allow_custom_value=True)
-                            gr.Textbox(value="Determines whether a unique identifier (UUID) timestamp is appended to the generated text-to-speech output file. When enabled, each output file will have a unique timestamp, preventing overwriting of files. When disabled, files with the same name will be overwritten. Default: Timestamp files", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_autoplay = gr.Dropdown(choices={"Play locally", "Play remotely"}, label="Play Locally or Remotely", value="Play remotely" if config.api_def.api_autoplay else "Play locally", allow_custom_value=True)
-                            gr.Textbox(value="Specifies whether the generated audio should be played locally on the client-side or remotely on the server-side console/terminal. Default: Play locally", interactive=False,show_label=False, lines=2, scale=4)
-                        with gr.Row():
-                            api_autoplay_volume = gr.Slider(minimum=0.1, maximum=0.9, step=0.1, label="Remote play volume", value=float(config.api_def.api_autoplay_volume))
-                            gr.Textbox(value="Adjusts the volume level for audio playback when the 'Play Remotely' option is selected. The value ranges from 0.1 (lowest) to 0.9 (highest). Default: 0.9", interactive=False,show_label=False, lines=2, scale=4)
-                    gr.Markdown("""## &nbsp;&nbsp;API Allowed Text Filtering/Passthrough Settings""")
                     with gr.Row():
-                        api_allowed_filter = gr.Textbox(value=config.api_def.api_allowed_filter, label="Allowed text filter", show_label=False, lines=6, scale=1)
-                        gr.Textbox(value="""Defines the set of characters and Unicode ranges that are permitted to be processed by the AllTalk TTS system. This filter ensures that only valid and supported characters are passed to the TTS engine or AI model for generation. The allowed characters include ASCII letters and digits, punctuation, whitespace, and various Unicode ranges for different languages and scripts.
-
-                        a-zA-Z0-9: ASCII letters and digits
-                        .,;:!?: Punctuation characters
-                        '": Single and double quotes
-                        \s: Whitespace characters
-                        \-: Hyphen/dash
-                        $: Dollar sign
-                        \\u00C0-\\u00FF: Latin characters with diacritics (À-ÿ)
-                        \\u0400-\\u04FF: Cyrillic characters
-                        \\u0900-\\u097F: Devanagari characters
-                        \\u4E00-\\u9FFF: Chinese characters (CJK Unified Ideographs)
-                        \\u3400-\\u4DBF: Chinese characters (CJK Unified Ideographs Extension A)
-                        \\uF900-\\uFAFF: Chinese characters (CJK Compatibility Ideographs)
-                        \\u0600-\\u06FF: Arabic characters (Arabic)
-                        \\u0750-\\u077F: Arabic characters (Arabic Supplement)
-                        \\uFB50-\\uFDFF: Arabic characters (Arabic Presentation Forms-A)
-                        \\uFE70-\\uFEFF: Arabic characters (Arabic Presentation Forms-B)
-                        \\u3040-\\u309F: Hiragana characters (Japanese)
-                        \\u30A0-\\u30FF: Katakana characters (Japanese)
-                        \\uAC00-\\uD7A3: Hangul Syllables (Korean)
-                        \\u1100-\\u11FF: Hangul Jamo (Korean)
-                        \\u3130-\\u318F: Hangul Compatibility Jamo (Korean)
-                        \\u0150\\u0151\\u0170\\u0171: Hungarian characters
-                        \\u2018\\u2019: Left and right single quotation marks
-                        \\u201C\\u201D: Left and right double quotation marks
-                        \\u3001\\u3002: Ideographic comma and full stop
-                        \\uFF01\\uFF0C\\uFF1A\\uFF1B\\uFF1F: Fullwidth exclamation, comma, colon, semicolon & question mark
-                        """, interactive=False,show_label=False, lines=32, scale=1)
-                    with gr.Row():
-                        submit_button = gr.Button("Update Settings")
-                        output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
+                        # API Version Settings
+                        with gr.Column(scale=1):
+                            with gr.Group():
+                                with gr.Row():
+                                    api_use_legacy_api = gr.Dropdown(
+                                        choices=["AllTalk v2 API", "AllTalk v1 API (Legacy)"],
+                                        label="API Version",
+                                        scale=1,
+                                        allow_custom_value=True,                                        
+                                        value=config.api_def.api_use_legacy_api
+                                    )
+                                    api_legacy_ip_address = gr.Textbox(
+                                        value=config.api_def.api_legacy_ip_address,
+                                        scale=1,
+                                        label="Legacy API IP Address"
+                                    )
+                        # Request Processing
+                        with gr.Column(scale=2):
+                            with gr.Group():
+                                with gr.Row():
+                                    api_length_stripping = gr.Slider(
+                                        minimum=1, maximum=20, step=1,
+                                        value=int(config.api_def.api_length_stripping),
+                                        scale=2,
+                                        label="Minimum Sentence Length"
+                                    )
+                                    api_max_characters = gr.Slider(
+                                        minimum=50, maximum=10000, step=50,
+                                        value=int(config.api_def.api_max_characters),
+                                        scale=2,
+                                        label="Maximum Request Characters"
+                                    )
+                                    api_text_filtering = gr.Dropdown(
+                                        value=config.api_def.api_text_filtering,
+                                        label="Text Filtering Mode",
+                                        scale=2,
+                                        choices=["none", "standard", "html"]
+                                    )
+                                    api_language = gr.Dropdown(
+                                        value=config.api_def.api_language,
+                                        label="Default Language",
+                                        scale=2,
+                                        choices=["ar", "zh", "cs", "nl", "en", "fr", "de", "hi", "hu", "it", "ja", "ko", "pl", "pt", "ru", "es", "tr"]
+                                    )
+                    with gr.Row():                                    
+                        with gr.Column(scale=1):
+                            with gr.Group():
+                                with gr.Row():
+                                    api_narrator_enabled = gr.Dropdown(
+                                        choices=[("Enabled", "true"), ("Disabled", "false"), ("Enabled (Silent)", "silent")],
+                                        label="Narrator Mode",
+                                        allow_custom_value=True,
+                                        value="true" if config.api_def.api_narrator_enabled == "true" else ("silent" if config.api_def.api_narrator_enabled == "silent" else "false")
+                                    )
+                                    api_text_not_inside = gr.Dropdown(
+                                        choices=["character", "narrator", "silent"],
+                                        label="Text-Not-Inside Handling",
+                                        allow_custom_value=True,                                        
+                                        value=config.api_def.api_text_not_inside
+                                    )                                
+                        with gr.Column(scale=2):
+                            with gr.Group():
+                                with gr.Row():                        
+                                    api_output_file_name = gr.Textbox(
+                                        value=config.api_def.api_output_file_name,
+                                        label="Default Filename"
+                                    )
+                                    api_output_file_timestamp = gr.Dropdown(
+                                        choices=["Timestamp files", "Dont Timestamp (Over-write)"],
+                                        label="File Timestamping",
+                                        allow_custom_value=True,
+                                        value="Timestamp files" if config.api_def.api_output_file_timestamp else "Dont Timestamp (Over-write)"
+                                    )
+                                    api_autoplay = gr.Dropdown(
+                                        choices=["Play locally", "Play remotely"],
+                                        label="Playback Location",
+                                        allow_custom_value=True,
+                                        value="Play remotely" if config.api_def.api_autoplay else "Play locally"
+                                    )
+                                    api_autoplay_volume = gr.Slider(
+                                        minimum=0.1, maximum=0.9, step=0.1,
+                                        label="Remote Playback Volume",
+                                        value=float(config.api_def.api_autoplay_volume)
+                                    )
+                    with gr.Row():                                    
+                        with gr.Column(scale=2):
+                            with gr.Group():
+                                with gr.Row():
+                                    api_allowed_filter = gr.Textbox(
+                                        value=config.api_def.api_allowed_filter,
+                                        label="Allowed Characters & Unicode Ranges",
+                                        lines=3
+                                    )
+                        with gr.Column(scale=1):
+                            with gr.Group():
+                                with gr.Row():
+                                    with gr.Column(scale=2):
+                                        output_message = gr.Textbox(
+                                            label="Status",
+                                            interactive=False
+                                        )
+                                        submit_button = gr.Button("Update Settings")                                        
+                    # Help Accordions
+                    with gr.Accordion("HELP - 🎯 Quick Start Guide", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS1, elem_classes="custom-markdown")
+                    with gr.Accordion("HELP - 🔄 Version & Compatibility Settings (API v1/v2, Legacy support)", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS2, elem_classes="custom-markdown")
+                    with gr.Accordion("HELP - 🎛️ Request Configuration (Character limits, language, file names)", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS3, elem_classes="custom-markdown")
+                    with gr.Accordion("HELP - 📝 Text Processing & Filtering (Filtering modes, character sets, language)", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS4, elem_classes="custom-markdown")
+                    with gr.Accordion("HELP - 🗣️ Narrator & Playback (Narrator modes, text handling, playback options", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS5, elem_classes="custom-markdown")
+                    with gr.Accordion("HELP - 📚 API Allowed Text Filtering/Passthrough", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS6, elem_classes="custom-markdown")
+                    with gr.Accordion("HELP - ❗ Troubleshooting & Best Practices", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_DEFAULTS7, elem_classes="custom-markdown")                        
 
                     submit_button.click(update_settings_api, inputs=[api_length_stripping, api_legacy_ip_address, api_allowed_filter, api_max_characters, api_use_legacy_api, api_text_filtering, api_narrator_enabled, api_text_not_inside, api_language, api_output_file_name, api_output_file_timestamp, api_autoplay, api_autoplay_volume], outputs=output_message)
 
@@ -1807,11 +1948,12 @@ if gradio_enabled == True:
                             filter_radius = gr.Slider(minimum=0, maximum=7, label="Filter Radius", info="If the number is greater than or equal to three, employing median filtering on the collected tone results has the potential to decrease respiration.", value=config.rvc_settings.filter_radius, step=1, interactive=True,)
                     with gr.Row():
                         with gr.Column():
-                            with gr.Row():
-                                embedder_model = gr.Radio(label="Embedder Model", info="Model used for learning speaker embedding.", choices=["hubert", "contentvec"], value=config.rvc_settings.embedder_model, interactive=True,)
-                            with gr.Row():
-                                split_audio = gr.Checkbox(label="Split Audio", info="Split the audio into chunks for inference to obtain better results in some cases.", value=config.rvc_settings.split_audio, interactive=True,)
-                                autotune = gr.Checkbox(label="Autotune", info="Apply a soft autotune to your inferences, recommended for singing conversions.", value=config.rvc_settings.autotune, interactive=True,)
+                            with gr.Row():                                
+                                with gr.Row():
+                                    embedder_model = gr.Radio(label="Embedder Model", info="Model used for learning speaker embedding.", choices=["hubert", "contentvec"], value=config.rvc_settings.embedder_model, interactive=True,)
+                                with gr.Row():
+                                    split_audio = gr.Checkbox(label="Split Audio", info="Split the audio into chunks for inference to obtain better results in some cases.", value=config.rvc_settings.split_audio, interactive=True,)
+                                    autotune = gr.Checkbox(label="Autotune", info="Apply a soft autotune to your inferences, recommended for singing conversions.", value=config.rvc_settings.autotune, interactive=True,)
                         with gr.Column():
                             f0method = gr.Radio(label="Pitch Extraction Algorithm", info="Select the algorithm to be used for extracting the pitch (F0) during audio conversion. The default algorithm is rmvpe, which is generally recommended for most cases due to its balance of accuracy and performance.", choices=["crepe", "crepe-tiny", "dio", "fcpe", "harvest", "hybrid[rmvpe+fcpe]", "pm", "rmvpe"], value=config.rvc_settings.f0method, interactive=True,)
                     with gr.Row():
@@ -1819,6 +1961,12 @@ if gradio_enabled == True:
                         update_output = gr.Textbox(label="Update Status", show_label=False)
                     rvc_refresh_button.click(rvc_update_dropdowns, None, [rvc_char_model_file_gr, rvc_narr_model_file_gr])
                     update_button.click(fn=gr_update_rvc_settings, inputs=[rvc_enabled, rvc_char_model_file_gr, rvc_narr_model_file_gr, split_audio, autotune, pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0method, embedder_model, training_data_size], outputs=[update_output])
+
+                    with gr.Accordion("🗣️ HELP - RVC Settings Page", open=False, elem_classes=["gr-accordion"]):
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.RVC_PAGE1, elem_classes="custom-markdown")
+                            gr.Markdown(AllTalkHelpContent.RVC_PAGE2, elem_classes="custom-markdown")
+
 
                 with gr.Tab("Text-generation-webui Settings"):
                     with gr.Row():
@@ -1845,13 +1993,27 @@ if gradio_enabled == True:
                                 globals()[f"{engine_name}_at_gradio_settings_page"](globals()[f"{engine_name}_model_config_data"])
 
             if config.gradio_pages.alltalk_documentation_page:
-                alltalk_documentation()
-
-            if config.gradio_pages.api_documentation_page:
-                api_documentation()
+                with gr.Tab("Documentation"):
+                    with gr.Accordion("📖 HELP - Narrator Function", open=False):
+                        gr.Markdown(AllTalkHelpContent.NARRATOR, elem_classes="custom-markdown")
+                        with gr.Row():
+                            gr.Markdown(AllTalkHelpContent.NARRATOR1, elem_classes="custom-markdown")
+                            gr.Markdown(AllTalkHelpContent.NARRATOR2, elem_classes="custom-markdown")                                            
+                    with gr.Accordion("🔌 HELP - API Standard TTS Generation Endpoints", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_STANDARD, elem_classes="custom-markdown")
+                    with gr.Accordion("🔌 HELP - API Streaming TTS Generation Endpoints", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_STREAMING, elem_classes="custom-markdown")
+                    with gr.Accordion("🔌 HELP - API Server Control Endpoints", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_CONTROL, elem_classes="custom-markdown")
+                    with gr.Accordion("🔌 HELP - API Server Status Endpoints", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_STATUS, elem_classes="custom-markdown")
+                    with gr.Accordion("🔌 HELP - API OpenAI V1 Speech Endpoints", open=False):
+                        gr.Markdown(AllTalkHelpContent.API_OPENAPI, elem_classes="custom-markdown")                                                                        
 
             with gr.Tab("About this project"):
-                alltalk_about()
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.WELCOME1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.WELCOME2, elem_classes="custom-markdown")
 
         return app
 

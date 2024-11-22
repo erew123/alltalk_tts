@@ -95,7 +95,7 @@ def print_message(message, message_type="standard", component="TTS"):
             
         if message_type == "debug_func" and "Function entry:" in message:
             message_parts = message.split("Function entry:", 1)
-            print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} Function entry:{GREEN}{message_parts[1]}{RESET}")
+            print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} Function entry:{GREEN}{message_parts[1]}{RESET} tts_server.py")
         else:
             print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} {message}")
         
