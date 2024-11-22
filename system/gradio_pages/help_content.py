@@ -137,6 +137,17 @@ class AllTalkHelpContent:
         flex: 1 1 50% !important;
         min-width: 0 !important; /* Prevents flex items from overflowing */
     }
+
+    .small-file-upload { 
+    min-height: 200px;
+    max-height: 200px;
+    }
+
+    .small-file-upload2 { 
+    min-height: 90px;
+    max-height: 90px;
+    }    
+
     """
 
     WELCOME = """
@@ -2520,3 +2531,446 @@ class AllTalkHelpContent:
     Note: The Gradio interface will not reflect these changes until AllTalk is reloaded, as Gradio caches the list.
     """
 
+    TRANSCRIBE = """
+    ## 🎯 Transcribe Help
+
+    Transcribe is a tool that converts spoken audio into text using OpenAI's Whisper speech recognition models. It supports multiple output formats and batch processing capabilities.
+    """
+
+    TRANSCRIBE1 = """
+    ## 🎤 Input Methods
+
+    ### File Upload
+    - Supported formats: MP3, WAV, M4A, OGG, FLAC, AAC, WMA, AIFF, ALAC, OPUS
+    - Recommended max size: 50MB per file (larger allowed)
+    - Multiple files supported
+    - Quality tips:
+        - Clear audio with minimal background noise
+        - Consistent volume levels
+        - Good microphone quality
+        - Minimal echo or reverb
+
+    ## 📝 Output Options
+
+    ### Format Selection
+    1. **TXT Format**
+        - Plain text transcription
+        - Simple and clean output
+        - Easy to edit and process
+        - No timing information
+
+    2. **JSON Format**
+        - Complete transcription data
+        - Includes timing information
+        - Speaker segments
+        - Confidence scores
+        - Additional metadata
+
+    3. **SRT Format**
+        - Standard subtitle format
+        - Includes timestamps
+        - Compatible with video players
+        - Useful for captioning
+
+    ### Organization Features
+    - Optional prefix naming
+        - Add custom prefix to files
+        - Helps organize batches
+        - Useful for project management
+        - Examples: "meeting_", "interview_"
+
+    - Automatic timestamping
+        - Each batch uniquely identified
+        - Prevents file overwrites
+        - Easy chronological sorting
+        - Format: YYYYMMDD_HHMMSS
+
+    ## 🎚️ Model Selection
+
+    ### Available Models
+    1. **Tiny**
+        - Fastest processing
+        - Lowest resource usage
+        - Basic accuracy
+        - Good for quick tests
+
+    2. **Base**
+        - Balanced performance
+        - Good for most uses
+        - Moderate accuracy
+        - Efficient processing
+        
+    3. **Small**
+        - Better accuracy
+        - Slightly slower
+        - Good all-rounder
+        - Recommended default
+
+    4. **Medium**
+        - High accuracy
+        - Slower processing
+        - Better with accents
+        - Good for complex audio
+    """
+        
+    TRANSCRIBE2 = """
+    ## 🎚️ Model Selection cont...
+
+    5. **Large**
+        - Best accuracy
+        - Slowest processing
+        - Most resource intensive
+        - Best for critical transcription
+
+    ## 💡 Best Practices
+
+    1. **File Preparation**
+        - Remove unnecessary silence
+        - Ensure clear audio quality
+        - Split very long recordings
+        - Check file format compatibility
+
+    2. **Model Selection Tips**
+        - Start with 'base' model
+        - Use 'tiny' for quick tests
+        - 'medium'/'large' for accuracy
+        - Consider processing time needs
+
+    3. **Batch Processing**
+        - Group related files
+        - Use meaningful prefixes
+        - Monitor available space
+        - Check progress indicators
+
+    4. **File Management**
+        - Use descriptive prefixes
+        - Clean up temporary files
+        - Download results promptly
+        - Organize by project/date
+
+    ## ⚠️ Troubleshooting
+
+    - **File Upload Issues**
+        - Check file format
+        - Verify file size
+        - Try splitting large files
+        - Ensure stable connection
+
+    - **Processing Errors**
+        - Check audio quality
+        - Try different model size
+        - Ensure sufficient space
+        - Monitor system resources
+
+    - **Output Quality Issues**
+        - Try larger model
+        - Check input audio quality
+        - Consider background noise
+        - Verify speech clarity
+
+    ## 🔧 System Requirements
+
+    - Modern web browser
+    - Sufficient storage space
+    - Stable internet connection
+    - Adequate processing power
+        - More important for larger models
+        - GPU recommended for large batches
+
+    ## 🗂️ Output Directory Structure
+
+    ```
+    transcriptions/
+    ├── uploads/
+    │   └── (temporary audio files)
+    └── output/
+        ├── project1_20240122_123456/
+        │   ├── project1_audio1.txt
+        │   ├── project1_audio1.srt
+        │   └── project1_summary.json
+        └── meeting_20240122_234567/
+            ├── meeting_recording1.txt
+            ├── meeting_recording1.srt
+            └── meeting_summary.json
+    """
+
+    WHISPER_LANGUAGES = {
+    "en": "English",
+    "zh": "Chinese",
+    "de": "German",
+    "es": "Spanish",
+    "ru": "Russian",
+    "ko": "Korean",
+    "fr": "French",
+    "ja": "Japanese",
+    "pt": "Portuguese",
+    "tr": "Turkish",
+    "pl": "Polish",
+    "ca": "Catalan",
+    "nl": "Dutch",
+    "ar": "Arabic",
+    "sv": "Swedish",
+    "it": "Italian",
+    "id": "Indonesian",
+    "hi": "Hindi",
+    "fi": "Finnish",
+    "vi": "Vietnamese",
+    "he": "Hebrew",
+    "uk": "Ukrainian",
+    "el": "Greek",
+    "ms": "Malay",
+    "cs": "Czech",
+    "ro": "Romanian",
+    "da": "Danish",
+    "hu": "Hungarian",
+    "ta": "Tamil",
+    "no": "Norwegian",
+    "th": "Thai",
+    "ur": "Urdu",
+    "hr": "Croatian",
+    "bg": "Bulgarian",
+    "lt": "Lithuanian",
+    "la": "Latin",
+    "mi": "Maori",
+    "ml": "Malayalam",
+    "cy": "Welsh",
+    "sk": "Slovak",
+    "te": "Telugu",
+    "fa": "Persian",
+    "lv": "Latvian",
+    "bn": "Bengali",
+    "sr": "Serbian",
+    "az": "Azerbaijani",
+    "sl": "Slovenian",
+    "kn": "Kannada",
+    "et": "Estonian",
+    "mk": "Macedonian",
+    "br": "Breton",
+    "eu": "Basque",
+    "is": "Icelandic",
+    "hy": "Armenian",
+    "ne": "Nepali",
+    "mn": "Mongolian",
+    "bs": "Bosnian",
+    "kk": "Kazakh",
+    "sq": "Albanian",
+    "sw": "Swahili",
+    "gl": "Galician",
+    "mr": "Marathi",
+    "pa": "Punjabi",
+    "si": "Sinhala",
+    "km": "Khmer",
+    "sn": "Shona",
+    "yo": "Yoruba",
+    "so": "Somali",
+    "af": "Afrikaans",
+    "oc": "Occitan",
+    "ka": "Georgian",
+    "be": "Belarusian",
+    "tg": "Tajik",
+    "sd": "Sindhi",
+    "gu": "Gujarati",
+    "am": "Amharic",
+    "yi": "Yiddish",
+    "lo": "Lao",
+    "uz": "Uzbek",
+    "fo": "Faroese",
+    "ht": "Haitian Creole",
+    "ps": "Pashto",
+    "tk": "Turkmen",
+    "nn": "Nynorsk",
+    "mt": "Maltese",
+    "sa": "Sanskrit",
+    "lb": "Luxembourgish",
+    "my": "Myanmar",
+    "bo": "Tibetan",
+    "tl": "Tagalog",
+    "mg": "Malagasy",
+    "as": "Assamese",
+    "tt": "Tatar",
+    "haw": "Hawaiian",
+    "ln": "Lingala",
+    "ha": "Hausa",
+    "ba": "Bashkir",
+    "jw": "Javanese",
+    "su": "Sundanese",
+}
+    WHISPER_HELP = """
+    ## 🎤 Dictate Help
+
+    The Dictate feature enables real-time speech-to-text conversion using OpenAI's Whisper models. This guide explains all available settings and provides recommendations for optimal use.
+    """
+
+    WHISPER_HELP1 = """
+    ## 📝 Basic Settings
+
+    **Known Bug** After unloading the model you have to **refresh the page** to start trancription again. Believed to be a Gradio bug/issue.
+
+    ### Whisper Model Selection
+    - **Purpose**: Determines the model size and accuracy used for transcription
+    - **Options**:
+        * `tiny` (0.5GB VRAM): Fastest, basic accuracy, good for testing
+        * `base` (1GB VRAM): Good balance of speed and accuracy
+        * `small` (2GB VRAM): Better accuracy, suitable for clear speech
+        * `medium` (4GB VRAM): High accuracy, handles accents better
+        * `large-v3` (10GB VRAM): Best accuracy, handles complex audio
+        * `large-v3-turbo` (10GB VRAM): Fast high-quality processing
+        * `turbo` (10GB VRAM): Fastest high-quality option
+
+    **Recommendation**: Start with a `turbo` model for speed, or `base` if VRAM is very limited and `large-v3`for best quality<br>
+    **Note**: Ensure your GPU has sufficient VRAM. Running out of VRAM will cause crashes
+
+    ### Language Settings
+    - **Language**: Primary language for transcription
+    - **Source Language**: Original speech language if translating
+    - **Translate to English**: Converts source language to English
+    - **Recommendation**: Set both to match your speech language unless translation needed
+
+    1. **Language**:
+        - Sets the language model that Whisper uses to decode speech into text
+        - Used as the OUTPUT language for transcription
+        - Controls what language the text will be written in
+        - Example: Set to English to get English text output
+
+    2. **Source Language**:
+        - Tells Whisper what language to expect in the input audio
+        - Helps the model better recognize speech patterns and phonemes
+        - Improves accuracy when processing non-English speech
+        - Example: Set Source Language to French when speaker is speaking French
+
+    ### Language Use Case Examples:
+    **Same Language Transcription**: Set both to same language (e.g., English/English for English speech to English text)<br>
+    **Translation**: Set Source Language to speaker's language (e.g., French) and Language to desired output language (e.g., English)<br>
+    **Best Accuracy**: Always set Source Language to match the actual spoken language, even when translating
+
+    **Note**: If "Translate to English" is enabled, it overrides the Language setting and forces English output.
+
+    ## Output Format
+        - **Types**:
+            * `txt`: Simple text file
+            * `srt`: Subtitle format with timestamps
+            * `json`: Detailed format with metadata
+        - **Location**: Files saved to `transcriptions/live_dictation/`
+        - **Naming**: `[prefix]_dictation_[timestamp].[format]`
+
+    ## 🎚️ Advanced Settings
+
+    ### Audio Processing
+    - **Enable ALL Audio Enhancements**:
+        * Activates **ALL** audio processing features
+        * Use when recording quality needs improvement
+        * The checkboxes for other settings will not show checked
+        
+    - **Apply Noise Reduction**:
+        * Reduces background noise
+        * **Recommendation**: Enable for noisy environments
+
+    - **Apply Audio Compression**:
+        * Evens out volume levels
+        * **Use When**: Speaking volume varies significantly
+
+    - **Apply Bandpass Filter**:
+    The Bandpass Filter isolates frequencies within the typical range of human speech, filtering out low-frequency rumbles and high-frequency hiss or noise. This improves transcription quality in challenging environments.<br><br>
+    - **∿ Low Frequency (Hz)** *(Range: 50 - 120 Hz)*  
+        - **Default Value:** 85 Hz  
+        - **Lower Values (e.g., 50–70 Hz):**
+            - Recommended for deeper male voices or audio with a broader vocal range.
+            - Useful when preserving low vocal harmonics in clean recordings.
+        - **Higher Values (e.g., 100–120 Hz):**
+            - Filters out low-frequency background hums (e.g., AC noise, mic handling noise).
+            - Ideal for recordings with rumble or low-frequency distortion.<br><br>
+
+    - **∿ High Frequency (Hz)** *(Range: 3000 - 5000 Hz)*  
+        - **Default Value:** 3800 Hz  
+        - **Lower Values (e.g., 3000–3500 Hz):**
+            - Reduces high-pitched noise, hissing, or squeals in noisy environments.
+            - Useful for telephone-quality recordings or audio with limited frequency range.
+        - **Higher Values (e.g., 4000–5000 Hz):**
+            - Captures more speech detail and overtones, particularly for tonal languages or professionally recorded audio.
+            - Suitable for higher-quality recordings where clarity is paramount.
+
+    **Use Bandpass Filter in Noisy Environments:** Helps focus on human speech frequencies while ignoring irrelevant noise.
+
+    **Skip Bandpass for Pristine Audio:** For high-quality recordings, skipping this filter ensures no speech frequencies are lost.    
+    """
+
+    WHISPER_HELP2 = """
+    ### Timing and Organization
+    - **Add Timestamps**:
+        * Adds time markers to transcription
+        * Useful for long recordings
+        * Format: `[HH:MM:SS] Text`
+
+    - **Enable Speaker Diarization**:
+        * Attempts to identify different speakers
+        * Basic implementation - best for clear speaker transitions
+        * Format: `Speaker 1: Text`
+
+    - **Silence Threshold** *(Range: 0.001 - 0.02)*  
+    This setting determines the amplitude below which audio is treated as silence. Adjusting this is essential for balancing noise filtering and capturing soft speech.  
+        - **Default Value:** 0.008  
+        - **Use Higher Values (e.g., 0.01–0.02):**
+            - Reduces false triggers from faint background noise (e.g., air conditioners, hums).
+            - Suitable for noisier environments where background noise needs to be suppressed.
+        - **Use Lower Values (e.g., 0.001–0.007):**
+            - Helps capture quieter or softer speech.
+            - Ideal for high-quality recordings with minimal background noise.
+
+    **Tip:** Monitor the **Audio Levels graph** during preprocessing or testing to ensure speech is detected while avoiding unnecessary noise capture. Fine-tune based on the quietest speaker in your audio.
+
+    ### **Additional Notes for Optimization:**
+    - **Experiment with Combined Settings:**
+        - Pair a **higher Silence Threshold** (e.g., 0.01) with a **narrower Bandpass range** (e.g., 100–3500 Hz) in noisy environments.
+        - Use a **lower Silence Threshold** (e.g., 0.005) and a **wider Bandpass range** (e.g., 50–4000 Hz) for high-quality or wide-spectrum recordings.
+    - **Adapt Based on Speaker Profiles:**
+        - Adjust **Low Frequency** for male vs. female speakers.
+        - Raise **High Frequency** for tonal clarity in languages like Mandarin or musical recordings.
+        
+    ## 📊 Real-Time Feedback
+
+    ### Audio Levels Graph
+    - Shows audio input strength in real-time
+    - **How to Read**:
+        * X-axis: Time
+        * Y-axis: Audio level
+        * **Good levels**: Consistent peaks without flatlines or clipping
+        * **Too low**: Flat or minimal movement
+        * **Too high**: Constant maximum peaks
+
+    ## 🔄 Workflow
+
+    1. **Setup**:
+        - Select Whisper model based on your GPU's VRAM
+        - Choose output format and optional file name prefix 
+        - Configure advanced settings if needed
+
+    2. **Recording**:
+        - Click "Load Model" to initialize
+        - Press "Record" to start transcription
+        - Speak clearly at a consistent volume
+        - Watch Audio Levels for feedback
+        - Press "Stop" to pause/resume
+        - Use "Finish & Unload" when completely done
+
+    3. **File Management**:
+        - Transcripts auto-save to `transcriptions/live_dictation/`
+        - Each session creates new timestamped files
+        - Multiple formats saved if selected
+
+    ## ⚠️ Important Notes
+
+    - **VRAM Usage**:
+        * Monitor GPU memory
+        * Close other GPU applications
+        * Restart application if performance degrades
+
+    - **Best Practices**:
+        * Speak clearly and at consistent volume
+        * Position microphone correctly
+        * Use Audio Levels graph for feedback
+
+    - **Performance Tips**:
+        * Use `large-v3-turbo` for best speed/quality balance
+        * Enable audio processing only when needed
+        * Refresh page between sessions if issues occur
+    """
