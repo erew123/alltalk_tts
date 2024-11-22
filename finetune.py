@@ -889,20 +889,20 @@ def create_pfc_interface():
             with gr.Row():
                 with gr.Column():
                     with gr.Accordion("💻 Hardware Requirements", open=False):
-                        gr.Markdown(HELP_CONTENT["gpu_requirements"])
+                        gr.Markdown(HELP_CONTENT["gpu_requirements"], elem_classes="custom-markdown")
 
                 with gr.Column():
                     with gr.Accordion("🖥️ Storage Requirements", open=False):
-                        gr.Markdown(HELP_CONTENT["disk_space_details"])
+                        gr.Markdown(HELP_CONTENT["disk_space_details"], elem_classes="custom-markdown")
 
             with gr.Row():
                 with gr.Column():
                     with gr.Accordion("🤖 PyTorch & CUDA", open=False):
-                        gr.Markdown(HELP_CONTENT["pytorch_cuda"])
+                        gr.Markdown(HELP_CONTENT["pytorch_cuda"], elem_classes="custom-markdown")
 
                 with gr.Column():
                     with gr.Accordion("📦 Model Setup", open=False):
-                        gr.Markdown(HELP_CONTENT["model_setup"])
+                        gr.Markdown(HELP_CONTENT["model_setup"], elem_classes="custom-markdown")
 
             def run_checks():
                 system_checks.run_all_checks()
@@ -3925,25 +3925,25 @@ if __name__ == "__main__":
                 )
                 with gr.Accordion("🎯 Quick Start Guide", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_QUICKSTART)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_QUICKSTART, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("📋 Detailed Instructions", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_DETAILED_INSTRUCTIONS)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_DETAILED_INSTRUCTIONS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("🔧 Process Overview", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_PROCESS_OVERVIEW)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_PROCESS_OVERVIEW, elem_classes="custom-markdown") # pylint: disable=no-member
                 with gr.Accordion("🔍 Whisper Model Selection", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_WHISPER_MODEL_SELECTION)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_WHISPER_MODEL_SELECTION, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("⚙️ Advanced Settings", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_ADVANCED_SETTINGS)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_ADVANCED_SETTINGS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("🔍 Dataset Creation Debug Settings", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_DEBUG_SETTINGS)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_DEBUG_SETTINGS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("❗ Troubleshooting", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP1_TROUBLESHOOTING)  # pylint: disable=no-member
+                        FinetuneContent.STEP1_TROUBLESHOOTING, elem_classes="custom-markdown")  # pylint: disable=no-member
 
         with gr.TabItem("📊 Dataset Validation"):
             with gr.Row():
@@ -3953,10 +3953,10 @@ if __name__ == "__main__":
                     with gr.Row():
                         with gr.Column():
                             gr.Markdown(
-                                FinetuneContent.DATASET_VALIDATION_1)  # pylint: disable=no-member
+                                FinetuneContent.DATASET_VALIDATION_1, elem_classes="custom-markdown")  # pylint: disable=no-member
                         with gr.Column():
                             gr.Markdown(
-                                FinetuneContent.DATASET_VALIDATION_2)  # pylint: disable=no-member
+                                FinetuneContent.DATASET_VALIDATION_2, elem_classes="custom-markdown")  # pylint: disable=no-member
 
             with gr.Row():
                 progress_box = gr.Textbox(label="Progress", interactive=False)
@@ -4456,31 +4456,31 @@ if __name__ == "__main__":
                 )
                 with gr.Accordion("🎯 Quick Start Training Guide", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_QUICKSTART)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_QUICKSTART, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("📁 Using Your Own Training Dataset", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_YOUR_OWN_DATASET)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_YOUR_OWN_DATASET, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("📊 Training Metrics and Logs", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_TRAINING_METRICS)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_TRAINING_METRICS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("💾 Memory Management", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_MEMORY_MANAGEMENT)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_MEMORY_MANAGEMENT, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("⚙️ Batch Size & Gradient Accumulation", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_BATCH_SIZE)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_BATCH_SIZE, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("📊 Learning Rate & Schedulers", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_LEARNING_RATE)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_LEARNING_RATE, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("🔧 Optimizers", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_OPTIMIZERS)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_OPTIMIZERS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("🔄 Training Epochs", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_EPOCHS)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_EPOCHS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("📈 Max Audio Length", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP2_AUDIO_LENGTH)  # pylint: disable=no-member
+                        FinetuneContent.STEP2_AUDIO_LENGTH, elem_classes="custom-markdown")  # pylint: disable=no-member
 
         #######################
         #### GRADIO STEP 3 ####
@@ -4625,30 +4625,30 @@ if __name__ == "__main__":
                 )
                 with gr.Accordion("🎯 Testing Overview", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP3_TESTING_OVERVIEW)  # pylint: disable=no-member
+                        FinetuneContent.STEP3_TESTING_OVERVIEW, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("⚠️ Important Notes", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP3_IMPORTANT)  # pylint: disable=no-member
+                        FinetuneContent.STEP3_IMPORTANT, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("📝 Testing Instructions", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP3_INSTRUCTIONS)  # pylint: disable=no-member
+                        FinetuneContent.STEP3_INSTRUCTIONS, elem_classes="custom-markdown")  # pylint: disable=no-member
                 with gr.Accordion("🔍 What the Testing Step Does", open=False):
                     gr.Markdown(
-                        FinetuneContent.STEP3_WHAT_IT_DOES)  # pylint: disable=no-member
+                        FinetuneContent.STEP3_WHAT_IT_DOES, elem_classes="custom-markdown")  # pylint: disable=no-member
 
         with gr.Tab("📦 Model Export"):
             with gr.Accordion("🎯 Export Overview", open=False):
                 gr.Markdown(
-                    FinetuneContent.EXPORT_OVERVIEW)  # pylint: disable=no-member
+                    FinetuneContent.EXPORT_OVERVIEW, elem_classes="custom-markdown")  # pylint: disable=no-member
             with gr.Accordion("📊 Voice Sample Organization", open=False):
                 gr.Markdown(
-                    FinetuneContent.EXPORT_VOICE_SAMPLES)  # pylint: disable=no-member
+                    FinetuneContent.EXPORT_VOICE_SAMPLES, elem_classes="custom-markdown")  # pylint: disable=no-member
             with gr.Accordion("🔄 Export Options", open=False):
                 gr.Markdown(
-                    FinetuneContent.EXPORT_OPTIONS)  # pylint: disable=no-member
+                    FinetuneContent.EXPORT_OPTIONS, elem_classes="custom-markdown")  # pylint: disable=no-member
             with gr.Accordion("💾 Storage Management", open=False):
                 gr.Markdown(
-                    FinetuneContent.EXPORT_STORAGE)  # pylint: disable=no-member
+                    FinetuneContent.EXPORT_STORAGE, elem_classes="custom-markdown")  # pylint: disable=no-member
 
             final_progress_data = gr.Label(label="Progress:")
             with gr.Row():
