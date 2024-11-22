@@ -361,20 +361,20 @@ class AllTalkHelpContent:
 
     ## 🗣️ Voice Management
 
-    ### Single Voice Setup
+    ### Single Voice Setup (Wav/MP3)
     - Place WAV/MP3 files in `/alltalk_tts/voices/`
     - Use descriptive filenames (e.g., `broadcaster_male.wav`)
     - Files appear as individual voices in interface
     - Best for quick testing or simple use cases
 
-    ### Multi-Voice Sets
+    ### Multi-Voice Sets (Wav/MP3)
     - Create folders in `/alltalk_tts/voices/xtts_multi_voice_sets/`
     - Add multiple samples per voice
     - System randomly selects up to 5 samples
     - Better for consistent voice reproduction
     - Example: `/voices/xtts_multi_voice_sets/broadcaster_voice/`
 
-    ### Pre-computed Latents
+    ### Pre-computed Latents (JSON latents)
     - Stored in `/voices/xtts_latents/`
     - Faster generation times
     - Reduced memory usage
@@ -430,7 +430,7 @@ class AllTalkHelpContent:
     - **Models**: `/alltalk_tts/models/xtts/`
     - **Voice Samples**: `/alltalk_tts/voices/`
     - **Multi-Voice Sets**: `/alltalk_tts/voices/xtts_multi_voice_sets/`
-    - **Latents**: `/alltalk_tts/voices/xtts_latents/`
+    - **JSON Latents**: `/alltalk_tts/voices/xtts_latents/`
     - **Outputs**: `/alltalk_tts/outputs/`
         - Automatic cleanup available
         - Configurable retention period
