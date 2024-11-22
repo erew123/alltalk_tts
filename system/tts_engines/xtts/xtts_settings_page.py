@@ -4,6 +4,7 @@ import requests
 import gradio as gr
 from tqdm import tqdm
 from pathlib import Path
+from .help_content import AllTalkHelpContent
 
 this_dir = Path(__file__).parent.resolve()                         # Sets up self.this_dir as a variable for the folder THIS script is running in.
 main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up self.main_dir as a variable for the folder AllTalk is running in
@@ -128,11 +129,16 @@ def xtts_model_alltalk_settings(model_config_data):
                         def_narrator_voice_gr = gr.Dropdown(value=model_config_data["settings"]["def_narrator_voice"], label="Narrator Voice", choices=voice_list, allow_custom_value=True)
                     with gr.Group():
                         with gr.Row():
-                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="In this section, you can set the default settings for this TTS engine. Settings that are not supported by the current engine will be greyed out and cannot be selected. Default voices specified here will be used when no specific voice is provided in the TTS generation request. If a voice is specified in the request, it will override these default settings. When using the OpenAI API compatable API with this TTS engine, the voice mappings will be applied. As the OpenAI API has a limited set of 6 voices, these mappings ensure compatibility by mapping the OpenAI voices to the available voices in this TTS engine.")
+                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="Configure default settings and voice mappings for the selected TTS engine. Unavailable options are grayed out based on engine capabilities. See the Help section below for detailed information about each setting.")
             with gr.Row():
                 submit_button = gr.Button("Update Settings")
                 output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
-
+            with gr.Accordion("HELP - 🔊 Understanding TTS Engine Default Settings Page", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")  
             submit_button.click(xtts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
@@ -166,34 +172,12 @@ def xtts_model_alltalk_settings(model_config_data):
                         gr.Textbox(label="Linux Support", value='Yes' if features_list['linux_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Mac Support", value='Yes' if features_list['mac_capable'] else 'No', interactive=False)
             with gr.Row():
-                gr.Markdown("""
-                ####  🟧 DeepSpeed Capable
-                DeepSpeed is a deep learning optimization library that can significantly speed up model training and inference. If a model is DeepSpeed capable, it means it can utilize DeepSpeed to accelerate the generation of text-to-speech output. This requires the model to be loaded into CUDA/VRAM on an Nvidia GPU and the model's inference method to support DeepSpeed.
-                ####  🟧 Pitch Capable
-                Pitch refers to the highness or lowness of a sound. If a model is pitch capable, it can adjust the pitch of the generated speech, allowing for more expressive and varied output.
-                #### 🟧 Generation Speed Capable
-                Generation speed refers to the rate at which the model can generate text-to-speech output. If a model is generation speed capable, it means the speed of the generated speech can be adjusted, making it faster or slower depending on the desired output.
-                #### 🟧 Repetition Penalty Capable
-                Repetition penalty is a technique used to discourage the model from repeating the same words or phrases multiple times in the same sounding way. If a model is repetition penalty capable, it can apply this penalty during generation to improve the diversity and naturalness of the output.
-                #### 🟧 Multi-Languages Capable
-                Multi-language capable models can generate speech in multiple languages. This means that the model has been trained on data from different languages and can switch between them during generation. Some models are language-specific.
-                #### 🟧 Multi-Voice Capable
-                Multi-voice capable models generate speech in multiple voices or speaking styles. This means that the model has been trained on data from different speakers and can mimic their voices during generation, or is a voice cloning model that can generate speech based on the input sample.
-                """)
-                gr.Markdown("""
-                #### 🟧 Streaming Capable
-                Streaming refers to the ability to generate speech output in real-time, without the need to generate the entire output before playback. If a model is streaming capable, it can generate speech on-the-fly, allowing for faster response times and more interactive applications.
-                #### 🟧 Low VRAM Capable
-                VRAM (Video Random Access Memory) is a type of memory used by GPUs to store and process data. If a model is low VRAM capable, it can efficiently utilize the available VRAM by moving data between CPU and GPU memory as needed, allowing for generation even on systems with limited VRAM where it may be competing with an LLM model for VRAM.
-                #### 🟧 Temperature Capable
-                Temperature is a hyperparameter that controls the randomness of the generated output. If a model is temperature capable, the temperature can be adjusted to make the output more or less random, affecting the creativity and variability of the generated speech.
-                #### 🟧 Multi-Model Capable Engine
-                If an engine is multi-model capable, it means that it can support and utilize multiple models for text-to-speech generation. This allows for greater flexibility and the ability to switch between different models depending on the desired output. Different models may be capable of different languages, specific languages, voices, etc.
-                #### 🟧 Default Audio Output Format
-                Specifies the file format in which the generated speech will be saved. Common audio formats include WAV, MP3, FLAC, Opus, AAC, and PCM. If you want different outputs, you can set the transcode function to change the output audio, though transcoding will add a little time to the generation and is not available for streaming generation.
-                #### 🟧 Windows/Linux/Mac Support
-                These indicators show whether the model and engine are compatible with Windows, Linux, or macOS. However, additional setup or requirements may be necessary to ensure full functionality on your operating system. Please note that full platform support has not been extensively tested.
-                """)
+                with gr.Accordion("HELP - 🔊 Understanding TTS Engine Capabilities", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION, elem_classes="custom-markdown")                               
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION2, elem_classes="custom-markdown")
 
 
         with gr.Tab("Models/Voices Download"):
@@ -276,61 +260,11 @@ def xtts_model_alltalk_settings(model_config_data):
         ###################################################################################################
         with gr.Tab("Engine Help"):
             with gr.Row():
-                gr.Markdown("""
-                    ### 🟧 Using my own Finetuned models
-                    Please your Finetuned models within their own folder in `/alltalk_tts/models/xtts/`. Once they are in here they will become availabe within the interface after reloading the XTTS engine.<br>
-                            
-                    ### 🟧 Using Single Voice Samples
-                    Voice samples are stored in `/alltalk_tts/voices/` and should be named using the following format `name.wav`. These files will be listed as `name.wav` in the available voices list.<br>
-                    
-                    ### 🟧 Using Multiple Voice Samples
-                    If you have multiple voice samples for a single voice, you can organize them into subfolders within the `/alltalk_tts/voices/` directory. Each subfolder should be named according to the voice it contains, up to 5 voice samples will be randomly selected for use.<br>
-                                      
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Each subfolder should reflect the name or type of the voice it contains (e.g., `female_voice`, `male_voice`).<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• The voice samples inside each subfolder should follow the standard `.wav` format.<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• An example folder path would be `/alltalk_tts/voices/mynewvoice/` and this would be listed in the available voices list as `mynewvoice/`.<br>
-
-                    This organization allows for easy selection and management of multiple voice samples while ensuring the system can correctly identify and utilize each voice. Manual CURL API requests would send the folder in the format `mynewvoice/`.
-                    
-                    ### 🟧 Where are the outputs stored & Automatic output wav file deletion
-                    Voice outputs are stored in `/alltalk_tts/outputs/`. You can configure automatic maintenance deletion of old wav files by setting `Del WAV's older than` in the global settings.<br>
-                    
-                    > When `Disabled`, your output wav files will be left untouched.<br>
-                    > When set to a setting `1 Day` or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.<br>
-                    
-                    ### 🟧 Where are the models stored?
-                    This extension will download the models to `/alltalk_tts/models/xtts/` folder.<br>
-                    
-                    ### 🟧 API Local, XTTSv2 Generation methods & Speed
-                    These two methods both produce sound output in slightly different ways. XTTSv2 is the perferable method a it supports DeepSpeed, which, if you have a system capable of DeepSpeed genereation, can result in a 2-3x speed gain in generation.
-                    
-                    ### 🟧 Hindi Support on XTTS
-                    Currently Hindi only works on XTTS model 2.0.3 and it has to be loaded as the API Local method.
-                    """)
-                gr.Markdown("""
-                    ### 🟧 How do I create a new voice sample?
-                    To create a new voice sample, you need to make a wav file that is `22050Hz`, `Mono`, `16 bit` and between 6 to 30 seconds long, though 8 to 10 seconds is usually good enough. The model can handle up to 30 second samples, however I've not noticed any improvement in voice output from much longer clips.<br><br>
-                    You want to find a nice clear selection of audio, so lets say you wanted to clone your favourite celebrity. You may go looking for an interview where they are talking. Pay close attention to the audio you are listening to and trying to sample. Are there noises in the background, hiss on the soundtrack, a low humm, some quiet music playing or something? The better quality the audio the better the final TTS result. Don't forget, the AI that processes the sounds can hear everything in your sample and it will use them in the voice its trying to recreate.<br><br>
-                    Try make your clip one of nice flowing speech, like the included example files. No big pauses, gaps or other sounds. Preferably a sample that the person you are trying to copy will show a little vocal range and emotion in their voice. Also, try to avoid a clip starting or ending with breathy sounds (breathing in/out etc).<br>
-                            
-                    ### 🟧 Editing your sample!
-                    So, you've downloaded your favourite celebrity interview off YouTube, from here you need to chop it down to 6 to 30 seconds in length and resample it. If you need to clean it up, do audio processing, volume level changes etc, do this before down-sampling.<br><br>
-                    Using the latest version of Audacity `select/highlight` your 6 to 30 second clip and:<br><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• `Tracks` > `Resample to 22050Hz`<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• `Tracks` > `Mix` > `Stereo to Mono`<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• `File` > `Export Audio` saving it as a `WAV` of `22050Hz`.<br><br>
-                    Save your generated wav file in the `/alltalk_tts/voices/` folder.<br>
-                    
-                    ### 🟧 Why doesnt it sound like XXX Person?
-                    Maybe you might be interested in trying Finetuning of the XTTS model. Otherwise, the reasons can be that you:<br>
-                    
-                    > Didn't down-sample it as above.<br>
-                    > Have a bad quality voice sample.<br>
-                    > Try using the 2x different generation methods `API Local` and `XTTSv2 Local`, as they generate output in slightly different ways.<br>
-                     
-                    Additionally, use the RVC pipeline with a matching voice model, however, some samples just never seem to work correctly, so maybe try a different sample. Always remember though, this is an AI model attempting to re-create a voice, so you will never get a 100% match.
-                    """)
-
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE, elem_classes="custom-markdown")                               
+            with gr.Row():
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE1, elem_classes="custom-markdown")
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE2, elem_classes="custom-markdown")
+                
     return app
 
 ################################

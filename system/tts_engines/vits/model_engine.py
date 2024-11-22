@@ -7,6 +7,7 @@ import json
 import time
 import torch
 import logging
+import inspect
 from pathlib import Path
 from fastapi import (HTTPException)
 logging.disable(logging.WARNING)
@@ -141,7 +142,19 @@ class tts_class:
             print(f"[{self.branding}ENG] \033[92mCUDA Version      :\033[93m {cuda_version}\033[0m")
         print(f"[{self.branding}ENG]")
         return
-    
+
+
+    ###############################################
+    # Central print function # Do not change this #
+    ###############################################
+    def debug_func_entry(self):
+        """Log function entry if debug_func is enabled."""
+        quick_debug = False
+        if quick_debug:
+            current_func = inspect.currentframe().f_back.f_code.co_name
+            print(f"Function entry: {current_func}", "debug_func")
+
+
     ###################################################################################      
     ###################################################################################
     # CHANGE ME # Inital setup of the model and engine. Called when the script starts #
@@ -152,6 +165,7 @@ class tts_class:
     # engine doesnt actually load a model into CUDA or System RAM, you may be doing 
     # Something to fake its start-up.
     async def setup(self):
+        self.debug_func_entry()
         self.printout_versions()
         self.available_models = self.scan_models_folder()
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -189,6 +203,7 @@ class tts_class:
     # However, its quite a simple check along the lines of "if CUDA is available and model is
     # in X place, then send it to Y place (or Y to X).
     async def handle_lowvram_change(self):
+        self.debug_func_entry()
         if torch.cuda.is_available():
             if self.device == "cuda":
                 self.device = "cpu"
@@ -210,6 +225,7 @@ class tts_class:
     # model_settings.JSON and this function will never get called, however it still needs
     # to exist as a function.
     async def handle_deepspeed_change(self, value):
+        self.debug_func_entry()
         if value:
             # DeepSpeed enabled
             print(f"[{self.branding}ENG] \033[93mDeepSpeed Activating\033[0m")
@@ -240,32 +256,69 @@ class tts_class:
     # voices that can be selected in the interface.    
     # If no models are found, we return "No Models Available" and continue on with the script.
     def scan_models_folder(self):
+        self.debug_func_entry()
         models_folder = self.main_dir / "models" / "vits" # Edit to match the name of your folder where voices are stored
         self.available_models = {}
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
         # ↑↑↑ Keep everything above this line ↑↑↑
-        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑  
+        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑     
+  
+        # Define possible model file names
+        model_files = ["model_file.pth", "model.pth"]
         
-        required_files_multi_speaker = ["config.json", "model_file.pth", "speaker_ids.json"]
-        required_files_single_speaker = ["config.json", "model_file.pth"]
-        required_files_multi_language = ["config.json", "model_file.pth.tar", "speaker_ids.json", "language_ids.json"]
+        found_any_models = False
         for subfolder in models_folder.iterdir():
             if subfolder.is_dir():
                 model_name = subfolder.name
-                if all(subfolder.joinpath(file).exists() for file in required_files_multi_speaker):
-                    self.available_models[f"vits - {model_name}"] = "vits_multi_speaker"
-                elif all(subfolder.joinpath(file).exists() for file in required_files_single_speaker):
-                    self.available_models[f"vits - {model_name}"] = "vits_single_speaker"
-                elif all(subfolder.joinpath(file).exists() for file in required_files_multi_language):
+                
+                # Check if config.json exists (this is the minimum requirement)
+                if not (subfolder / "config.json").exists():
+                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' missing config.json")
+                    continue
+
+                # Load config to check model type
+                try:
+                    with open(subfolder / "config.json", "r") as f:
+                        config = json.load(f)
+                    use_speaker_embedding = config["model_args"].get("use_speaker_embedding", False)
+                    num_speakers = config["model_args"].get("num_speakers", 0)
+                except Exception as e:
+                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Couldn't read config.json for '{model_name}': {str(e)}")
+                    continue
+
+                # Check for model file
+                has_model_file = any(subfolder.joinpath(model_file).exists() for model_file in model_files)
+                has_model_file_tar = subfolder.joinpath("model_file.pth.tar").exists()
+                
+                if not (has_model_file or has_model_file_tar):
+                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' missing model file")
+                    continue
+
+                # Determine model type based on files and config
+                if (subfolder / "language_ids.json").exists() and (subfolder / "speaker_ids.json").exists():
                     self.available_models[f"vits - {model_name}"] = "vits_multi_language"
+                    found_any_models = True
+                    #print(f"[{self.branding}ENG] Found multi-language model: {model_name}")
                     
+                elif (subfolder / "speaker_ids.json").exists() or (use_speaker_embedding or num_speakers > 0):
+                    self.available_models[f"vits - {model_name}"] = "vits_multi_speaker"
+                    found_any_models = True
+                    #print(f"[{self.branding}ENG] Found multi-speaker model: {model_name}")
+                    
+                else:
+                    self.available_models[f"vits - {model_name}"] = "vits_single_speaker"
+                    found_any_models = True
+                    #print(f"[{self.branding}ENG] Found single-speaker model: {model_name}")
+
                 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
                 # ↓↓↓ Keep everything below this line ↓↓↓
                 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  
-                else:
-                    self.available_models = {'No Models Available': 'vits'} # Change the name in here to your TTS engine name                
-                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required")
-                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: files or the folder does not exist.")
+
+        if not found_any_models:
+            self.available_models = {'No Models Available': 'vits'} # Change the name in here to your TTS engine name                
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required")
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: files or the folder does not exist.")
+        
         return self.available_models
     
     #############################################################
@@ -279,38 +332,55 @@ class tts_class:
     # populate the "voices" variable somehow and if no voices are found, we return
     # "No Voices Found" back to the interface/api.    
     def voices_file_list(self):
+        self.debug_func_entry()
         try:
             voices = []
-            # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-            # ↑↑↑ Keep everything above this line ↑↑↑
-            # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
             
             model_name = self.selected_model.replace("vits - ", "")
             print("model_name", model_name) if self.debug_tts else None
             model_type = self.available_models[self.selected_model]
             print("model_type", model_type) if self.debug_tts else None
             
-            if model_type == "vits_multi_speaker" or model_type == "vits_multi_language":
+            # Load config to check model type
+            config_path = self.main_dir / "models" / "vits" / model_name / "config.json"
+            if config_path.exists():
+                with open(config_path, "r") as f:
+                    config = json.load(f)
+                use_speaker_embedding = config["model_args"].get("use_speaker_embedding", False)
+                num_speakers = config["model_args"].get("num_speakers", 0)
+            else:
+                print(f"[{self.branding}ENG] \033[91mWarning\033[0m: config.json not found for model '{model_name}'")
+                return ["No Voices Found"]
+
+            # Check for speakers file and model configuration
+            if model_type in ["vits_multi_speaker", "vits_multi_language"]:
                 speaker_ids_path = self.main_dir / "models" / "vits" / model_name / "speaker_ids.json"
                 if speaker_ids_path.exists():
                     with open(speaker_ids_path, "r") as f:
                         speaker_ids = json.load(f)
                     voices = [speaker for speaker in speaker_ids.keys() if speaker != "ED\n"]
+                    print(f"[{self.branding}ENG] Found {len(voices)} voices in speaker_ids.json") if self.debug_tts else None
+                elif use_speaker_embedding or num_speakers > 0:
+                    # If there's no speaker_ids.json but config indicates multiple speakers,
+                    # create a default list of numbered speakers
+                    voices = [f"Speaker{i}" for i in range(num_speakers)]
+                    print(f"[{self.branding}ENG] Created {len(voices)} default voice names from config") if self.debug_tts else None
                 else:
-                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: speaker_ids.json not found for model \033[0m'{model_name}'\033[0m.") if self.debug_tts else None
+                    print(f"[{self.branding}ENG] No speaker information found for multi-speaker model '{model_name}'") if self.debug_tts else None
             
             elif model_type == "vits_single_speaker":
-                voices = ["default"]  # Return a list containing only the default voice for single-speaker models
-            
-            # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-            # ↓↓↓ Keep everything below this line ↓↓↓
-            # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓                     
+                voices = ["default"]
+                print(f"[{self.branding}ENG] Using default voice for single-speaker model") if self.debug_tts else None
+                        
             if not voices:  # If the voices list is empty
-                return ["No Voices Found"]  # Return a list with 'No Voices Found' if there are no voices/voice models
+                voices = ["default"]  # Fallback to default if no voices were found
+                print(f"[{self.branding}ENG] No voices found, using default") if self.debug_tts else None
+                
             return voices  # Return the list of voices
+            
         except Exception as e:
             print(f"[{self.branding}ENG] \033[91mError\033[0m: Voices/Voice Models not found. Cannot load a list of voices.")
-            print(f"[{self.branding}ENG] Exception: {str(e)}")  # Optional: Print the exception message for debugging
+            print(f"[{self.branding}ENG] Exception: {str(e)}")
             return ["No Voices Found"]
 
     #############################
@@ -326,6 +396,7 @@ class tts_class:
     # We always check for "No Models Available" being sent as that means we are trying to load in a model that 
     # doesnt exist/wasnt found on script start-up e.g. someone deleted the model from the folder or something.   
     async def api_manual_load_model(self, model_name):
+        self.debug_func_entry()
         if "No Models Available" in self.available_models:
             print(f"[{self.branding}ENG] \033[91mError\033[0m: No models for this TTS engine were found to load. Please download a model.")
             return    
@@ -354,10 +425,36 @@ class tts_class:
         # Save the updated config dictionary back to the config.json file
         with open(config_file_path, "w") as f:
             json.dump(config_dict, f, indent=4)
+
+        def get_model_path(model_dir, model_type):
+            """Helper function to find the correct model file"""
+            print(f"Searching for model file in {model_dir} for type {model_type}") if self.debug_tts else None
+            
+            if model_type == "vits_multi_language":
+                # Check for .pth.tar file first for multi-language models
+                if (model_dir / "model_file.pth.tar").exists():
+                    print(f"Found model_file.pth.tar") if self.debug_tts else None
+                    return model_dir / "model_file.pth.tar"
+            
+            # Check for regular .pth files
+            if (model_dir / "model_file.pth").exists():
+                print(f"Found model_file.pth") if self.debug_tts else None
+                return model_dir / "model_file.pth"
+            elif (model_dir / "model.pth").exists():
+                print(f"Found model.pth") if self.debug_tts else None
+                return model_dir / "model.pth"
+            
+            print(f"No model file found in {model_dir}") if self.debug_tts else None
+            raise FileNotFoundError(f"No model file found in {model_dir}")
+
+        # Then in api_manual_load_model:
+        model_type = self.available_models[f"vits - {model_name}"]
+        model_file = get_model_path(model_path, model_type)
+
         if model_type == "vits_multi_language":
             # Load multi-language model
             self.model = Synthesizer(
-                tts_checkpoint=model_path / "model_file.pth.tar",
+                tts_checkpoint=model_file,  # Use the detected model file
                 tts_config_path=config_file_path,
                 tts_speakers_file=speakers_file,
                 tts_languages_file=model_path / "language_ids.json",
@@ -366,14 +463,14 @@ class tts_class:
         elif not use_speaker_embedding and num_speakers == 0:
             # Single-speaker model without speaker embeddings
             self.model = Synthesizer(
-                tts_checkpoint=model_path / "model_file.pth",
+                tts_checkpoint=model_file,
                 tts_config_path=config_file_path,
                 use_cuda=self.cuda_is_available,
             )
         else:
             # Multi-speaker model or single-speaker model with speaker embeddings
             self.model = Synthesizer(
-                tts_checkpoint=model_path / "model_file.pth",
+                tts_checkpoint=model_file,
                 tts_config_path=config_file_path,
                 tts_speakers_file=speakers_file,
                 use_cuda=self.cuda_is_available,
@@ -397,6 +494,7 @@ class tts_class:
     # other than set "self.is_tts_model_loaded = False", which would be set back to true by the model loader. 
     # So look at the Piper model_engine.py if you DONT need to unload models. 
     async def unload_model(self):
+        self.debug_func_entry()
         self.is_tts_model_loaded = False
         if not self.current_model_loaded == None:
             print(f"[{self.branding}ENG] \033[94mUnloading model \033[0m") if self.debug_tts else None
@@ -418,6 +516,7 @@ class tts_class:
     # we just have a fake function that doesnt really do anything. We always check to see if the model name has "No Models Available" in the
     # name thats sent over, just to catch any potential errors. We display the start load time and end load time. Thats about it.
     async def handle_tts_method_change(self, tts_method):
+        self.debug_func_entry()
         generate_start_time = time.time() # Record the start time of loading the model
         if "No Models Available" in self.available_models:
             print(f"[{self.branding}ENG] \033[91mError\033[0m: No models for this TTS engine were found to load. Please download a model.")
@@ -467,6 +566,7 @@ class tts_class:
     # Piper TTS, which uses command line based calls and therefore has different ones for Windows and Linux/Mac, has an example of doing this
     # within its model_engine.py file.   
     async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming):
+        self.debug_func_entry()
         print(f"[{self.branding}Debug] Entered model_engine.py generate_tts function") if self.debug_tts else None
         if not self.is_tts_model_loaded: # Check if a model is loaded and error out if not.
             error_message = f"[{self.branding}ENG] \033[91mError\033[0m: You currently have no TTS model loaded." 

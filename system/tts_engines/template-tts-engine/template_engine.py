@@ -1,15 +1,6 @@
 """
-XTTS (Coqui TTS) Engine Implementation for AllTalk TTS
 Version: 1.0
 Last Updated: 2024
-
-This implementation serves as both a functional XTTS engine and a reference example
-for implementing new TTS engines in AllTalk. It demonstrates proper:
-- Variable initialization and management
-- Debug message handling
-- Model loading/unloading patterns
-- Resource management
-- Generation handling with streaming support
 
 Implementation Notes:
 - All core system variables must be maintained
@@ -78,7 +69,7 @@ from what is stored in your `model_settings.json` file.
 # ↓↓↓ MODIFY THIS LINE ↓↓↓
 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-model_supports_deepspeed_true_or_false = True
+model_supports_deepspeed_true_or_false = False
 
 # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 # ↑↑↑ MODIFY THIS LINE ↑↑↑
@@ -117,24 +108,12 @@ except ModuleNotFoundError:
     print("Missing required modules. Please install...")
     raise
 
-For XTTS specifically, we need:
-- torchaudio: For audio processing
-- TTS modules: Core Coqui TTS functionality
-- Support libraries: wave, io, random, numpy for audio handling
 """
 try:
     import torchaudio
-    import wave
-    import io
-    import random
-    import numpy as np
-    from TTS.tts.configs.xtts_config import XttsConfig
-    from TTS.tts.models.xtts import Xtts
-    from TTS.api import TTS
-    from TTS.utils.synthesizer import Synthesizer
 except ModuleNotFoundError:
     brand = "[AllTalk ENG]"
-    print(f"{brand} \033[91mError\033[0m Could not find the Coqui TTS modules.")
+    print(f"{brand} \033[91mError\033[0m Could not find the XXX TTS modules.")
     print(f"{brand} \033[91mError\033[0m Please re-install the requirements.")
     raise
 
@@ -235,7 +214,7 @@ class tts_class:
     #############################################
     def __init__(self):
         """
-        Initialize the XTTS engine instance.
+        Initialize the TTS engine instance.
         
         WARNING: This class requires specific variables to interface with AllTalk's main system (tts_server.py).
         Do not remove or rename any of the predefined variables as they are required for proper system integration.
@@ -376,7 +355,7 @@ class tts_class:
         # ↓↓↓ MODIFY THIS LINE ↓↓↓
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-        self.model_folder_name = "xtts"
+        self.model_folder_name = "MYNEWTTSENGINE"
          
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
         # ↑↑↑ MODIFY THIS LINE ↑↑↑
@@ -509,11 +488,6 @@ class tts_class:
         """
         self.debug_func_entry()
         # Initial validation        
-        if self.current_model_loaded.startswith("apitts"): # Specific only to the XTTS engine
-            self.print_message("\033[93mDeepSpeed not supported in API mode\033[0m", message_type="error")
-            self.deepspeed_enabled = False
-            return False
-
         if not self.is_tts_model_loaded:
             self.print_message("No model is currently loaded. Please select a model to load.", message_type="error")
             raise HTTPException(status_code=400, detail="No model is currently loaded. Please select a model to load.")
@@ -569,7 +543,7 @@ class tts_class:
     ############################################################
     async def setup(self):
         """
-        Initialize the XTTS engine and load initial model configuration.
+        Initialize the TTS engine and load initial model configuration.
         
         This function is called during system startup and handles:
         1. Version information display
@@ -593,7 +567,7 @@ class tts_class:
         Note: Custom initialization code should be placed between the marked sections.
         """
         self.debug_func_entry()
-        self.print_message("Initializing XTTS engine", message_type="debug_tts")
+        self.print_message("Initializing TTS engine", message_type="debug_tts")
         self.printout_versions()
         self.available_models = self.scan_models_folder()
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -622,25 +596,18 @@ class tts_class:
     ###########################################################################
     def scan_models_folder(self):
         """
-        Scan for available XTTS models in the models directory.
+        Scan for available TTS models in the models directory.
         
-        This function searches the models directory for valid XTTS model installations.
+        This function searches the models directory for valid TTS model installations.
         Each model must contain all required files to be considered valid.
         
         Required Files for Each Model:
-        - config.json: Model configuration
-        - model.pth: Model weights
-        - mel_stats.pth: Mel spectrogram statistics
-        - speakers_xtts.pth: Speaker embeddings
-        - vocab.json: Tokenizer vocabulary
-        - dvae.pth: Discrete VAE weights
+        - Whatever your TTS engine needs/supports
         
         Operation:
-        1. Scans the models/xtts directory
+        1. Scans the models/{folder} directory
         2. Checks each subfolder for required files
-        3. Registers valid models in two formats:
-           - "xtts - {model_name}": For local inference
-           - "apitts - {model_name}": For API-based inference
+        3. Registers valid models
         
         States Affected:
         - self.available_models: Updated with found models
@@ -649,7 +616,7 @@ class tts_class:
             dict: Dictionary of available models in format:
                  {model_identifier: engine_type}
         
-        Note: If no valid models are found, returns {"No Models Available": "xtts"}
+        Note: If no valid models are found, returns {"No Models Available": "TTS Engine Name"}
         """
         self.debug_func_entry()
         
@@ -660,19 +627,10 @@ class tts_class:
         # ↑↑↑ Keep everything above this line ↑↑↑
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑  
             
-        required_files = ["config.json", "model.pth", "mel_stats.pth", 
-                         "speakers_xtts.pth", "vocab.json", "dvae.pth"]
-        
-        for subfolder in models_folder.iterdir():
-            if subfolder.is_dir():
-                model_name = subfolder.name
-                self.print_message(f"Checking model folder: {model_name}", message_type="debug_tts")
-                
-                if all(subfolder.joinpath(file).exists() for file in required_files):
-                    self.print_message(f"Found valid model: {model_name}", message_type="debug_tts")
-                    self.available_models[f"xtts - {model_name}"] = "xtts"
-                    self.available_models[f"apitts - {model_name}"] = "apitts"
-                    
+        required_files = ["config.json", "model.pth"]
+        model_name = "DO SOMETHING HERE"
+
+
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  
@@ -688,28 +646,17 @@ class tts_class:
     ################################################################
     def voices_file_list(self):
         """
-        Scan and compile a list of available voice samples and latents.
+        Scan and compile a list of available voices
         
-        This function scans multiple directories to find voice samples in different formats:
-        1. Individual WAV files in the main voices directory
-        2. Collections of WAV files in the xtts_multi_voice_sets directory
-        3. Pre-computed voice latents in the xtts_latents directory
+        This function scans multiple directories to find voice models/samples in different formats:
+        1. Individual WAV/MP3 etc files in the main voices directory
         
         Directory Structure:
-        - voices/: Individual WAV files
-        - voices/xtts_multi_voice_sets/: Folders containing multiple WAV files
-        - voices/xtts_latents/: JSON files containing pre-computed latents
-        
-        Voice Types:
-        - Standard: Direct WAV files
-        - voiceset: Multiple WAV files for one voice
-        - latent: Pre-computed speaker embeddings
-        
+        - voices/: Individual audio files
+               
         Returns:
             list: Available voices with appropriate prefixes:
                  - Standard WAV: filename.wav
-                 - Voice sets: "voiceset:foldername"
-                 - Latents: "latent:filename.json"
         
         Note: Returns ["No Voices Found"] if no valid voices are detected
         """
@@ -722,33 +669,7 @@ class tts_class:
             # ↑↑↑ Keep everything above this line ↑↑↑
             # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ 
 
-            json_latents_dir = directory / "xtts_latents" # XTTS specific
-            multi_voice_dir = directory / "xtts_multi_voice_sets" # XTTS specific
 
-            # Scan for individual WAV files
-            self.print_message("Scanning for individual voice files", message_type="debug_tts")
-            voices.extend([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) 
-                        and f.endswith(".wav")])
-            
-            # Scan for voice sets
-            if os.path.exists(multi_voice_dir):
-                self.print_message("Found Multi_Voice_Sets directory", message_type="debug_tts")
-                for voice_set in os.listdir(multi_voice_dir):
-                    voice_set_path = multi_voice_dir / voice_set
-                    if os.path.isdir(voice_set_path):
-                        if any(f.endswith(".wav") for f in os.listdir(voice_set_path)):
-                            voices.append(f"voiceset:{voice_set}")
-                            self.print_message(f"Added voice set: {voice_set}", message_type="debug_tts_variables")
-                
-            # Scan for JSON latents
-            if not self.current_model_loaded.startswith("apitts"): # APITTS doesnt support latents
-                if os.path.exists(json_latents_dir):
-                    self.print_message("Found JSON_Latents directory", message_type="debug_tts")
-                    json_files = [f for f in os.listdir(json_latents_dir) if f.endswith('.json')]
-                    for json_file in json_files:
-                        voices.append(f"latent:{json_file}")
-                    if json_files:
-                        self.print_message(f"Added {len(json_files)} JSON latent files", message_type="debug_tts")
             
             # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
             # ↓↓↓ Keep everything below this line ↓↓↓
@@ -768,11 +689,8 @@ class tts_class:
     ############################################
     async def load_model(self, model_name):
         """
-        Load a model using the Coqui TTS API interface.
-        
-        This is one of two model loading methods for XTTS. This method uses the high-level
-        TTS API which provides a simpler interface but less control over model parameters.
-        
+        Load a model using the your TTS API interface.
+               
         Args:
             model_name (str): Name of the model to load
             
@@ -807,111 +725,21 @@ class tts_class:
             config_path=model_path / "config.json",
         ).to(self.device)
         
-        self.print_message("\033[94mModel License : \033[93mhttps://coqui.ai/cpml.txt\033[0m")
-        
+      
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         self.is_tts_model_loaded = True
         return self.model
 
-    ###################################################################################################################
-    # Load in your model # XTTS specific as XTTS has 2x loader types so you wouldnt normally have 2x loader functions #
-    ###################################################################################################################
-    async def xtts_manual_load_model(self, model_name):
-        """
-        Load a model using the direct XTTS interface.
-        
-        This is the second model loading method for XTTS. It provides direct access
-        to the XTTS model interface, allowing for more detailed control over model
-        parameters and DeepSpeed integration.
-        
-        Args:
-            model_name (str): Name of the model to load
-            
-        Operation:
-        1. Validates model availability
-        2. Initializes XttsConfig with model settings
-        3. Loads model with appropriate configurations
-        4. Handles DeepSpeed integration if enabled
-        5. Moves model to appropriate device
-        
-        States Affected:
-        - self.model: Updated with loaded model
-        - self.is_tts_model_loaded: Set to True on success
-        
-        Returns:
-            The loaded model instance
-            
-        Raises:
-            HTTPException: If no models are available to load
-        """
-        self.debug_func_entry()
-        
-        if "No Models Available" in self.available_models:
-            self.print_message("No models for this TTS engine were found to load", message_type="error")
-            return
-
-        # Enhanced debugging for paths and configuration
-        config = XttsConfig()
-        model_path = self.main_dir / "models" / self.model_folder_name / model_name
-        config_path = model_path / "config.json"
-        vocab_path_dir = model_path / "vocab.json"
-        checkpoint_dir = model_path
-        
-        self.print_message(f"Model path: {model_path}", message_type="debug_tts_variables")
-        self.print_message(f"Config path: {config_path}", message_type="debug_tts_variables")
-        self.print_message(f"Vocab path: {vocab_path_dir}", message_type="debug_tts_variables")
-        
-        # Load and debug configuration
-        config.load_json(str(config_path))
-        self.print_message("Model configuration:", message_type="debug_tts_variables")
-        self.print_message(f"├─ Model dimension: {config.model_args.gpt_n_model_channels}", message_type="debug_tts_variables")
-        self.print_message(f"├─ Number of layers: {config.model_args.gpt_layers}", message_type="debug_tts_variables")
-        self.print_message(f"├─ Number of heads: {config.model_args.gpt_n_heads}", message_type="debug_tts_variables")
-        self.print_message(f"├─ Max audio tokens: {config.model_args.gpt_max_audio_tokens}", message_type="debug_tts_variables")
-        self.print_message(f"├─ Max text tokens: {config.model_args.gpt_max_text_tokens}", message_type="debug_tts_variables")
-        self.print_message(f"└─ Using DeepSpeed: {self.deepspeed_enabled}", message_type="debug_tts_variables")
-
-        # Initialize model
-        self.print_message("Initializing model from config...", message_type="debug_tts")
-        self.model = Xtts.init_from_config(config)
-        
-        # Load checkpoint with detailed progress
-        self.print_message("Loading model checkpoint...", message_type="debug_tts")
-        self.model.load_checkpoint(
-            config,
-            checkpoint_dir=str(checkpoint_dir),
-            vocab_path=str(vocab_path_dir),
-            use_deepspeed=self.deepspeed_enabled,
-        )
-        
-        # Device management debugging
-        self.print_message(f"Moving model to device: {self.device}", message_type="debug_tts")
-        self.model.to(self.device)
-        if self.device == "cuda":
-            memory_allocated = torch.cuda.memory_allocated() / 1024**2
-            memory_reserved = torch.cuda.memory_reserved() / 1024**2
-            self.print_message("CUDA Memory Status:", message_type="debug_tts_variables")
-            self.print_message(f"├─ Allocated: {memory_allocated:.2f} MB", message_type="debug_tts_variables")
-            self.print_message(f"└─ Reserved: {memory_reserved:.2f} MB", message_type="debug_tts_variables")
-        
-        self.is_tts_model_loaded = True
-        self.print_message("\033[94mModel License : \033[93mhttps://coqui.ai/cpml.txt\033[0m")
-        
-        return self.model
-
-
     async def handle_tts_method_change(self, tts_method):
         """
-        Handle switching between different XTTS model types and loading methods.
+        Handle switching between different TTS models/voices.
         
-        This function manages the process of changing between different model loading
-        methods (XTTS local vs API) and handles the actual model loading process.
+        This function manages actual model loading process.
         
         Args:
             tts_method (str): Format "type - modelname" where type is either
-                            "xtts" or "apitts"
         
         Operation:
         1. Validates model availability
@@ -943,19 +771,16 @@ class tts_class:
         # Unload current model
         await self.unload_model()
         
-        # Handle different loading methods
-        if tts_method.startswith("xtts"):
-            model_name = tts_method.split(" - ")[1]
-            self.print_message(f"\033[94mLoading XTTS model \033[93m{model_name} \033[94mon \033[93m{self.device}\033[0m")
-            self.model = await self.xtts_manual_load_model(model_name)
-            self.current_model_loaded = f"xtts - {model_name}"
-            
-        elif tts_method.startswith("apitts"):
-            model_name = tts_method.split(" - ")[1]
-            self.print_message(f"\033[94mLoading API model \033[93m{model_name} \033[94mon \033[93m{self.device}\033[0m")
-            self.model = await self.load_model(model_name)
-            self.current_model_loaded = f"apitts - {model_name}"
-            
+        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+        # ↑↑↑ Keep everything above this line ↑↑↑
+        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+
+
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        # ↓↓↓ Keep everything below this line ↓↓↓
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
         else:
             self.print_message(f"Unknown model type in: {tts_method}", message_type="error")
             self.current_model_loaded = None
@@ -969,20 +794,20 @@ class tts_class:
 
     async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming):
         """
-        Generate speech from text using the XTTS model.
+        Generate speech from text using the TTS model.
 
         This core function handles all TTS generation, supporting both streaming and
-        non-streaming output, multiple voice input types (WAV, voice sets, latents),
+        non-streaming output, multiple voice input types,
         and various generation parameters.
 
         Args:
             text (str): Text to convert to speech
-            voice (str): Voice identifier (WAV file, voice set, or latent)
+            voice (str): Voice identifier (WAV/MP3 file, voice set, or latent)
             language (str): Target language code
             temperature (float): Generation temperature (0.0-1.0)
             repetition_penalty (float): Penalty for repetitive generation
             speed (float): Speech speed multiplier
-            pitch (float): Voice pitch adjustment (not used in XTTS)
+            pitch (float): Voice pitch adjustment 
             output_file (str): Path for output audio file
             streaming (bool): Whether to stream audio chunks
 
@@ -1019,133 +844,29 @@ class tts_class:
         try:
             # Voice input processing
             self.print_message(f"Processing voice input: {voice}", message_type="debug_tts")
-            gpt_cond_latent = None
-            speaker_embedding = None
-            
-            # Handle different voice types
-            if voice.startswith('latent:'):
-                if self.current_model_loaded.startswith("xtts"):
-                    gpt_cond_latent, speaker_embedding = self._load_latents(voice)
-                
-            elif voice.startswith('voiceset:'):
-                voice_set = voice.replace("voiceset:", "")
-                voice_set_path = os.path.join(self.main_dir, "voices", "xtts_multi_voice_sets", voice_set)
-                self.print_message(f"Processing voice set from: {voice_set_path}", message_type="debug_tts")
-                
-                wavs_files = glob.glob(os.path.join(voice_set_path, "*.wav"))
-                if not wavs_files:
-                    self.print_message(f"No WAV files found in voice set: {voice_set}", message_type="error")
-                    raise HTTPException(status_code=400, detail=f"No WAV files found in voice set: {voice_set}")
-                
-                if len(wavs_files) > 5:
-                    wavs_files = random.sample(wavs_files, 5)
-                    self.print_message(f"Using 5 random samples from voice set", message_type="debug_tts")
-                
-                if self.current_model_loaded.startswith("xtts"):
-                    self.print_message("Generating conditioning latents from voice set", message_type="debug_tts")
-                    gpt_cond_latent, speaker_embedding = self._generate_conditioning_latents(wavs_files)
-                
-            else:
-                normalized_path = os.path.normpath(os.path.join(self.main_dir, "voices", voice))
-                wavs_files = [normalized_path]
-                self.print_message(f"Using single voice sample: {normalized_path}", message_type="debug_tts")
-                
-                if self.current_model_loaded.startswith("xtts"):
-                    self.print_message("Generating conditioning latents from single sample", message_type="debug_tts")
-                    gpt_cond_latent, speaker_embedding = self._generate_conditioning_latents(wavs_files)
 
-            # Generate speech
-            if self.current_model_loaded.startswith("xtts"):
-                self.print_message(f"Generating speech for text: {text}", message_type="debug_tts")
-                
-                common_args = {
-                    "text": text,
-                    "language": language,
-                    "gpt_cond_latent": gpt_cond_latent,
-                    "speaker_embedding": speaker_embedding,
-                    "temperature": float(temperature),
-                    "length_penalty": float(self.model.config.length_penalty),
-                    "repetition_penalty": float(repetition_penalty),
-                    "top_k": int(self.model.config.top_k),
-                    "top_p": float(self.model.config.top_p),
-                    "speed": float(speed),
-                    "enable_text_splitting": True
-                }
-                
-                self.print_message("Generation settings:", message_type="debug_tts_variables")
-                self.print_message(f"├─ Temperature: {temperature}", message_type="debug_tts_variables")
-                self.print_message(f"├─ Speed: {speed}", message_type="debug_tts_variables")
-                self.print_message(f"├─ Language: {language}", message_type="debug_tts_variables")
-                self.print_message(f"└─ Text length: {len(text)} characters", message_type="debug_tts_variables")
+            # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+            # ↑↑↑ Keep everything above this line ↑↑↑
+            # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-                # Handle streaming vs non-streaming
+                # BUILD ANY SETTINGS NEEED FOR TTS HERE
+                # DO ANY LOGIC TESTS E.G. CHECK IF THE AUDIO FILE/MODEL EXISTS
+
+                # ALWAYS CHECK IF STREAMING FIRST THEN DO OTHER METHODS
                 if streaming:
-                    self.print_message("Starting streaming generation", message_type="debug_tts")
-                    self.print_message(f"Using streaming-based generation and files {wavs_files}")
-                    output = self.model.inference_stream(**common_args, stream_chunk_size=20)
-
-                    file_chunks = []
-                    wav_buf = io.BytesIO()
-                    with wave.open(wav_buf, "wb") as vfout:
-                        vfout.setnchannels(1)
-                        vfout.setsampwidth(2)
-                        vfout.setframerate(24000)
-                        vfout.writeframes(b"")
-                    wav_buf.seek(0)
-                    yield wav_buf.read()
-
-                    for i, chunk in enumerate(output):
-                        if self.tts_stop_generation:
-                            self.print_message("Generation stopped by user", message_type="debug_tts")
-                            self.tts_stop_generation = False
-                            self.tts_generating_lock = False
-                            break
-
-                        self.print_message(f"Processing chunk {i+1}", message_type="debug_tts")
-                        file_chunks.append(chunk)
-                        if isinstance(chunk, list):
-                            chunk = torch.cat(chunk, dim=0)
-                        chunk = chunk.clone().detach().cpu().numpy()
-                        chunk = chunk[None, : int(chunk.shape[0])]
-                        chunk = np.clip(chunk, -1, 1)
-                        chunk = (chunk * 32767).astype(np.int16)
-                        yield chunk.tobytes()
+                    # PUT YOUR TTS ENGINE STREAMING GENERATION LOGIC IN HERE                    
+                    yield
                 else:
                     self.print_message("Starting non-streaming generation", message_type="debug_tts")
-                    output = self.model.inference(**common_args)
-                    torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
+
+                    # PUT YOUR TTS ENGINE STANDARD GENERATION LOGIC IN HERE
+
                     self.print_message(f"Saved audio to: {output_file}", message_type="debug_tts")
 
-            elif self.current_model_loaded.startswith("apitts"):
-                if streaming:
-                    raise ValueError("Streaming is only supported in XTTSv2 local mode")
-                # Common arguments for both error and normal cases
-                common_args = {
-                    "file_path": output_file,
-                    "language": language,
-                    "temperature": temperature,
-                    "length_penalty": self.model.config.length_penalty,
-                    "repetition_penalty": repetition_penalty,
-                    "top_k": self.model.config.top_k,
-                    "top_p": self.model.config.top_p,
-                    "speed": speed
-                }     
-                if voice.startswith('latent:'):
-                    self.print_message("API TTS method does not support latent files - Please use an audio reference file", message_type="error")
-                    self.model.tts_to_file(
-                        text="The API TTS method only supports audio files not latents. Please select an audio reference file instead.",
-                        speaker="Ana Florence",
-                        **common_args
-                    )
-                else:
-                    self.print_message("Using API-based generation", message_type="debug_tts")
-                    self.model.tts_to_file(
-                        text=text,
-                        speaker_wav=wavs_files,
-                        **common_args
-                    )
                 
-                self.print_message(f"API generation completed, saved to: {output_file}", message_type="debug_tts")
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        # ↓↓↓ Keep everything below this line ↓↓↓
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
         finally:
             # Generation complete
@@ -1164,36 +885,3 @@ class tts_class:
                 await self.handle_lowvram_change()
                 
             self.tts_generating_lock = False
-
-    ##############################################################################
-    # Helper Functions that are specific to this script & not generically needed #
-    ##############################################################################
-    def _generate_conditioning_latents(self, audio_paths):
-        """Generate conditioning latents from audio files."""
-        self.debug_func_entry()
-        self.print_message(f"Generating latents from {len(audio_paths)} audio files", message_type="debug_tts")
-        return self.model.get_conditioning_latents(
-            audio_path=audio_paths,
-            gpt_cond_len=self.model.config.gpt_cond_len,
-            max_ref_length=self.model.config.max_ref_len,
-            sound_norm_refs=self.model.config.sound_norm_refs,
-        )
-
-    def _load_latents(self, voice):
-        """Load speaker latents from JSON file."""
-        self.debug_func_entry()
-        try:
-            json_file = voice.replace("latent:", "")
-            json_path = os.path.join(self.main_dir, "voices", "xtts_latents", json_file)
-            self.print_message(f"Loading latents from: {json_path}", message_type="debug_tts")
-            
-            with open(json_path) as f:
-                latent_data = json.load(f)
-                gpt_cond_latent = torch.tensor(latent_data['gpt_cond_latent'])
-                speaker_embedding = torch.tensor(latent_data['speaker_embedding'])
-            
-            self.print_message("Successfully loaded speaker latents", message_type="debug_tts")
-            return gpt_cond_latent, speaker_embedding
-        except Exception as e:
-            self.print_message(f"Failed to load speaker latents: {str(e)}", message_type="error")
-            raise HTTPException(status_code=400, detail=f"Failed to load voice latents: {str(e)}")

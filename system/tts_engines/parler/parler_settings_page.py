@@ -4,6 +4,7 @@ import requests
 import gradio as gr
 from tqdm import tqdm
 from pathlib import Path
+from .help_content import AllTalkHelpContent
 this_dir = Path(__file__).parent.resolve()                         # Sets up self.this_dir as a variable for the folder THIS script is running in.
 main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up self.main_dir as a variable for the folder AllTalk is running in
 
@@ -127,11 +128,17 @@ def parler_model_alltalk_settings(model_config_data):
                         def_narrator_voice_gr = gr.Dropdown(value=model_config_data["settings"]["def_narrator_voice"], label="Narrator Voice", choices=voice_list, allow_custom_value=True)
                     with gr.Group():
                         with gr.Row():
-                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="In this section, you can set the default settings for this TTS engine. Settings that are not supported by the current engine will be greyed out and cannot be selected. Default voices specified here will be used when no specific voice is provided in the TTS generation request. If a voice is specified in the request, it will override these default settings. When using the OpenAI API compatable API with this TTS engine, the voice mappings will be applied. As the OpenAI API has a limited set of 6 voices, these mappings ensure compatibility by mapping the OpenAI voices to the available voices in this TTS engine.")
+                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="Configure default settings and voice mappings for the selected TTS engine. Unavailable options are grayed out based on engine capabilities. See the Help section below for detailed information about each setting.")
             with gr.Row():
                 submit_button = gr.Button("Update Settings")
                 output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
             submit_button.click(parler_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
+            with gr.Accordion("HELP - 🔊 Understanding TTS Engine Default Settings Page", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")   
 
         ###########################################################################################
         # Do not change this section apart from "TTS Engine Name" value to match your engine name #
@@ -164,34 +171,12 @@ def parler_model_alltalk_settings(model_config_data):
                         gr.Textbox(label="Linux Support", value='Yes' if features_list['linux_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Mac Support", value='Yes' if features_list['mac_capable'] else 'No', interactive=False)
             with gr.Row():
-                gr.Markdown("""
-                ####  🟧 DeepSpeed Capable
-                DeepSpeed is a deep learning optimization library that can significantly speed up model training and inference. If a model is DeepSpeed capable, it means it can utilize DeepSpeed to accelerate the generation of text-to-speech output. This requires the model to be loaded into CUDA/VRAM on an Nvidia GPU and the model's inference method to support DeepSpeed.
-                ####  🟧 Pitch Capable
-                Pitch refers to the highness or lowness of a sound. If a model is pitch capable, it can adjust the pitch of the generated speech, allowing for more expressive and varied output.
-                #### 🟧 Generation Speed Capable
-                Generation speed refers to the rate at which the model can generate text-to-speech output. If a model is generation speed capable, it means the speed of the generated speech can be adjusted, making it faster or slower depending on the desired output.
-                #### 🟧 Repetition Penalty Capable
-                Repetition penalty is a technique used to discourage the model from repeating the same words or phrases multiple times in the same sounding way. If a model is repetition penalty capable, it can apply this penalty during generation to improve the diversity and naturalness of the output.
-                #### 🟧 Multi-Languages Capable
-                Multi-language capable models can generate speech in multiple languages. This means that the model has been trained on data from different languages and can switch between them during generation. Some models are language-specific.
-                #### 🟧 Multi-Voice Capable
-                Multi-voice capable models generate speech in multiple voices or speaking styles. This means that the model has been trained on data from different speakers and can mimic their voices during generation, or is a voice cloning model that can generate speech based on the input sample.
-                """)
-                gr.Markdown("""
-                #### 🟧 Streaming Capable
-                Streaming refers to the ability to generate speech output in real-time, without the need to generate the entire output before playback. If a model is streaming capable, it can generate speech on-the-fly, allowing for faster response times and more interactive applications.
-                #### 🟧 Low VRAM Capable
-                VRAM (Video Random Access Memory) is a type of memory used by GPUs to store and process data. If a model is low VRAM capable, it can efficiently utilize the available VRAM by moving data between CPU and GPU memory as needed, allowing for generation even on systems with limited VRAM where it may be competing with an LLM model for VRAM.
-                #### 🟧 Temperature Capable
-                Temperature is a hyperparameter that controls the randomness of the generated output. If a model is temperature capable, the temperature can be adjusted to make the output more or less random, affecting the creativity and variability of the generated speech.
-                #### 🟧 Multi-Model Capable Engine
-                If an engine is multi-model capable, it means that it can support and utilize multiple models for text-to-speech generation. This allows for greater flexibility and the ability to switch between different models depending on the desired output. Different models may be capable of different languages, specific languages, voices, etc.
-                #### 🟧 Default Audio Output Format
-                Specifies the file format in which the generated speech will be saved. Common audio formats include WAV, MP3, FLAC, Opus, AAC, and PCM. If you want different outputs, you can set the transcode function to change the output audio, though transcoding will add a little time to the generation and is not available for streaming generation.
-                #### 🟧 Windows/Linux/Mac Support
-                These indicators show whether the model and engine are compatible with Windows, Linux, or macOS. However, additional setup or requirements may be necessary to ensure full functionality on your operating system. Please note that full platform support has not been extensively tested.
-                """)
+                with gr.Accordion("HELP - 🔊 Understanding TTS Engine Capabilities", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION, elem_classes="custom-markdown")                               
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION2, elem_classes="custom-markdown")
 
         #######################################################################################################################################################################################################
         # REQUIRED CHANGE                                                                                                                                                                                     #
@@ -347,6 +332,12 @@ def parler_model_alltalk_settings(model_config_data):
             add_update_button.click(add_update_voice, inputs=[voice_name, description, selected_index, button_label], outputs=[voice_list, voice_name, description, selected_index, voice_name, button_label])
             delete_button.click(delete_selected_voice, inputs=selected_index, outputs=[voice_list, voice_name, description, selected_index, voice_name, button_label])
             clear_button.click(clear_text_boxes, outputs=[voice_name, description, selected_index, voice_name, button_label])
+            with gr.Accordion("HELP - 🎙️ Parler Voice Editor Help", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.VOICE_EDITOR, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.VOICE_EDITOR1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.VOICE_EDITOR2, elem_classes="custom-markdown")            
 
         ###################################################################################################
         # REQUIRED CHANGE                                                                                 #
@@ -355,54 +346,10 @@ def parler_model_alltalk_settings(model_config_data):
         ###################################################################################################
         with gr.Tab("Engine Help"):
             with gr.Row():
-                gr.Markdown("""
-                    ### 🟧 Where are the Parler models stored?
-                    This extension will download the models to `/alltalk_tts/models/parler/` folder.<br>
-                    
-                    ### 🟧 Where are the voices stored for parler models?
-                    Parler is unlike any other TTS engine. It is actually mode like Stable Diffusion, where you write a text based description of what you want your image to look like, but in this case, you describe what you want the voice to sound like. For example `A female speaker with an enthusiastic and lively voice. Her tone is bright and energetic, with a fast pace and a lot of inflection. The audio is clear and vibrant.` 
-                    
-                    This means you can have pretty much any voice you want, however, the downside to this is, there is little consistency of the voices, meaning that no 2x TTS generations will sound exactly like the same voice. You can however use one of the `Native` built in voices to give a level of consistency. Please refer to the Parler website for more infomation https://github.com/huggingface/parler-tts.<br>
-                   
-                    ### 🟧 So how do I create my voices for Parler?
-                    On the settings page for Parler, there is a Voice Editor tab. In there you can add/remove/ammend voices as you wish, or edit the `parler_voices.json` file stored in `system/tts_engines/parler/`.
-                   
-                    ### 🟧 Where are the outputs stored & Automatic output wav file deletion
-                    Voice outputs are stored in `/alltalk_tts/outputs/`. You can configure automatic maintenance deletion of old wav files by setting `Del WAV's older than` in the global settings.<br>
-                    
-                    > When `Disabled`, your output wav files will be left untouched.<br>
-                    > When set to a setting `1 Day` or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.<br>
-                    
-                    ### 🟧 Skipped text/speech
-                    At time of writing, this model is 1x day old and I could see reports of issues with some TTS not being generated, some longer text missing the middle portion of the text etc. You can confirm what AllTalk sent to the Parler TTS engine by looking at the command prompt/terminal window. If your text shows up there, it was sent to the Parler TTS engine. Please refer to the Parler website for more details https://github.com/huggingface/parler-tts. 
-                    """)
-                gr.Markdown("""
-                    ### 🟧 How do I use Parler's voice generation system?
-                    To create a voice with Parler:
-
-                    Describe the voice characteristics in your prompt. For example: `Jon's voice is monotone yet slightly fast in delivery, with a very close recording that almost has no background noise.`
-                    
-                    Use one of the 34 inbuilt `Native` speaker names for a level of consistency: `Aaron, Alisa, Anna, Barbara, Bill, Brenda, Bruce, Carol, David, Eileen, Emily, Eric, Gary, James, Jason, Jenna, Jerry, Jon, Jordan, Joy, Karen, Laura, Lauren, Lea, Mike, Naomie, Patrick, Rebecca, Rick, Rose, Tina, Tom, Will, Yann`
-                    
-                    Control audio quality in the voice characteristics prompt:
-
-                    > Include `very clear audio` for highest quality<br>
-                    > Use `very noisy audio` for high levels of background noise
-
-                    Adjust other features in your voice characteristics prompt:
-
-                    > Gender<br>
-                    > Speaking rate<br>
-                    > Pitch<br>
-                    > Reverberation
-                    
-                    Remember, while you can create diverse voices, each generation may sound slightly different even with the same description.
-
-                    In the text sent for TTS generation, you can use punctuation to control speech rhythm (e.g. use `,` commas for small breaks)
-                    
-                    ### 🟧 UserWarning: 1Torch was not compiled with flash attention
-                    This is a limitation of Windows Pytorch not yet having full flash attention support on later builds of Pytorch (is my understanding at this time).
-                    """)
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE, elem_classes="custom-markdown")                               
+            with gr.Row():
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE1, elem_classes="custom-markdown")
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE2, elem_classes="custom-markdown")
 
     return app
 
