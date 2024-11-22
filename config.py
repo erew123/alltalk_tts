@@ -84,6 +84,7 @@ class AlltalkConfigDebug:
     debug_fullttstext: bool = False
     debug_narrator: bool = False
     debug_gradio_IP: bool = False
+    debug_transcribe: bool = False
 
 @dataclass
 class AlltalkConfigGradioPages:

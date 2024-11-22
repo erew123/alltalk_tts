@@ -1,10 +1,9 @@
 import os
-import re
 import sys
 import json
 import time
 import atexit
-import signal
+import signal as system_signal
 import inspect
 import requests
 import platform
@@ -14,6 +13,16 @@ import soundfile as sf
 from pathlib import Path
 from datetime import datetime, timedelta
 from requests.exceptions import RequestException, ConnectionError
+import whisper
+import torch
+import zipfile
+from tqdm import tqdm
+import gc
+import shutil
+import mimetypes
+import numpy as np
+from scipy import signal as scipy_signal
+import plotly
 """
 Note: The following function names are reserved for TGWUI integration.
 When running under text-generation-webui, these functions will be imported from
@@ -574,7 +583,7 @@ except ImportError:
     running_on_google_colab = False
 
 # Attach the signal handler to the SIGINT signal (Ctrl+C)
-signal.signal(signal.SIGINT, signal_handler)
+system_signal.signal(system_signal.SIGINT, signal_handler)
 
 # Check if we're running in docker
 if os.path.isfile("/.dockerenv") and 'google.colab' not in sys.modules:
@@ -1067,6 +1076,656 @@ def send_lowvram_request(value_sent):
             return f'<audio src="file/{audio_path}" controls autoplay></audio>'
     
     return response
+
+########################################
+#### Whisper Transcription Handling ####
+########################################
+class TranscriptionProgress:
+    def __init__(self):
+        self.current_file = ""
+        self.total_files = 0
+        self.completed_files = 0
+        self.current_progress = 0
+
+whisper_progress = TranscriptionProgress()
+
+# File size constants (in bytes)
+WARNING_SIZE = 25 * 1024 * 1024  # 25MB
+MAX_SIZE = 100 * 1024 * 1024     # 100MB
+
+# Allowed audio formats
+ALLOWED_AUDIO_FORMATS = {
+    '.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac',
+    '.wma', '.aiff', '.alac', '.opus'
+}
+
+def setup_directories(script_dir):
+    """Setup required directories"""
+    debug_func_entry()
+    base_dir = os.path.join(script_dir, "transcriptions")
+    uploads_dir = os.path.join(base_dir, "uploads")
+    output_dir = os.path.join(base_dir, "output")
+    
+    for directory in [base_dir, uploads_dir, output_dir]:
+        os.makedirs(directory, exist_ok=True)
+        print_message(f"Created/verified directory: {directory}", "debug_transcribe")
+    
+    return base_dir, uploads_dir, output_dir
+
+def validate_audio_file(file_path):
+    """Validate file type and size"""
+    debug_func_entry()
+    file_size = os.path.getsize(file_path)
+    file_ext = os.path.splitext(file_path)[1].lower()
+    mime_type = mimetypes.guess_type(file_path)[0]
+    
+    print_message(f"Validating file: {file_path}", "debug_transcribe")
+    print_message(f"File size: {file_size/1024/1024:.1f}MB", "debug_transcribe")
+    print_message(f"File extension: {file_ext}", "debug_transcribe")
+    print_message(f"MIME type: {mime_type}", "debug_transcribe")
+    
+    warnings = []
+    errors = []
+    
+    if file_ext not in ALLOWED_AUDIO_FORMATS:
+        msg = f"Invalid file format: {file_ext}"
+        print_message(msg, "error")
+        errors.append(msg)
+    
+    if mime_type and not mime_type.startswith('audio/'):
+        msg = f"File does not appear to be audio: {mime_type}"
+        print_message(msg, "error")
+        errors.append(msg)
+    
+    if file_size > MAX_SIZE:
+        msg = f"File too large: {file_size/1024/1024:.1f}MB (max {MAX_SIZE/1024/1024}MB)"
+        print_message(msg, "error")
+        errors.append(msg)
+    elif file_size > WARNING_SIZE:
+        msg = f"File is large ({file_size/1024/1024:.1f}MB) and may take longer to process"
+        print_message(msg, "warning")
+        warnings.append(msg)
+    
+    return warnings, errors
+
+def cleanup_gpu_memory():
+    """Thorough GPU memory cleanup"""
+    debug_func_entry()
+    if torch.cuda.is_available():
+        # Clear PyTorch's CUDA cache
+        torch.cuda.empty_cache()
+        # Force garbage collection
+        gc.collect()
+        # Clear any remaining CUDA memory
+        with torch.cuda.device('cuda'):
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+        print_message("GPU memory cleaned", "debug_transcribe")
+
+def create_output_directory(base_dir, prefix=""):
+    """Create a uniquely named output directory for this batch of transcriptions"""
+    debug_func_entry()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dir_name = f"{prefix}_{timestamp}" if prefix else timestamp
+    output_dir = os.path.join(base_dir, "output", dir_name)
+    os.makedirs(output_dir, exist_ok=True)
+    print_message(f"Created output directory: {output_dir}", "debug_transcribe")
+    return output_dir
+
+def create_output_filename(input_path, output_dir, prefix=""):
+    """Create an output filename based on the input path"""
+    debug_func_entry()
+    stem = Path(input_path).stem
+    if prefix:
+        return os.path.join(output_dir, f"{prefix}_{stem}")
+    return os.path.join(output_dir, stem)
+
+def delete_uploaded_files():
+    """Delete all files in the uploads directory"""
+    debug_func_entry()
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    uploads_dir = os.path.join(script_dir, "transcriptions", "uploads")
+    deleted_count = 0
+    
+    print_message(f"Attempting to delete files in: {uploads_dir}", "debug_transcribe")
+    
+    if os.path.exists(uploads_dir):
+        for file in os.listdir(uploads_dir):
+            file_path = os.path.join(uploads_dir, file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                    deleted_count += 1
+                    print_message(f"Deleted: {file}", "debug_transcribe")
+            except Exception as e:
+                error_msg = f"Error while deleting {file}: {str(e)}"
+                print_message(error_msg, "error")
+                return error_msg
+                
+        msg = f"Deleted {deleted_count} uploaded audio files"
+        print_message(msg)
+        return msg
+    
+    msg = "No files to delete - uploads directory not found"
+    print_message(msg, "warning")
+    return msg
+
+def create_srt_content(segments):
+    """Convert whisper segments to SRT format"""
+    debug_func_entry()    
+    srt_content = []
+    for i, segment in enumerate(segments, start=1):
+        # Convert start/end times to SRT format (HH:MM:SS,mmm)
+        start_time = timedelta(seconds=segment['start'])
+        end_time = timedelta(seconds=segment['end'])
+        
+        # Format with milliseconds
+        start_str = str(start_time).replace('.', ',')[:11]
+        end_str = str(end_time).replace('.', ',')[:11]
+        
+        # Ensure proper formatting for times less than 1 hour
+        if len(start_str) < 11:
+            start_str = "0" + start_str
+        if len(end_str) < 11:
+            end_str = "0" + end_str
+        
+        # Build SRT segment
+        srt_content.append(f"{i}\n{start_str} --> {end_str}\n{segment['text'].strip()}\n")
+    
+    return "\n".join(srt_content)
+    
+
+def process_audio_files(audio_files, model_size, output_format, delete_after, prefix="", gradio_progress=gr.Progress(track_tqdm=True)):
+    """Process multiple audio files and return paths to transcription files"""
+    debug_func_entry()
+    try:
+        print_message(f"Starting transcription process with model: {model_size}", "debug_transcribe")
+        
+        # Setup directories
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir, uploads_dir, _ = setup_directories(script_dir)
+        
+        # Create specific output directory for this batch
+        output_dir = create_output_directory(base_dir, prefix)
+        print_message(f"Using prefix: {prefix if prefix else 'none'}", "debug_transcribe")
+        
+        # Validate and copy files to uploads directory
+        processed_files = []
+        validation_messages = []
+        
+        for audio_file in audio_files:
+            print_message(f"Processing file: {audio_file}", "debug_transcribe")
+            warnings, errors = validate_audio_file(audio_file)
+            file_name = Path(audio_file).name
+            
+            if errors:
+                for error in errors:
+                    validation_messages.append(f"Skipping {file_name}: {error}")
+                continue
+            
+            validation_messages.extend([f"Warning for {file_name}: {warning}" for warning in warnings])
+            
+            # Copy file to uploads directory
+            upload_path = os.path.join(uploads_dir, file_name)
+            shutil.copy2(audio_file, upload_path)
+            print_message(f"Copied to uploads: {upload_path}", "debug_transcribe")
+            processed_files.append(upload_path)
+        
+        if not processed_files:
+            msg = "No valid files to process\n" + "\n".join(validation_messages)
+            print_message(msg, "error")
+            return None, msg
+        
+        # Load model
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print_message(f"Loading Whisper model {model_size} on {device}", "debug_transcribe")
+        model = whisper.load_model(model_size, device=device)
+        
+        output_files = []
+        metadata = []
+        
+        whisper_progress.total_files = len(processed_files)
+        
+        for idx, audio_file in enumerate(tqdm(processed_files, desc="Processing files")):
+            try:
+                whisper_progress.current_file = Path(audio_file).name
+                whisper_progress.completed_files = idx
+                print_message(f"Transcribing: {audio_file}", "debug_transcribe")
+                
+                # Transcribe audio
+                result = model.transcribe(audio_file)
+                
+                # Create output file
+                base_output_path = create_output_filename(audio_file, output_dir, prefix)
+                
+                # Save based on format
+                if output_format == "txt":
+                    output_path = f"{base_output_path}.txt"
+                    with open(output_path, 'w', encoding='utf-8') as f:
+                        f.write(result["text"])
+                elif output_format == "srt":
+                    output_path = f"{base_output_path}.srt"
+                    with open(output_path, 'w', encoding='utf-8') as f:
+                        f.write(create_srt_content(result["segments"]))
+                else:  # json
+                    output_path = f"{base_output_path}.json"
+                    with open(output_path, 'w', encoding='utf-8') as f:
+                        json.dump(result, f, indent=4, ensure_ascii=False)
+                
+                print_message(f"Saved transcription to: {output_path}", "debug_transcribe")
+                output_files.append(output_path)
+                
+                # Collect metadata
+                metadata.append({
+                    "original_file": Path(audio_file).name,
+                    "duration": result["segments"][-1]["end"] if result["segments"] else 0,
+                    "output_file": Path(output_path).name,
+                    "model_used": model_size,
+                    "format": output_format,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+                # Delete audio file if requested
+                if delete_after:
+                    os.unlink(audio_file)
+                    print_message(f"Deleted audio file: {audio_file}", "debug_transcribe")
+                
+            except Exception as e:
+                error_msg = f"Error processing {Path(audio_file).name}: {str(e)}"
+                print_message(error_msg, "error")
+                validation_messages.append(error_msg)
+                continue
+        
+        # Create summary file
+        summary_path = os.path.join(output_dir, f"summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "processed_files": metadata,
+                "total_files": len(processed_files),
+                "successful_transcriptions": len(output_files),
+                "processing_date": datetime.now().isoformat(),
+                "validation_messages": validation_messages
+            }, f, indent=4)
+        
+        print_message(f"Created summary file: {summary_path}", "debug_transcribe")
+        
+        # Create ZIP file containing all outputs
+        zip_path = os.path.join(base_dir, "output", f"{prefix}_transcriptions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip" if prefix else f"transcriptions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip")
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for file in output_files + [summary_path]:
+                # Preserve the directory structure in the ZIP
+                arcname = os.path.relpath(file, os.path.dirname(output_dir))
+                zipf.write(file, arcname)
+        
+        print_message(f"Created ZIP file: {zip_path}", "debug_transcribe")
+        
+        status_message = "\n".join(validation_messages + [
+            f"Processed {m['original_file']}: {m['duration']:.2f} seconds"
+            for m in metadata
+        ])
+        status_message += f"\nFiles saved in: {output_dir}"
+        
+        return zip_path, status_message
+        
+    finally:
+        # Cleanup GPU memory
+        if 'model' in locals():
+            del model
+        cleanup_gpu_memory()
+
+########################
+#### Live Dictation ####
+########################
+def setup_transcription_directory():
+    """Setup directory for saving transcriptions"""
+    debug_func_entry()
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    transcripts_dir = os.path.join(script_dir, "transcriptions", "live_dictation")
+    os.makedirs(transcripts_dir, exist_ok=True)
+    return transcripts_dir
+
+def create_transcript_file(directory, prefix=""):
+    """Create a new transcript file with timestamp"""
+    debug_func_entry()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{prefix}_dictation_{timestamp}.txt" if prefix else f"dictation_{timestamp}.txt"
+    return os.path.join(directory, filename)
+
+def load_whisper_model(model_name):
+    """Load the Whisper model"""
+    debug_func_entry()
+    print_message(f"Loading Whisper model: {model_name}", "debug_transcribe")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = whisper.load_model(model_name, device=device)
+    print_message(f"Model loaded on {device}", "debug_transcribe")
+    return model
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    """Design a butterworth bandpass filter"""
+    debug_func_entry()
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = scipy_signal.butter(order, [low, high], btype='band')
+    return b, a
+
+def apply_audio_processing(audio_data, sample_rate, settings):
+    """Apply audio processing based on settings"""
+    debug_func_entry()
+    if not settings.get("enable_audio_processing"):
+        return audio_data
+        
+    # Convert to float32 and normalize
+    audio_data = audio_data.astype(np.float32)
+    
+    if settings.get("bandpass_filter"):
+        # Apply bandpass filter
+        b, a = butter_bandpass(
+            settings.get("bandpass_low", 85),
+            settings.get("bandpass_high", 3800),
+            sample_rate
+        )
+        audio_data = scipy_signal.filtfilt(b, a, audio_data)
+    
+    if settings.get("noise_reduction"):
+        # Simple noise reduction
+        noise_floor = np.mean(np.abs(audio_data)) * 2
+        audio_data[np.abs(audio_data) < noise_floor] = 0
+    
+    if settings.get("compression"):
+        # Apply compression
+        threshold = 0.1
+        ratio = 0.5
+        makeup_gain = 1.5
+        
+        mask = np.abs(audio_data) > threshold
+        audio_data[mask] = np.sign(audio_data[mask]) * (
+            threshold + (np.abs(audio_data[mask]) - threshold) * ratio
+        )
+        audio_data *= makeup_gain
+    
+    # Final normalization
+    max_val = np.max(np.abs(audio_data))
+    if max_val > 0:
+        audio_data = audio_data / max_val
+    
+    return audio_data
+
+def identify_speaker(segments):
+    """Simple speaker identification based on segment characteristics"""
+    debug_func_entry()
+    # Very basic approach - could be enhanced with proper speaker diarization
+    current_speaker = 1
+    last_end_time = 0
+    
+    for segment in segments:
+        # If there's a significant gap, might be a different speaker
+        if segment['start'] - last_end_time > 1.0:
+            current_speaker = 2 if current_speaker == 1 else 1
+        last_end_time = segment['end']
+    
+    return current_speaker
+
+
+def visualize_audio_levels(audio_data):
+    """Create audio level visualization"""
+    debug_func_entry()
+    import plotly.graph_objects as go
+    
+    # Calculate RMS in windows
+    window_size = 1024
+    windows = range(0, len(audio_data), window_size)
+    rms_values = [np.sqrt(np.mean(audio_data[i:i+window_size]**2)) for i in windows]
+    
+    # Create time points
+    time_points = [i/len(windows) for i in range(len(windows))]
+    
+    # Create plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=time_points,
+        y=rms_values,
+        mode='lines',
+        name='Audio Level'
+    ))
+    
+    fig.update_layout(
+        title="Real-time Audio Levels",
+        xaxis_title="Time",
+        yaxis_title="Level"
+    )
+    
+    return fig
+
+def process_audio(audio, state):
+    """Process audio chunk and update transcript"""
+    debug_func_entry()
+   # Default return values for error cases
+    empty_plot = visualize_audio_levels(np.zeros(1024))
+    default_return = (
+        state if state else None,
+        state["display_text"] if state and "display_text" in state else "",
+        empty_plot
+    )
+    
+    if audio is None or state is None or not state.get("is_active"):
+        return default_return
+    
+    try:
+        # Get audio data and sample rate
+        sample_rate, audio_data = audio[0], audio[1]
+        
+        # Convert to float32 and normalize
+        audio_data = audio_data.astype(np.float32) / 32768.0
+        
+        # Calculate RMS energy
+        energy = np.sqrt(np.mean(audio_data**2))
+        print_message(f"Audio energy level: {energy}", "debug_transcribe")
+        
+        # Skip if too quiet
+        if energy < 0.005:
+            print_message("Audio too quiet, skipping", "debug_transcribe")
+            plot_data = visualize_audio_levels(audio_data)
+            return state, state["display_text"], plot_data
+        
+        # Resample to 16kHz if needed
+        if sample_rate != 16000:
+            print_message(f"Resampling from {sample_rate} to 16000", "debug_transcribe")
+            number_of_samples = round(len(audio_data) * 16000 / sample_rate)
+            audio_data = scipy_signal.resample(audio_data, number_of_samples).astype(np.float32)
+        
+        # Simple normalization
+        max_val = np.max(np.abs(audio_data))
+        if max_val > 0:
+            audio_data = audio_data / max_val
+        
+        print_message(f"Processing audio chunk - shape: {audio_data.shape}, range: [{audio_data.min():.3f}, {audio_data.max():.3f}]", "debug_transcribe")
+        
+        # Process with Whisper
+        result = model.transcribe(
+            audio_data,
+            language=state.get("source_language", "auto"),
+            task="translate" if state.get("translate_to_english") else "transcribe",
+            temperature=0.0,
+            condition_on_previous_text=True
+        )
+        
+        transcribed_text = result["text"].strip()
+        
+        if transcribed_text:
+            # Format text based on timestamps setting
+            if state.get("add_timestamps"):
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                formatted_text = f"[{timestamp}] {transcribed_text}"
+                state["text"] += formatted_text + "\n"
+            else:
+                # For non-timestamped text, append with space and handle sentence endings
+                if state["text"] and not state["text"].endswith(('.', '!', '?', '\n')):
+                    state["text"] += " "
+                state["text"] += transcribed_text
+            
+            # Update display text
+            state["display_text"] = state["text"]
+            
+            # Get confidence scores (if available)
+            try:
+                confidences = [segment.get('confidence', 1.0) for segment in result['segments']]
+                avg_confidence = sum(confidences) / len(confidences) if confidences else 1.0
+                state["display_text"] += f"\n\nConfidence: {avg_confidence:.2%}"
+            except:
+                pass
+            
+            # Save transcript
+            save_transcript(state, state.get("export_format", "txt"))
+            
+            # Create audio plot
+            try:
+                plot_data = visualize_audio_levels(audio_data)
+            except Exception as plot_error:
+                print_message(f"Plot error (non-critical): {plot_error}", "debug_transcribe")
+                plot_data = None
+            
+            return state, state["display_text"], plot_data
+        else:
+            return default_return
+
+    except Exception as e:
+        error_msg = f"Error processing audio: {str(e)}"
+        print_message(error_msg, "error")
+        return default_return
+
+def create_srt_file(segments, filename):
+    """Create an SRT file from segments"""
+    debug_func_entry()
+    srt_content = create_srt_content(segments)
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(srt_content)
+
+def save_transcript(state, format_type):
+    """Save transcript in specified format"""
+    debug_func_entry()
+    if not state or not state.get("text"):
+        return
+        
+    # Format text based on timestamps setting
+    if state.get("add_timestamps"):
+        save_text = state["text"]  # Already formatted with timestamps
+    else:
+        # Format as flowing text with proper sentence spacing
+        sentences = state["text"].replace("\n", " ").split(". ")
+        save_text = ". ".join(s.strip() for s in sentences if s.strip())
+        if not save_text.endswith(('.', '!', '?')):
+            save_text += "."
+        
+    if format_type == "txt":
+        with open(state["output_file"], "w", encoding="utf-8") as f:
+            f.write(save_text)
+            
+    elif format_type == "srt":
+        srt_filename = state["output_file"].replace(".txt", ".srt")
+        create_srt_file(state.get("segments", []), srt_filename)
+        
+    elif format_type == "json":
+        json_filename = state["output_file"].replace(".txt", ".json")
+        metadata = {
+            "text": save_text,
+            "segments": state.get("segments", []),
+            "word_count": len(save_text.split()),
+            "model": state["model_name"],
+            "settings": state["settings"]
+        }
+        with open(json_filename, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
+
+    print_message(f"Saved transcript to: {state['output_file']}", "debug_transcribe")
+
+def start_new_dictation(model_name, prefix, language, source_lang, translate, export_fmt, timestamps, 
+                       diarization, audio_proc, bandpass, noise_red, compress, 
+                       silence_thresh, bp_low, bp_high):
+    """Load model and prepare for dictation"""
+    debug_func_entry()
+    global model
+    try:
+        model = load_whisper_model(model_name)
+        
+        transcripts_dir = setup_transcription_directory()
+        output_file = create_transcript_file(transcripts_dir, prefix)
+        
+        state = {
+            "text": "",
+            "display_text": "",
+            "output_file": output_file,
+            "chunks": 0,
+            "is_active": True,
+            "model_name": model_name,
+            "word_count": 0,
+            # Settings
+            "language": language,
+            "source_language": source_lang,
+            "translate_to_english": translate,
+            "export_format": export_fmt,
+            "add_timestamps": timestamps,
+            "enable_diarization": diarization,
+            "settings": {
+                "enable_audio_processing": audio_proc,
+                "bandpass_filter": bandpass,
+                "noise_reduction": noise_red,
+                "compression": compress,
+                "silence_threshold": silence_thresh,
+                "bandpass_low": bp_low,
+                "bandpass_high": bp_high
+            }
+        }
+        
+        print_message(f"Started new transcription: {output_file}", "debug_transcribe")
+        message = "Model loaded! Click the microphone icon to start/stop recording."
+        
+        return (
+            state,
+            message,
+            gr.update(interactive=True),
+            gr.update(interactive=False),
+            gr.update(interactive=True)
+        )
+    except Exception as e:
+        error_msg = f"Error loading model: {str(e)}"
+        print_message(error_msg, "error")
+        return (
+            None,
+            f"Error: {error_msg}",
+            gr.update(interactive=False),
+            gr.update(interactive=True),
+            gr.update(interactive=False)
+        )
+
+def finish_dictation(state):
+    """End dictation and cleanup"""
+    debug_func_entry()
+    global model
+    if state is not None:
+        print_message(f"Finished dictation: {state['output_file']}", "debug_transcribe")
+        save_transcript(state, state.get("export_format", "txt"))
+        
+        if 'model' in globals():
+            # Clear model references
+            model.to('cpu')  # Move model to CPU first
+            del model
+            model = None
+            
+        # Thorough cleanup
+        cleanup_gpu_memory()
+        
+        # Clear CUDA memory pool
+        torch.cuda.synchronize()
+        
+    return (
+        None,
+        "Dictation finished. Please refresh the page before starting a new session.",
+        gr.update(interactive=False, value=None),
+        gr.update(interactive=True),
+        gr.update(interactive=False)
+    )
+
 
 ##################################################################
 #     _    _ _ _____     _ _       ____               _ _        #
@@ -1689,6 +2348,321 @@ if gradio_enabled == True:
                         with gr.Row():
                             gr.Markdown(AllTalkHelpContent.VOICE2RVC1, elem_classes="custom-markdown")
                             gr.Markdown(AllTalkHelpContent.VOICE2RVC2, elem_classes="custom-markdown")                    
+    
+            with gr.Tab("Transcribe"):
+                with gr.Row():
+                    with gr.Group():
+                        audio_files = gr.File(
+                            file_count="multiple", 
+                            label="Upload Audio Files",
+                            elem_classes="small-file-upload"
+                        )
+                        delete_after_process = gr.Checkbox(
+                            label="Clean Up Temporary Audio Files After Processing",
+                            value=False
+                        )                        
+                    with gr.Row():
+                        with gr.Group():
+                            with gr.Row():                                                  
+                                prefix_input = gr.Textbox(
+                                    label="Output Prefix (optional)",
+                                    placeholder="e.g., project_name, meeting_date",
+                                    value="",
+                                    scale=3
+                                )                                                 
+                                model_choices = gr.Dropdown(
+                                    choices=["tiny", "base", "small", "medium", "large-v3"],
+                                    value="base",
+                                    label="Whisper Model Size",
+                                    scale=1
+                                )
+                                format_choices = gr.Dropdown(
+                                    choices=["txt", "json", "srt"],
+                                    value="txt",
+                                    label="Output Format",
+                                    scale=1
+                                )
+                            with gr.Row():
+                                delete_btn = gr.Button("Delete Uploaded Audio")
+                                process_btn = gr.Button("Transcribe", variant="primary")
+                            with gr.Row():                                
+                                status_output = gr.Textbox(label="Processing Status", lines=2)                                
+                    
+                with gr.Row():
+                    output_zip = gr.File(label="Download Transcriptions (ZIP)", elem_classes="small-file-upload2")
+
+                with gr.Accordion("HELP - 🎯 Transcribe Basics", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.TRANSCRIBE, elem_classes="custom-markdown")                        
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.TRANSCRIBE1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.TRANSCRIBE2, elem_classes="custom-markdown")
+
+                process_btn.click(
+                    fn=process_audio_files,
+                    inputs=[audio_files, model_choices, format_choices, delete_after_process, prefix_input],
+                    outputs=[output_zip, status_output]
+                )
+                
+                delete_btn.click(
+                    fn=delete_uploaded_files,
+                    inputs=[],
+                    outputs=[status_output]
+                )
+
+            with gr.Tab("Dictate"):
+                state = gr.State(None)
+                # Sort the dictionary by full names alphabetically
+                sorted_languages = dict(sorted(AllTalkHelpContent.WHISPER_LANGUAGES.items(), key=lambda item: item[1]))
+                # Reverse the dictionary for lookups (Full Name -> Code)
+                name_to_code = {name: code for code, name in sorted_languages.items()}
+                def process_language(language_name):
+                    # Convert selected language name back to its 2-digit code
+                    return name_to_code[language_name]                
+                with gr.Row():
+                    model_choices = gr.Dropdown(
+                        choices=["tiny", "base", "small", "medium", "turbo", "large-v3", "large-v3-turbo"],
+                        value="large-v3",
+                        label="Whisper Model",
+                        scale=1
+                    )
+                    language_select = gr.Dropdown(
+                        choices=list(sorted_languages.values()),
+                        value="English",
+                        label="Language",
+                        allow_custom_value=True
+                    )
+                    language_select.change(
+                        fn=process_language, 
+                        inputs=language_select,
+                    )                                     
+                    export_format = gr.Dropdown(
+                        choices=["txt", "srt", "json"],
+                        value="txt",
+                        label="Output Format",
+                        scale=1
+                    )                    
+                    prefix_input = gr.Textbox(
+                        label="Output File Prefix (optional)",
+                        placeholder="e.g., meeting_notes, todo_list",
+                        scale=2
+                    )
+                    start_btn = gr.Button("Load Model", variant="primary")
+                    finish_btn = gr.Button("Finish & Unload", interactive=False)
+
+                with gr.Accordion("Advanced Settings (Change Before Loading The Model)", open=False):
+                    with gr.Row():
+                        # Update the dropdowns
+                        translate_to_english = gr.Dropdown(
+                            label="Translate to English",
+                            choices={False, True},
+                            value=False,
+                            allow_custom_value=True
+                        )                        
+                        source_language = gr.Dropdown(
+                            choices=list(sorted_languages.values()),
+                            value="English",
+                            label="Source Language",
+                            allow_custom_value=True
+                        )
+                        source_language.change(
+                            fn=process_language, 
+                            inputs=source_language,
+                        )
+                        add_timestamps = gr.Dropdown(
+                            label="Add Timestamps",
+                            choices={False, True},
+                            value=False
+                        )
+                        enable_diarization = gr.Dropdown(
+                            label="Enable Speaker Diarization",
+                            choices={False, True},
+                            value=False
+                        )
+                    
+                    with gr.Row():                    
+                        enable_audio_processing = gr.Checkbox(
+                            label="Enable ALL Audio Enhancements",
+                            value=True
+                        )
+                        bandpass_filter = gr.Checkbox(
+                            label="Apply Bandpass Filter",
+                            value=True
+                        )
+                        noise_reduction = gr.Checkbox(
+                            label="Apply Noise Reduction",
+                            value=True
+                        )
+                        compression = gr.Checkbox(
+                            label="Apply Audio Compression",
+                            value=True
+                        )
+
+                        # At the start of interface setup
+                        checkbox_state = gr.State({
+                            "processing": False
+                        })
+
+                        def update_audio_settings(main_enable, state_dict):
+                            """Enable all individual settings when main is checked"""
+                            if not state_dict["processing"]:
+                                state_dict["processing"] = True
+                                state_dict["processing"] = False
+                                # Return individual updates and state separately
+                                return (
+                                    gr.update(value=main_enable),  # bandpass
+                                    gr.update(value=main_enable),  # noise
+                                    gr.update(value=main_enable),  # compression
+                                    state_dict
+                                )
+                            return (
+                                gr.update(),  # bandpass
+                                gr.update(),  # noise
+                                gr.update(),  # compression
+                                state_dict
+                            )
+
+                        def update_main_setting(bandpass, noise, compress, state_dict):
+                            """Main should only be checked if all individuals are checked"""
+                            if not state_dict["processing"]:
+                                state_dict["processing"] = True
+                                ret = gr.update(value=all([bandpass, noise, compress]))
+                                state_dict["processing"] = False
+                                return ret, state_dict
+                            return gr.update(), state_dict
+
+                        # In interface:
+                        enable_audio_processing.change(
+                            fn=update_audio_settings,
+                            inputs=[enable_audio_processing, checkbox_state],
+                            outputs=[bandpass_filter, noise_reduction, compression, checkbox_state]
+                        )
+
+                        for checkbox in [bandpass_filter, noise_reduction, compression]:
+                            checkbox.change(
+                                fn=update_main_setting,
+                                inputs=[bandpass_filter, noise_reduction, compression, checkbox_state],
+                                outputs=[enable_audio_processing, checkbox_state]
+                            )
+
+                    with gr.Row():
+                        silence_threshold = gr.Slider(
+                            minimum=0.001,
+                            maximum=0.02,
+                            value=0.008,
+                            label="Silence Threshold"
+                        )
+                        bandpass_low = gr.Slider(
+                            minimum=50,
+                            maximum=200,
+                            value=85,
+                            label="Bandpass Low Freq (Hz)"
+                        )
+                        bandpass_high = gr.Slider(
+                            minimum=2000,
+                            maximum=8000,
+                            value=3800,
+                            label="Bandpass High Freq (Hz)"
+                        )
+
+                with gr.Row():
+                    # Audio input with waveform visualization
+                    waveform_opts = gr.WaveformOptions(
+                        sample_rate=16000,  # Set to Whisper's expected rate
+                        show_recording_waveform=True,
+                        show_controls=False,
+                        waveform_color="#1f77b4",
+                        waveform_progress_color="#2ecc71"
+                    )
+                    
+                    # Audio input with configured waveform
+                    audio_input = gr.Audio(
+                        sources=["microphone"],
+                        type="numpy",
+                        streaming=True,
+                        label="Click `Record` to start dictation and `Stop` to pause or stop dictation",
+                        show_label=True,
+                        interactive=False,
+                        waveform_options=waveform_opts
+                    )
+                with gr.Accordion("Show Audio Levels Graph", open=False):
+                    with gr.Row():               
+                        audio_plot = gr.Plot(
+                            label="Audio Levels",
+                            show_label=True,
+                            container=True,
+                        )                                       
+                with gr.Row():                
+                    text_output = gr.Textbox(
+                        label="Live Transcription", 
+                        lines=10,
+                        placeholder="Transcription will appear here as you speak...",
+                        show_copy_button=True
+                    )
+
+                # Dictatation Button click handlers
+                start_btn.click(
+                    fn=start_new_dictation,
+                    inputs=[
+                        model_choices, prefix_input, 
+                        language_select, source_language, translate_to_english, export_format,
+                        add_timestamps, enable_diarization,
+                        enable_audio_processing, bandpass_filter, noise_reduction, compression,
+                        silence_threshold, bandpass_low, bandpass_high
+                    ],
+                    outputs=[state, text_output, audio_input, start_btn, finish_btn]
+                )
+
+                finish_btn.click(
+                    fn=finish_dictation,
+                    inputs=[state],
+                    outputs=[state, text_output, audio_input, start_btn, finish_btn]
+                )
+                
+                def on_start_recording(state):
+                    if state and state.get("is_active"):
+                        print_message("Recording started", "debug_transcribe")
+                        state["is_recording"] = True
+                    return state
+
+                def on_stop_recording(state):
+                    if state and state.get("is_active"):
+                        print_message("Recording stopped", "debug_transcribe")
+                        state["is_recording"] = False
+                    return state
+
+                # Add the handlers to the audio input
+                audio_input.start_recording(
+                    fn=on_start_recording,
+                    inputs=[state],
+                    outputs=[state]
+                ).success(
+                    fn=None,
+                    js="() => {console.log('Recording started');}"
+                )
+                
+                audio_input.stop_recording(
+                    fn=on_stop_recording,
+                    inputs=[state],
+                    outputs=[state]
+                ).success(
+                    fn=None,
+                    js="() => {console.log('Recording stopped');}"
+                )
+                
+                audio_input.stream(
+                    fn=process_audio,
+                    inputs=[audio_input, state],
+                    outputs=[state, text_output, audio_plot],
+                    show_progress=False,
+                    concurrency_limit=1
+                )
+                with gr.Accordion("HELP - 🎯 Dictate Basics", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.WHISPER_HELP, elem_classes="custom-markdown")                        
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.WHISPER_HELP1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.WHISPER_HELP2, elem_classes="custom-markdown")
 
             if config.gradio_pages.TTS_Generator_page:
                 with gr.Tab("TTS Generator"):
@@ -1737,9 +2711,8 @@ if gradio_enabled == True:
                             gr_debug_tts = gr.CheckboxGroup(choices=debugging_choices, label="Debugging Options list", value=default_values)
                         with gr.Column():
                             gradio_interface = gr.Dropdown(choices={"Enabled": "true", "Disabled": "false"}, label="Gradio Interface", value="Enabled" if config.gradio_interface else "Disabled", info="**WARNING**: This will disable the AllTalk Gradio interface from loading. To re-enable the interface, go to the API address in a web browser and enable it there. http://127.0.0.1:7851/", allow_custom_value=True)
-                    gr.Markdown("### Disable Gradio Interface Tabs")  # Adds a title
-                    gr.Markdown("Use the checkboxes below to enable or disable individual interface tabs or components.")
                     with gr.Group():
+                        gr.Markdown("### Disable Gradio Interface Tabs")
                         with gr.Row():
                             generate_help_page = gr.Checkbox(label="Generate Help", value=config.gradio_pages.Generate_Help_page)
                             voice2rvc_page = gr.Checkbox(label="Voice2RVC", value=config.gradio_pages.Voice2RVC_page)
