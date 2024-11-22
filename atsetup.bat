@@ -495,7 +495,7 @@ echo.
 
 :update_gradio
 echo ** Updating Gradio **
-pip install --upgrade gradio==4.32.2
+pip install --upgrade gradio==4.44.1
 echo.
 if errorlevel 1 (
     echo Gradio update failed, errorlevel was %errorlevel%. There should be an error
