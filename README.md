@@ -39,6 +39,7 @@ I would also like to say a big thank you to anyone whom has contributed to this 
 - Clear console output for troubleshooting
 - Binds to all available IP addresses (0.0.0.0)
 - Fully customizable Global API settings
+- Transcription & Audio File Transcription
 
 #### Documentation and Support
 - Built-in documentation with web interface
