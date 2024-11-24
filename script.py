@@ -882,7 +882,7 @@ def read_or_initialize_sha(file_path, owner, repo, branch):
     else:
         # File doesn't exist, fetch the latest SHA and create the file
         current_commit_sha, _ = fetch_latest_commit_sha_and_date(owner, repo, branch)
-        if latest_commit_sha:
+        if current_commit_sha:
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump({"last_known_commit_sha": current_commit_sha}, file)
             return current_commit_sha
