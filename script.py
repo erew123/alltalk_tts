@@ -70,15 +70,31 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import gradio as gr
 import numpy as np
-import plotly.graph_objects as go
 import requests
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import RequestException
-from scipy import signal as scipy_signal
 import soundfile as sf
 from tqdm import tqdm
 import torch
-import whisper
+try:
+    import whisper
+    import soundfile as sf
+    import plotly.graph_objects as go
+    from scipy import signal as scipy_signal
+except ImportError as e:
+    print(f"Error: {e}")
+    print("=" * 50)
+    print("🚨 Missing Dependencies Detected 🚨\n")
+    print(
+        "It seems you are missing some required packages.\n"
+        "To resolve this, please install the dependencies by running:\n"
+    )
+    print("  🔹 pip install -r system/requirements/requirements_standalone.txt")
+    print("  🔹 or use the 'atsetup' command\n")
+    print("Once the installation is complete, try running the script again.")
+    print("=" * 50)
+    sys.exit(1)  # Exit the script to avoid further errors
+    
 this_dir = Path(__file__).parent.resolve()
 
 # Note: The following function names are reserved for TGWUI integration.
