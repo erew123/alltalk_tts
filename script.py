@@ -280,7 +280,7 @@ def initialize_engine_state(_state):
     """Initialize engine state from central config"""
     _state['srv_current_engine_loaded'] = tts_engines_config.engine_loaded
     _state['srv_engines_available'] = tts_engines_config.get_engine_names_available()
-    _state['srv_currnet_model_loaded'] = tts_engines_config.selected_model
+    _state['srv_current_model_loaded'] = tts_engines_config.selected_model
     return _state
 
 # Call this after creating _state
@@ -295,6 +295,14 @@ with open(os.path.join(this_dir, "system", "config", "languages.json"), "r", enc
 ##########################
 # Central print function #
 ##########################
+# ANSI color codes
+BLUE = "\033[94m"
+# MAGENTA = "\033[95m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
+
 def print_message(message, message_type="standard", component="TTS"):
     """Centralized print function for AllTalk messages
     Args:
@@ -302,14 +310,6 @@ def print_message(message, message_type="standard", component="TTS"):
         message_type (str): Type of message (standard/warning/error/debug_*/debug)
         component (str): Component identifier (TTS/ENG/GEN/API/etc.)
     """
-    # ANSI color codes
-    BLUE = "\033[94m"
-    # MAGENTA = "\033[95m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    RESET = "\033[0m"
-
     prefix = f"[{config.branding}{component}] "
 
     if message_type.startswith("debug_"):
@@ -802,7 +802,7 @@ def delete_old_files(folder_path, amt_days_to_keep):
 
 
 # Check and perform file deletion
-if delete_output_wavs_setting.lower() == "disabled":
+if delete_output_wavs_setting.strip().lower() == "disabled":
     print_message("\033[92mWAV file deletion :\033[93m Disabled\033[0m")
 else:
     try:
