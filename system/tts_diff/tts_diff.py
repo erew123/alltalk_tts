@@ -28,6 +28,8 @@ parser = argparse.ArgumentParser(description="Compare TTS output with the origin
 parser.add_argument("--threshold", type=int, default=98, help="Similarity threshold for considering a match (default: 98)")
 parser.add_argument("--ttslistpath", help="Path to the ttsList.json file")
 parser.add_argument("--wavfilespath", help="Path to the wav outputs folder")
+parser.add_argument("--whisper-model", type=str, default="large-v3", help="Whisper model to use (default: large-v3)")
+
 args = parser.parse_args()
 
 if not args.ttslistpath:
@@ -38,6 +40,7 @@ if not args.wavfilespath:
 json_file_path = Path(args.ttslistpath).resolve()
 wav_file_path = Path(args.wavfilespath).resolve()
 accuracy_threshold = args.threshold
+whisper_model_name = args.whisper_model  # Capture the model name from the argument
 
 def disclaimer_text():
     print(f"\nDESCRIPTION: ")
@@ -196,12 +199,13 @@ def main():
     print("[AllTalk TTSDiff] \033[94mJSON file  :\033[92m", json_file_path, "\033[0m")
     print("[AllTalk TTSDiff] \033[94mWAV files  :\033[92m", wav_file_path, "\033[0m")
     print("[AllTalk TTSDiff] \033[94mAccuracy   :\033[92m", accuracy_threshold, "%", "\033[0m")
+    print("[AllTalk TTSDiff] \033[94mWhisper    :\033[92m", whisper_model_name, "\033[0m")
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("[AllTalk TTSDiff] \033[94mDevice     :\033[92m", device, "\033[0m")
-    print("[AllTalk TTSDiff] Loading Whisper Large-v3 model...")
-    model = whisper.load_model("large-v3", device=device)
-    
+    print("[AllTalk TTSDiff] Loading Whisper model...")
+    model = whisper.load_model(whisper_model_name, device=device)  # Use the specified or default model
+        
     flagged_ids = []  # Initialize the list to track IDs needing review
 
     try:
