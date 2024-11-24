@@ -73,7 +73,6 @@ import numpy as np
 import requests
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import RequestException
-import soundfile as sf
 from tqdm import tqdm
 import torch
 try:
@@ -94,7 +93,6 @@ except ImportError as e:
     print("Once the installation is complete, try running the script again.")
     print("=" * 50)
     sys.exit(1)  # Exit the script to avoid further errors
-    
 this_dir = Path(__file__).parent.resolve()
 
 # Note: The following function names are reserved for TGWUI integration.
@@ -2986,7 +2984,7 @@ if gradio_enabled is True:
             theme=selected_theme,
             title="AllTalk",
             analytics_enabled=False,
-        ) as app: # pylint: disable=redefined-outer-name 
+        ) as app: # pylint: disable=redefined-outer-name
             with gr.Row():
                 gr.Markdown("## AllTalk TTS V2")
                 gr.Markdown("")
