@@ -293,6 +293,7 @@ class AllTalkHelpContent:
     - Settings here act as defaults but can be overridden via API parameters
     - All changes require clicking "Update Settings" to take effect    
     - Some settings require an engine reload to take effect
+    - JSON latent files are automatically created on first run of generation with a voice
     """
 
     HELP_PAGE = """
@@ -361,24 +362,39 @@ class AllTalkHelpContent:
 
     ## 🗣️ Voice Management
 
-    ### Single Voice Setup (Wav/MP3)
+    ### Single Voice Setup
     - Place WAV/MP3 files in `/alltalk_tts/voices/`
     - Use descriptive filenames (e.g., `broadcaster_male.wav`)
     - Files appear as individual voices in interface
     - Best for quick testing or simple use cases
 
-    ### Multi-Voice Sets (Wav/MP3)
+    ### Multi-Voice Sets
     - Create folders in `/alltalk_tts/voices/xtts_multi_voice_sets/`
     - Add multiple samples per voice
     - System randomly selects up to 5 samples
     - Better for consistent voice reproduction
     - Example: `/voices/xtts_multi_voice_sets/broadcaster_voice/`
 
-    ### Pre-computed Latents (JSON latents)
+    ### Pre-computed Latents
     - Stored in `/voices/xtts_latents/`
     - Faster generation times
     - Reduced memory usage
     - Recommended for frequently used voices
+    
+    ### Automatic Latent Generation
+    - System automatically creates `.json` latent files alongside voice samples
+    - Latents are voice characteristics extracted from audio
+    - Generated on first use of a voice file
+    - Stored next to original audio (e.g., `broadcaster_male.wav` → `broadcaster_male.json`)
+    - Improves generation speed for subsequent uses
+    - No manual management needed
+
+    ### Manual Latent Storage
+    - Pre-computed latents can also be stored in `/voices/xtts_latents/`
+    - Useful for organizing frequently used voice profiles
+    - Allows sharing latents without original audio
+    - Same format as automatic latents
+    - Takes priority over local latent files
     """
         
     HELP_PAGE2 = """
@@ -430,7 +446,7 @@ class AllTalkHelpContent:
     - **Models**: `/alltalk_tts/models/xtts/`
     - **Voice Samples**: `/alltalk_tts/voices/`
     - **Multi-Voice Sets**: `/alltalk_tts/voices/xtts_multi_voice_sets/`
-    - **JSON Latents**: `/alltalk_tts/voices/xtts_latents/`
+    - **Latents**: `/alltalk_tts/voices/xtts_latents/`
     - **Outputs**: `/alltalk_tts/outputs/`
         - Automatic cleanup available
         - Configurable retention period
