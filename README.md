@@ -1,12 +1,12 @@
 # AllTalk TTS
 
-## AllTalk version 2 (How to get Version 2)
+## AllTalk version 2
 
 # [Click here to go to AllTalk Version 2](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
 
 AllTalk v2 significantly enhances v1, introducing new features while addressing many previous issues. Although still evolving, v2 offers a stable build and is the recommended version for most users as this is where update and development work is now focused.
 
-## AllTalk version 1 (Everything below this point, on this page is for Version 1)
+## AllTalk v1 ⚠️Everything BELOW this point, on this page is for AllTalk v1⚠️
 AllTalk version 1 is an updated version of the Coqui_tts extension for Text Generation web UI. Features include:
 
 - **Can be run as a** [standalone application](https://github.com/erew123/alltalk_tts/#-quick-setup-text-generation-webui--standalone-installation) **or part of :**
@@ -67,7 +67,7 @@ If AllTalk has been helpful to you, consider showing your support through a dona
 
 # [Click here if you want AllTalk Version 2](https://github.com/erew123/alltalk_tts/tree/alltalkbeta)
 
-## Everything on this page is for AllTalk Version 1 not Version 2
+## ⚠️ Everything on this page is for AllTalk v1 not AllTalk v2 ⚠️
 
 ### 🟩 Quick Setup AllTalk Version 1 (Text-generation-webui & Standalone Installation)
 
