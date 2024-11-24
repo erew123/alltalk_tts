@@ -1752,6 +1752,7 @@ class AllTalkHelpContent:
     - 96-98% recommended accuracy
     - Flags inconsistencies
     - CPU/GPU compatible
+    - **TIP** Small/Meduim Whisper models are much faster
 
     ## ⭐ Best Practices
 
