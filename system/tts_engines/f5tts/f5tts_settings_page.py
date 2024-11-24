@@ -2,8 +2,16 @@ import os
 import json
 import requests
 import gradio as gr
+import whisper
+from typing import List, Tuple
 from tqdm import tqdm
 from pathlib import Path
+import gc
+import torch
+import warnings
+# Filter Flash Attention warning
+warnings.filterwarnings("ignore", message="1Torch was not compiled with flash attention")
+from .help_content import AllTalkHelpContent
 this_dir = Path(__file__).parent.resolve()                         # Sets up self.this_dir as a variable for the folder THIS script is running in.
 main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up self.main_dir as a variable for the folder AllTalk is running in
 
@@ -52,6 +60,71 @@ def f5tts_voices_file_list():
         return ["No Voices Found"]
         
     return sorted(voices)
+
+def get_files_needing_transcription(directory: Path) -> List[Tuple[Path, str]]:
+    """Get all audio files that need transcription."""
+    files_to_transcribe = []
+    
+    for ext in ['.wav', '.mp3', '.flac']:
+        # Check main directory
+        for f in directory.glob(f"*{ext}"):
+            if not f.with_suffix('.reference.txt').exists():
+                files_to_transcribe.append((f, ext[1:]))  # Remove the dot from extension
+                
+        # Check subdirectories
+        for folder in directory.iterdir():
+            if folder.is_dir():
+                for f in folder.glob(f"*{ext}"):
+                    if not f.with_suffix('.reference.txt').exists():
+                        files_to_transcribe.append((f, ext[1:]))
+    
+    return files_to_transcribe
+
+def transcribe_files(model_name: str, use_cpu: bool = False, progress=gr.Progress()) -> str:
+    """Transcribe all files without reference text."""
+    files = get_files_needing_transcription(Path(main_dir)/'voices')
+    
+    if not files:
+        return "No files need transcription!"
+    
+    model = None
+    try:
+        progress(0, desc="Loading Whisper model...")
+        
+        # Determine device
+        device = "cpu" if use_cpu else ("cuda" if torch.cuda.is_available() else "cpu")
+        model = whisper.load_model(model_name).to(device)
+        
+        progress(0, desc=f"Transcribing files using {device.upper()}...")
+        
+        for idx, (file_path, _) in enumerate(progress.tqdm(files, desc="Transcribing files")):
+            # Transcribe the audio
+            result = model.transcribe(str(file_path))
+            
+            # Save the transcription
+            with open(file_path.with_suffix('.reference.txt'), 'w', encoding='utf-8') as f:
+                f.write(result["text"].strip())
+            
+            progress((idx + 1) / len(files))
+        
+        return f"Successfully transcribed {len(files)} files using {device.upper()}!"
+    
+    except Exception as e:
+        return f"Error during transcription: {str(e)}"
+    
+    finally:
+        if model is not None:
+            # Move model to CPU before deletion if it was on CUDA
+            if torch.cuda.is_available() and not use_cpu:
+                model.cpu()
+                torch.cuda.empty_cache()
+            
+            # Delete the model explicitly
+            del model
+            model = None  # Add this line to explicitly clear the reference
+            
+            # Run garbage collection
+            gc.collect()
 
 ######################################################
 # REQUIRED CHANGE                                    #
@@ -143,10 +216,16 @@ def f5tts_model_alltalk_settings(model_config_data):
                         def_narrator_voice_gr = gr.Dropdown(value=model_config_data["settings"]["def_narrator_voice"], label="Narrator Voice", choices=voice_list, allow_custom_value=True)
                     with gr.Group():
                         with gr.Row():
-                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="In this section, you can set the default settings for this TTS engine. Settings that are not supported by the current engine will be greyed out and cannot be selected. Default voices specified here will be used when no specific voice is provided in the TTS generation request. If a voice is specified in the request, it will override these default settings. When using the OpenAI API compatable API with this TTS engine, the voice mappings will be applied. As the OpenAI API has a limited set of 6 voices, these mappings ensure compatibility by mapping the OpenAI voices to the available voices in this TTS engine.")
+                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="Configure default settings and voice mappings for the selected TTS engine. Unavailable options are grayed out based on engine capabilities. See the Help section below for detailed information about each setting.")
             with gr.Row():
                 submit_button = gr.Button("Update Settings")
                 output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
+            with gr.Accordion("HELP - 🔊 Understanding TTS Engine Default Settings Page", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")                
             submit_button.click(f5tts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
@@ -180,34 +259,12 @@ def f5tts_model_alltalk_settings(model_config_data):
                         gr.Textbox(label="Linux Support", value='Yes' if features_list['linux_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Mac Support", value='Yes' if features_list['mac_capable'] else 'No', interactive=False)
             with gr.Row():
-                gr.Markdown("""
-                ####  🟧 DeepSpeed Capable
-                DeepSpeed is a deep learning optimization library that can significantly speed up model training and inference. If a model is DeepSpeed capable, it means it can utilize DeepSpeed to accelerate the generation of text-to-speech output. This requires the model to be loaded into CUDA/VRAM on an Nvidia GPU and the model's inference method to support DeepSpeed.
-                ####  🟧 Pitch Capable
-                Pitch refers to the highness or lowness of a sound. If a model is pitch capable, it can adjust the pitch of the generated speech, allowing for more expressive and varied output.
-                #### 🟧 Generation Speed Capable
-                Generation speed refers to the rate at which the model can generate text-to-speech output. If a model is generation speed capable, it means the speed of the generated speech can be adjusted, making it faster or slower depending on the desired output.
-                #### 🟧 Repetition Penalty Capable
-                Repetition penalty is a technique used to discourage the model from repeating the same words or phrases multiple times in the same sounding way. If a model is repetition penalty capable, it can apply this penalty during generation to improve the diversity and naturalness of the output.
-                #### 🟧 Multi-Languages Capable
-                Multi-language capable models can generate speech in multiple languages. This means that the model has been trained on data from different languages and can switch between them during generation. Some models are language-specific.
-                #### 🟧 Multi-Voice Capable
-                Multi-voice capable models generate speech in multiple voices or speaking styles. This means that the model has been trained on data from different speakers and can mimic their voices during generation, or is a voice cloning model that can generate speech based on the input sample.
-                """)
-                gr.Markdown("""
-                #### 🟧 Streaming Capable
-                Streaming refers to the ability to generate speech output in real-time, without the need to generate the entire output before playback. If a model is streaming capable, it can generate speech on-the-fly, allowing for faster response times and more interactive applications.
-                #### 🟧 Low VRAM Capable
-                VRAM (Video Random Access Memory) is a type of memory used by GPUs to store and process data. If a model is low VRAM capable, it can efficiently utilize the available VRAM by moving data between CPU and GPU memory as needed, allowing for generation even on systems with limited VRAM where it may be competing with an LLM model for VRAM.
-                #### 🟧 Temperature Capable
-                Temperature is a hyperparameter that controls the randomness of the generated output. If a model is temperature capable, the temperature can be adjusted to make the output more or less random, affecting the creativity and variability of the generated speech.
-                #### 🟧 Multi-Model Capable Engine
-                If an engine is multi-model capable, it means that it can support and utilize multiple models for text-to-speech generation. This allows for greater flexibility and the ability to switch between different models depending on the desired output. Different models may be capable of different languages, specific languages, voices, etc.
-                #### 🟧 Default Audio Output Format
-                Specifies the file format in which the generated speech will be saved. Common audio formats include WAV, MP3, FLAC, Opus, AAC, and PCM. If you want different outputs, you can set the transcode function to change the output audio, though transcoding will add a little time to the generation and is not available for streaming generation.
-                #### 🟧 Windows/Linux/Mac Support
-                These indicators show whether the model and engine are compatible with Windows, Linux, or macOS. However, additional setup or requirements may be necessary to ensure full functionality on your operating system. Please note that full platform support has not been extensively tested.
-                """)
+                with gr.Accordion("HELP - 🔊 Understanding TTS Engine Capabilities", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION, elem_classes="custom-markdown")                               
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION2, elem_classes="custom-markdown")
 
         #######################################################################################################################################################################################################
         # REQUIRED CHANGE                                                                                                                                                                                     #
@@ -292,7 +349,6 @@ def f5tts_model_alltalk_settings(model_config_data):
             confirm_button.click(confirm_download, inputs=model_dropdown, outputs=[confirm_button, download_button, cancel_button, download_status])
             cancel_button.click(cancel_download, inputs=None, outputs=[confirm_button, download_button, cancel_button, download_status])
 
-
         def get_voice_files():
             """Get list of voice files with their status"""
             files = [
@@ -302,76 +358,47 @@ def f5tts_model_alltalk_settings(model_config_data):
             ]
             return sorted(files)
 
-        with gr.Tab("Reference Text/Sample Manager"):
+        with gr.Tab("Reference Text/Sample Manager"):          
             with gr.Row():
-                gr.Markdown("""
-                ### Reference Text/Sample Manager
-                This tool helps you manage reference text files for your voice samples. Each WAV file should have a corresponding .reference.txt file 
-                containing the exact text that was spoken in the recording. This is important for voice cloning quality.<br>
-
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Files marked in 🔴 red need a reference text file<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Files marked in 🟢 green already have a reference text file<br>
-                
-                It is important to note that F5-TTS only supports English and Chinese languages. 
-                
-                For more information on the F5-TTS engine, please visit the: [F5-TTS GitHub Repository](https://github.com/SWivid/F5-TTS/)
-                """)
-
-                gr.Markdown("""
-                #### Important Guidelines:
-                * Reference WAV files should be no longer than 15 seconds in length, or it may affect playback speed.
-                * You can play the audio below and listen to it. You then need to populate the Reference Text box with the exact spoken audio, preferably adding punctuation where appropriate:<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Period (.)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Comma (,)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Semi-colon (;)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Apostrophe (') - Important for words like "I'm", "don't", "can't", etc.<br>
-                * After saving the reference text file, you'll need to go to the main generation page and click "Refresh Server Settings" for the voice to be shown as available.
-                """)
-            
+                # List all WAV files and their status
+                file_list = gr.Dropdown(
+                    label="Voice Files",
+                    choices=get_voice_files(),
+                    value=None
+                )
+                refresh_btn = gr.Button("Refresh List")
+                model_selector = gr.Dropdown(
+                    label="Whisper Model",
+                    choices=["base", "medium", "large-v3"],
+                    value="base"
+                )
+                transcribe_button = gr.Button("Auto-Transcribe Missing Files")
             with gr.Row():
-                with gr.Column():
-                    # List all WAV files and their status
-                    file_list = gr.Dropdown(
-                        label="Voice Files",
-                        choices=get_voice_files(),
-                        value=None
-                    )
-                    
-                    # Add audio player with small height
-                    audio_player = gr.Audio(
-                        label="Preview Voice Sample", 
-                        type="filepath",
-                        interactive=False,
-                        elem_classes="small-audio-player"  # Custom CSS class for sizing
-                    )
-                    
-                    refresh_btn = gr.Button("Refresh List")
-                    
-                with gr.Column():
-                    current_text = gr.Textbox(
-                        label="Reference Text",
-                        placeholder="Enter the exact text that was spoken in the recording...",
-                        lines=5
-                    )
-                    
-                    with gr.Row():
-                        save_btn = gr.Button("Save Reference Text", variant="primary")
-                        delete_btn = gr.Button("Delete Reference Text", variant="secondary")
-                    
-                    status_text = gr.Textbox(label="Status", interactive=False)
-            
-            # Add custom CSS to make the audio player smaller
-            gr.HTML("""
-                <style>
-                    .small-audio-player audio {
-                        height: 40px !important;
-                        margin-top: 0px !important;
-                    }
-                    .small-audio-player {
-                        margin-bottom: 10px !important;
-                    }
-                </style>
-            """)
+                # Add audio player with small height
+                audio_player = gr.Audio(
+                    label="Preview Voice Sample", 
+                    type="filepath",
+                    interactive=False,
+                    elem_classes="small-audio-player"  # Custom CSS class for sizing
+                ) 
+            with gr.Row():
+                current_text = gr.Textbox(
+                    label="Manually Edit Reference Text",
+                    placeholder="Enter the exact text that was spoken in the recording...",
+                    lines=2,
+                    scale=2
+                )
+                status_text = gr.Textbox(label="Status", interactive=False, scale=1)
+            with gr.Row():   
+                save_btn = gr.Button("Save Reference Text", variant="primary")
+                delete_btn = gr.Button("Delete Reference Text", variant="secondary")                      
+            with gr.Accordion("HELP - 🎯 Reference Text/Sample Manager", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.REFERENCE_MANAGER, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.REFERENCE_MANAGER1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.REFERENCE_MANAGER2, elem_classes="custom-markdown")            
+
             
             def load_file_data(wav_file):
                 if not wav_file:
@@ -457,6 +484,14 @@ def f5tts_model_alltalk_settings(model_config_data):
                 outputs=file_list
             )
             refresh_btn.click(refresh_file_list, outputs=file_list)
+            transcribe_button.click(
+                fn=transcribe_files,
+                inputs=[model_selector],
+                outputs=status_text  # Use the existing status box instead of creating a new one
+            ).then(
+                fn=refresh_file_list,
+                outputs=file_list
+            )
 
         ###################################################################################################
         # REQUIRED CHANGE                                                                                 #
@@ -465,43 +500,10 @@ def f5tts_model_alltalk_settings(model_config_data):
         ###################################################################################################
         with gr.Tab("Engine Help"):
             with gr.Row():
-                gr.Markdown("""
-                    ### 🟧 Where are the f5tts models stored?
-                    This extension will download the f5tts models to `/alltalk_tts/models/f5tts/` folder.
-                    
-                    ### 🟧 How do clone/reference voices work?
-                    F5-TTS uses voice samples with corresponding reference text files for voice cloning:
-                    1. Place your WAV voice samples in the `/alltalk_tts/voices/` folder
-                    2. Create a matching `.reference.txt` file containing the exact text spoken in the recording.
-                    3. Use the `Reference Text/Sample Manager` tab to create and manage these text files
-                    4. Only voice samples with valid reference text files will be available for use
-                    
-                    For best results:
-                    - Keep voice samples under 15 seconds
-                    - Ensure the reference text exactly matches what is spoken
-                    - Use high-quality recordings with minimal background noise
-                    
-                    ### 🟧 Where are the outputs stored & Automatic output wav file deletion
-                    Voice outputs are stored in `/alltalk_tts/outputs/`. You can configure automatic maintenance deletion of old wav files by setting `Del WAV's older than` in the global settings.
-                    
-                    > When `Disabled`, your output wav files will be left untouched.
-                    > When set to a setting `1 Day` or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.
-                    """)
-                gr.Markdown("""
-                    ### 🟧 Speed settings and voice cloning
-                    F5-TTS appears to generate audio a little faster than the audio sample. As such, in AllTalk, the speed setting for generation is set to 0.9 (see the F5-TTS `Default Settings` tab). Certainly the better the punctuation you use, the better the end result, both in the audio samples reference file and the text you send to be generated as TTS. If you wish to globally adjust this, you can make the change on the Default Settings tab.
-                    
-                    ### 🟧 Cloned audio and punctuation.
-                    When F5-TTS reproduces audio, punctuation appears to matter greatly. As such `Im` and `I'm` or `I am` will all sound a little different. Additionally it appears to want to spell out text in CAPS. You may want to look at the F5-TTS developers page for more information on this.
-                    
-                    ### 🟧 Difference between F5-TTS and E2-TTS models.
-                    F5-TTS and E2-TTS represent two different approaches to zero-shot text-to-speech:
-                    
-                    - F5-TTS is optimized for voice fidelity and natural speech patterns. It excels at capturing the nuances and characteristics of the reference voice, producing highly natural and faithful speech output. The tradeoff is slightly longer generation times and higher computational requirements.<br>
-                    - E2-TTS prioritizes efficiency and ease of use. It offers faster generation speeds and better memory efficiency, making it ideal for longer texts or resource-constrained environments. While its voice reproduction may be slightly less precise than F5-TTS, it still produces high-quality output with good speaker similarity.
-
-                    Choose F5-TTS when voice fidelity is paramount, or E2-TTS when generation speed and efficiency are the priority.
-                    """)
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE, elem_classes="custom-markdown")                               
+            with gr.Row():
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE1, elem_classes="custom-markdown")
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE2, elem_classes="custom-markdown")
 
     return app
 

@@ -1,0 +1,29 @@
+{
+    "branding": "AllTalk ",
+    "tgwui": {
+        "tgwui_activate_tts": true,
+        "tgwui_autoplay_tts": true,
+        "tgwui_narrator_enabled": "false",
+        "tgwui_non_quoted_text_is": "silent",
+        "tgwui_deepspeed_enabled": false,
+        "tgwui_language": "English",
+        "tgwui_lowvram_enabled": false,
+        "tgwui_pitch_set": 0,
+        "tgwui_temperature_set": 0.75,
+        "tgwui_repetitionpenalty_set": 10,
+        "tgwui_generationspeed_set": 1,
+        "tgwui_narrator_voice": "en_US-ljspeech-high.onnx",
+        "tgwui_show_text": true,
+        "tgwui_character_voice": "en_US-ljspeech-high.onnx",
+        "tgwui_rvc_char_voice": "Disabled",
+        "tgwui_rvc_char_pitch": 0,
+        "tgwui_rvc_narr_voice": "Disabled",
+        "tgwui_rvc_narr_pitch": 0
+    },
+    "remote_connection": {
+        "server_protocol": "http://",
+        "server_address": "127.0.0.1:7851",
+        "connection_timeout": 5,
+        "use_legacy_api": false
+    }
+}

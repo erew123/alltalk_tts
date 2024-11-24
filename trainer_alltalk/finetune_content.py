@@ -4,67 +4,150 @@
 class FinetuneContent:
     """CSS and help content for finetune.py"""
     custom_css = """
-    /* Status indicators and labels */
-    .status-label {
-        font-size: 1.2em;
-        font-weight: bold;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
+    /* Add this to your existing CSS */
+    .gradio-container .prose {
+        max-width: none !important;
+        padding: 0.5rem !important; /* Reduced padding */
+        margin: 0 !important;
     }
 
-    .status-indicator {
-        padding: 5px 10px;
-        border-radius: 3px;
-        font-weight: bold;
+    .custom-markdown div {
+    border: none !important; /* Remove the inner border */
+    margin-top: 0 !important; /* Remove top margin */
+    margin-bottom: 0 !important; /* Remove bottom margin */
+    padding-top: 0 !important; /* Remove top padding */
+    padding-bottom: 0 !important; /* Remove bottom padding */
     }
 
-    /* Layout components */
-    .status-box {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
-        border-radius: 4px;
-        background: var(--background-fill-secondary);
+    /* Update the existing custom-markdown class */
+    .custom-markdown {
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        color: var(--body-text-color) !important;
+        background-color: var(--background-fill-primary) !important;
+        border: 1px solid var(--border-color-primary) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+        margin: 0 !important; /* Changed from 1rem 0 to 0 */
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        /* Default text color for all content (grey) */
+        color: rgba(156, 163, 175, 1) !important; /* Adjust this grey value to match your interface */        
     }
 
-    .status-group {
-        margin-bottom: 1rem;
-        padding: 1rem;
-        border-radius: 8px;
-        background: var(--background-fill-primary);
+    /* Make headings white */
+    .custom-markdown h1,
+    .custom-markdown h2,
+    .custom-markdown h3,
+    .custom-markdown h4,
+    .custom-markdown h5,
+    .custom-markdown h6 {
+        color: var(--heading-text-color, var(--body-text-color)) !important;
+        font-weight: 600 !important;
     }
 
-    /* Help section styling */
-    .help-section {
-        margin-top: 2rem;
-        border-top: 1px solid var(--border-color-primary);
-        padding-top: 1rem;
+    /* Keep all other elements in the grey color */
+    .custom-markdown p,
+    .custom-markdown li,
+    .custom-markdown ul,
+    .custom-markdown ol {
+        color: rgba(156, 163, 175, 1) !important; /* Same grey as the base text */
+    }
+   
+    /* Additional targeting for any wrapping elements */
+    .gradio-container .prose > * {
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    .help-accordion {
-        margin-bottom: 0.5rem;
+    /* Update the list item spacing in your existing CSS */
+    .custom-markdown li {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.2rem !important; /* Reduced from 0.5rem to 0.3rem */
     }
 
-    /* Ensure consistent font size in accordions */
-    .gradio-container .prose,
-    .gradio-container .prose p,
-    .gradio-container .prose ul,
-    .gradio-container .prose ol,
-    .gradio-container .prose ul li,
-    .gradio-container .prose ol li {
-        font-size: 1.02em !important; /* Adjust to the preferred size, e.g., 1em or 14px */
-        line-height: 1.3; /* Improves readability */
+    /* Add specific styling for definition-style lists (like your Default, Recommendation, Tip items) */
+    .custom-markdown li p {
+        margin: 0 !important; /* Remove paragraph margins within list items */
     }
 
-    /* Grid layout */
-    .check-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
+    /* If you need even tighter spacing for specific types of lists */
+    .custom-markdown li + li {
+        margin-top: 0.2rem !important; /* Space between consecutive list items */
     }
+
+    /* Ensure nested lists maintain proper spacing */
+    .custom-markdown li > ul,
+    .custom-markdown li > ol {
+        margin: 0.2rem 0 0.2rem 1rem !important; /* Reduced from 0.5rem */
+    }
+
+    /* Consistent heading styles */
+    .custom-markdown h2 {
+        font-size: 1.2rem !important; /* Fixed size relative to root */
+        font-weight: 600 !important;
+        margin: 1.5rem 0 1rem !important;
+        color: var(--heading-text-color, var(--body-text-color)) !important;
+        border-bottom: 1px solid var(--border-color-primary) !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    /* First paragraph styling */
+    .custom-markdown p:first-of-type {
+        font-size: 0.95rem !important; /* Match base size */
+        font-weight: 400 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Regular paragraphs */
+    .custom-markdown p {
+        font-size: 0.95rem !important;
+        margin: 0.8rem 0 !important;
+    }
+
+    /* List styling */
+    .custom-markdown ul,
+    .custom-markdown ol {
+        margin: 0.8rem 0 !important;
+        padding-left: 1.5rem !important;
+    }
+
+    /* Code styling */
+    .custom-markdown code {
+        font-family: ui-monospace, monospace !important;
+        background-color: var(--background-fill-secondary) !important;
+        padding: 0.2rem 0.4rem !important;
+        border-radius: 4px !important;
+        font-size: 0.8rem !important; /* Slightly smaller than regular text */
+        color: var(--body-text-color) !important;
+    }
+
+    /* Add styles for bold and emphasis */
+    .custom-markdown strong {
+        font-weight: 600 !important;
+        color: var(--body-text-color) !important;
+    }
+
+    .custom-markdown em {
+        font-style: italic !important;
+    }
+
+    /* Ensure both columns take equal width */
+    .gradio-row > div {
+        flex: 1 1 50% !important;
+        min-width: 0 !important; /* Prevents flex items from overflowing */
+    }
+
+    .small-file-upload { 
+    min-height: 200px;
+    max-height: 200px;
+    }
+
+    .small-file-upload2 { 
+    min-height: 90px;
+    max-height: 90px;
+    }    
+
     """
     
     STEP1_QUICKSTART = """

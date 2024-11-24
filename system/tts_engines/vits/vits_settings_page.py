@@ -6,6 +6,7 @@ import requests
 import gradio as gr
 from tqdm import tqdm
 from pathlib import Path
+from .help_content import AllTalkHelpContent
 this_dir = Path(__file__).parent.resolve()                         # Sets up self.this_dir as a variable for the folder THIS script is running in.
 main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up self.main_dir as a variable for the folder AllTalk is running in
 
@@ -28,6 +29,12 @@ main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up sel
 #
 # After making the necessary changes, this function should return a list of available voices that can be used
 # in your TTS engine's settings page.
+# Load the available models from the JSON file
+with open(os.path.join(this_dir, "available_models.json"), "r") as f:
+    available_models = json.load(f)
+# Extract the model names for the dropdown
+model_names = [model["model_name"] for model in available_models["models"]]
+
 def vits_voices_file_list():
     models_folder = main_dir / "models" / "vits"
     # Create the folder if it doesn't exist
@@ -35,32 +42,57 @@ def vits_voices_file_list():
         models_folder.mkdir(parents=True, exist_ok=True)
     voices = []
     available_models = {}
-    required_files_multi_speaker = ["config.json", "model_file.pth", "speaker_ids.json"]
-    required_files_single_speaker = ["config.json", "model_file.pth"]
-    required_files_multi_language = ["config.json", "model_file.pth.tar", "speaker_ids.json", "language_ids.json"]
+    
+    # Define possible model files
+    model_files = ["model_file.pth", "model.pth"]
+    
     for subfolder in models_folder.iterdir():
         if subfolder.is_dir():
             model_name = subfolder.name
-            if all(subfolder.joinpath(file).exists() for file in required_files_multi_speaker):
-                available_models[f"VITS - {model_name}"] = "VITS_multi_speaker"
-            elif all(subfolder.joinpath(file).exists() for file in required_files_single_speaker):
-                available_models[f"VITS - {model_name}"] = "VITS_single_speaker"
-            elif all(subfolder.joinpath(file).exists() for file in required_files_multi_language):
+            
+            # Check if config.json exists (minimum requirement)
+            if not (subfolder / "config.json").exists():
+                continue
+
+            # Load config to check model type
+            try:
+                with open(subfolder / "config.json", "r") as f:
+                    config = json.load(f)
+                use_speaker_embedding = config["model_args"].get("use_speaker_embedding", False)
+                num_speakers = config["model_args"].get("num_speakers", 0)
+            except Exception:
+                continue
+
+            # Check for model file
+            has_model_file = any(subfolder.joinpath(model_file).exists() for model_file in model_files)
+            has_model_file_tar = subfolder.joinpath("model_file.pth.tar").exists()
+            
+            if not (has_model_file or has_model_file_tar):
+                continue
+
+            # Determine model type
+            if (subfolder / "language_ids.json").exists() and (subfolder / "speaker_ids.json").exists():
                 available_models[f"VITS - {model_name}"] = "VITS_multi_language"
+            elif (subfolder / "speaker_ids.json").exists() or (use_speaker_embedding or num_speakers > 0):
+                available_models[f"VITS - {model_name}"] = "VITS_multi_speaker"
             else:
-                print(f"[AllTalk ENG] \033[91mWarning\033[0m: Model '{model_name}' does not match any known model type.")
-            model_type = available_models.get(f"VITS - {model_name}")
-            if model_type == "VITS_multi_speaker" or model_type == "VITS_multi_language":
+                available_models[f"VITS - {model_name}"] = "VITS_single_speaker"
+
+            # Get voices based on model type
+            model_type = available_models[f"VITS - {model_name}"]
+            if model_type in ["VITS_multi_speaker", "VITS_multi_language"]:
                 speaker_ids_path = subfolder / "speaker_ids.json"
                 if speaker_ids_path.exists():
                     with open(speaker_ids_path, "r") as f:
                         speaker_ids = json.load(f)
                     speakers = [speaker for speaker in speaker_ids.keys() if speaker != "ED\n"]
                     voices.extend(speakers)
-                else:
-                    print(f"[AllTalk ENG] \033[91mWarning\033[0m: speaker_ids.json not found for model '{model_name}'.")
+                elif use_speaker_embedding or num_speakers > 0:
+                    # If no speaker_ids.json but config indicates multiple speakers
+                    voices.extend([f"Speaker{i}" for i in range(num_speakers)])
             elif model_type == "VITS_single_speaker":
                 voices.append("default")
+
     # Remove duplicate speaker names
     voices = list(set(voices))
     # Sort the voices alphabetically
@@ -70,6 +102,120 @@ def vits_voices_file_list():
         voices.remove("default")
         voices.insert(0, "default")
     return voices
+
+def group_vits_models_by_language():
+    """Group available VITS models by language code"""
+    language_groups = {}
+    
+    for model in available_models["models"]:
+        model_name = model["model_name"]
+        # Extract language code from model name (format: tts_models--{lang}--...)
+        parts = model_name.split('--')
+        if len(parts) >= 2:
+            lang_code = parts[1]
+            
+            if lang_code not in language_groups:
+                language_groups[lang_code] = {
+                    "name": get_language_name(lang_code),
+                    "models": []
+                }
+            
+            language_groups[lang_code]["models"].append(model)
+    
+    return language_groups
+
+def get_language_name(lang_code):
+    """Convert VITS language code to full name"""
+    language_names = {
+        "en": "English",
+        "de": "German",
+        "fr": "French",
+        "es": "Spanish",
+        "it": "Italian",
+        "nl": "Dutch",
+        "pl": "Polish",
+        "pt": "Portuguese",
+        "ru": "Russian",
+        "cs": "Czech",
+        "hu": "Hungarian",
+        "bn": "Bengali",
+        "ca": "Catalan",
+        "el": "Greek",
+        "fi": "Finnish",
+        "hr": "Croatian",
+        "lt": "Lithuanian",
+        "lv": "Latvian",
+        "mt": "Maltese",
+        "ro": "Romanian",
+        "sk": "Slovak",
+        "sl": "Slovenian",
+        "sv": "Swedish",
+        "bg": "Bulgarian",
+        "da": "Danish",
+        "et": "Estonian",
+        "ga": "Irish",
+        "uk": "Ukrainian",
+        "ewe": "Ewe",
+        "hau": "Hausa",
+        "lin": "Lingala",
+        "tw": "Twi",
+        "yor": "Yoruba"
+    }
+    return language_names.get(lang_code, f"Unknown ({lang_code})")
+
+def download_language_pack(lang_code, progress=gr.Progress()):
+    """Download all models for a specific language"""
+    language_groups = group_vits_models_by_language()
+    if lang_code not in language_groups:
+        return f"Error: Language pack {lang_code} not found"
+    
+    models = language_groups[lang_code]["models"]
+    total_models = len(models)
+    
+    progress(0, desc=f"Downloading {get_language_name(lang_code)} voice pack")
+    
+    downloaded_files = []
+    errors = []
+    
+    for idx, model in enumerate(models, 1):
+        progress(idx/total_models, desc=f"Downloading model {idx}/{total_models}")
+        try:
+            # Create the model folder
+            vits_folder = os.path.join(main_dir, "models", "vits")
+            folder_path = os.path.join(vits_folder, model["folder_path"])
+            os.makedirs(folder_path, exist_ok=True)
+            
+            # Download and extract the model
+            zip_url = model["github_rls_url"]
+            zip_file_path = os.path.join(vits_folder, f"{model['model_name']}.zip")
+            
+            response = requests.get(zip_url, stream=True)
+            total_size = int(response.headers.get("content-length", 0))
+            
+            with open(zip_file_path, "wb") as file:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        file.write(chunk)
+            
+            # Extract ZIP file
+            with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+                zip_ref.extractall(vits_folder)
+            
+            # Cleanup
+            os.remove(zip_file_path)
+            macosx_folder = os.path.join(vits_folder, "__MACOSX")
+            if os.path.exists(macosx_folder):
+                shutil.rmtree(macosx_folder)
+                
+            downloaded_files.append(model["model_name"])
+            
+        except Exception as e:
+            errors.append(f"Error downloading {model['model_name']}: {str(e)}")
+    
+    if errors:
+        return f"Downloaded {len(downloaded_files)} models with {len(errors)} errors:\n" + "\n".join(errors)
+    else:
+        return f"Successfully downloaded {len(downloaded_files)} models for {get_language_name(lang_code)}"
 
 ######################################################
 # REQUIRED CHANGE                                    #
@@ -161,10 +307,16 @@ def vits_model_alltalk_settings(model_config_data):
                         def_narrator_voice_gr = gr.Dropdown(value=model_config_data["settings"]["def_narrator_voice"], label="Narrator Voice", choices=voice_list, allow_custom_value=True)
                     with gr.Group():
                         with gr.Row():
-                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="In this section, you can set the default settings for this TTS engine. Settings that are not supported by the current engine will be greyed out and cannot be selected. Default voices specified here will be used when no specific voice is provided in the TTS generation request. If a voice is specified in the request, it will override these default settings. When using the OpenAI API compatable API with this TTS engine, the voice mappings will be applied. As the OpenAI API has a limited set of 6 voices, these mappings ensure compatibility by mapping the OpenAI voices to the available voices in this TTS engine.")
+                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="Configure default settings and voice mappings for the selected TTS engine. Unavailable options are grayed out based on engine capabilities. See the Help section below for detailed information about each setting.")
             with gr.Row():
                 submit_button = gr.Button("Update Settings")
                 output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
+            with gr.Accordion("HELP - 🔊 Understanding TTS Engine Default Settings Page", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")                 
             submit_button.click(vits_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
@@ -198,52 +350,54 @@ def vits_model_alltalk_settings(model_config_data):
                         gr.Textbox(label="Linux Support", value='Yes' if features_list['linux_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Mac Support", value='Yes' if features_list['mac_capable'] else 'No', interactive=False)
             with gr.Row():
-                gr.Markdown("""
-                ####  🟧 DeepSpeed Capable
-                DeepSpeed is a deep learning optimization library that can significantly speed up model training and inference. If a model is DeepSpeed capable, it means it can utilize DeepSpeed to accelerate the generation of text-to-speech output. This requires the model to be loaded into CUDA/VRAM on an Nvidia GPU and the model's inference method to support DeepSpeed.
-                ####  🟧 Pitch Capable
-                Pitch refers to the highness or lowness of a sound. If a model is pitch capable, it can adjust the pitch of the generated speech, allowing for more expressive and varied output.
-                #### 🟧 Generation Speed Capable
-                Generation speed refers to the rate at which the model can generate text-to-speech output. If a model is generation speed capable, it means the speed of the generated speech can be adjusted, making it faster or slower depending on the desired output.
-                #### 🟧 Repetition Penalty Capable
-                Repetition penalty is a technique used to discourage the model from repeating the same words or phrases multiple times in the same sounding way. If a model is repetition penalty capable, it can apply this penalty during generation to improve the diversity and naturalness of the output.
-                #### 🟧 Multi-Languages Capable
-                Multi-language capable models can generate speech in multiple languages. This means that the model has been trained on data from different languages and can switch between them during generation. Some models are language-specific.
-                #### 🟧 Multi-Voice Capable
-                Multi-voice capable models generate speech in multiple voices or speaking styles. This means that the model has been trained on data from different speakers and can mimic their voices during generation, or is a voice cloning model that can generate speech based on the input sample.
-                """)
-                gr.Markdown("""
-                #### 🟧 Streaming Capable
-                Streaming refers to the ability to generate speech output in real-time, without the need to generate the entire output before playback. If a model is streaming capable, it can generate speech on-the-fly, allowing for faster response times and more interactive applications.
-                #### 🟧 Low VRAM Capable
-                VRAM (Video Random Access Memory) is a type of memory used by GPUs to store and process data. If a model is low VRAM capable, it can efficiently utilize the available VRAM by moving data between CPU and GPU memory as needed, allowing for generation even on systems with limited VRAM where it may be competing with an LLM model for VRAM.
-                #### 🟧 Temperature Capable
-                Temperature is a hyperparameter that controls the randomness of the generated output. If a model is temperature capable, the temperature can be adjusted to make the output more or less random, affecting the creativity and variability of the generated speech.
-                #### 🟧 Multi-Model Capable Engine
-                If an engine is multi-model capable, it means that it can support and utilize multiple models for text-to-speech generation. This allows for greater flexibility and the ability to switch between different models depending on the desired output. Different models may be capable of different languages, specific languages, voices, etc.
-                #### 🟧 Default Audio Output Format
-                Specifies the file format in which the generated speech will be saved. Common audio formats include WAV, MP3, FLAC, Opus, AAC, and PCM. If you want different outputs, you can set the transcode function to change the output audio, though transcoding will add a little time to the generation and is not available for streaming generation.
-                #### 🟧 Windows/Linux/Mac Support
-                These indicators show whether the model and engine are compatible with Windows, Linux, or macOS. However, additional setup or requirements may be necessary to ensure full functionality on your operating system. Please note that full platform support has not been extensively tested.
-                """)
+                with gr.Accordion("HELP - 🔊 Understanding TTS Engine Capabilities", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION, elem_classes="custom-markdown")                               
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION2, elem_classes="custom-markdown")
 
         #######################################################################################################################################################################################################
         # REQUIRED CHANGE                                                                                                                                                                                     #
         # You will need to build a custom method to identify if your models are installed and download them. Store your models list in the available_models.json file, alongside your model_settings.json etc #
         #######################################################################################################################################################################################################
         with gr.Tab("Models/Voices Download"):
-            with gr.Row():
-                # Load the available models from the JSON file
-                with open(os.path.join(this_dir, "available_models.json"), "r") as f:
-                    available_models = json.load(f)
-                # Extract the model names for the dropdown
-                model_names = [model["model_name"] for model in available_models["models"]]
-                # Create the dropdown
-                model_dropdown = gr.Dropdown(choices=sorted(model_names), label="Select Model", value=model_names[0])
-                download_button = gr.Button("Download Model/Missing Files")
+            with gr.Tab("Language Pack Download"):
+                with gr.Row():
+                    language_groups = group_vits_models_by_language()
+                    language_choices = [
+                        f"{code} - {info['name']} ({len(info['models'])} models)" 
+                        for code, info in sorted(language_groups.items())
+                    ]
+                    
+                    lang_pack_dropdown = gr.Dropdown(
+                        choices=language_choices,
+                        label="Select Language Pack",
+                        value=language_choices[0]
+                    )
+                    lang_pack_download_button = gr.Button("Download Language Pack")
+                
+                with gr.Row():
+                    lang_pack_status = gr.Textbox(label="Language Pack Download Status")
+                
+                def download_selected_language_pack(selected_pack):
+                    lang_code = selected_pack.split(" - ")[0]
+                    return download_language_pack(lang_code)
+                    
+                lang_pack_download_button.click(
+                    download_selected_language_pack,
+                    inputs=lang_pack_dropdown,
+                    outputs=lang_pack_status
+                )
 
-            with gr.Row():
-                download_status = gr.Textbox(label="Download Status")
+            with gr.Tab("Individual Voice Download"):
+                with gr.Row():
+                    # Create the dropdown
+                    model_dropdown = gr.Dropdown(choices=sorted(model_names), label="Select Model", value=model_names[0])
+                    download_button = gr.Button("Download Model/Missing Files")
+
+                with gr.Row():
+                    download_status = gr.Textbox(label="Download Status")
 
             def download_model(model_name):
                 # Find the selected model in the available models
@@ -351,21 +505,10 @@ def vits_model_alltalk_settings(model_config_data):
         ###################################################################################################
         with gr.Tab("Engine Help"):
             with gr.Row():
-                gr.Markdown("""
-                    ### 🟧 Where are the vits models stored?
-                    This extension will download the models to `/alltalk_tts/models/vits/` folder.<br>
-                    
-                    ### 🟧 Where are the voices stored for vits models?
-                    Vits models themselves are the voices/have the voices built into them. Some models have mutliple voices embedded and some models only the one voice embedded in them.<br>
-                   
-                    ### 🟧 Where are the outputs stored & Automatic output wav file deletion
-                    Voice outputs are stored in `/alltalk_tts/outputs/`. You can configure automatic maintenance deletion of old wav files by setting `Del WAV's older than` in the global settings.<br>
-                    
-                    > When `Disabled`, your output wav files will be left untouched.<br>
-                    > When set to a setting `1 Day` or greater, your output wav files older than that time period will be automatically deleted on start-up of AllTalk.<br>
-                    """)
-                gr.Markdown("""
-                    """)
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE, elem_classes="custom-markdown")                               
+            with gr.Row():
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE1, elem_classes="custom-markdown")
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE2, elem_classes="custom-markdown")
 
     return app
 

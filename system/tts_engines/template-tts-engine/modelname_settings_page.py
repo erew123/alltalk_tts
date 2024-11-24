@@ -4,6 +4,7 @@ import requests
 import gradio as gr
 from tqdm import tqdm
 from pathlib import Path
+from .help_content import AllTalkHelpContent
 this_dir = Path(__file__).parent.resolve()                         # Sets up self.this_dir as a variable for the folder THIS script is running in.
 main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up self.main_dir as a variable for the folder AllTalk is running in
 
@@ -15,11 +16,9 @@ main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up sel
 # You need to modify this function to use the appropriate method for your engine to retrieve the voice list.
 #
 # The current implementation lists all the WAV files in a "voices" directory, which may not be suitable for your engine.
-# You should find/replace the `xxxx_voices_file_list` function name to match your engine name. For example, if your engine 
+# You should replace the `xxxx_voices_file_list` function name to match your engine name. For example, if your engine 
 # is named "mytts", the function should be named `mytts_voices_file_list`. 
 # 
-# You can pretty much find/replace "myttsengine" with the name of your TTS engine (about 14 entries in here)
-#
 # You will also neef to update the code with your own implementation that retrieves the voice list according to your 
 # engine's specific requirements. Typically this is the same code as will be in your model_engine.py file.
 #
@@ -28,13 +27,11 @@ main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up sel
 #
 # After making the necessary changes, this function should return a list of available voices that can be used
 # in your TTS engine's settings page.
-def myttsengine_voices_file_list():
-    voices = []
-    models_dir = main_dir / "models" / "myttsengine"
-    
-    # Basically the same way you are finding/reporting available voices in your model_engine.py file
-        
-    return voices
+
+def xtts_voices_file_list():
+    directory = main_dir / "voices"
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")]
+    return files
 
 ######################################################
 # REQUIRED CHANGE                                    #
@@ -50,10 +47,12 @@ def myttsengine_voices_file_list():
 # dictionaries with the values provided as arguments, and save the updated settings back to the JSON file.
 #
 # You do not need to modify the function's logic or any other part of the code.
-def myttsengine_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
+
+def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
     # Load the model_config_data from the JSON file
     with open(os.path.join(this_dir, "model_settings.json"), "r") as f:
         model_config_data = json.load(f)
+
     # Update the settings and openai_voices dictionaries with the new values
     model_config_data["settings"]["def_character_voice"] = def_character_voice_gr
     model_config_data["settings"]["def_narrator_voice"] = def_narrator_voice_gr
@@ -69,9 +68,11 @@ def myttsengine_model_update_settings(def_character_voice_gr, def_narrator_voice
     model_config_data["settings"]["repetitionpenalty_set"] = repetitionpenalty_set_gr
     model_config_data["settings"]["pitch_set"] = pitch_set_gr
     model_config_data["settings"]["generationspeed_set"] = generationspeed_set_gr
+
     # Save the updated model_config_data to the JSON file
     with open(os.path.join(this_dir, "model_settings.json"), "w") as f:
         json.dump(model_config_data, f, indent=4)
+
     return "Settings updated successfully!"
 
 #######################################################
@@ -94,10 +95,11 @@ def myttsengine_model_update_settings(def_character_voice_gr, def_narrator_voice
 #
 # After making these changes, this function will create and return the Gradio interface for your TTS engine's
 # settings page, allowing users to configure various options and voice selections.
-def myttsengine_model_alltalk_settings(model_config_data):
+
+def xtts_model_alltalk_settings(model_config_data):
     features_list = model_config_data['model_capabilties']
-    voice_list = myttsengine_voices_file_list()
-    with gr.Blocks(title="myttsengine TTS") as app:
+    voice_list = xtts_voices_file_list()
+    with gr.Blocks(title="Xtts TTS", analytics_enabled=False) as app:
         with gr.Tab("Default Settings"):
             with gr.Row():
                 lowvram_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Low VRAM" if model_config_data["model_capabilties"]["lowvram_capable"] else "Low VRAM N/A", value="Enabled" if model_config_data["settings"]["lowvram_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["lowvram_capable"])
@@ -126,11 +128,17 @@ def myttsengine_model_alltalk_settings(model_config_data):
                         def_narrator_voice_gr = gr.Dropdown(value=model_config_data["settings"]["def_narrator_voice"], label="Narrator Voice", choices=voice_list, allow_custom_value=True)
                     with gr.Group():
                         with gr.Row():
-                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="In this section, you can set the default settings for this TTS engine. Settings that are not supported by the current engine will be greyed out and cannot be selected. Default voices specified here will be used when no specific voice is provided in the TTS generation request. If a voice is specified in the request, it will override these default settings. When using the OpenAI API compatable API with this TTS engine, the voice mappings will be applied. As the OpenAI API has a limited set of 6 voices, these mappings ensure compatibility by mapping the OpenAI voices to the available voices in this TTS engine.")
+                            details_text = gr.Textbox(label="Details", show_label=False, lines=5, interactive=False, value="Configure default settings and voice mappings for the selected TTS engine. Unavailable options are grayed out based on engine capabilities. See the Help section below for detailed information about each setting.")
             with gr.Row():
                 submit_button = gr.Button("Update Settings")
                 output_message = gr.Textbox(label="Output Message", interactive=False, show_label=False)
-            submit_button.click(myttsengine_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
+            with gr.Accordion("HELP - 🔊 Understanding TTS Engine Default Settings Page", open=False):
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS, elem_classes="custom-markdown")                               
+                with gr.Row():
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
+                    gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")  
+            submit_button.click(xtts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
         # Do not change this section apart from "TTS Engine Name" value to match your engine name #
@@ -157,45 +165,20 @@ def myttsengine_model_alltalk_settings(model_config_data):
                     with gr.Row():                       
                         gr.Textbox(label="Multi Voice Capable Models", value='Yes' if features_list['multivoice_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Default Audio output format", value=model_config_data['model_capabilties']['audio_format'], interactive=False)
-                        gr.Textbox(label="TTS Engine Name", value="myttsengine", interactive=False)
+                        gr.Textbox(label="TTS Engine Name", value="XTTS", interactive=False)
                     with gr.Row():
                         gr.Textbox(label="Windows Support", value='Yes' if features_list['windows_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Linux Support", value='Yes' if features_list['linux_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Mac Support", value='Yes' if features_list['mac_capable'] else 'No', interactive=False)
             with gr.Row():
-                gr.Markdown("""
-                ####  🟧 DeepSpeed Capable
-                DeepSpeed is a deep learning optimization library that can significantly speed up model training and inference. If a model is DeepSpeed capable, it means it can utilize DeepSpeed to accelerate the generation of text-to-speech output. This requires the model to be loaded into CUDA/VRAM on an Nvidia GPU and the model's inference method to support DeepSpeed.
-                ####  🟧 Pitch Capable
-                Pitch refers to the highness or lowness of a sound. If a model is pitch capable, it can adjust the pitch of the generated speech, allowing for more expressive and varied output.
-                #### 🟧 Generation Speed Capable
-                Generation speed refers to the rate at which the model can generate text-to-speech output. If a model is generation speed capable, it means the speed of the generated speech can be adjusted, making it faster or slower depending on the desired output.
-                #### 🟧 Repetition Penalty Capable
-                Repetition penalty is a technique used to discourage the model from repeating the same words or phrases multiple times in the same sounding way. If a model is repetition penalty capable, it can apply this penalty during generation to improve the diversity and naturalness of the output.
-                #### 🟧 Multi-Languages Capable
-                Multi-language capable models can generate speech in multiple languages. This means that the model has been trained on data from different languages and can switch between them during generation. Some models are language-specific.
-                #### 🟧 Multi-Voice Capable
-                Multi-voice capable models generate speech in multiple voices or speaking styles. This means that the model has been trained on data from different speakers and can mimic their voices during generation, or is a voice cloning model that can generate speech based on the input sample.
-                """)
-                gr.Markdown("""
-                #### 🟧 Streaming Capable
-                Streaming refers to the ability to generate speech output in real-time, without the need to generate the entire output before playback. If a model is streaming capable, it can generate speech on-the-fly, allowing for faster response times and more interactive applications.
-                #### 🟧 Low VRAM Capable
-                VRAM (Video Random Access Memory) is a type of memory used by GPUs to store and process data. If a model is low VRAM capable, it can efficiently utilize the available VRAM by moving data between CPU and GPU memory as needed, allowing for generation even on systems with limited VRAM where it may be competing with an LLM model for VRAM.
-                #### 🟧 Temperature Capable
-                Temperature is a hyperparameter that controls the randomness of the generated output. If a model is temperature capable, the temperature can be adjusted to make the output more or less random, affecting the creativity and variability of the generated speech.
-                #### 🟧 Multi-Model Capable Engine
-                If an engine is multi-model capable, it means that it can support and utilize multiple models for text-to-speech generation. This allows for greater flexibility and the ability to switch between different models depending on the desired output. Different models may be capable of different languages, specific languages, voices, etc.
-                #### 🟧 Default Audio Output Format
-                Specifies the file format in which the generated speech will be saved. Common audio formats include WAV, MP3, FLAC, Opus, AAC, and PCM. If you want different outputs, you can set the transcode function to change the output audio, though transcoding will add a little time to the generation and is not available for streaming generation.
-                #### 🟧 Windows/Linux/Mac Support
-                These indicators show whether the model and engine are compatible with Windows, Linux, or macOS. However, additional setup or requirements may be necessary to ensure full functionality on your operating system. Please note that full platform support has not been extensively tested.
-                """)
+                with gr.Accordion("HELP - 🔊 Understanding TTS Engine Capabilities", open=False):
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION, elem_classes="custom-markdown")                               
+                    with gr.Row():
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION1, elem_classes="custom-markdown")
+                        gr.Markdown(AllTalkHelpContent.ENGINE_INFORMATION2, elem_classes="custom-markdown")
 
-        #######################################################################################################################################################################################################
-        # REQUIRED CHANGE                                                                                                                                                                                     #
-        # You will need to build a custom method to identify if your models are installed and download them. Store your models list in the available_models.json file, alongside your model_settings.json etc #
-        #######################################################################################################################################################################################################
+
         with gr.Tab("Models/Voices Download"):
             with gr.Row():
                 # Load the available models from the JSON file
@@ -207,62 +190,67 @@ def myttsengine_model_alltalk_settings(model_config_data):
                 model_dropdown = gr.Dropdown(choices=sorted(model_names), label="Select Model", value=model_names[0])
                 download_button = gr.Button("Download Model/Missing Files")
 
-            def download_model(model_name, force_download=False):
+            with gr.Row():
+                download_status = gr.Textbox(label="Download Status")
+
+            def download_model(model_name):
                 # Find the selected model in the available models
                 selected_model = next(model for model in available_models["models"] if model["model_name"] == model_name)
+
                 # Get the folder path and files to download
-                folder_path = os.path.join(main_dir, "models", "myttsengine")
+                folder_path = os.path.join(main_dir, "models", "xtts", selected_model["folder_path"])
                 files_to_download = selected_model["files_to_download"]
+
                 # Check if all files are already downloaded
-                all_files_exists = all(os.path.exists(os.path.join(folder_path, os.path.basename(url.split('?')[0]))) for url in files_to_download)
-                if all_files_exists and not force_download:
+                all_files_exists = all(os.path.exists(os.path.join(folder_path, file)) for file in files_to_download)
+
+                if all_files_exists:
                     return "All files are already downloaded. No need to download again."
                 else:
                     # Create the folder if it doesn't exist
                     os.makedirs(folder_path, exist_ok=True)
+
                     # Download the missing files
-                    for url in files_to_download:
-                        file_name = os.path.basename(url.split('?')[0])
-                        file_path = os.path.join(folder_path, file_name)
-                        if not os.path.exists(file_path) or force_download:
-                            print(f"Downloading {file_name}...")
+                    for file, url in files_to_download.items():
+                        file_path = os.path.join(folder_path, file)
+                        if not os.path.exists(file_path):
+                            print(f"Downloading {file}...")
+
                             response = requests.get(url, stream=True)
                             total_size_in_bytes = int(response.headers.get("content-length", 0))
                             block_size = 1024  # 1 Kibibyte
                             progress_bar = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
+
                             with open(file_path, "wb") as file:
                                 for data in response.iter_content(block_size):
                                     progress_bar.update(len(data))
                                     file.write(data)
-                            progress_bar.close()
-                    return "Model downloaded successfully!"
 
-            with gr.Row():
-                download_status = gr.Textbox(label="Download Status")
+                            progress_bar.close()
+
+                    return "Model downloaded successfully!"
 
             download_button.click(download_model, inputs=model_dropdown, outputs=download_status)
 
             def show_confirm_cancel(model_name):
-                all_files_exists = all(os.path.exists(os.path.join(main_dir, "models", "myttsengine", os.path.basename(file.split('?')[0]))) for model in available_models["models"] if model["model_name"] == model_name for file in model["files_to_download"])
+                all_files_exists = all(os.path.exists(os.path.join(main_dir, "models", "xtts", model["folder_path"], file)) for model in available_models["models"] if model["model_name"] == model_name for file in model["files_to_download"])
+
                 if all_files_exists:
                     return [gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)]
                 else:
                     return [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)]
 
             def confirm_download(model_name):
-                download_status_text = download_model(model_name, force_download=True)
-                return [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), download_status_text]
-
-            def cancel_download():
-                return [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), ""]
+                download_model(model_name)
+                return [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)]
 
             with gr.Row():
                 confirm_button = gr.Button("Download Anyway", visible=False)
                 cancel_button = gr.Button("Cancel", visible=False)
 
-            download_button.click(show_confirm_cancel, inputs=model_dropdown, outputs=[confirm_button, download_button, cancel_button])
-            confirm_button.click(confirm_download, inputs=model_dropdown, outputs=[confirm_button, download_button, cancel_button, download_status])
-            cancel_button.click(cancel_download, inputs=None, outputs=[confirm_button, download_button, cancel_button, download_status])
+            download_button.click(show_confirm_cancel, model_dropdown, [confirm_button, download_button, cancel_button])
+            confirm_button.click(confirm_download, model_dropdown, [confirm_button, download_button, cancel_button])
+            cancel_button.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, [confirm_button, download_button, cancel_button])
 
         ###################################################################################################
         # REQUIRED CHANGE                                                                                 #
@@ -271,15 +259,11 @@ def myttsengine_model_alltalk_settings(model_config_data):
         ###################################################################################################
         with gr.Tab("Engine Help"):
             with gr.Row():
-                using_voice_samples = """
-
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE, elem_classes="custom-markdown")                               
+            with gr.Row():
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE1, elem_classes="custom-markdown")
+                gr.Markdown(AllTalkHelpContent.HELP_PAGE2, elem_classes="custom-markdown")
                 
-                IF YOU WANT TO ADD HELP INSTRUCTIONS FOR THE MODEL, ADD THEM IN HERE USING MARKDOWN
-                
-
-                """
-            gr.Markdown(using_voice_samples)
-
     return app
 
 ################################
@@ -300,9 +284,7 @@ def myttsengine_model_alltalk_settings(model_config_data):
 #    `mytts_model_alltalk_settings(model_config_data)`
 #
 # After making these changes, this function will create and return the Gradio app for your TTS engine's settings page.
-def myttsengine_at_gradio_settings_page(model_config_data):
-    app = myttsengine_model_alltalk_settings(model_config_data)
-    return app
-def myttsengine_at_gradio_settings_page(model_config_data):
-    app = myttsengine_model_alltalk_settings(model_config_data)
+
+def xtts_at_gradio_settings_page(model_config_data):
+    app = xtts_model_alltalk_settings(model_config_data)
     return app

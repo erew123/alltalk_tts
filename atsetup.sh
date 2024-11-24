@@ -392,7 +392,7 @@ install_custom_standalone() {
     echo
     pip install -r system/requirements/requirements_standalone.txt
     curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
-    pip install --upgrade gradio==4.32.2
+    pip install --upgrade gradio==4.44.1
     echo Installing DeepSpeed...
     pip install deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
     rm deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl

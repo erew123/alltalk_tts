@@ -244,18 +244,25 @@ class tts_class:
     # voices that can be selected in the interface.    
     # If no models are found, we return "No Models Available" and continue on with the script.
     def scan_models_folder(self):
-        models_folder = self.main_dir / "models" / "parler" # Edit to match the name of your folder where voices are stored
+        models_folder = self.main_dir / "models" / "parler" 
         print("models_folder is:", models_folder) if self.debug_tts else None
         self.available_models = {}
-        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-        # ↑↑↑ Keep everything above this line ↑↑↑
-        # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-        # Check if model_path exists
+
+        # Add immediate check for models folder existence
+        if not models_folder.exists():
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Models folder does not exist: {models_folder}")
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Please use the Gradio inteface to download/select a model.")
+            self.available_models = {'No Models Available': 'parler'}
+            return self.available_models
+
+        # Check basic files needed for any model
         common_required_files = [
-            "config.json", "generation_config.json", "preprocessor_config.json", 
-            "special_tokens_map.json", "spiece.model", "tokenizer.json", "tokenizer_config.json"
+            "config.json",
+            "tokenizer_config.json",
+            "special_tokens_map.json"
         ]
 
+        found_valid_model = False
         for subfolder in models_folder.iterdir():
             if subfolder.is_dir():
                 model_name = subfolder.name
@@ -263,30 +270,28 @@ class tts_class:
 
                 # Check for common required files
                 if all(subfolder.joinpath(file).exists() for file in common_required_files):
-                    # Check for mini model (single safetensors file)
-                    if subfolder.joinpath("model.safetensors").exists():
+                    # Look for any safetensors files
+                    safetensor_files = list(subfolder.glob("*.safetensors"))
+                    if safetensor_files:
                         self.available_models[f"parler - {model_name}"] = "parler"
-                        print("self.available_models is:", self.available_models) if self.debug_tts else None
-                    # Check for large model (split safetensors files and index)
-                    elif (subfolder.joinpath("model.safetensors.index.json").exists() and
-                        subfolder.joinpath("model-00001-of-00002.safetensors").exists() and
-                        subfolder.joinpath("model-00002-of-00002.safetensors").exists()):
-                        self.available_models[f"parler - {model_name}"] = "parler"
+                        found_valid_model = True
                         print("self.available_models is:", self.available_models) if self.debug_tts else None
                     else:
-                        print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required model files.")
+                        print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' has no .safetensors files.")
                 else:
                     print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing common required files.")
-                    
+
             # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
             # ↓↓↓ Keep everything below this line ↓↓↓
             # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  
-            else:                  
-                self.available_models = {'No Models Available': 'parler'} # Change the name in here to your TTS engine name
-                print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_name}' is missing required")
-                print(f"[{self.branding}ENG] \033[91mWarning\033[0m: files or the folder does not exist.")
+
+        if not found_valid_model:
+            self.available_models = {'No Models Available': 'parler'}
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: No valid Parler models found.")
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Please download and install Parler models.")
+
         return self.available_models
-    
+
     #############################################################
     #############################################################
     # CHANGE ME #  POPULATE FILES LIST FROM VOICES DIRECTORY ####
@@ -340,7 +345,12 @@ class tts_class:
         
         model_path = self.main_dir / "models" / "parler" / model_name
         print("model_path is:", model_path) if self.debug_tts_variables else None
-        
+
+        if not model_path.exists():
+            print(f"[{self.branding}ENG] \033[91mError\033[0m: Model directory not found: {model_path}")
+            print(f"[{self.branding}ENG] \033[93mPlease download a Parler model file in the Gradio interface section for the Parler engine.\033[0m")
+            raise HTTPException(status_code=404, detail=f"Model directory not found: {model_path}")
+       
         # Get the appropriate dtype
         dtype = self.get_dtype()
         

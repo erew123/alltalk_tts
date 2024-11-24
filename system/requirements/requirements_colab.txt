@@ -1,14 +1,13 @@
 coqui-tts>=0.24.3
-faster-whisper>=1.0.0
+openai-whisper
+filelock>=3.16.1
 fuzzywuzzy
-gradio==4.32.2
+gradio==4.44.1
 importlib_metadata>=7.1.0
 inputimeout>=1.0.4
 Jinja2>=3.1.0
 librosa>=0.10.2.post1
 local_attention>=1.9.0
-nvidia-cublas-cu11==11.11.3.6
-nvidia-cudnn-cu11==9.1.1.17
 onnxruntime-gpu>=1.18.0
 pydantic>=2.7.0
 python-ffmpeg>=2.0.0
@@ -44,4 +43,5 @@ word2number
 cutlet==0.4.0
 fugashi==1.3.1
 piper-tts; sys_platform == "linux"
-ctranslate2==4.4.0
+plotly==5.24.1
+scipy==1.14.1

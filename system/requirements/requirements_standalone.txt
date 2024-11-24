@@ -1,6 +1,7 @@
 coqui-tts>=0.24.3
+filelock>=3.16.1
 fuzzywuzzy>=0.18.0
-gradio>=4.44.1
+gradio==4.44.1
 importlib_metadata>=7.2.1
 inputimeout>=1.0.4
 Jinja2>=3.1.4
@@ -32,3 +33,5 @@ piper-tts; sys_platform == "linux"
 piper-tts; sys_platform == "darwin"
 piper-phonemize==1.1.0; sys_platform == "darwin"
 fastapi==0.112.2
+plotly==5.24.1
+scipy==1.14.1

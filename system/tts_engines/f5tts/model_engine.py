@@ -389,11 +389,13 @@ class tts_class:
         models_dir = self.main_dir / "models" / "f5tts"
         
         if not models_dir.exists():
-            print(f"[{self.branding}ENG] Models directory not found: {models_dir}")
-            self.available_models["No Models Found"] = "No Models Found"
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Models directory not found: {models_dir}")
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Please use the Gradio inteface to download/select a model.")
+            self.available_models["No Models Found"] = "f5tts"
             return self.available_models
             
         # Look for model directories that match the pattern f5tts_v*
+        found_valid_model = False
         for model_dir in models_dir.glob("*tts_v*"):
             if model_dir.is_dir():
                 # First try to find model_*.safetensors files
@@ -410,16 +412,20 @@ class tts_class:
                 # Check if we have at least one model file and all other required files
                 if model_files and all(f.exists() for f in [vocab_file, vocos_config, vocos_model]):
                     model_name = model_dir.name
-                    self.available_models[model_name] = model_name
+                    self.available_models[f"f5tts - {model_name}"] = "f5tts"
+                    found_valid_model = True
+                    print(f"[{self.branding}ENG] Found valid model: {model_name}") if self.debug_tts else None
+                else:
+                    print(f"[{self.branding}ENG] \033[91mWarning\033[0m: Model folder '{model_dir.name}' is missing required files")
         
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 
-        if not self.available_models:
-            self.available_models["No Models Found"] = "No Models Found" # Return a list with {'No Models Found'} if there are no models found.
-        return self.available_models # Return a list of models in the format {'engine name': 'model 1', 'engine name': 'model 2", etc}
+        if not found_valid_model:
+            self.available_models["No Models Found"] = "f5tts"
+            print(f"[{self.branding}ENG] \033[91mWarning\033[0m: No valid F5-TTS models found")
+        return self.available_models
 
-    #############################################################
     #############################################################
     # CHANGE ME #  POPULATE FILES LIST FROM VOICES DIRECTORY ####
     #############################################################
@@ -487,6 +493,12 @@ class tts_class:
         
         # Split the engine name from model name and get just the model folder name
         model_folder = model_name.split(" - ")[-1]
+        model_dir = self.main_dir / "models" / "f5tts" / model_folder
+        if not model_dir.exists():
+            print(f"[{self.branding}ENG] \033[91mError\033[0m: Model directory not found: {model_dir}")
+            print(f"[{self.branding}ENG] \033[93mPlease download an F5-TTS model file in the Gradio interface section for the F5-TTS engine.\033[0m")
+            raise HTTPException(status_code=404, detail=f"Model directory not found: {model_dir}")
+                
         
         try:
             # Set up paths using the correct model folder name

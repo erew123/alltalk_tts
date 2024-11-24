@@ -1,29 +1,29 @@
 {
     "model_details": {
-        "manufacturer_name": "MyTTSEngine",
-        "manufacturer_website": "https://github.com/MyTTSEngine",
-        "model_description": "A description and detail about the TTS Engine"
+        "manufacturer_name": "MYNEWTTS",
+        "manufacturer_website": "https://something here",
+        "model_description": "A bit of blurb about the manufacturer/TTS engine"
     },
     "model_capabilties": {
         "audio_format": "wav",
-        "deepspeed_capable": false,
-        "generationspeed_capable": false,
-        "languages_capable": false,
-        "lowvram_capable": false,
-        "multimodel_capable": false,
-        "repetitionpenalty_capable": false,
-        "streaming_capable": false,
-        "temperature_capable": false,
-        "multivoice_capable": false,
+        "deepspeed_capable": true,
+        "generationspeed_capable": true,
+        "languages_capable": true,
+        "lowvram_capable": true,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": true,
+        "streaming_capable": true,
+        "temperature_capable": true,
+        "multivoice_capable": true,
         "pitch_capable": false,
         "windows_capable": true,
         "linux_capable": true,
         "mac_capable": true
     },
     "settings": {
-        "def_character_voice": "defaultvoice.wav",
-        "def_narrator_voice": "defaultvoice.wav",
-        "deepspeed_enabled": false,
+        "def_character_voice": "female_01.wav",
+        "def_narrator_voice": "male_01.wav",
+        "deepspeed_enabled": true,
         "engine_installed": true,
         "generationspeed_set": 1,
         "lowvram_enabled": false,
@@ -32,11 +32,11 @@
         "temperature_set": 0.75
     },
     "openai_voices": {
-        "alloy": "defaultvoice.wav",
-        "echo": "defaultvoice.wav",
-        "fable": "defaultvoice.wav",
-        "nova": "defaultvoice.wav",
-        "onyx": "defaultvoice.wav",
-        "shimmer": "defaultvoice.wav"
+        "alloy": "female_01.wav",
+        "echo": "female_01.wav",
+        "fable": "female_01.wav",
+        "nova": "female_01.wav",
+        "onyx": "female_01.wav",
+        "shimmer": "female_01.wav"
     }
 }

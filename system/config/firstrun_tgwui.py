@@ -1,18 +1,19 @@
 import json
 import os
-import time
 import shutil
+import sys
 import zipfile
 import requests
 from tqdm import tqdm
 from inputimeout import inputimeout, TimeoutOccurred
 from pathlib import Path
 
+# Setting the module search path:
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.resolve()))
+
+from config import AlltalkTTSEnginesConfig, AlltalkConfig
+
 this_dir = Path(__file__).parent.resolve().parent.resolve().parent.resolve()
-# File paths
-config_path = this_dir / 'confignew.json'
-tts_engines_path = this_dir / 'system/tts_engines/tts_engines.json'
-new_config_template_path = this_dir / 'system/config/confignew.json'
 
 def download_file(url, dest_path):
     response = requests.get(url, stream=True)
@@ -60,31 +61,14 @@ def setup_xtts():
 
 
 
-def update_tts_engines(engine, model):
-    with open(tts_engines_path, 'r') as file:
-        tts_engines = json.load(file)
-    
-    tts_engines['engine_loaded'] = engine
-    tts_engines['selected_model'] = model
-    
-    with open(tts_engines_path, 'w') as file:
-        json.dump(tts_engines, file, indent=4)
+def update_tts_engines(engine):
+    AlltalkTTSEnginesConfig.get_instance().change_engine(engine).save()
 
 def set_firstrun_model_false():
-    with open(config_path, 'r') as file:
-        config = json.load(file)
-    
-    config['firstrun_model'] = False
-    
-    with open(config_path, 'w') as file:
-        json.dump(config, file, indent=4)
+    config.firstrun_model = False
+    config.save()
 
-def load_config(file_path):
-    with open(file_path, "r") as config_file:
-        config = json.load(config_file)
-    return config
-
-def warning_mesasge():
+def warning_message():
     print(f"[{branding}TTS]")
     print(f"[{branding}TTS] \033[93mIf you have you have UPGRADED from v1 ensure you have re-installed\033[0m")
     print(f"[{branding}TTS] \033[93mthe requirements. Otherwise you will get failures and errors!\033[0m")
@@ -92,32 +76,32 @@ def warning_mesasge():
     print(f"[{branding}TTS] \033[0m'using untested triton version' \033[93mmessages.\033[0m")
     print(f"[{branding}TTS]")
 
-# Load confignew.json
-with open(config_path, 'r') as file:
-    config = json.load(file)
+# Load confignew.json (might be version 1 or 2):
+with open(AlltalkConfig.default_config_path(), 'r') as file:
+    config_json = json.load(file)
 
-branding = config['branding']
+branding = config_json['branding']
 
 # Check if the config file is version 1
-if "ip_address" in config:
+if "ip_address" in config_json:
     print(f"[{branding}TTS] Detected version 1 configuration file.")
     print(f"[{branding}TTS] Upgrading to version 2 configuration file...")
 
     # Backup the old configuration file
-    backup_path = config_path + ".backup"
-    shutil.copyfile(config_path, backup_path)
+    backup_path = AlltalkConfig.default_config_path() + ".backup"
+    shutil.copyfile(AlltalkConfig.default_config_path(), backup_path)
 
     # Copy the new configuration template to replace the old config file
-    shutil.copyfile(new_config_template_path, config_path)
+    new_config_template_path = this_dir / 'system/config/confignew.json'
+    shutil.copyfile(new_config_template_path, AlltalkConfig.default_config_path())
 
     print(f"[{branding}TTS] Configuration file upgraded successfully.")
-    
-    # Reload the new config file
-    with open(config_path, 'r') as file:
-        config = json.load(file)
+
+config = AlltalkConfig.get_instance()
+branding = config.branding
 
 # Check if firstrun_model is true
-if config.get('firstrun_model', False):
+if config.firstrun_model:
     print(f"[{branding}TTS]")
     print(f"[{branding}TTS] \033[92mThis is the first time startup. Please download a start TTS model.\033[0m")
     print(f"[{branding}TTS]")
@@ -157,30 +141,30 @@ if config.get('firstrun_model', False):
         os.makedirs('models/piper', exist_ok=True)
         os.makedirs('models/vits', exist_ok=True)
         os.makedirs('models/xtts/', exist_ok=True)
-        update_tts_engines('piper', 'piper')
+        update_tts_engines('piper')
         set_firstrun_model_false()
-        warning_mesasge()
+        warning_message()
         exit()
 
     if user_choice is not None and user_choice.isdigit() and 1 <= int(user_choice) <= len(models):
         selected_model = models[int(user_choice) - 1]
-        warning_mesasge()
+        warning_message()
 
     if user_choice is None or user_choice.lower() != 'own':
         if selected_model['name'] == 'piper':
             setup_piper()
-            update_tts_engines('piper', 'piper')
+            update_tts_engines('piper')
         elif selected_model['name'] == 'vits':
             setup_vits()
-            update_tts_engines('vits', 'vits - tts_models--en--vctk--vits')
+            update_tts_engines('vits')
         elif selected_model['name'] == 'xtts':
             setup_xtts()
-            update_tts_engines('xtts', 'xtts - xttsv2_2.0.3')
+            update_tts_engines('xtts')
 
         print(f"[{branding}TTS] {selected_model['name']} model downloaded and configuration updated successfully.")
         # Set firstrun_model to false
         set_firstrun_model_false()
-        warning_mesasge()
+        warning_message()
         exit()
 else:
     exit()

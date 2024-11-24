@@ -725,6 +725,16 @@
         <option value="91">91</option>
         <option value="90">90</option>
     </select>
+    <label for="whisperModel">WhisperV:</label>
+    <select id="whisperModel" name="whisperModel" class="fixed-size-dropdown">
+        <option value="large-v3" selected>Large-v3 (Default)</option>
+        <option value="tiny">Tiny</option>
+        <option value="base">Base</option>
+        <option value="small">Small</option>
+        <option value="medium">Medium</option>
+        <option value="turbo">Turbo</option>         
+        <option value="large-v3-turbo">Large-v3-Turbo</option>
+    </select>
     <div id="paginationControls">
         <button class="conditional-btn pagination-btn" id="prevPage">Previous</button>
         <span id="pageIndicator">Page 1 of X</span>
@@ -902,7 +912,8 @@
             // If the server confirms the data was saved successfully, trigger analysis
             if (saveData.message === "Data saved successfully") {
                 const accuracy = parseInt(document.getElementById('AnalyzeAccuracy').value) || 98;
-                const analyzeResponse = await fetch(`/api/trigger-analysis?threshold=${accuracy}`);
+                const whisperModel = document.getElementById('whisperModel').value;
+                const analyzeResponse = await fetch(`/api/trigger-analysis?threshold=${accuracy}&whisper_model=${whisperModel}`);
                 const analyzeData = await analyzeResponse.json();
                 if (analyzeData.summary.flagged_ids && analyzeData.summary.flagged_ids.length > 0) {
                     // Update the global problematicIds array with the new flagged IDs
