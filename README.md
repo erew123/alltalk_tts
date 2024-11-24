@@ -13,7 +13,7 @@
 
 I would also like to say a big thank you to anyone whom has contributed to this project either with PR's (list [here](https://github.com/erew123/alltalk_tts/graphs/contributors)) or in any discussion forums/issues tickets. Your input, guidance, help and thoughts are greatly appreciated.
 
-#### [💖 Sponsor this Project on Ko-fi](https://ko-fi.com/erew123)
+### [💖 Sponsor this Project on Ko-fi](https://ko-fi.com/erew123)
 
 ---
 
