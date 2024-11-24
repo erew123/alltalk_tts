@@ -79,6 +79,14 @@ load_config()
 ##########################
 # Central print function #
 ##########################
+# ANSI color codes
+BLUE = "\033[94m"
+# MAGENTA = "\033[95m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
+
 def print_message(message, message_type="standard", component="TTS"):
     """Centralized print function for AllTalk messages
     Args:
@@ -86,14 +94,6 @@ def print_message(message, message_type="standard", component="TTS"):
         message_type (str): Type of message (standard/warning/error/debug_*/debug)
         component (str): Component identifier (TTS/ENG/GEN/API/etc.)
     """
-    # ANSI color codes
-    BLUE = "\033[94m"
-    # MAGENTA = "\033[95m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    RESET = "\033[0m"
-
     prefix = f"[{config.branding}{component}] "
 
     if message_type.startswith("debug_"):
