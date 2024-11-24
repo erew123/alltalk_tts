@@ -10,6 +10,15 @@ class AllTalkHelpContent:
         padding: 0.5rem !important; /* Reduced padding */
         margin: 0 !important;
     }
+    
+    .fixed-accordion {
+        max-height: 440px; /* or any desired height */
+        overflow: auto; /* Ensures content is scrollable if it overflows */
+    }
+
+    .fixed-plot {
+        height: 400px; /* Set a fixed height for the plot */
+    }    
 
     .custom-markdown div {
     border: none !important; /* Remove the inner border */
