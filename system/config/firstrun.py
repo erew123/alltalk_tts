@@ -1,4 +1,62 @@
+"""
+firstrun.py
+
+This script handles the first-time setup for the Alltalk TTS system. It allows the user to download and configure 
+the initial Text-to-Speech (TTS) engine and associated models. It provides automatic detection for Docker or Google 
+Colab environments to simplify the setup process, as well as an interactive menu or command-line arguments for manual configuration.
+
+Features:
+---------
+1. **Automatic Environment Detection**:
+    - Detects if the script is running in a Docker container or Google Colab environment.
+    - Automatically sets up the Piper TTS engine in these cases.
+
+2. **Command-Line Arguments**:
+    - Accepts a `--tts_model` argument to bypass the interactive menu and directly set up a specific TTS engine:
+        - `piper`: Sets up the Piper TTS engine.
+        - `vits`: Sets up the VITS TTS engine.
+        - `xtts`: Sets up the XTTS TTS engine.
+        - `none`: Skips model setup entirely.
+
+3. **Interactive Menu**:
+    - If no command-line argument is provided and the environment is not Docker/Colab, it presents an interactive 
+      menu for the user to select a TTS model.
+
+4. **Configuration Management**:
+    - Updates the Alltalk TTS configuration files to reflect the selected TTS engine and marks the initial setup as complete.
+
+Usage:
+------
+Command-Line:
+    python firstrun.py --tts_model [piper|vits|xtts|none]
+
+Interactive Mode:
+    python firstrun.py
+
+In Docker/Colab:
+    The script automatically selects and sets up the Piper TTS engine without user interaction.
+
+Functions:
+----------
+- **is_running_in_colab**: Detects if the script is running in Google Colab.
+- **is_running_in_docker**: Detects if the script is running in a Docker container.
+- **download_file**: Downloads a file with a progress bar and retry logic.
+- **setup_piper**: Sets up the Piper TTS engine and downloads associated files.
+- **setup_vits**: Sets up the VITS TTS engine and downloads associated files.
+- **setup_xtts**: Sets up the XTTS TTS engine and downloads associated files.
+- **update_tts_engines**: Updates the configuration to reflect the selected TTS engine.
+- **set_firstrun_model_false**: Marks the initial setup as complete in the configuration.
+- **warning_message**: Displays post-setup warnings or tips for the user.
+
+Notes:
+------
+- Ensure network access is available for downloading models during setup.
+- Configuration files are automatically updated and backed up if needed.
+
+"""
+import argparse
 import json
+from pathlib import Path
 import os
 import shutil
 import time
@@ -7,12 +65,10 @@ import zipfile
 import requests
 from tqdm import tqdm
 from inputimeout import inputimeout, TimeoutOccurred
-from pathlib import Path
 
 # Setting the module search path:
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.resolve()))
-
-from config import AlltalkTTSEnginesConfig, AlltalkConfig
+from config import AlltalkTTSEnginesConfig, AlltalkConfig #pylint: disable=wrong-import-position
 
 this_dir = Path(__file__).parent.resolve().parent.resolve().parent.resolve()
 
@@ -28,7 +84,7 @@ def is_running_in_docker():
     """Test for google colab"""
     path = '/proc/self/cgroup'
     return os.path.exists('/.dockerenv') or (
-        os.path.exists(path) and any('docker' in line for line in open(path))
+        os.path.exists(path) and any('docker' in line for line in open(path, encoding='utf-8'))
     )
 
 def download_file(url: str, dest_path: str, timeout: int = 30, retries: int = 3) -> bool:
@@ -36,51 +92,78 @@ def download_file(url: str, dest_path: str, timeout: int = 30, retries: int = 3)
     Download a file from a URL to a specified destination path with progress bar.
     
     Args:
-        url (str): URL of the file to download
-        dest_path (str): Destination path where the file will be saved
+        url (str): URL of the file to download.
+        dest_path (str): Destination path where the file will be saved.
         timeout (int, optional): Connection and read timeout in seconds. Defaults to 30.
         retries (int, optional): Number of retry attempts for failed downloads. Defaults to 3.
+    
+    Returns:
+        bool: True if the file was successfully downloaded, False otherwise.
+    
+    Raises:
+        ValueError: If the downloaded file size does not match the expected size.
     """
     progress_bar = None
-    for attempt in range(retries):
+    for attempt in range(1, retries + 1):
         try:
-            response = requests.get(url, stream=True, 
-                                 timeout=(timeout, timeout))
+            print(f"Attempting to download: {url} (Attempt {attempt}/{retries})")
+            response = requests.get(url, stream=True, timeout=(timeout, timeout))
             response.raise_for_status()
+
             total_size = int(response.headers.get('content-length', 0))
             block_size = 1024  # 1 Kibibyte
+
             # Initialize progress bar
-            progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True, 
-                              desc=f"Downloading {Path(dest_path).name} (Attempt {attempt + 1}/{retries})")
+            progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True,
+                                desc=f"Downloading {Path(dest_path).name} (Attempt {attempt}/{retries})")
             Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
+
             with open(dest_path, 'wb') as dwn_file:
                 for data in response.iter_content(block_size):
                     if data:
                         dwn_file.write(data)
                         progress_bar.update(len(data))
+
             if progress_bar:
                 progress_bar.close()
+
+            # Verify file size
             if progress_bar.n != total_size and total_size > 0:
-                raise requests.exceptions.RequestException(
-                    f"Downloaded size ({progress_bar.n} bytes) does not match expected size ({total_size} bytes)"
-                )    
-            return True
-        except requests.exceptions.RequestException as e:
-            if progress_bar:
-                progress_bar.close()
-            if Path(dest_path).exists():
-                Path(dest_path).unlink()
-            if attempt == retries - 1:
-                raise requests.exceptions.RequestException(
-                    f"Failed to download {url} after {retries} attempts: {str(e)}"
+                raise ValueError(
+                    f"Downloaded size ({progress_bar.n} bytes) does not match expected size ({total_size} bytes)."
                 )
-            print(f"Download attempt {attempt + 1}/{retries} failed: {str(e)}")
-            print("Retrying in 5 seconds...")
-            time.sleep(5)
+
+            print(f"Download completed: {dest_path}")
+            return True
+
+        except requests.Timeout:
+            print(f"Timeout error during download: {url}")
+        except requests.ConnectionError:
+            print(f"Connection error during download: {url}")
+        except requests.exceptions.RequestException as e:
+            print(f"HTTP error during download: {url}. Details: {str(e)}")
+        except ValueError as e:
+            print(f"File validation error: {str(e)}")
+            if Path(dest_path).exists():
+                Path(dest_path).unlink()  # Remove incomplete file
+            break  # Stop retrying on file validation errors
         except Exception as e:
+            print(f"Unexpected error during download: {str(e)}")
+            break  # Stop retrying on unexpected errors
+        finally:
             if progress_bar:
                 progress_bar.close()
-            raise Exception(f"Unexpected error downloading {url}: {str(e)}")
+
+        if Path(dest_path).exists():
+            Path(dest_path).unlink()  # Remove incomplete file
+
+        if attempt < retries:
+            print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{retries})")
+            time.sleep(5)
+        else:
+            print(f"Exhausted all retries for {url}.")
+
+    # Return False if all attempts fail
     return False
 
 def setup_piper():
@@ -117,7 +200,7 @@ def setup_xtts():
         "vocab.json"
     ]
     for each_file in files:
-        download_file(base_url + file + "?download=true", this_dir / f"models/xtts/xttsv2_2.0.3/{each_file}")
+        download_file(base_url + each_file + "?download=true", this_dir / f"models/xtts/xttsv2_2.0.3/{each_file}")
 
 def update_tts_engines(engine):
     """Set engine to users choice that matches the download"""
@@ -129,6 +212,13 @@ def update_tts_engines(engine):
         print(f"[{branding}TTS] Error updating TTS engine configuration: {str(e)}")
 
 def set_firstrun_model_false():
+    """
+    Marks the first-run setup as complete in the Alltalk configuration.
+
+    This function updates the `firstrun_model` flag in the configuration file to `False`,
+    indicating that the initial setup has been completed. It attempts to save the updated 
+    configuration and verifies the changes, retrying with a direct file write if necessary.
+    """
     try:
         # Get a fresh instance of the config
         config_fr = AlltalkConfig.get_instance()
@@ -151,6 +241,7 @@ def set_firstrun_model_false():
         print(f"[{branding}TTS] Error saving firstrun configuration: {str(e)}")
 
 def warning_message():
+    """AllTalk V1 Warning message re updating"""
     print(f"[{branding}TTS]")
     print(f"[{branding}TTS] \033[93mIf you have you have UPGRADED from v1 ensure you have re-installed\033[0m")
     print(f"[{branding}TTS] \033[93mthe requirements. Otherwise you will get failures and errors!\033[0m")
@@ -181,22 +272,47 @@ if "ip_address" in config_json:
 
 config = AlltalkConfig.get_instance()
 branding = config.branding
+# Argument parser setup
+parser = argparse.ArgumentParser(description="TTS Setup Script")
+parser.add_argument('--tts_model', type=str, choices=['piper', 'vits', 'xtts', 'none'],
+                    help="Specify TTS model to set up (piper, vits, xtts, or none)")
+args = parser.parse_args()
 
 # Check if firstrun_model is true
 if config.firstrun_model:
-    # Check for Colab or Docker environment
+    # Handle command-line argument for tts_model
+    if args.tts_model:
+        if args.tts_model == 'piper':
+            setup_piper()
+            update_tts_engines('piper')
+            set_firstrun_model_false()
+        elif args.tts_model == 'vits':
+            setup_vits()
+            update_tts_engines('vits')
+            set_firstrun_model_false()
+        elif args.tts_model == 'xtts':
+            setup_xtts()
+            update_tts_engines('xtts')
+            set_firstrun_model_false()
+        elif args.tts_model == 'none':
+            print(f"[{branding}TTS] No TTS model setup requested.")
+        print(f"[{branding}TTS] Setup completed for {args.tts_model}. Exiting.")
+        sys.exit()
+
+    # Check for Colab or Docker environment first
     if is_running_in_colab() or is_running_in_docker():
         print(f"[{branding}TTS] Detected Colab/Docker environment - automatically selecting Piper")
         setup_piper()
         update_tts_engines('piper')
         set_firstrun_model_false()
         warning_message()
-        exit()
+        sys.exit()
 
+    # Present the menu if no argument is passed and not in Colab/Docker
     print(f"[{branding}TTS]")
-    print(f"[{branding}TTS] \033[92mThis is the first time startup.. Please download a start TTS model. Other TTS engines\033[0m")
+    print(f"[{branding}TTS] \033[92mThis is the first-time startup.. Please download a start TTS model. Other TTS engines\033[0m")
     print(f"[{branding}TTS] \033[92mand TTS models can be downloaded/managed in the Gradio Interface `TTS Engines Settings`\033[0m")
-    print(f"[{branding}TTS] \033[92mtab after inital setup.\033[0m")
+    print(f"[{branding}TTS] \033[92mtab after initial setup.\033[0m")
     print(f"[{branding}TTS]")
 
     # List of available models
@@ -228,12 +344,15 @@ if config.firstrun_model:
         print(f"[{branding}TTS] No input received. Proceeding with the default model (piper).")
     elif user_choice.lower() == 'own' or (user_choice.isdigit() and int(user_choice) == len(models) + 1):
         print(f"[{branding}TTS]")
-        print(f"[{branding}TTS] If you have your own XTTS models, please move them into the")
-        print(f"[{branding}TTS] \033[93m/models/xtts/\033[0m folder")
+        print(f"[{branding}TTS] Please use the Gradio interface TTS Engine Settings > [Engine Name] > Model Download")
+        print(f"[{branding}TTS] To download models for your selected TTS Engine. Or use the [Engine Name] help sections")
+        print(f"[{branding}TTS] for instructions on using your own TTS models.")
         print(f"[{branding}TTS]")
         os.makedirs('models/piper', exist_ok=True)
         os.makedirs('models/vits', exist_ok=True)
         os.makedirs('models/xtts/', exist_ok=True)
+        os.makedirs('models/f5-tts/', exist_ok=True)
+        os.makedirs('models/rvc_voices/', exist_ok=True)
         update_tts_engines('piper')
         set_firstrun_model_false()
         warning_message()
