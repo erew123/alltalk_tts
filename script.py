@@ -720,11 +720,11 @@ def check_google_colab():
     """
     debug_func_entry()
     try:
-        from google.colab import colab
+        import google.colab
         return True
     except ImportError:
         return False
-
+    
 _state['running_on_google_colab'] = check_google_colab()
 
 ###############################################################################
@@ -947,7 +947,6 @@ def signal_handler(sig, frame): # pylint: disable=unused-argument
 #####################################################################
 # pylint: disable=ungrouped-imports,unused-import,import-outside-toplevel,import-error
 if check_google_colab():
-    _state['running_on_google_colab'] = True
     try:
         with open("/content/alltalk_tts/googlecolab.json", "r", encoding="utf-8") as f:
             data = json.load(f)
