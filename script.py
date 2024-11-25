@@ -36,6 +36,13 @@ Key Features:
    - Extensive debug logging for monitoring function entries, file operations, and network requests.
    - Progress tracking for long-running tasks like model loading and transcription.
 
+7. **Command-Line Arguments**:
+    - Accepts a `--tts_model` argument to bypass the interactive menu and directly set up a specific TTS engine
+      on the first time start-up:
+        - `piper`: Sets up the Piper TTS engine.
+        - `vits`: Sets up the VITS TTS engine.
+        - `xtts`: Sets up the XTTS TTS engine.
+        - `none`: Skips model setup entirely.
 
 Requirements:
 -------------
@@ -51,6 +58,7 @@ Supported Environments:
 - Standalone mode
 """
 import atexit
+import argparse
 import gc
 import inspect
 import importlib
@@ -749,13 +757,20 @@ except ModuleNotFoundError:
 ######################################################
 # START-UP # Check if this is a first time start-up  #
 ######################################################
-def run_firsttime_script():
+def run_firsttime_script(tts_model=None):
     """
     Run the first time startup script based on the current environment
-    (Google Colab, standalone, or TGWUI).
+    (Google Colab, standalone, or TGWUI). Optionally, pass a TTS model
+    argument to the script for direct configuration.
+    
+    Args:
+        tts_model (str): Optional. TTS model to set up ('piper', 'vits', 'xtts', or 'none').
     """
     debug_func_entry()
     try:
+        # Get the current config instance
+        firstrun_config = AlltalkConfig.get_instance()
+        # Determine the script path based on environment
         if _state['running_on_google_colab']:
             firstrun_script_path = "/content/alltalk_tts/system/config/firstrun.py"
         elif running_in_standalone:
@@ -766,18 +781,39 @@ def run_firsttime_script():
             )
         else:
             firstrun_script_path = os.path.join(this_dir, "system", "config", "firstrun.py")
-
-        subprocess.run([sys.executable, firstrun_script_path], check=True)
+        # Prepare the subprocess command
+        command = [sys.executable, firstrun_script_path]
+        # Append the --tts_model argument if provided
+        if tts_model:
+            if tts_model not in ['piper', 'vits', 'xtts', 'none']:
+                raise ValueError(f"Invalid tts_model value: {tts_model}")
+            command.extend(['--tts_model', tts_model])
+        # Run the script
+        subprocess.run(command, check=True)
+        # Reload the configuration after script execution
+        firstrun_config.reload()
     except subprocess.CalledProcessError as e:
         error_msg = f"Error running first-time setup script: {str(e)}"
         print_message(error_msg, message_type="error")
     except (FileNotFoundError, PermissionError) as e:
         error_msg = f"File system error during first-time setup: {str(e)}"
         print_message(error_msg, message_type="error")
+    except ValueError as e:
+        error_msg = f"Invalid argument passed to first-time setup script: {str(e)}"
+        print_message(error_msg, message_type="error")
 
-
+# Add argparse for command-line arguments
+parser = argparse.ArgumentParser(description="Run the first-time setup script.")
+parser.add_argument(
+    "--tts_model",
+    type=str,
+    choices=["piper", "vits", "xtts", "none"],
+    help="Specify the TTS model to set up (piper, vits, xtts, or none).",
+)
+# Parse the arguments
+args = parser.parse_args()
 # Call the function to run the startup script
-run_firsttime_script()
+run_firsttime_script(tts_model=args.tts_model)
 
 
 ###########################################################
@@ -2488,26 +2524,25 @@ if gradio_enabled is True:
     ###########################################################
     # Finish Dynamically import the Themes builder for Gradio #
     ###########################################################
-    # Check if the script is running in standalone mode
+    # Adjust the module search path based on the execution context
     if script_dir.name == "alltalk_tts":
-        # Running in standalone mode, add the script's
-        # directory to the Python module search path
+        # Standalone execution: Add the script directory to the module search path
         sys.path.insert(0, str(script_dir))
     else:
-        # Running as part of text-generation-webui, add the parent
-        # directory of "alltalk_tts" to the Python module search path
+        # Running as part of text-generation-webui: Add the parent directory to the module search path
         sys.path.insert(0, str(script_dir.parent))
 
     # Determine if running as standalone or within another project
-    # TODO: Want to re-check on this and how its impacting TGWUI. May not be needed anymore!
-    if __name__ == "__main__" or "text-generation-webui" not in this_dir.parts:
-        # Standalone execution
-        base_package = None  # No base package needed for absolute imports
-    else:
-        # Running within text-generation-webui
-        # Dynamically build the base package using the current folder name
-        current_folder_name = this_dir.name
-        base_package = f"extensions.{current_folder_name}"
+    if __name__ == "__main__":
+        # Determine if running as standalone or within another project
+        if "text-generation-webui" not in script_dir.parts:
+            # Standalone execution
+            base_package = None  # No base package needed for absolute imports
+        else:
+            # Running within text-generation-webui
+            # Dynamically build the base package using the current folder name
+            current_folder_name = script_dir.name
+            base_package = f"extensions.{current_folder_name}"
 
     def dynamic_import(module_path, package=None):
         """
