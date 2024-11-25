@@ -23,6 +23,7 @@ import uuid
 import hashlib
 import sys
 import time
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Union, List, Optional, Tuple
@@ -34,6 +35,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Form, Request, Response, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse, StreamingResponse
+import ffmpeg
 import numpy as np
 import soundfile as sf
 import librosa
@@ -69,7 +71,7 @@ def after_config_load():
     """Initialize the infer_pipeline based on RVC settings."""
     global infer_pipeline # pylint: disable=global-statement
     if config.rvc_settings.rvc_enabled:
-        from system.tts_engines.rvc.infer.infer import infer_pipeline as rvc_pipeline
+        from system.tts_engines.rvc.infer.infer import infer_pipeline as rvc_pipeline # pylint: disable=import-outside-toplevel
         infer_pipeline = rvc_pipeline
     else:
         infer_pipeline = None
@@ -128,48 +130,38 @@ def debug_func_entry():
 ####################
 # Check for FFMPEG #
 ####################
-def check_ffmpeg(ffmpeg_dir):
-    """Verify FFmpeg availability in the system."""
+def check_ffmpeg():
+    """Verify FFmpeg availability in the conda environment."""
     debug_func_entry()
-    message = ""
 
-    if sys.platform == "win32":
-        ffmpeg_path = os.path.join(ffmpeg_dir, "system", "win_ffmpeg", "ffmpeg.exe")
-        if os.path.exists(ffmpeg_path):
-            return True, "FFmpeg found in Windows directory"
-        message = "FFmpeg not found in Windows directory"
-    else:
-        try:
-            subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            return True, "FFmpeg found in system PATH"
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            message = "FFmpeg not found in system PATH"
+    try:
+        # Check if ffmpeg is in PATH
+        ffmpeg_path = shutil.which('ffmpeg')
+        ffprobe_path = shutil.which('ffprobe')
 
-    print_message(message, "warning")
-    return False, message
+        if not ffmpeg_path or not ffprobe_path:
+            return False, "FFmpeg not found in conda environment"
 
-# Check if FFmpeg is installed
-ffmpeg_installed = check_ffmpeg(this_dir)
+        # Verify FFmpeg works
+        subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return True, "FFmpeg found in conda environment"
 
-if not ffmpeg_installed:
-    print_message("\033[92mTranscoding       :\033[91m ffmpeg not found\033[0m", component="ENG")
-    print_message("FFmpeg is not installed. Transcoding will be disabled.", "warning", "ENG")
-    print_message("Please install FFmpeg on your system.", component="ENG")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False, "FFmpeg not functioning correctly"
 
-    if sys.platform == "win32":
+def print_ffmpeg_status(is_ffmpeg_installed, _message):
+    """Print FFmpeg installation status and instructions."""
+    if not is_ffmpeg_installed:
         print_message("\033[92mTranscoding       :\033[91m ffmpeg not found\033[0m", component="ENG")
-        print_message("Installation instructions for Windows:", component="ENG")
-        print_message(f"Copy the 'ffmpeg.exe' file to '{os.path.join(this_dir, 'system', 'win_ffmpeg')}'", component="ENG")
+        print_message("FFmpeg is not installed. Transcoding will be disabled.", "warning", "ENG")
+        print_message("Please install FFmpeg using:", component="ENG")
+        print_message("conda install -c conda-forge ffmpeg", component="ENG")
     else:
-        print_message("\033[92mTranscoding       :\033[91m ffmpeg not found\033[0m", component="ENG")
-        print_message("Installation instructions:", component="ENG")
-        print_message("Linux (Debian-based systems): Run 'sudo apt-get install ffmpeg' in the terminal.", component="ENG")
-        print_message("macOS: Run 'brew install ffmpeg' in the terminal (requires Homebrew).", component="ENG")
+        print_message("\033[92mTranscoding       :\033[93m ffmpeg found\033[0m", component="ENG")
 
-FFmpeg = None
-if ffmpeg_installed:
-    from ffmpeg.asyncio import FFmpeg
-    print_message("\033[92mTranscoding       :\033[93m ffmpeg found\033[0m", component="ENG")
+# Implementation
+ffmpeg_installed, ffmpeg_message = check_ffmpeg()
+print_ffmpeg_status(ffmpeg_installed, ffmpeg_message)
 
 ################################
 # Check for portaudio on Linux #
@@ -730,80 +722,107 @@ def run_voice2rvc(input_tts_path, output_rvc_path, pth_path, pitch, method) -> O
 ##################################
 # Transcode between file formats #
 ##################################
-async def transcode_audio(input_file, output_format):
-    """Transcode audio files between different formats using FFmpeg. Supports wav, mp3, flac, aac, and opus formats."""
+async def get_audio_duration(file_path):
+    """Get duration of audio file using FFprobe."""
     debug_func_entry()
 
-    print_message("*************************************************", "debug_transcode")
-    print_message("transcode_audio function called (debug_transcode)", "debug_transcode")
-    print_message("*************************************************", "debug_transcode")
-    print_message(f"Input file    : {input_file}", "debug_transcode")
-    print_message(f"Output format : {output_format}", "debug_transcode")
+    file_path_str = str(file_path)
+    print_message("\033[94mGet Audio Duration > get_audio_duration > tts_server.py\033[0m", "debug_transcode" or "debug_openai")
+    print_message(f"├─ Input file: {file_path_str}", "debug_transcode")
 
-    if output_format == "Disabled":
-        print_message("Transcode format is set to Disabled so skipping transcode.", "debug_transcode")
-        return input_file
+    try:
+        probe = ffmpeg.probe(file_path_str)
+        duration = float(probe['format']['duration'])
+        print_message(f"└─ Duration: {duration} seconds", "debug_transcode")
+        return duration
+    except Exception as e:
+        print_message(f"Error getting audio duration: {str(e)}", "error")
+        raise
 
+async def transcode_audio(input_file, output_format, output_file=None):
+    """Transcode audio files between different formats using FFmpeg."""
+    debug_func_entry()
+    input_file_str = str(input_file)
+    print_message("\033[94mTranscode Function Entry > transcode_audio > tts_server.py\033[0m", "debug_transcode")
+    print_message(f"├─ Input file    : {input_file_str}", "debug_transcode")
+    print_message(f"└─ Output format : {output_format}", "debug_transcode")
+    if output_file is None:
+        output_file = os.path.splitext(input_file_str)[0] + f".{output_format}"
+    print_message(f"└─ Output file : {output_file}", "debug_transcode")
     if not ffmpeg_installed:
         print_message("FFmpeg is not installed. Format conversion is not possible.", "error")
         raise RuntimeError("FFmpeg is not installed. Format conversion is not possible.")
-
-    input_extension = os.path.splitext(input_file)[1][1:].lower()
-    print_message(f"Input file extension: {input_extension}", "debug_transcode")
-
+    input_extension = os.path.splitext(input_file_str)[1][1:].lower()
     if input_extension == output_format.lower():
         print_message(f"Input file is already in the requested format: {output_format}", "debug_transcode")
         return input_file
-
-    output_file = os.path.splitext(input_file)[0] + f".{output_format}"
-    print_message(f"Output file: {output_file}", "debug_transcode")
-
-    ffmpeg_path = os.path.join(this_dir, "system", "win_ffmpeg", "ffmpeg.exe") if sys.platform == "win32" else "ffmpeg"
-    ffmpeg = FFmpeg(ffmpeg_path).option("y").input(input_file).output(output_file)
-
-    print_message(f"Transcoding to {output_format}", "debug_transcode")
-
-    # Configure format-specific options
-    if output_format == "opus":
-        print_message("Configuring Opus options", "debug_transcode")
-        ffmpeg.output(output_file, {
-            "codec:a": "libopus", 
-            "b:a": "128k", 
-            "vbr": "on", 
-            "compression_level": 10, 
-            "frame_duration": 60, 
-            "application": "voip"
-        })
-    elif output_format == "aac":
-        print_message("Configuring AAC options", "debug_transcode")
-        ffmpeg.output(output_file, {"codec:a": "aac", "b:a": "192k"})
-    elif output_format == "flac":
-        print_message("Configuring FLAC options", "debug_transcode")
-        ffmpeg.output(output_file, {"codec:a": "flac", "compression_level": 8})
-    elif output_format == "wav":
-        print_message("Configuring WAV options", "debug_transcode")
-        ffmpeg.output(output_file, {"codec:a": "pcm_s16le"})
-    elif output_format == "mp3":
-        print_message("Configuring MP3 options", "debug_transcode")
-        ffmpeg.output(output_file, {"codec:a": "libmp3lame", "b:a": "192k"})
-    else:
-        print_message(f"Unsupported output format: {output_format}", "error")
-        raise ValueError(f"Unsupported output format: {output_format}")
-
+    output_file = os.path.splitext(input_file_str)[0] + f".{output_format}"
+    print_message(f"└─ Output file : {output_file}", "debug_transcode")
     try:
-        print_message("Starting transcoding process", "debug_transcode")
-        await ffmpeg.execute()
+        print_message("\033[94mStarting Transcode Process\033[0m", "debug_transcode")
+        stream = ffmpeg.input(input_file_str)
+        # Configure format-specific options
+        format_options = {
+            'mp3': {
+                'acodec': 'libmp3lame',
+                **{'b:a': '192k'},
+                'ar': 44100,
+                'ac': 2
+            },
+            'opus': {
+                'acodec': 'libopus',
+                **{'b:a': '128k'},
+                'vbr': 'on',
+                'compression_level': '10',
+                'frame_duration': '60',
+                'application': 'voip',
+                'ar': 48000,
+                'ac': 2
+            },
+            'aac': {
+                'acodec': 'aac',
+                **{'b:a': '192k'},
+                'ar': 44100,
+                'ac': 2
+            },
+            'vorbis': {  # for ogg
+                'acodec': 'libvorbis',
+                **{'b:a': '192k'},
+                'ar': 44100,
+                'ac': 2,
+                'f': 'ogg'  # Force OGG container format
+            },
+            'flac': {
+                'acodec': 'flac',
+                'compression_level': '8',
+                'ar': 44100,
+                'ac': 2
+            },
+            'wav': {
+                'acodec': 'pcm_s16le',
+                'ar': 44100,
+                'ac': 2
+            }
+        }
+        if output_format not in format_options:
+            raise ValueError(f"Unsupported output format: {output_format}")
+        # Add options and force overwrite
+        stream = ffmpeg.output(stream, output_file, **format_options[output_format], y=None)
+        print_message(f"FFmpeg command: {' '.join(ffmpeg.compile(stream))}", "debug_transcode")
+        _out, _err = ffmpeg.run(stream, capture_stdout=True, capture_stderr=True)
         print_message("Transcoding completed successfully", "debug_transcode")
-    except Exception as e:
-        print_message(f"Error occurred during transcoding: {str(e)}", "error")
+        os.remove(input_file_str)
+        print_message("\033[94mTranscode Complete\033[0m", "debug_transcode")
+        print_message(f"└─ Output file: {output_file}", "debug_transcode")
+        return output_file
+    except ffmpeg.Error as e:
+        print_message("FFmpeg error:", "error")
+        print_message(f"stdout: {e.stdout.decode('utf8')}", "error")
+        print_message(f"stderr: {e.stderr.decode('utf8')}", "error")
         raise
-
-    print_message("Deleting original input file", "debug_transcode")
-    os.remove(input_file)
-
-    print_message("Transcoding process completed", "debug_transcode")
-    print_message(f"Transcoded file: {output_file}", "debug_transcode")
-    return output_file
+    except Exception as e:
+        print_message(f"Error during transcoding: {str(e)}", "error")
+        raise
 
 ##############################
 # Central Transcode function #
@@ -1170,63 +1189,40 @@ async def openai_tts_generate(request: Request):
 # API Endpoint - OpenAI Speech API compatable endpoint Transcode Function #
 ###########################################################################
 async def transcode_for_openai(input_file, output_format):
-    """Transcode audio files for OpenAI API compatibility. Handles additional formats like ogg and m4a."""
+    """Transcode audio files for OpenAI API compatibility."""
     debug_func_entry()
 
     print_message("************************************", "debug_openai", "TTS")
     print_message("transcode_for_openai function called", "debug_openai", "TTS")
-    print_message("************************************", "debug_openai", "TTS")
     print_message(f"Input file    : {input_file}", "debug_openai", "TTS")
     print_message(f"Output format : {output_format}", "debug_openai", "TTS")
 
-    if not ffmpeg_installed:
-        print_message("FFmpeg is not installed. Format conversion is not possible.", "error")
-        raise RuntimeError("FFmpeg is not installed. Format conversion is not possible.")
-
-    input_extension = os.path.splitext(input_file)[1][1:].lower()
-    print_message(f"Input file extension: {input_extension}", "debug_openai", "TTS")
-
-    if input_extension == output_format.lower():
-        print_message(f"Input file is already in the requested format: {output_format}", "debug_openai", "TTS")
-        return input_file
-
-    output_file = os.path.splitext(input_file)[0] + f".{output_format}"
-    print_message(f"Output file: {output_file}", "debug_openai", "TTS")
-
-    ffmpeg_path = os.path.join(this_dir, "system", "win_ffmpeg", "ffmpeg.exe") if sys.platform == "win32" else "ffmpeg"
-    ffmpeg = FFmpeg(ffmpeg_path).option("y").input(input_file).output(output_file)
-
-    print_message(f"Transcoding to {output_format}", "debug_openai", "TTS")
-
-    codec_settings = {
-        "opus": {"codec:a": "libopus", "b:a": "128k", "vbr": "on", "compression_level": 10, 
-                "frame_duration": 60, "application": "voip"},
-        "aac": {"codec:a": "aac", "b:a": "192k"},
-        "flac": {"codec:a": "flac", "compression_level": 8},
-        "wav": {"codec:a": "pcm_s16le"},
-        "mp3": {"codec:a": "libmp3lame", "b:a": "192k"},
-        "ogg": {"codec:a": "libvorbis"},
-        "m4a": {"codec:a": "aac", "b:a": "192k"}
+    # Map formats to codecs but preserve original extension
+    format_mapping = {
+        "m4a": ("aac", "m4a"),     # (codec, extension)
+        "ogg": ("vorbis", "ogg"),
+        "aac": ("aac", "aac"),
+        "mp3": ("mp3", "mp3"),
+        "opus": ("opus", "opus"),
+        "flac": ("flac", "flac"),
+        "wav": ("wav", "wav")
     }
 
-    if output_format in codec_settings:
-        print_message(f"Configuring {output_format.upper()} options", "debug_openai", "TTS")
-        ffmpeg.output(output_file, codec_settings[output_format])
-    else:
-        print_message(f"Unsupported output format: {output_format}", "error", "TTS")
-        raise ValueError(f"Unsupported output format: {output_format}")
+    if output_format not in format_mapping:
+        raise ValueError(f"Unsupported format: {output_format}")
+
+    codec, extension = format_mapping[output_format]
+
+    # Create output path with desired extension
+    output_file = os.path.splitext(input_file)[0] + f".{extension}"
 
     try:
-        print_message("Starting transcoding process", "debug_openai", "TTS")
-        await ffmpeg.execute()
-        print_message("Transcoding completed successfully", "debug_openai", "TTS")
+        # Use main transcode but rename file if needed
+        result = await transcode_audio(input_file, codec, output_file)
+        return result
     except Exception as e:
-        print_message(f"Error occurred during transcoding: {str(e)}", "error", "TTS")
+        print_message(f"Error in OpenAI transcoding: {str(e)}", "error", "TTS")
         raise
-
-    print_message("Transcoding process completed", "debug_openai", "TTS")
-    print_message(f"Transcoded file: {output_file}", "debug_openai", "TTS")
-    return output_file
 
 
 ######################################################################################
