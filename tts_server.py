@@ -1598,11 +1598,11 @@ class JSONInput(BaseModel):
     """
     text_input: str = Field(..., max_length=int(config.api_def.api_max_characters), description=f"text_input needs to be {config.api_def.api_max_characters} characters or less.")
     text_filtering: str = Field(..., pattern="^(none|standard|html)$", description="text_filtering needs to be 'none', 'standard' or 'html'.")
-    #character_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
+    character_voice_gen: str = Field(..., pattern=r'^[^<>"|?*]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvccharacter_voice_gen: str = Field(..., description="rvccharacter_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
     rvccharacter_pitch: float = Field(..., description="RVC Character pitch needs to be a number between -24 and 24")
     narrator_enabled: str = Field(..., pattern="^(true|false|silent)$", description="narrator_enabled needs to be 'true', 'false' or 'silent'.")
-    narrator_voice_gen: str = Field(..., pattern=r'^[\(\)a-zA-Z0-9\_\-./\s]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
+    narrator_voice_gen: str = Field(..., pattern=r'^[^<>"|?*]+$', description="character_voice_gen needs to be the name of a valid voice for the loaded TTS engine.")
     rvcnarrator_voice_gen: str = Field(..., description="rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
     rvcnarrator_pitch: float = Field(..., description="RVC Narrator pitch needs to be a number between -24 and 24")
     text_not_inside: str = Field(..., pattern="^(character|narrator|silent)$", description="text_not_inside needs to be 'character', 'narrator' or 'silent'.")
@@ -1694,7 +1694,7 @@ def validate_json_input(json_input_data):
         error_messages = []
         for error in e.errors():
             field = error["loc"][0]
-            description = JSONInput.__fields__.get(field).field_info.description
+            description = JSONInput.model_fields[field].description  # Updated line
             error_messages.append(f"{field}: {description}")
         error_message = "\n".join(error_messages)
         print_message(f"Error with API request: {error_message}", "error", "API")
