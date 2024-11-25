@@ -344,6 +344,7 @@ install_custom_standalone() {
     conda install -y pytorch=2.2.1 torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
     conda install -y nvidia/label/cuda-12.1.0::cuda-toolkit=12.1
     conda install -y pytorch::faiss-cpu
+    conda install -y -c conda-forge "ffmpeg=*=*gpl*"
     conda install -y conda-forge::ffmpeg
     echo
     echo
