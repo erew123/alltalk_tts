@@ -10,7 +10,7 @@ import sys
 import os
 import numpy as np
 import asyncio
-from ffmpeg.asyncio import FFmpeg
+import ffmpeg
 from pathlib import Path
 import subprocess
 
@@ -19,33 +19,27 @@ this_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
 
 def load_audio(file, sampling_rate):
     try:
-        # Get the parent directory of the current file
-        this_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
-        file = file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
+        file = str(file).strip(" ").strip('"').strip("\n").strip('"').strip(" ")
 
-        # Set the ffmpeg_path variable based on the operating system
-        if sys.platform == "win32":
-            ffmpeg_path = os.path.join(this_dir, "system", "win_ffmpeg", "ffmpeg.exe")
-        else:
-            ffmpeg_path = "ffmpeg"  # Default path for Linux and macOS
+        try:
+            # Use ffmpeg-python
+            stream = (
+                ffmpeg
+                .input(file)
+                .output('pipe:', format='f32le', acodec='pcm_f32le', ac=1, ar=str(sampling_rate))
+                .run(capture_stdout=True, capture_stderr=True)
+            )
+            out = stream[0]  # Get stdout data
+            
+        except ffmpeg.Error as e:
+            print(f"FFmpeg error: {e.stderr.decode('utf-8')}")
+            raise RuntimeError(f"FFmpeg error: {e.stderr.decode('utf-8')}") from e
 
-        # Initialize the process variable
-        process = subprocess.Popen(
-            [ffmpeg_path, "-y", "-i", file, "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "1", "-ar", str(sampling_rate), "pipe:1"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        
-        out, err = process.communicate()
-        if process.returncode != 0:
-            print(f"FFmpeg error: {err.decode('utf-8')}")  # Debug statement
-            raise RuntimeError(f"FFmpeg error: {err.decode('utf-8')}")
-        #print("Audio loaded successfully")  # Debug statement
+        return np.frombuffer(out, np.float32).flatten()
+
     except Exception as error:
-        print(f"Error loading audio: {error}")  # Debug statement
-        raise RuntimeError(f"Failed to load audio: {error}")
-
-    return np.frombuffer(out, np.float32).flatten()
+        print(f"Error loading audio: {error}")
+        raise RuntimeError(f"Failed to load audio: {error}") from error
 
 
 
