@@ -825,7 +825,7 @@ async def transcode_audio_if_necessary(output_file, model_audio_format, output_a
         raise
 
     print_message("Transcode condition completed", "debug_transcode")
-    print_message("Updating output file paths and URLs", "debug_tts")
+    print_message("Updating output file paths and URLs", "debug_transcode")
 
     # Generate appropriate URLs based on API configuration
     if config.api_def.api_use_legacy_api:
@@ -835,7 +835,10 @@ async def transcode_audio_if_necessary(output_file, model_audio_format, output_a
         output_file_url = f'/audio/{os.path.basename(output_file)}'
         output_cache_url = f'/audiocache/{os.path.basename(output_file)}'
 
-    print_message("Output file paths and URLs updated", "debug_tts")
+    print_message("Output file paths and URLs updated", "debug_transcode")
+    print_message(f"Transcode output_file is now     : {output_file}", "debug_transcode")
+    print_message(f"Transcode output_file_url is now : {output_file_url}", "debug_transcode")
+    print_message(f"Transcode output_cache_url is now: {output_cache_url}", "debug_transcode")
     return output_file, output_file_url, output_cache_url
 
 ##############################
@@ -2209,6 +2212,10 @@ async def apifunction_generate_tts_standard(
             output_file_path, output_file_url, output_cache_url = await tts_process_standard_mode(
                 params, text_input
             )
+
+        print_message(f"Final output_file_path is: {output_file_path}", "debug_tts", "GEN")
+        print_message(f"Final output_file_url is : {output_file_url}", "debug_tts", "GEN")
+        print_message(f"Final output_cache_url is: {output_cache_url}", "debug_tts", "GEN")
 
         if isinstance(output_file_path, StreamingResponse):
             return output_file_path
