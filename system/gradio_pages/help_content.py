@@ -1229,7 +1229,7 @@ class AllTalkHelpContent:
     - **RVC Voices:**
         - Additional voice modification layer
         - Shows as "Disabled" until RVC activated
-        - Requires RVC set to **`Enabled`** in **Global Settings*
+        - Requires RVC set to **`Enabled`** in **Global Settings** > **RVC Settings**
         - When enabled, **each** voice can be stored in:
             - `/models/rvc_voices/{YOUR_VOICE_MODEL} 
         - Read the [Github WIKI](https://github.com/erew123/alltalk_tts/wiki) for more information
