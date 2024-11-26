@@ -144,6 +144,7 @@ echo ** Faiss **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y pytorch::faiss-cpu
 echo ** FFmpeg **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y -c conda-forge "ffmpeg=*=*gpl*"
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y -c conda-forge "ffmpeg=*=h*_*" --no-deps
 if %ERRORLEVEL% neq 0 (
     echo.
     echo    There was an error installing the requirements.
@@ -462,6 +463,7 @@ if errorlevel 1 (
 :install_ffmpeg
 echo ** Installing FFmpeg **
 call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y -c conda-forge "ffmpeg=*=*gpl*"
+call "%CONDA_ROOT_PREFIX%\Scripts\conda.exe" install -y -c conda-forge "ffmpeg=*=h*_*" --no-deps
 echo.
 if errorlevel 1 (
     echo FFmpeg installation failed, errorlevel was %errorlevel%. There should be a Conda
