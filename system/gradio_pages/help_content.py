@@ -20,6 +20,11 @@ class AllTalkHelpContent:
         height: 400px; /* Set a fixed height for the plot */
     }    
 
+    .certificate-group {
+    max-height: 280px;  /* Adjust this value to find the right height */
+    overflow: hidden;   /* This will prevent content from spilling out */
+    }
+
     .custom-markdown div {
     border: none !important; /* Remove the inner border */
     margin-top: 0 !important; /* Remove top margin */
@@ -372,7 +377,7 @@ class AllTalkHelpContent:
         - **Purpose**: Toggles the Real-Time Voice Cloning feature & downloads the base RVC model required.
         - **Default**: Disabled
         - **Recommendation**: Enable this only if you plan to use RVC-enhanced TTS.
-        - **Tip**: Enable this to download and setup your base RVC models and folders.
+        - **Tip**: Enable this to download and setup your base RVC models and folders. `/models/rvc_voices` 
 
     - **Refresh Model Choices**: 
         - **Purpose**: Refreshes the list of available voice models from the `/models/rvc_voices` directory.
@@ -1224,7 +1229,10 @@ class AllTalkHelpContent:
     - **RVC Voices:**
         - Additional voice modification layer
         - Shows as "Disabled" until RVC activated
-        - Requires RVC set to `Enabled` in Global Settings   
+        - Requires RVC set to **`Enabled`** in **Global Settings*
+        - When enabled, **each** voice can be stored in:
+            - `/models/rvc_voices/{YOUR_VOICE_MODEL} 
+        - Read the [Github WIKI](https://github.com/erew123/alltalk_tts/wiki) for more information
     """
    
     GENERATE_SCREEN2 = """
@@ -2983,4 +2991,280 @@ class AllTalkHelpContent:
         * Use `large-v3-turbo` for best speed/quality balance
         * Enable audio processing only when needed
         * Refresh page between sessions if issues occur
+    """
+
+    PROXY = """
+    ## 🎯 What is the AllTalk Proxy?
+
+    The AllTalk Proxy system provides a secure way to expose your AllTalk instance to external networks while maintaining control and security. It acts as a protective intermediate layer between the internet and your AllTalk services.
+    """
+
+    PROXY1 = """
+    ### Why Use the Proxy?
+    - **Security**: Adds an additional layer of protection between external users and your AllTalk instance
+    - **HTTPS Support**: Enable secure, encrypted connections to your service
+    - **Port Control**: Map internal services to different external ports
+    - **Access Control**: Manage how your AllTalk instance is accessed from outside your network
+    - **Monitoring**: Track and log all access attempts and usage
+
+    Ideal for:
+    - Exposing AllTalk to the internet safely
+    - Running AllTalk in a production environment
+    - Sharing your instance with team members
+    - Monitoring and controlling access to your services
+
+    ## 🚀 Quick Start Guide
+
+    1. **Enable Master Switch**
+    - Enable "Master switch/safety lockout for proxy functionality" checkbox
+    - Essential first step - nothing will work without this enabled
+    - It's designed as a safety mechanism to prevent accidental exposure
+    - Enables all other controls
+
+    2. **Configure Endpoints**
+    - **HTTP Mode** (Default)
+        - No certificates required
+        - Only **HTTP** connections available
+        - Less secure but simpler setup
+
+    - **HTTPS Mode** (Optional)
+        - **Requires** valid SSL certificates
+        - Enables **HTTPS** connections
+        - More secure but requires setup
+        
+    - **Certificate Quick Guide (Optional)**
+        - Accepts SSL certificates (.crt/.pem) and private keys (.key)
+        - Self-signed certificates work fine (will give browser warnings)
+        - You may have to install Self-signed on your client machine/device
+
+    3. **Start Operations**
+    - Enable/Disable the API & Gradio proxy
+    - Set desired ports for the API & Gradio proxy
+    - Click "Save Settings"
+    - Click "Start Service"
+
+    4. **Stop Operations**
+    - Click "Stop Service"
+    - It can take 30 seconds to stop the proxy
+
+    ## 🔧 Detailed Configuration Guide
+
+    ### Master Safety Control
+    The "Master switch/safety lockout for proxy functionality":
+    - Acts as a global killswitch for all proxy features
+    - Must be enabled for any proxy functionality to work
+    - Settings are preserved when disabled
+    - Prevents accidental exposure of services
+    - Recommended to leave disabled when not actively using proxy features
+
+    ## Network Architecture
+
+    #### Port Mapping System
+    The proxy creates an intelligent port-forwarding system:
+    - External Ports: What the outside world sees and connects to
+    - Internal Ports: Your local AllTalk services (automatically managed)
+    - Auto-mapping: Internal Gradio (7852) and API (7851) ports are automatically mapped to whatever external ports you specify
+    - Traffic Flow: External request → Proxy → Internal Service → Proxy → External response
+
+    #### Port Configuration
+    - **HTTP(S) Port**: External port for web interface access
+    - **API Port**: External port for API access
+    - Both ports must be:
+        - Available on your system
+        - Not blocked by firewalls
+        - Different from each other
+        - Different from internal ports (7851/7852)
+
+    ## Certificate Management
+    
+    #### Certificate Requirements
+    - **Format**: PEM or CRT format for certificate, PEM for private key
+    - **Fields Required**:
+    - Common Name (CN)
+    - Valid dates (not expired)
+    - Proper encryption strength (minimum 2048-bit RSA or equivalent)
+
+    #### Self-Signed Certificates
+    - Perfectly fine to use BUT may need to be installed on your client device too
+    - Will generate browser warnings but connections are still encrypted
+    - Create your own:
+    ```bash
+    openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+    ```
+
+    #### How to Upload
+    1. Drag and drop or click to upload both certificate and key files
+    2. Provide a descriptive name (e.g., "alltalk_cert")
+    3. Click "Upload Certificate"
+
+    #### Managing Certificates
+    - Delete certificates by removing entries from config.yaml
+    - Or delete the certificate directory
+    - Location `/alltalk_tts/system/proxy_module/certificates`
+    - System can run without certificates in HTTP mode
+    - Certificates can be added/changed while system is running
+    - Changes take effect on proxy restart
+    - System falls back to HTTP if certificates are removed
+
+    #### Converting Certificates
+    - DER to PEM: `openssl x509 -inform der -in certificate.cer -out certificate.pem`
+    - PFX to PEM: `openssl pkcs12 -in certificate.pfx -out certificate.pem -nodes`
+
+    ## SSL/HTTPS Configuration
+
+    #### Understanding HTTP vs HTTPS
+    - Without certificates: Only **HTTP** connections available
+    - With certificates: **HTTPS** connections enabled
+    - Each endpoint (API/Gradio) can be configured independently
+
+    #### Certificate Requirements
+    - SSL certificate file (.crt/.pem)
+    - Private key file (.key)
+    - Self-signed certificates work (will trigger browser warnings)
+    - Commercial certificates recommended for production
+
+    #### Setup Process
+    1. Obtain certificates (self-signed or commercial)
+    2. Upload via Certificate Management section
+    3. Enter certificate name
+    4. Enable endpoint(s)
+    5. Restart proxy service
+
+    #### Security Notes
+    - HTTP connections are unencrypted
+    - HTTPS provides encryption and authentication
+    - Consider using HTTPS for sensitive data
+    - Browser warnings normal with self-signed certificates
+
+    #### Troubleshooting
+    - Verify certificate/key pair match
+    - Check certificate expiration
+    - Confirm port availability
+    - Review proxy logs if issues persist
+    """
+
+    PROXY2 = """
+    ## Debug and Logging System
+
+    #### Debug Options
+    - **debug_proxy**: Main proxy debugging flag
+    - Shows detailed proxy operations
+    - Logs connection attempts
+    - Shows routing decisions
+    - **Important**: Requires system restart to show in console!
+
+    #### Enabling Debug Logging
+    1. Enable **debug_proxy** in interface
+    2. **Must restart the system** for console logging to begin
+    3. File logging begins immediately without restart
+    4. Can be enabled/disabled without stopping proxy
+
+    #### Log Locations
+    - Console: Real-time viewing in interface
+    - File System: `/system/proxy_module/logs/alltalk.log`
+    - Debug logs: Additional detail in debug-specific files
+
+    #### Log Rotation
+    - Files rotate automatically based on size (10MB)
+    - Keeps last 5 log files
+    - Naming: alltalk.log, alltalk.log.1, alltalk.log.2, etc.
+    - Rotation happens automatically, no user intervention needed
+
+    #### What Gets Logged
+    Different debug flags show different information:
+    - **debug_proxy**: 
+    ```
+    [AllTalk PRX] Debug proxy New connection from 192.168.1.100
+    [AllTalk PRX] Debug proxy Routing request to internal port 7852
+    [AllTalk PRX] Debug proxy Certificate loaded: my_cert
+    ```
+    - **System Messages**:
+    ```
+    [AllTalk PRX] System starting...
+    [AllTalk PRX] Ports configured: External HTTPS:8443, API:8444
+    [AllTalk PRX] Certificate validation successful
+    ```
+    - **Error Messages**:
+    ```
+    [AllTalk PRX] Error: Port 8443 already in use
+    [AllTalk PRX] Error: Certificate file not found
+    [AllTalk PRX] Warning: Running without HTTPS encryption
+    ```
+
+    ## Console Interface
+
+    #### Real-time Monitoring
+    The console interface shows:
+    - Active connections
+    - Error messages
+    - System status
+    - Certificate operations
+    - Debug information (if enabled and after restart)
+
+    #### Status Indicators
+    - **Active**: System is running and accepting connections
+    - **Inactive**: System is stopped
+    - **Error**: System encountered issues (with error details)
+
+    #### Common Log Messages
+    - `Starting proxy system`: Initial startup
+    - `Certificate loaded successfully`: Cert validation passed
+    - `Forwarding traffic`: Active connection handling
+    - `Connection closed`: Clean disconnection
+    - `Error: Port already in use`: Configuration conflict
+
+    ## 🔍 Troubleshooting
+
+    Common issues and solutions:
+    1. **System won't start**
+    - Check master switch is enabled
+    - Verify ports are available
+    - Confirm certificate validity (if using HTTPS)
+
+    2. **Certificate issues**
+    - Verify format (PEM/CRT)
+    - Check expiration dates
+    - Ensure key matches certificate
+    - Try running without certificates first
+
+    3. **Connection refused**
+    - Check firewall settings
+    - Verify ports are open
+    - Confirm service is running
+
+    4. **Debug logs not appearing in console**
+    - Remember to restart after enabling **debug_proxy**
+    - Check log file permissions
+    - Verify log path exists
+
+    5. **Certificate won't upload**
+    - Verify file formats
+    - Check file permissions
+    - Try different certificate formats
+
+    ## 📝 Best Practices
+
+    1. **Security**
+    - Use strong certificates when possible
+    - Regular certificate rotation
+    - Monitor logs for unusual activity
+    - Log dir `system/proxy_module/logs/`
+    - Disable master switch when not needed
+
+    2. **Performance**
+    - Enable debug_proxy only when needed
+    - Regular log file cleanup
+    - Monitor resource usage
+
+    3. **Maintenance**
+    - Regular certificate updates (if using)
+    - Log file cleanup
+    - System updates
+    - Regular security audits
+
+    4. **Testing**
+    - Start without certificates for initial testing
+    - Use self-signed certificates for development
+    - Test with debug_proxy enabled initially
+    - Verify all paths work before exposing to internet
     """
