@@ -333,7 +333,6 @@ PYTHON PACKAGES:
  ema-pytorch                   = 0.7.6
  encodec                       = 0.1.1
  executing                     = 2.1.0
- f5-tts                        = 0.1.2
  fairseq                       = 0.12.4
  faiss                         = 1.9.0
  fastapi                       = 0.112.2
