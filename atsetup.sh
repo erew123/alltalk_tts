@@ -345,7 +345,7 @@ install_custom_standalone() {
     conda install -y nvidia/label/cuda-12.1.0::cuda-toolkit=12.1
     conda install -y pytorch::faiss-cpu
     conda install -y -c conda-forge "ffmpeg=*=*gpl*"
-    conda install -y conda-forge::ffmpeg
+    conda install -y -c conda-forge "ffmpeg=*=h*_*" --no-deps
     echo
     echo
     echo
@@ -354,41 +354,6 @@ install_custom_standalone() {
     # Define the environment path
     env_path="${INSTALL_ENV_DIR}/lib"
 
-    # List of broken symlinks and their correct targets
-    declare -A symlinks=(
-        ["libcufile.so"]="libcufile.so.1.10.0"
-        ["libcufile_rdma.so"]="libcufile_rdma.so.1.10.0"
-        ["libcudart.so"]="libcudart.so.12"
-        ["libnvjpeg.so"]="libnvjpeg.so.12.1.1.14"
-        ["libcurand.so"]="libcurand.so.10.3.6.39"
-        ["libnvJitLink.so"]="libnvJitLink.so.12.1.105"
-        ["libnvrtc-builtins.so"]="libnvrtc-builtins.so.12.1.105"
-        ["libnvrtc.so"]="libnvrtc.so.12.1.105"
-    )
-
-    # Function to fix broken symlinks
-    fix_broken_symlinks() {
-        echo "Fixing broken symlinks..."
-        for link in "${!symlinks[@]}"; do
-            target="${symlinks[$link]}"
-            if [ -L "$env_path/$link" ] && [ ! -e "$env_path/$link" ]; then
-                echo "Removing broken link: $env_path/$link"
-                rm "$env_path/$link"
-            fi
-
-            if [ -e "$env_path/$target" ]; then
-                echo "Creating new symlink: $env_path/$link -> $env_path/$target"
-                ln -s "$env_path/$target" "$env_path/$link"
-            else
-                echo "Target file does not exist: $env_path/$target"
-            fi
-        done
-        echo "Verification of symbolic links:"
-        ls -l $env_path | grep -E "libcufile.so|libcudart.so|libcufile_rdma.so|libnvjpeg.so|libcurand.so|libnvJitLink.so|libnvrtc-builtins.so|libnvrtc.so"
-    }
-
-    # Call the function to fix broken symlinks
-    fix_broken_symlinks
     echo "    Installing additional requirements."
     echo
     pip install -r system/requirements/requirements_standalone.txt
