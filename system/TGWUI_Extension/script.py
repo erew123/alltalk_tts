@@ -608,7 +608,6 @@ def output_modifier(string, state):
         print_func("Audio generation is already in progress. Please wait.", message_type="warning")
         return
 
-@debounce
 def voice_preview(string):
     """Generates a preview of the selected voice settings"""
     # debug_func_entry()
@@ -1298,7 +1297,7 @@ def ui():
         tgwui_preview_play_gr.click(
             voice_preview,
             tgwui_preview_text_gr,
-            tgwui_preview_audio_gr
+            tgwui_preview_audio_gr,
         )
 
         # Stop generation button
