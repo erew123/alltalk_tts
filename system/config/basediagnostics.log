@@ -139,7 +139,7 @@ CONDA PACKAGES IN CURRENT ENVIRONMENT:
  CONDA-FORGE PACKAGES:
   aom                            Version: 3.9.1           Channel: conda-forge
   cairo                          Version: 1.18.0          Channel: conda-forge
-  ffmpeg                         Version: 7.1.0           Channel: conda-forge
+  ffmpeg                         Version: 4.3.1           Channel: conda-forge
   fontconfig                     Version: 2.15.0          Channel: conda-forge
   freetype                       Version: 2.12.1          Channel: conda-forge
   harfbuzz                       Version: 9.0.0           Channel: conda-forge
@@ -250,6 +250,7 @@ PACKAGE VERSIONS vs REQUIREMENTS FILE:
  coqui-tts           Required: >= 0.24.3        Installed: 0.24.3
  filelock            Required: >= 3.16.1        Installed: 3.13.4
  fuzzywuzzy          Required: >= 0.18.0        Installed: 0.18.0
+ ffmpeg-python       Required: >= 0.2.0         Installed: 0.2.0
  gradio              Required: == 4.44.1        Installed: 4.44.1
  importlib_metadata  Required: >= 7.2.1         Installed: 8.5.0
  inputimeout         Required: >= 1.0.4         Installed: 1.0.4
@@ -257,7 +258,6 @@ PACKAGE VERSIONS vs REQUIREMENTS FILE:
  librosa             Required: >= 0.10.2.post1  Installed: 0.10.2.post1
  onnxruntime-gpu     Required: >= 1.18.1        Installed: 1.20.1
  pydantic            Required: >= 2.8.2         Installed: 2.10.1
- python-ffmpeg       Required: >= 2.0.12        Installed: 2.0.12
  python-Levenshtein  Required: >= 0.25.1        Installed: 0.26.1
  praat-parselmouth   Required: >= 0.4.4         Installed: 0.4.5
  pyworld             Required: >= 0.3.4         Installed: 0.3.4
@@ -265,7 +265,7 @@ PACKAGE VERSIONS vs REQUIREMENTS FILE:
  soundfile           Required: >= 0.12.1        Installed: 0.12.1
  spacy               Required: >= 3.7.1         Installed: 3.7.5
  torchcrepe          Required: >= 0.0.2         Installed: 0.0.23
- tqdm                Required: >= 4.66.5        Installed: 4.67.0
+ tqdm                Required: >= 4.66.5        Installed: 4.67.1
  unidic-lite         Required: >= 1.0.8         Installed: 1.0.8
  uvicorn             Required: >= 0.29.0        Installed: 0.32.1
  pillow              Required: == 10.3.0        Installed: 10.3.0
@@ -284,7 +284,6 @@ PYTHON PACKAGES:
  aiohappyeyeballs              = 2.4.3
  aiohttp                       = 3.11.7
  aiosignal                     = 1.3.1
- altair                        = 5.4.1
  annotated-types               = 0.7.0
  antlr4-python3-runtime        = 4.9.3
  anyascii                      = 0.3.2
@@ -297,8 +296,8 @@ PYTHON PACKAGES:
  bitarray                      = 3.0.0
  bitsandbytes                  = 0.44.1
  blis                          = 0.7.11
- boto3                         = 1.35.67
- botocore                      = 1.35.67
+ boto3                         = 1.35.69
+ botocore                      = 1.35.69
  Brotli                        = 1.0.9
  cached_path                   = 1.6.4
  cachetools                    = 5.5.0
@@ -317,7 +316,7 @@ PYTHON PACKAGES:
  coqui-tts-trainer             = 0.1.7
  cutlet                        = 0.4.0
  cycler                        = 0.12.1
- cymem                         = 2.0.8
+ cymem                         = 2.0.10
  Cython                        = 3.0.11
  datasets                      = 3.1.0
  dateparser                    = 1.1.8
@@ -338,6 +337,7 @@ PYTHON PACKAGES:
  fairseq                       = 0.12.4
  faiss                         = 1.9.0
  fastapi                       = 0.112.2
+ ffmpeg-python                 = 0.2.0
  ffmpy                         = 0.4.0
  filelock                      = 3.13.4
  fire                          = 0.7.0
@@ -390,8 +390,6 @@ PYTHON PACKAGES:
  jmespath                      = 1.0.1
  joblib                        = 1.4.2
  jsonlines                     = 1.2.0
- jsonschema                    = 4.23.0
- jsonschema-specifications     = 2024.10.1
  julius                        = 0.2.7
  kiwisolver                    = 1.4.7
  langcodes                     = 3.5.0
@@ -419,19 +417,19 @@ PYTHON PACKAGES:
  msgpack                       = 1.1.0
  multidict                     = 6.1.0
  multiprocess                  = 0.70.16
- murmurhash                    = 1.0.10
- narwhals                      = 1.14.1
+ murmurhash                    = 1.0.11
  networkx                      = 3.2.1
- ninja                         = 1.11.1.1
+ ninja                         = 1.11.1.2
  num2words                     = 0.5.13
  numba                         = 0.60.0
  numpy                         = 1.26.4
  omegaconf                     = 2.3.0
  onnxruntime-gpu               = 1.20.1
  openai-whisper                = 20240930
- orjson                        = 3.10.11
+ orjson                        = 3.10.12
  packaging                     = 24.1
  pandas                        = 2.2.3
+ parler_tts                    = 0.2.1
  parso                         = 0.8.4
  pillow                        = 10.3.0
  pip                           = 24.2
@@ -447,14 +445,13 @@ PYTHON PACKAGES:
  proto-plus                    = 1.25.0
  psutil                        = 6.1.0
  pure_eval                     = 0.2.3
- pyarrow                       = 18.0.0
+ pyarrow                       = 18.1.0
  pyasn1                        = 0.6.1
  pyasn1_modules                = 0.4.1
  pycparser                     = 2.22
  pydantic                      = 2.10.1
  pydantic_core                 = 2.27.1
  pydub                         = 0.25.1
- pyee                          = 12.1.1
  Pygments                      = 2.18.0
  pyloudnorm                    = 0.1.1
  pynvml                        = 11.5.3
@@ -469,7 +466,6 @@ PYTHON PACKAGES:
  pystoi                        = 0.4.1
  python-crfsuite               = 0.9.11
  python-dateutil               = 2.9.0.post0
- python-ffmpeg                 = 2.0.12
  python-Levenshtein            = 0.26.1
  python-multipart              = 0.0.17
  pytz                          = 2024.2
@@ -479,15 +475,13 @@ PYTHON PACKAGES:
  py-cpuinfo                    = 9.0.0
  randomname                    = 0.2.1
  RapidFuzz                     = 3.10.1
- referencing                   = 0.35.1
  regex                         = 2024.11.6
  requests                      = 2.32.3
  resampy                       = 0.4.3
  rich                          = 13.9.4
  rotary-embedding-torch        = 0.8.5
- rpds-py                       = 0.21.0
  rsa                           = 4.9
- ruff                          = 0.7.4
+ ruff                          = 0.8.0
  s3transfer                    = 0.10.4
  sacrebleu                     = 2.4.3
  safetensors                   = 0.4.5
@@ -532,7 +526,7 @@ PYTHON PACKAGES:
  torchdiffeq                   = 0.2.5
  torchvision                   = 0.17.1
  torch-stoi                    = 0.2.3
- tqdm                          = 4.67.0
+ tqdm                          = 4.67.1
  traitlets                     = 5.14.3
  transformers                  = 4.46.1
  transformers-stream-generator = 0.0.5
@@ -549,14 +543,14 @@ PYTHON PACKAGES:
  wasabi                        = 1.1.3
  wcwidth                       = 0.2.13
  weasel                        = 0.4.1
- websockets                    = 11.0.3
+ websockets                    = 12.0
  Werkzeug                      = 3.1.3
  wheel                         = 0.44.0
  win-inet-pton                 = 1.1.0
  word2number                   = 1.1
  wrapt                         = 1.17.0
  xxhash                        = 3.5.0
- x-transformers                = 1.42.12
+ x-transformers                = 1.42.17
  yarl                          = 1.18.0
  zipp                          = 3.21.0
 
@@ -569,4 +563,3 @@ DeepSpeed Installation Requirements:
 To install DeepSpeed, run the following command based on your environment:
   pip install deepspeed==<version> --no-cache-dir
 Ensure to choose the correct DeepSpeed version matching your environment.
-
