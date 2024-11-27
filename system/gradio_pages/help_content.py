@@ -2994,9 +2994,18 @@ class AllTalkHelpContent:
     """
 
     PROXY = """
+    ⚠️ Important Notice
+    This is an advanced feature intended for users who need to expose AllTalk services to the internet with SSL/HTTPS capabilities. If you're running AllTalk locally or don't specifically need HTTPS support, you should use the standard Gradio interface links.
+
+    **This guide is specifically for:**
+    - System administrators
+    - Users **with** networking/SSL certificate experience
+    - Those requiring **HTTPS for production deployments**
+    - Users needing secure external access to AllTalk services    
+    
     ## 🎯 What is the AllTalk Proxy?
 
-    The AllTalk Proxy system provides a secure way to expose your AllTalk instance to external networks while maintaining control and security. It acts as a protective intermediate layer between the internet and your AllTalk services.
+    The AllTalk Proxy system provides a secure way to expose your AllTalk instance to external networks while maintaining control and security. It acts as a protective intermediate layer between the internet and your AllTalk services. You can find much of the below information also on the [Github Wiki](https://github.com/erew123/alltalk_tts/wiki/AllTalk-SSL-Proxy-System-%E2%80%90-Technical-Guide/)
     """
 
     PROXY1 = """
@@ -3034,8 +3043,9 @@ class AllTalkHelpContent:
         
     - **Certificate Quick Guide (Optional)**
         - Accepts SSL certificates (.crt/.pem) and private keys (.key)
-        - Self-signed certificates work fine (will give browser warnings)
-        - You may have to install Self-signed on your client machine/device
+        - Self-signed certificates work fine on the **API only**
+            - But will give browser warnings
+            - You may have to install Self-signed on your client machine/device
 
     3. **Start Operations**
     - Enable/Disable the API & Gradio proxy
@@ -3045,7 +3055,7 @@ class AllTalkHelpContent:
 
     4. **Stop Operations**
     - Click "Stop Service"
-    - It can take 30 seconds to stop the proxy
+    - It can take 60 seconds to stop the proxy
 
     ## 🔧 Detailed Configuration Guide
 
@@ -3085,9 +3095,11 @@ class AllTalkHelpContent:
     - Proper encryption strength (minimum 2048-bit RSA or equivalent)
 
     #### Self-Signed Certificates
-    - Perfectly fine to use BUT may need to be installed on your client device too
+    - Ok to use BUT may need to be installed on your client device too
+    - The Gradio UI will **not** proxy with self-signed certificates
     - Will generate browser warnings but connections are still encrypted
     - Create your own:
+    
     ```bash
     openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
     ```
@@ -3098,8 +3110,7 @@ class AllTalkHelpContent:
     3. Click "Upload Certificate"
 
     #### Managing Certificates
-    - Delete certificates by removing entries from config.yaml
-    - Or delete the certificate directory
+    - Delete certificates by clicking `Delete Certificates`
     - Location `/alltalk_tts/system/proxy_module/certificates`
     - System can run without certificates in HTTP mode
     - Certificates can be added/changed while system is running
@@ -3113,15 +3124,20 @@ class AllTalkHelpContent:
     ## SSL/HTTPS Configuration
 
     #### Understanding HTTP vs HTTPS
-    - Without certificates: Only **HTTP** connections available
+    - Without certificates: Only **HTTP** connections are available
     - With certificates: **HTTPS** connections enabled
+    - Self-signed certificates **ONLY** work for the **API endpoint**
+    - Gradio interface requires properly signed certificates
     - Each endpoint (API/Gradio) can be configured independently
+        - Enabled/Disabled
+        - Port number for External access
 
     #### Certificate Requirements
     - SSL certificate file (.crt/.pem)
     - Private key file (.key)
     - Self-signed certificates work (will trigger browser warnings)
-    - Commercial certificates recommended for production
+        - But Gradio will **not** proxy with self-signed
+    - **Commercial certificates recommended for production**
 
     #### Setup Process
     1. Obtain certificates (self-signed or commercial)
@@ -3129,6 +3145,16 @@ class AllTalkHelpContent:
     3. Enter certificate name
     4. Enable endpoint(s)
     5. Restart proxy service
+
+    #### Getting Valid SSL Certificates
+    - For production/Gradio interface use, obtain certificates from:
+        - Let's Encrypt (free, trusted certificates)
+        - Cloudflare (offers free SSL with their services)
+        - Commercial providers (DigiCert, GlobalSign, etc.)
+        - Self-signed certificates:
+            - Only work with API endpoint
+            - Will cause errors with Gradio interface
+            - Should only be used for testing API functionality
 
     #### Security Notes
     - HTTP connections are unencrypted
@@ -3241,6 +3267,11 @@ class AllTalkHelpContent:
     - Verify file formats
     - Check file permissions
     - Try different certificate formats
+    
+    6. **Gradio interface not loading with HTTPS**
+    - Verify you're using properly signed certificates (not self-signed)
+    - Self-signed certificates will not work with Gradio interface
+    - Try using HTTP mode for testing Gradio interface    
 
     ## 📝 Best Practices
 
