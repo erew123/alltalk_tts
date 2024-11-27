@@ -35,3 +35,4 @@ piper-phonemize==1.1.0; sys_platform == "darwin"
 fastapi==0.112.2
 plotly==5.24.1
 scipy==1.14.1
+pyOpenSSL>=24.2.1
