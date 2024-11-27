@@ -3,7 +3,13 @@
 
 name: Python CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - alltalkbeta
+  pull_request:
+    branches:
+      - alltalkbeta
 
 permissions:
   contents: read
