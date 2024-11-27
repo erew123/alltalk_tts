@@ -237,6 +237,8 @@ try:
     )  # TGWUI import
     from .system.gradio_pages.help_content import AllTalkHelpContent
     from .system.gradio_pages.alltalk_diskspace import get_disk_interface
+    from .system.proxy_module.proxy_manager import ProxyManager
+    from .system.proxy_module.interface import create_proxy_interface
 except ImportError:
     from config import (
         AlltalkConfig,
@@ -245,6 +247,8 @@ except ImportError:
     )  # Standalone import
     from system.gradio_pages.help_content import AllTalkHelpContent
     from system.gradio_pages.alltalk_diskspace import get_disk_interface
+    from system.proxy_module.proxy_manager import ProxyManager
+    from system.proxy_module.interface import create_proxy_interface
 
 
 def initialize_configs():
@@ -278,7 +282,8 @@ _state = {
     'srv_engines_available': None, # The current TTS engines available, Initally loaded from central config and later pulled from the tts_server's API
     'srv_current_engine_loaded': None, # The current TTS engines loaded in, Initally loaded from central config and later pulled from the tts_server's API
     'gradio_languages_list': None, # The list of languauges disaplyed in the Gradio interface.
-    'whisper_model': None, # Used to track the whisper model used for dictation etc 
+    'whisper_model': None, # Used to track the whisper model used for dictation etc
+    'proxy_manager': None # Used for the Proxy manager
 }
 
 ############################################################
@@ -638,6 +643,64 @@ def update_rvc_settings(
     print_message(error_msg, message_type="error")
     return return_message
 
+def update_proxy_settings(
+    proxy_enabled,
+    start_on_startup,
+    gradio_proxy_enabled,
+    api_proxy_enabled,
+    external_ip,
+    gradio_cert_name,
+    api_cert_name,
+    cert_validation,
+    logging_enabled,
+    log_level
+):
+    """Update proxy settings using the centralized config system"""
+    debug_func_entry()
+    try:
+        # Get the current config instance
+        config = AlltalkConfig.get_instance()
+
+        # Update proxy settings
+        config.proxy_settings.proxy_enabled = proxy_enabled
+        config.proxy_settings.start_on_startup = start_on_startup
+        config.proxy_settings.gradio_proxy_enabled = gradio_proxy_enabled
+        config.proxy_settings.api_proxy_enabled = api_proxy_enabled
+        config.proxy_settings.external_ip = external_ip
+        config.proxy_settings.gradio_cert_name = gradio_cert_name
+        config.proxy_settings.api_cert_name = api_cert_name
+        config.proxy_settings.cert_validation = cert_validation
+        config.proxy_settings.logging_enabled = logging_enabled
+        config.proxy_settings.log_level = log_level
+
+        # Save the updated configuration
+        config.save()
+
+        print_message("Proxy Settings Saved")
+        return "Proxy settings updated successfully!"
+    except Exception as e:
+        print_message(f"Error updating proxy settings: {str(e)}", message_type="error")
+        return f"Error updating proxy settings: {str(e)}"
+
+# Add to your state dictionary initialization
+def initialize_proxy_state(_state):
+    """Initialize proxy state"""
+    config = AlltalkConfig.get_instance()
+    _state['proxy_process'] = None
+    _state['proxy_status'] = 'stopped'
+    _state['proxy_enabled'] = config.proxy_settings.proxy_enabled
+    _state['proxy_gradio_enabled'] = config.proxy_settings.gradio_proxy_enabled
+    _state['proxy_api_enabled'] = config.proxy_settings.api_proxy_enabled
+    return _state
+
+# Modify your existing initialize_engine_state function:
+def initialize_engine_state(_state):
+    """Initialize engine state from central config"""
+    _state = initialize_proxy_state(_state)  # Add proxy initialization
+    _state['srv_current_engine_loaded'] = tts_engines_config.engine_loaded
+    _state['srv_engines_available'] = tts_engines_config.get_engine_names_available()
+    _state['srv_current_model_loaded'] = tts_engines_config.selected_model
+    return _state
 
 ###########################################################################
 # START-UP # Silence Character Normaliser when it checks the Ready Status #
@@ -1625,7 +1688,14 @@ def send_reload_request(value_sent):
     params = {"tts_method": value_sent}
     return send_api_request("/api/reload", params=params)
 
-
+#################################
+#### Proxy Interface Manager ####
+#################################
+if _state.get('proxy_manager') is None:
+    _state['proxy_manager'] = ProxyManager(AlltalkConfig)
+    if config.proxy_settings.proxy_enabled and config.proxy_settings.start_on_startup:
+        _state['proxy_manager'].start_proxy()
+        
 ########################################
 #### Whisper Transcription Handling ####
 ########################################
@@ -4675,6 +4745,22 @@ if gradio_enabled is True:
                                 elem_classes="custom-markdown",
                             )
 
+                with gr.Tab("SSL Proxy Server"):
+                    _proxy_interface = create_proxy_interface(_state['proxy_manager'])
+                    with gr.Accordion("HELP - 🎯 Proxy Quick Start Guide", open=False):
+                        gr.Markdown(
+                            AllTalkHelpContent.PROXY, elem_classes="custom-markdown"
+                        )
+                        with gr.Row():
+                            gr.Markdown(
+                                AllTalkHelpContent.PROXY1,
+                                elem_classes="custom-markdown",
+                            )
+                            gr.Markdown(
+                                AllTalkHelpContent.PROXY2,
+                                elem_classes="custom-markdown",
+                            )   
+
                 with gr.Tab("Text-generation-webui Settings"):
                     with gr.Row():
                         activate = gr.Dropdown(
@@ -4750,7 +4836,7 @@ if gradio_enabled is True:
                     )
 
                 disk_space_page = get_disk_interface()
-                disk_space_page()
+                disk_space_page()                           
 
             if config.gradio_pages.TTS_Engines_Settings_page:
                 with gr.Tab("TTS Engines Settings"):

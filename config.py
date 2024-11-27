@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from filelock import FileLock
 from types import SimpleNamespace
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Callable, Any, MutableSequence
 
@@ -85,6 +85,7 @@ class AlltalkConfigDebug:
     debug_narrator: bool = False
     debug_gradio_IP: bool = False
     debug_transcribe: bool = False
+    debug_proxy: bool = False
 
 @dataclass
 class AlltalkConfigGradioPages:
@@ -101,6 +102,48 @@ class AlltalkAvailableEngine:
     name = ""
     selected_model = ""
 
+@dataclass
+class AlltalkConfigProxyEndpoint:
+    enabled: bool = False
+    external_port: int = 0
+    external_ip: str = "0.0.0.0"
+    cert_name: str = ""
+
+    def to_dict(self):
+        return {
+            "enabled": self.enabled,
+            "external_port": self.external_port,
+            "external_ip": self.external_ip,
+            "cert_name": self.cert_name
+        }
+
+@dataclass
+class AlltalkConfigProxySettings:
+    proxy_enabled: bool = False
+    start_on_startup: bool = False
+    gradio_endpoint: AlltalkConfigProxyEndpoint = field(default_factory=lambda: AlltalkConfigProxyEndpoint(external_port=444))
+    api_endpoint: AlltalkConfigProxyEndpoint = field(default_factory=lambda: AlltalkConfigProxyEndpoint(external_port=443))
+    cert_validation: bool = True
+    logging_enabled: bool = True
+    log_level: str = "INFO"
+
+    def __post_init__(self):
+        # Handle conversion from dict to proper objects
+        if isinstance(self.gradio_endpoint, dict):
+            self.gradio_endpoint = AlltalkConfigProxyEndpoint(**self.gradio_endpoint)
+        if isinstance(self.api_endpoint, dict):
+            self.api_endpoint = AlltalkConfigProxyEndpoint(**self.api_endpoint)
+
+    def to_dict(self):
+        return {
+            "proxy_enabled": self.proxy_enabled,
+            "start_on_startup": self.start_on_startup,
+            "gradio_endpoint": self.gradio_endpoint.to_dict(),
+            "api_endpoint": self.api_endpoint.to_dict(),
+            "cert_validation": self.cert_validation,
+            "logging_enabled": self.logging_enabled,
+            "log_level": self.log_level
+        }
 
 class AbstractJsonConfig(ABC):
 
@@ -308,6 +351,7 @@ class AlltalkConfig(AbstractJsonConfig):
         self.api_def = AlltalkConfigApiDef()
         self.debugging = AlltalkConfigDebug()
         self.gradio_pages = AlltalkConfigGradioPages()
+        self.proxy_settings = AlltalkConfigProxySettings()
         self._load_config()
 
     @staticmethod
@@ -334,7 +378,7 @@ class AlltalkConfig(AbstractJsonConfig):
 
     def _handle_loaded_config(self, data):
         from dataclasses import fields, is_dataclass, asdict
-        debug_me =False
+        debug_me = False
         if debug_me:
             print("=== Loading Config ===")
             print(f"Initial data state: {vars(data)}")
@@ -346,25 +390,48 @@ class AlltalkConfig(AbstractJsonConfig):
             'tgwui': AlltalkConfigTgwUi(),
             'api_def': AlltalkConfigApiDef(),
             'theme': AlltalkConfigTheme(),
-            'gradio_pages': AlltalkConfigGradioPages()
+            'gradio_pages': AlltalkConfigGradioPages(),
+            'proxy_settings': AlltalkConfigProxySettings()
         }
+
         if debug_me:
             print("\nDefault values for each class:")
+
         for name, instance in default_instances.items():
             if debug_me:
-                print(f"{name}: {asdict(instance)}")        
-                # Show actual default values from dataclass
+                print(f"{name}: {asdict(instance)}")
                 print(f"Default values: {[(f.name, getattr(instance, f.name)) for f in fields(instance)]}")
+
             if hasattr(data, name):
                 source = getattr(data, name)
                 if debug_me:
-                    print(f"Source data: {vars(source) if hasattr(source, '__dict__') else source}")
+                    print(f"Source data for {name}: {vars(source) if hasattr(source, '__dict__') else source}")
 
-                for field in fields(instance):
-                    if hasattr(source, field.name):
-                        setattr(instance, field.name, getattr(source, field.name))
-                    if debug_me:
-                        print(f"Field {field.name}: {getattr(instance, field.name)}")
+                # Special handling for proxy_settings due to nested structure
+                if name == 'proxy_settings' and hasattr(source, '__dict__'):
+                    new_instance = AlltalkConfigProxySettings()
+                    for field in fields(new_instance):
+                        if hasattr(source, field.name):
+                            field_value = getattr(source, field.name)
+                            if field.name in ['gradio_endpoint', 'api_endpoint']:
+                                # Handle nested endpoint objects
+                                if isinstance(field_value, dict):
+                                    setattr(new_instance, field.name, 
+                                        AlltalkConfigProxyEndpoint(**field_value))
+                                elif hasattr(field_value, '__dict__'):
+                                    setattr(new_instance, field.name,
+                                        AlltalkConfigProxyEndpoint(**field_value.__dict__))
+                            else:
+                                setattr(new_instance, field.name, field_value)
+                    instance = new_instance
+                else:
+                    # Standard handling for other dataclasses
+                    for field in fields(instance):
+                        if hasattr(source, field.name):
+                            setattr(instance, field.name, getattr(source, field.name))
+
+                if debug_me:
+                    print(f"Processed instance {name}: {asdict(instance)}")
 
             setattr(self, name, instance)
 
@@ -373,12 +440,13 @@ class AlltalkConfig(AbstractJsonConfig):
             if hasattr(self, n) and not n.startswith("__") and not is_dataclass(type(getattr(self, n))):
                 setattr(self, n, v)
 
+        # Special handling for theme class/clazz as before
         self.theme.clazz = data.theme.__dict__.get("class", data.theme.__dict__.get("clazz", ""))
         self.get_output_directory().mkdir(parents=True, exist_ok=True)
 
     def to_dict(self):
         from dataclasses import is_dataclass, asdict
-        debug_me =False
+        debug_me = False
         if debug_me:
             print("=== Converting to dict ===")
         result = {}
@@ -386,7 +454,10 @@ class AlltalkConfig(AbstractJsonConfig):
         for key, value in vars(self).items():
             if not key.startswith('_'):
                 # print(f"\nProcessing {key}:")
-                if is_dataclass(value):
+                if key == 'proxy_settings' and is_dataclass(value):
+                    # Special handling for proxy settings
+                    result[key] = value.to_dict()
+                elif is_dataclass(value):
                     # print(f"Dataclass value before conversion: {vars(value)}")
                     result[key] = asdict(value)
                     # print(f"Converted to dict: {result[key]}")
@@ -397,6 +468,7 @@ class AlltalkConfig(AbstractJsonConfig):
                     # print(f"Regular value: {value}")
                     result[key] = value
 
+        # Maintain existing theme handling exactly as before
         if 'theme' in result:
             if debug_me:
                 print("\nProcessing theme:")
@@ -408,6 +480,4 @@ class AlltalkConfig(AbstractJsonConfig):
         if debug_me:
             print(f"\nFinal dict: {result}")           
         return result
-
-
 
