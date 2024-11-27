@@ -104,11 +104,13 @@ For a fast and straightforward installation and recommended:
 - [Standalone Installation](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Standalone-Installation)
   - For users who want to run AllTalk TTS as a standalone application.
   - Available for Windows and Linux.
+  - Most users will want a Standalone Installation and should use this choice.
 
 - [Text-generation-webui Installation](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Text%E2%80%90generation%E2%80%90webui-Installation)
   - For users who want to integrate AllTalk TTS as a part of [Text-generation-webui](https://github.com/oobabooga/text-generation-webui).
   - Available for Windows and Linux.
   - Includes information on the optional/alternative TGWUI Remote Extension.
+  - **CURRENTLY YOU SHOULD USE THE STANDALONE INSTALL METHOD AND TGWUI REMOTE EXTENSION**
 
 These methods use scripts that automate most of the installation process, making it easier for users to get started quickly.
 
