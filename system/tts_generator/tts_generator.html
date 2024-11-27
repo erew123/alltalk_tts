@@ -546,7 +546,7 @@
             <label for="RVC_voice_gen">RVC Voice:</label>
             <select id="RVC_voice_gen"></select>
         </div>
-        
+
         <div class="setting voice-setting">
             <label for="RVC_voice_pitch">RVC Pitch:</label>
             <select id="RVC_voice_pitch">
@@ -702,6 +702,7 @@
     <button class="conditional-btn" onclick="exportToJSON()" style="margin-right: 10px;">Export JSON</button>
     <button class="conditional-btn" id="exportsrttitles" style="margin-right: 10px;">Export SRT</button>
     <button class="conditional-btn" onclick="exportMP3()" style="margin-right: 10px;">Export to WAV</button>
+    <button class="conditional-btn" onclick="exportToMP3()" style="margin-right: 10px;">Export to MP3</button>
     <label for="splitEvery">Export Split:</label>
     <select id="splitEvery" name="splitEvery" style="margin-right: 40px;">
         <option value="100">100</option>
@@ -732,7 +733,7 @@
         <option value="base">Base</option>
         <option value="small">Small</option>
         <option value="medium">Medium</option>
-        <option value="turbo">Turbo</option>         
+        <option value="turbo">Turbo</option>
         <option value="large-v3-turbo">Large-v3-Turbo</option>
     </select>
     <div id="paginationControls">
@@ -757,13 +758,19 @@
 </div>
 </div>
 
-<!-- Howler.js script inclusion -->
+<!-- External libraries -->
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 <script src="./howler.min.js"></script>
+
+<!-- Main script -->
 <script type="module">
     import Crunker from './crunker.esm.js';
 
+    // Create a single instance of Crunker to be used by both functions
+    const crunker = new Crunker();
+
+    // Export to WAV function
     async function exportMP3() {
-        const crunker = new Crunker();
         const fileUrls = ttsList.map(item => item.fileUrl);
         const splitEvery = parseInt(document.getElementById('splitEvery').value) || 500;
         const progressIndicator = document.getElementById('progressIndicator');
@@ -780,7 +787,7 @@
                 const totalBatches = Math.ceil(fileUrls.length / splitEvery);
                 if (progressText) {
                     progressText.textContent = `Processing batch ${currentBatch} of ${totalBatches}`;
-                    progressText.style.color = 'black'; // Set the text color to black
+                    progressText.style.color = 'black';
                 }
 
                 const batchUrls = fileUrls.slice(i, Math.min(i + splitEvery, fileUrls.length));
@@ -789,9 +796,7 @@
                 const output = crunker.export(combined, "audio/wav");
                 crunker.download(output.blob, `combined_audio_part_${currentBatch}.wav`);
 
-                // Clear audioBuffers array to free up memory
                 audioBuffers.length = 0;
-
                 console.log(`Exported batch ${currentBatch} of ${totalBatches}`);
             }
         } catch (error) {
@@ -802,15 +807,93 @@
         } finally {
             if (progressIndicator && progressText) {
                 progressIndicator.style.display = 'none';
-                progressText.textContent = ''; // Reset progress text
+                progressText.textContent = '';
             }
         }
     }
 
+    // Export to MP3 function
+    async function exportToMP3() {
+        const fileUrls = ttsList.map(item => item.fileUrl);
+        const splitEvery = parseInt(document.getElementById('splitEvery').value) || 500;
+        const progressIndicator = document.getElementById('progressIndicator');
+        const progressText = document.getElementById('progressText');
+
+        if (progressIndicator && progressText) {
+            progressIndicator.style.display = 'block';
+            progressText.textContent = 'Starting MP3 export...';
+        }
+
+        try {
+            for (let i = 0; i < fileUrls.length; i += splitEvery) {
+                const currentBatch = Math.floor(i / splitEvery) + 1;
+                const totalBatches = Math.ceil(fileUrls.length / splitEvery);
+                if (progressText) {
+                    progressText.textContent = `Processing MP3 batch ${currentBatch} of ${totalBatches}`;
+                }
+
+                const batchUrls = fileUrls.slice(i, Math.min(i + splitEvery, fileUrls.length));
+                const audioBuffers = await crunker.fetchAudio(...batchUrls);
+                const combined = crunker.concatAudio(audioBuffers);
+                
+                const sampleRate = 44100;
+                const channels = 1;
+                const kbps = 192;
+                
+                const mp3Encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
+                const mp3Data = [];
+
+                const samples = new Int16Array(combined.length * channels);
+                const leftChannel = combined.getChannelData(0);
+                
+                for (let i = 0; i < leftChannel.length; i++) {
+                    const sample = Math.max(-1, Math.min(1, leftChannel[i]));
+                    samples[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                }
+
+                const sampleBlockSize = 1152;
+                for (let i = 0; i < samples.length; i += sampleBlockSize) {
+                    const sampleChunk = samples.subarray(i, i + sampleBlockSize);
+                    const mp3buf = mp3Encoder.encodeBuffer(sampleChunk);
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+                }
+
+                const mp3buf = mp3Encoder.flush();
+                if (mp3buf.length > 0) {
+                    mp3Data.push(mp3buf);
+                }
+
+                const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                const url = window.URL.createObjectURL(mp3Blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `combined_audio_part_${currentBatch}.mp3`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                audioBuffers.length = 0;
+                mp3Data.length = 0;
+
+                console.log(`Exported MP3 batch ${currentBatch} of ${totalBatches}`);
+            }
+        } catch (error) {
+            console.error('Error combining files:', error);
+            if (progressText) {
+                progressText.textContent = 'Error during MP3 export!';
+            }
+        } finally {
+            if (progressIndicator && progressText) {
+                progressIndicator.style.display = 'none';
+                progressText.textContent = '';
+            }
+        }
+    }
+
+    // Expose functions to global scope
     window.exportMP3 = exportMP3;
-
-
-
+    window.exportToMP3 = exportToMP3;
 </script>
 
 <script>
@@ -1126,7 +1209,7 @@
                 text_filtering: "standard",
                 character_voice_gen: characterVoice,
                 rvccharacter_voice_gen: RVCVoice,
-                rvccharacter_pitch: RVCPitch,                
+                rvccharacter_pitch: RVCPitch,
                 narrator_enabled: "false",
                 narrator_voice_gen: characterVoice,
                 text_not_inside: "character",
@@ -1214,7 +1297,7 @@
         const RVCPitch = document.getElementById("RVC_voice_pitch").value;
 
         // Call the TTS generation with the same details, current volume, and existing file name
-        const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice,  RVCVoice, RVCPitch, currentVolume, customFileName, chunkIndex, id);
+        const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice, RVCVoice, RVCPitch, currentVolume, customFileName, chunkIndex, id);
 
         // Call the TTS generation with the same details and current volume
         //const result = await generateAndCache(ttsDetails.text, ttsDetails.language, ttsDetails.characterVoice, currentVolume, id);
@@ -1263,7 +1346,7 @@
                 text_filtering: "standard",
                 character_voice_gen: characterVoice,
                 rvccharacter_voice_gen: RVCVoice,
-                rvccharacter_pitch: RVCPitch,                
+                rvccharacter_pitch: RVCPitch,
                 narrator_enabled: "false",
                 narrator_voice_gen: characterVoice,
                 text_not_inside: "character",
@@ -2042,7 +2125,7 @@
         }
     }
 
-        async function fetchRVCVoices() {
+    async function fetchRVCVoices() {
         try {
             const response = await fetch(baseUrl + "/api/rvcvoices");
             const result = await response.json();
@@ -2283,7 +2366,7 @@
         const savedRVCVoice = localStorage.getItem('RVCVoice');
         if (savedRVCVoice) {
             document.getElementById('RVC_voice_gen').value = savedRVCVoice;
-        }        
+        }
 
         // Initialize language based on preference
         const savedLanguage = localStorage.getItem('language');
@@ -2391,7 +2474,7 @@
 
         // Save RVC voice preference
         const RVCVoice = document.getElementById('RVC_voice_gen').value;
-        localStorage.setItem('RVCVoice', RVCVoice);        
+        localStorage.setItem('RVCVoice', RVCVoice);
 
         // Save language preference
         const language = document.getElementById('language').value;
