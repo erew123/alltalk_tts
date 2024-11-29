@@ -1148,7 +1148,7 @@ def format_audio_list(
             continue
 
         # Load and process audio
-        wav, sr = torchaudio.load(audio_path)
+        wav, sr = torchaudio.load(str(audio_path))
         if wav.size(0) != 1:
             wav = torch.mean(wav, dim=0, keepdim=True)
         wav = wav.squeeze()
@@ -1209,7 +1209,7 @@ def format_audio_list(
 
                 chunk_path = os.path.join(
                     temp_folder, f"{audio_file_name_without_ext}_chunk_{chunk_idx}.wav")
-                torchaudio.save(chunk_path, chunk.unsqueeze(0), sr)
+                torchaudio.save(str(chunk_path), chunk.unsqueeze(0), sr)
 
                 # Transcribe with appropriate precision
                 if fal_precision == "mixed" and device == "cuda":
@@ -1745,7 +1745,7 @@ def save_audio_segment(
             os.makedirs(
                 os.path.dirname(sas_split_absolute_path),
                 exist_ok=True)
-            torchaudio.save(sas_split_absolute_path, sas_split_audio, sas_sr)
+            torchaudio.save(str(sas_split_absolute_path), sas_split_audio, sas_sr)
 
             sas_metadata["audio_file"].append(
                 f"wavs/{sas_split_relative_path}")
@@ -1755,7 +1755,7 @@ def save_audio_segment(
 
     # Only save if segment is at least 1 second
     if sas_audio_segment.size(-1) >= sas_sr:
-        torchaudio.save(sas_absolute_path, sas_audio_segment, sas_sr)
+        torchaudio.save(str(sas_absolute_path), sas_audio_segment, sas_sr)
         sas_metadata["audio_file"].append(f"wavs/{sas_audio_file_name}")
         sas_metadata["text"].append(sas_sentence)
         sas_metadata["speaker_name"].append(sas_speaker_name)
@@ -2221,7 +2221,7 @@ def save_audio_and_correction(
                     f"Saving edited audio: {sr}Hz, length: {len(audio)}",
                     "DATA_PROCESS")
                 audio_tensor = torch.tensor(audio).unsqueeze(0)
-                torchaudio.save(audio_path, audio_tensor, sr)
+                torchaudio.save(str(audio_path), audio_tensor, sr)
                 save_status_msg.append("Audio saved successfully")
                 debug_print(
                     f"Saved edited audio to {audio_path}",
@@ -2959,7 +2959,7 @@ def run_tts(lang, tts_text, speaker_audio_file):
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fp:
         out["wav"] = torch.tensor(out["wav"]).unsqueeze(0)
         out_path = fp.name
-        torchaudio.save(out_path, out["wav"], 24000)
+        torchaudio.save(str(out_path), out["wav"], 24000)
 
     return "Speech generated !", out_path, speaker_audio_file
 
@@ -3171,7 +3171,7 @@ def compact_custom_model(
         if file_path.is_file() and file_path.suffix.lower() == ".wav":
             try:
                 # Load audio file and get duration
-                waveform, sample_rate = torchaudio.load(file_path)
+                waveform, sample_rate = torchaudio.load(str(file_path))
                 duration = waveform.size(
                     1) / sample_rate  # Duration in seconds
 

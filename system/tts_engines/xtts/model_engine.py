@@ -1113,7 +1113,7 @@ class tts_class:
                 else:
                     self.print_message("Starting non-streaming generation", message_type="debug_tts")
                     output = self.model.inference(**common_args)
-                    torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
+                    torchaudio.save(str(output_file), torch.tensor(output["wav"]).unsqueeze(0), 24000)
                     self.print_message(f"Saved audio to: {output_file}", message_type="debug_tts")
 
             elif self.current_model_loaded.startswith("apitts"):

@@ -756,7 +756,7 @@ class tts_class:
     ):
         """Process text and prepare for batch inference"""
         # Split the input text into batches
-        audio, sr = torchaudio.load(ref_audio)
+        audio, sr = torchaudio.load(str(ref_audio))
         max_chars = int(len(ref_text.encode("utf-8")) / (audio.shape[-1] / sr) * (25 - audio.shape[-1] / sr))
         gen_text_batches = self.chunk_text(gen_text, max_chars=max_chars)
         
