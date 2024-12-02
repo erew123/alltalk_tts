@@ -1760,6 +1760,7 @@ def process_transcription_result(
 
         segment_content = ""
         segment_start = segment["words"][0].get("start", 0) - buffer_time
+        segment_start = max(0, segment_start)
         segment_end = segment_start 
 
         for word_info in segment["words"]:
