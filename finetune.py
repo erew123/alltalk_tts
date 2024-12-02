@@ -1704,10 +1704,9 @@ def save_audio_segment(
     sas_sr,
     sas_start_time,
     sas_end_time,
-    sas_sentence,
+    sas_transcription,
     sas_audio_file_name_without_ext,
     sas_segment_idx,
-    sas_sentence_idx,
     sas_speaker_name,
     sas_audio_folder,
     sas_metadata,
@@ -1717,9 +1716,9 @@ def save_audio_segment(
     sas_target_language,
 ):
     """Helper function to save audio segments and update metadata"""
-    sas_sentence = sas_sentence.strip()
+    sas_transcription = sas_transcription.strip()
     sas_sentence = multilingual_cleaners(sas_sentence, sas_target_language)
-    sas_audio_file_name = f"{sas_audio_file_name_without_ext}_{str(sas_segment_idx).zfill(8)}_{str(sas_sentence_idx).zfill(8)}.wav"
+    sas_audio_file_name = f"{sas_audio_file_name_without_ext}_{str(sas_segment_idx).zfill(8)}.wav"
 
     sas_absolute_path = os.path.join(sas_audio_folder, sas_audio_file_name)
     os.makedirs(os.path.dirname(sas_absolute_path), exist_ok=True)
@@ -1779,7 +1778,6 @@ def process_transcription_result(
     """Helper function to process transcription results and save audio segments"""
     ptr_i = ptr_segment_idx + 1
     ptr_sentence = ""
-    ptr_sentence_idx = 0
     ptr_sentence_start = None
     ptr_first_word = True
     ptr_current_words = []
@@ -1820,7 +1818,6 @@ def process_transcription_result(
                     ptr_sentence,
                     ptr_audio_file_name_without_ext,
                     ptr_i,
-                    ptr_sentence_idx,
                     ptr_speaker_name,
                     ptr_audio_folder,
                     ptr_metadata,
@@ -1829,7 +1826,6 @@ def process_transcription_result(
                     ptr_too_long_files,
                     ptr_target_language,
                 )
-                ptr_sentence_idx += 1
                 ptr_first_word = True
                 ptr_current_words = []
                 ptr_sentence = ""
