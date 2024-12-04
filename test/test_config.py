@@ -1,16 +1,56 @@
 import os.path
 import tempfile
-import unittest
+from unittest import TestCase
 from pathlib import Path
-
 from config import AlltalkConfig, AlltalkTTSEnginesConfig, AlltalkNewEnginesConfig
 
 
-class TestAlltalkConfig(unittest.TestCase):
+class TestAlltalkConfig(TestCase):
 
     def setUp(self):
         self.config = AlltalkConfig.get_instance()
         self.config.reload()
+
+    def test_default_values_loaded(self):
+        cfg = AlltalkConfig(Path(__file__).parent.resolve() / 'empty.json')
+
+        # Since the default config file is expected to also contain the
+        # default values, we can simply check that both dictionaries are identical:
+        self.assertEqual(self.config.to_dict(), cfg.to_dict())
+
+    def test_no_default_values_missing(self):
+        # Loading the empty JSON will populate the config with defaults from the code:
+        cfg = AlltalkConfig(Path(__file__).parent.resolve() / 'empty.json')
+        with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
+            cfg.save(tmp.name)
+            # Compare the defaults from code (when written to a file) to the actual default config file:
+            with open(tmp.name, "r") as file1:
+                with open(self.config.get_config_path(), "r") as file2:
+                    self.assertEqual(file1.read(), file2.read())
+
+    def test_values_merged_with_defaults(self):
+        cfg = AlltalkConfig(Path(__file__).parent.resolve() / 'confignew_partial.json')
+
+        # Check some values that are missing in the JSON:
+        self.assertEqual(cfg.gradio_port_number, 7852)
+        self.assertEqual(cfg.theme.clazz, "gradio/base")
+        self.assertEqual(cfg.rvc_settings.index_rate, 0.75)
+        self.assertEqual(cfg.rvc_settings.embedder_model, "hubert")
+        self.assertEqual(cfg.tgwui.tgwui_language, "English")
+        self.assertEqual(cfg.tgwui.tgwui_repetitionpenalty_set, 10)
+        self.assertEqual(cfg.api_def.api_port_number, 7851)
+        self.assertEqual(cfg.api_def.api_text_filtering, "standard")
+        self.assertFalse(cfg.debugging.debug_rvc)
+        self.assertFalse(cfg.debugging.debug_openai)
+
+    def test_loading_values(self):
+        cfg = AlltalkConfig(Path(__file__).parent.resolve() / 'confignew_partial.json')
+
+        # Check that some values that are in the JSON:
+        self.assertEqual(cfg.branding, "Another AllTalk ")
+        self.assertEqual(cfg.rvc_settings.rvc_narr_model_file, "another/file")
+        self.assertEqual(cfg.tgwui.tgwui_narrator_voice, "another_female_01.wav")
+        self.assertEqual(cfg.api_def.api_output_file_name, "another_myoutputfile")
 
     def test_default_config_path(self):
         expected_config_path = Path(__file__).parent.parent.resolve() / "confignew.json"
@@ -119,15 +159,23 @@ class TestAlltalkConfig(unittest.TestCase):
     def test_save_config(self):
         with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
             self.config.branding = "foo"
+            self.config.theme.clazz = "bar"
             self.config.save(tmp.name)
             new_config = AlltalkConfig(tmp.name)
             self.assertEqual(new_config.branding, "foo")
+            self.assertEqual(new_config.theme.clazz, "bar")
+
+            # Test serialization of field 'clazz' to field "class"
+            with open(tmp.name, "r") as file:
+                json = file.read()
+                self.assertTrue("class" in json)
+                self.assertFalse("clazz" in json)
 
     def test_no_private_fields(self):
         for attr in self.config.to_dict().keys():
             self.assertTrue(not attr.startswith("_"))
 
-class TestAlltalkTTSEnginesConfig(unittest.TestCase):
+class TestAlltalkTTSEnginesConfig(TestCase):
 
     def setUp(self):
         self.tts_engines_config = AlltalkTTSEnginesConfig.get_instance()
@@ -178,7 +226,7 @@ class TestAlltalkTTSEnginesConfig(unittest.TestCase):
             self.assertTrue(not attr.startswith("_"))
 
 
-class TestAlltalkNewEnginesConfig(unittest.TestCase):
+class TestAlltalkNewEnginesConfig(TestCase):
 
     def setUp(self):
         self.new_engines_config = AlltalkNewEnginesConfig.get_instance()

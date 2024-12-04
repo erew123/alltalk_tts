@@ -44,7 +44,9 @@
         "tgwui_show_text": true,
         "tgwui_character_voice": "female_01.wav",
         "tgwui_rvc_char_voice": "Disabled",
-        "tgwui_rvc_narr_voice": "Disabled"
+        "tgwui_rvc_char_pitch": 0,
+        "tgwui_rvc_narr_voice": "Disabled",
+        "tgwui_rvc_narr_pitch": 0
     },
     "api_def": {
         "api_port_number": 7851,
@@ -68,7 +70,14 @@
         "debug_openai": false,
         "debug_concat": false,
         "debug_tts_variables": false,
-        "debug_rvc": false
+        "debug_rvc": false,
+        "debug_func": false,
+        "debug_api": false,
+        "debug_fullttstext": false,
+        "debug_narrator": false,
+        "debug_gradio_IP": false,
+        "debug_transcribe": false,
+        "debug_proxy": false
     },
     "gradio_pages": {
         "Generate_Help_page": true,
@@ -77,5 +86,24 @@
         "TTS_Engines_Settings_page": true,
         "alltalk_documentation_page": true,
         "api_documentation_page": true
+    },
+    "proxy_settings": {
+        "proxy_enabled": false,
+        "start_on_startup": false,
+        "gradio_endpoint": {
+            "enabled": false,
+            "external_port": 444,
+            "external_ip": "0.0.0.0",
+            "cert_name": ""
+        },
+        "api_endpoint": {
+            "enabled": false,
+            "external_port": 443,
+            "external_ip": "0.0.0.0",
+            "cert_name": ""
+        },
+        "cert_validation": true,
+        "logging_enabled": true,
+        "log_level": "INFO"
     }
 }
