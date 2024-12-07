@@ -3870,9 +3870,9 @@ if __name__ == "__main__":
                             fal_min_sample_length=pd_min_sample_length,
                             fal_eval_split_number=pd_eval_split_number,
                             fal_speaker_name_input=pd_speaker_name_input,
-                            fal_create_bpe_tokenizer=pd_create_bpe_tokenizer,
+                            fal_create_bpe_tokenizer= True if pd_create_bpe_tokenizer == "True" else False,
                             fal_gradio_progress=pd_progress,
-                            fal_use_vad=pd_use_vad,
+                            fal_use_vad= True if pd_use_vad == "True" else False,
                             fal_precision=pd_precision,
                         )
                     except Exception:
