@@ -7,6 +7,9 @@ assignees: ''
 
 ---
 
+**Please confirm you have read the current Features request list**
+https://github.com/erew123/alltalk_tts/discussions/74
+
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
