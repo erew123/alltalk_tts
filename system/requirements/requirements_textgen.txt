@@ -1,4 +1,4 @@
-coqui-tts>=0.24.3
+coqui-tts==0.24.3
 ffmpeg-python>=0.2.0
 filelock>=3.16.1
 fuzzywuzzy>=0.18.0
