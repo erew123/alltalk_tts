@@ -1,0 +1,15 @@
+{
+    "branding": "Another AllTalk ",
+    "theme": {
+        "file": null
+    },
+    "rvc_settings": {
+        "rvc_narr_model_file": "another/file"
+    },
+    "tgwui": {
+        "tgwui_narrator_voice": "another_female_01.wav"
+    },
+    "api_def": {
+        "api_output_file_name": "another_myoutputfile"
+    }
+}
