@@ -4,12 +4,22 @@ FROM continuumio/miniconda3:24.7.1-0
 ARG TTS_MODEL="xtts"
 ENV TTS_MODEL=$TTS_MODEL
 
+ARG CUDA_VERSION="12.1.1"
+ENV CUDA_VERSION=$CUDA_VERSION
+
+ARG PYTHON_VERSION=3.11.9
+ENV PYTHON_VERSION=$PYTHON_VERSION
+
+ARG PYTORCH_VERSION=2.2.1
+ENV PYTORCH_VERSION=$PYTORCH_VERSION
+
 SHELL ["/bin/bash", "-l", "-c"]
 ENV SHELL=/bin/bash
 ENV HOST=0.0.0.0
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CUDA_DOCKER_ARCH=all
 ENV GRADIO_SERVER_NAME="0.0.0.0"
+ENV NVIDIA_VISIBLE_DEVICES=all
 
 RUN <<EOR
     apt-get update
@@ -30,23 +40,30 @@ WORKDIR /alltalk
 ARG INSTALL_ENV_DIR=/alltalk/alltalk_environment/env
 ENV CONDA_AUTO_UPDATE_CONDA="false"
 RUN <<EOR
-    conda create -y -n "alltalk" -c conda-forge python=3.11.9
+    CUDA_SHORT_VERSION=${CUDA_VERSION%.*}
+
+    conda create -y -n "alltalk" -c conda-forge python=${PYTHON_VERSION}
     conda activate alltalk
-    conda install -y \
+    RESULT=$( { conda install -y \
       gcc_linux-64 \
       gxx_linux-64 \
-      pytorch=2.2.1 \
+      pytorch=${PYTORCH_VERSION} \
+      pytorch-cuda=${CUDA_SHORT_VERSION} \
       torchvision \
       torchaudio \
-      pytorch-cuda=12.1 \
       libaio \
-      nvidia/label/cuda-12.1.0::cuda-toolkit=12.1 \
+      nvidia/label/cuda-${CUDA_SHORT_VERSION}.0::cuda-toolkit \
       faiss-gpu=1.9.0 \
       conda-forge::ffmpeg=7.1.0 \
       conda-forge::portaudio=19.7.0 \
       -c pytorch \
       -c anaconda \
-      -c nvidia | grep -zq PackagesNotFoundError && exit 1
+      -c nvidia ; } 2>&1 )
+
+    if echo $RESULT | grep -izq error ; then
+      echo "Failed to install conda dependencies 2: $RESULT"
+      exit 1
+    fi
     conda clean -a && pip cache purge
 EOR
 
@@ -61,22 +78,34 @@ RUN <<EOR
     mkdir /alltalk/pip_cache
     pip install --no-cache-dir --cache-dir=/alltalk/pip_cache -r system/requirements/requirements_standalone.txt
     pip install --no-cache-dir --cache-dir=/alltalk/pip_cache --upgrade gradio==4.32.2
-
-    # Deepspeed:
-    curl -LO https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-14.0/deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
-    CFLAGS="-I$CONDA_PREFIX/include/" LDFLAGS="-L$CONDA_PREFIX/lib/" \
-      pip install --no-cache-dir --cache-dir=/alltalk/pip_cache deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
-    rm -f deepspeed-0.14.2+cu121torch2.2-cp311-cp311-manylinux_2_24_x86_64.whl
-
     # Parler:
-    pip install --no-cache-dir --no-deps --cache-dir=/alltalk/pip_cache -r system/requirements/requirements_parler.txt
+    pip install --no-cache-dir --cache-dir=/alltalk/pip_cache -r system/requirements/requirements_parler.txt
 
     conda clean --all --force-pkgs-dirs -y && pip cache purge
 EOR
 
-# Deepspeed requires cutlass:
-RUN git clone --depth 1 --branch "v3.5.1" https://github.com/NVIDIA/cutlass /alltalk/cutlass
-ENV CUTLASS_PATH=/alltalk/cutlass
+# Deepspeed:
+RUN mkdir -p /tmp/deepseped
+COPY deepspeed/build/*.whl /tmp/deepspeed/
+RUN <<EOR
+    DEEPSPEED_WHEEL=$(realpath /tmp/deepspeed/*.whl)
+    conda activate alltalk
+
+    RESULT=$( { CFLAGS="-I$CONDA_PREFIX/include/" LDFLAGS="-L$CONDA_PREFIX/lib/" \
+      pip install --no-cache-dir ${DEEPSPEED_WHEEL} ; } 2>&1 )
+
+    if echo $RESULT | grep -izq error ; then
+      echo "Failed to install pip dependencies: $RESULT"
+      exit 1
+    fi
+
+    rm ${DEEPSPEED_WHEEL}
+    conda clean --all --force-pkgs-dirs -y && pip cache purge
+EOR
+
+### Deepspeed requires cutlass:
+###RUN git clone --depth 1 --branch "v3.5.1" https://github.com/NVIDIA/cutlass /alltalk/cutlass
+###ENV CUTLASS_PATH=/alltalk/cutlass
 
 # Writing scripts to start alltalk:
 RUN <<EOR
