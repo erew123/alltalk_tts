@@ -1,26 +1,15 @@
 #!/usr/bin/env bash
 
-CUDA_VERSION=12.1.1
-PYTHON_VERSION=3.11
-PYTORCH_VERSION=2.2.1
-DEEPSPEED_VERSION=0.16.1
-
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd $SCRIPT_DIR
+
+. ${SCRIPT_DIR=}/../variables.sh
 
 # Parse arguments
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --cuda-version)
-      CUDA_VERSION="$2"
-      shift
-      ;;
     --python-version)
       PYTHON_VERSION="$2"
-      shift
-      ;;
-    --pytorch-version)
-      PYTORCH_VERSION="$2"
       shift
       ;;
     --deepspeed-version)
@@ -36,24 +25,30 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
-PYTHON_VERSION_NO_DOT=${PYTHON_VERSION//./}
+PYTHON_SHORT_VERSION=${PYTHON_VERSION%.*}
+PYTHON_VERSION_NO_DOT=${PYTHON_SHORT_VERSION//./}
 if [[ -n $(find build -name "deepspeed-${DEEPSPEED_VERSION}*-cp${PYTHON_VERSION_NO_DOT}-cp${PYTHON_VERSION_NO_DOT}-*.whl") ]]
 then
    echo "DeepSpeed was already built - skipping..."
    exit 0
 fi
 
-echo "Building DeepSpeed $DEEPSPEED_VERSION for CUDA $CUDA_VERSION using python ${PYTHON_VERSION} with PyTorch ${PYTORCH_VERSION}"
+CONDA_ENV=${SCRIPT_DIR=}/../conda/build/environment-cu-${CUDA_VERSION}-cp-${PYTHON_VERSION}.yml
+if [ ! -f ${CONDA_ENV} ]; then
+    echo "No conda environment found. Please run 'build-conda-env.sh' first."
+    exit 1
+fi
 
-rm -rf build # make sure to properly clean up - we only want 1 wheel at the time
+echo "Building DeepSpeed $DEEPSPEED_VERSION using python ${PYTHON_VERSION}"
+
+rm -rf build # make sure to properly clean up
 mkdir -p build
+cp ${CONDA_ENV} ${SCRIPT_DIR=}/build
+
 docker buildx \
   build \
-  --build-arg CUDA_VERSION=$CUDA_VERSION \
-  --build-arg PYTHON_VERSION=$PYTHON_VERSION \
-  --build-arg PYTORCH_VERSION=$PYTORCH_VERSION \
   --build-arg DEEPSPEED_VERSION=$DEEPSPEED_VERSION \
-  -t deepspeed:cu-$CUDA_VERSION-ds-$DEEPSPEED_VERSION \
+  -t deepspeed:$DEEPSPEED_VERSION \
   .
 
 docker run \
@@ -62,4 +57,4 @@ docker run \
   --gpus=all \
   --name deepspeed \
   -v $SCRIPT_DIR/build:/deepspeed \
-  deepspeed:cu-$CUDA_VERSION-ds-$DEEPSPEED_VERSION
+  deepspeed:$DEEPSPEED_VERSION

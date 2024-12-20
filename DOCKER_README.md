@@ -2,9 +2,11 @@
 The Docker image currently works on Windows and Linux, optionally supporting NVIDIA GPUs.
 
 ## General Remarks
-- The resulting Docker image is 22 GB in size. Building might require even more disk space temporarily.
-- Build time depends on your hardware and internet connection. Expect at least 10min to be normal.
-- The Docker build:
+- The resulting Docker image is 21 GB in size. Building might require even more disk space temporarily.
+    - Another 15 GB is required for building DeepSpeed
+- Build time depends on your hardware and internet connection. Expect at least 20-30min to be normal for a full build.
+  - This includes building the conda environment as well as DeepSpeed, which is the basis for the alltalk Docker image.
+- The Docker build for alltalk:
   - Downloads XTTS as default TTS engine
   - Enables RVC by default
   - Downloads all supported RVC models
@@ -55,18 +57,22 @@ There are various arguments to customize the build and start of the docker image
   - Example: `docker-build.sh --tts_model piper`
 - `--tag` allows to choose the docker tag. Defaults to `latest`.
   - Example: `docker-build.sh --tag mytag`
+- `--clean` allows remove existing dependency build like conda environment or DeepSpeed.
+    - Example: `docker-build.sh --clean`
 
 ### Arguments for `docker-start.sh`
 - `--config` lets you choose a config JSON file which can subset of `confignew.json`. This allows you to change only 
   few values and leave the rest as defined in the default `confignew.json` file.
-  - Example: `docker-build.sh --config /my/config/file.json` with content `{"branding": "My Brand "}` will just change
+  - Example: `docker-start.sh --config /my/config/file.json` with content `{"branding": "My Brand "}` will just change
     the branding in `confignew.json`.
 - `--voices` lets you add voices for the TTS engine in WAV format. You have to specify the folder containing all
   voice files.
-  - Example: `docker-build.sh --voices /my/voices/dir`
+  - Example: `docker-start.sh --voices /my/voices/dir`
 - `--rvc_voices` similar to voices, this option lets you pick the folder containing the RVC models.
-  - Example: `docker-build.sh --rvc_vices /my/rvc/voices/dir`
+  - Example: `docker-start.sh --rvc_vices /my/rvc/voices/dir`
 - `--no_ui` allows you to not expose port 7852 for the gradio interface. Note that you still have to set `launch_gradio`
-  to `false` via JSON file passed to `--config`. 
+  to `false` via JSON file passed to `--config`.
+- `--tag` allows to choose the docker tag of the image to run. Defaults to `latest`.
+    - Example: `docker-start.sh --tag mytag`
 - Since the above commands only address the most important options, you might pass additional arbitrary docker commands
     to the `docker-start.sh`.

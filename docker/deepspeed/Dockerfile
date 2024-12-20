@@ -1,16 +1,15 @@
-ARG CUDA_VERSION=12.1.1
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04
+FROM continuumio/miniconda3:24.7.1-0
 
-ARG PYTHON_VERSION=3.11
-ENV PYTHON_VERSION=$PYTHON_VERSION
-
-ARG PYTORCH_VERSION=2.2.1
-ENV PYTORCH_VERSION=$PYTORCH_VERSION
-
-ARG DEEPSPEED_VERSION=0.16.1
+ARG DEEPSPEED_VERSION=0.16.2
 ENV DEEPSPEED_VERSION=$DEEPSPEED_VERSION
 
+SHELL ["/bin/bash", "-l", "-c"]
+ENV SHELL=/bin/bash
+ENV HOST=0.0.0.0
 ENV DEBIAN_FRONTEND=noninteractive
+ENV CUDA_DOCKER_ARCH=all
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV CONDA_AUTO_UPDATE_CONDA="false"
 
 ##############################################################################
 # Directories:
@@ -21,62 +20,49 @@ RUN mkdir -p ${STAGE_DIR}
 ##############################################################################
 # Installation/Basic Utilities
 ##############################################################################
-SHELL ["/bin/bash", "-l", "-c"]
-ENV SHELL=/bin/bash
-
 RUN <<EOR
-  apt-get update
-  apt-get install --no-install-recommends -y \
-    software-properties-common \
-    ca-certificates
-
-  add-apt-repository ppa:git-core/ppa -y # for latest git
-  add-apt-repository ppa:deadsnakes/ppa -y # for python
-
   apt-get update
   apt-get upgrade -y
   apt-get install --no-install-recommends -y \
-    build-essential \
-    autotools-dev \
-    pdsh \
-    cmake \
-    g++ \
-    gcc \
-    curl \
-    wget \
-    vim \
-    unzip \
-    llvm-dev \
-    git \
-    python${PYTHON_VERSION}-dev \
-    libcupti-dev \
-    libaio-dev
+      espeak-ng \
+      curl \
+      wget \
+      jq \
+      vim
+
+   apt-get clean && rm -rf /var/lib/apt/lists/*
 EOR
 
 ##############################################################################
-# Python & pip
+# Create a conda environment and install dependencies:
 ##############################################################################
+COPY build/environment-*.yml environment.yml
 RUN <<EOR
-  # Correct symlinks to use the proper python version:
-  PYTHON_MAJOR_VERSION=${PYTHON_VERSION%%.*}
-  rm -f /usr/bin/python${PYTHON_MAJOR_VERSION}
-  ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python${PYTHON_MAJOR_VERSION}
-  ln -s /usr/bin/python3 /usr/bin/python
+    RESULT=$( { conda env create -f environment.yml ; } 2>&1 )
 
-  curl -O https://bootstrap.pypa.io/pip/3.7/get-pip.py
-  python get-pip.py
-  rm get-pip.py
-  pip install --upgrade pip
+    if echo $RESULT | grep -izq error ; then
+      echo "Failed to install conda dependencies: $RESULT"
+      exit 1
+    fi
+
+    conda clean -a && pip cache purge
 EOR
 
-# Minimal dependencies needed to build deepspeed:
-RUN pip install \
-    deepspeed-kernels \
-    scikit-learn \
-    torch==${PYTORCH_VERSION}
+##############################################################################
+# Install python dependencies
+##############################################################################
+ENV PIP_CACHE_DIR=/tmp/pip_cache
+RUN <<EOR
+  conda activate alltalk
+
+  pip install \
+      deepspeed-kernels \
+      scikit-learn
+EOR
+
 
 ##############################################################################
-# DeepSpeed
+# Clone DeepSpeed sources
 ##############################################################################
 RUN <<EOR
   git clone https://github.com/microsoft/DeepSpeed.git ${STAGE_DIR}/DeepSpeed
@@ -86,12 +72,15 @@ RUN <<EOR
 EOR
 
 ##############################################################################
-# DeepSpeed build file
+# Create DeepSpeed build file
 ##############################################################################
 RUN <<EOR
   cat << EOF > build_deepspeed.sh
 #!/usr/bin/env bash
+source ~/.bashrc
 mkdir -p /deepspeed
+
+conda activate alltalk
 cd ${STAGE_DIR}/DeepSpeed
 DS_BUILD_OPS=1 python setup.py build_ext -j8 bdist_wheel
 mv ${STAGE_DIR}/DeepSpeed/dist/*.whl /deepspeed/
@@ -100,4 +89,7 @@ EOR
 
 RUN chmod +x /build_deepspeed.sh
 
+##############################################################################
+# Build DeepSpeed:
+##############################################################################
 ENTRYPOINT ["/build_deepspeed.sh"]

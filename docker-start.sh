@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-ALLTALK_DIR="/alltalk"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. ${SCRIPT_DIR=}/docker/variables.sh
+
 WITH_UI=true
+DOCKER_TAG=latest
 declare -a ADDITIONAL_ARGS=()
 
 # Parse arguments
@@ -21,6 +24,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no_ui)
       WITH_UI=false
+      ;;
+    --tag)
+      DOCKER_TAG="$2"
+      shift
       ;;
     *)
       # Allow to pass arbitrary arguments to docker as well to be flexible:
@@ -58,4 +65,4 @@ docker run \
   --name alltalk \
  "${DOCKER_ARGS[@]}" \
  "${ADDITIONAL_ARGS[@]}" \
-  alltalk_beta:latest &> /dev/stdout
+  alltalk_beta:${DOCKER_TAG} &> /dev/stdout
