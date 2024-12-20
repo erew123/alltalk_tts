@@ -69,7 +69,7 @@ There are various arguments to customize the build and start of the docker image
   voice files.
   - Example: `docker-start.sh --voices /my/voices/dir`
 - `--rvc_voices` similar to voices, this option lets you pick the folder containing the RVC models.
-  - Example: `docker-start.sh --rvc_vices /my/rvc/voices/dir`
+  - Example: `docker-start.sh --rvc_voices /my/rvc/voices/dir`
 - `--no_ui` allows you to not expose port 7852 for the gradio interface. Note that you still have to set `launch_gradio`
   to `false` via JSON file passed to `--config`.
 - `--tag` allows to choose the docker tag of the image to run. Defaults to `latest`.
