@@ -1,0 +1,7 @@
+{
+  "delete_output_wavs": "1",
+  "rvc_settings": {
+    "rvc_enabled": true,
+    "f0method": "rmvpe"
+  }
+}
