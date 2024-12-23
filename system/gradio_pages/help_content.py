@@ -2528,13 +2528,13 @@ class AllTalkHelpContent:
     You can remap the 6 OpenAI voices to any voices supported by the currently loaded TTS engine using the following endpoint:
 
     - **URL**: `http://{ipaddress}:{port}/api/openai-voicemap`
-    - **Method**: `POST`
+    - **Method**: `PUT`
     - **Content-Type**: `application/json`
 
     ### Example Voice Remapping Request
 
     ```bash
-    curl -X POST "http://localhost:7851/api/openai-voicemap" \
+    curl -X PUT "http://localhost:7851/api/openai-voicemap" \
         -H "Content-Type: application/json" \
         -d '{
             "alloy": "female_01.wav",
