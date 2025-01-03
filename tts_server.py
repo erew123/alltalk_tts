@@ -39,8 +39,12 @@ import ffmpeg
 import numpy as np
 import soundfile as sf
 import librosa
+from langdetect import detect, DetectorFactory
+from langdetect.lang_detect_exception import LangDetectException
 from config import AlltalkConfig, AlltalkTTSEnginesConfig
 logging.disable(logging.WARNING)
+
+DetectorFactory.seed = 0  # Ensure deterministic behavior
 
 ########################################################################################
 # START-UP # Silence RVC warning about torch.nn.utils.weight_norm even though not used #
@@ -938,6 +942,9 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
         print_message("each TTS Engine in the 'Engine Information' section of the Gradio interface.", "warning", "GEN")
         raise ValueError("Streaming not supported by current TTS engine")
 
+    if language == "auto":
+        language = detect_language(text)
+
     response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming)
 
     if streaming:
@@ -1138,7 +1145,7 @@ async def openai_tts_generate(request: Request):
         else:
             print_message(f"{cleaned_string[:90]}{'...' if len(cleaned_string) > 90 else ''}", component="TTS")
 
-        await generate_audio(cleaned_string, mapped_voice, "en", model_engine.temperature_set,
+        await generate_audio(cleaned_string, mapped_voice, "auto", model_engine.temperature_set,
                            model_engine.repetitionpenalty_set, speed, model_engine.pitch_set,
                            output_file_path, streaming=False)
 
@@ -1605,7 +1612,7 @@ class JSONInput(BaseModel):
     rvcnarrator_voice_gen: str = Field(..., description="rvcnarrator_voice_gen needs to be the name of a valid pth file in the 'folder\\file.pth' format or the word 'Disabled'.")
     rvcnarrator_pitch: float = Field(..., description="RVC Narrator pitch needs to be a number between -24 and 24")
     text_not_inside: str = Field(..., pattern="^(character|narrator|silent)$", description="text_not_inside needs to be 'character', 'narrator' or 'silent'.")
-    language: str = Field(..., pattern="^(ar|zh-cn|zh|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following: ar, zh-cn, zh, cs, nl, en, fr, de, hu, hi, it, ja, ko, pl, pt, ru, es, tr.")
+    language: str = Field(..., pattern="^(auto|ar|zh-cn|zh|cs|nl|en|fr|de|hu|hi|it|ja|ko|pl|pt|ru|es|tr)$", description="language needs to be one of the following: auto, ar, zh-cn, zh, cs, nl, en, fr, de, hu, hi, it, ja, ko, pl, pt, ru, es, tr.")
     output_file_name: str = Field(..., pattern="^[a-zA-Z0-9_]+$", description="output_file_name needs to be the name without any special characters or file extension, e.g., 'filename'.")
     output_file_timestamp: bool = Field(..., description="output_file_timestamp needs to be true or false.")
     autoplay: bool = Field(..., description="autoplay needs to be a true or false value.")
@@ -2097,6 +2104,21 @@ async def tts_finalize_output(audio_files: List[Path], params: dict) -> Tuple[Pa
         play_audio(output_file_path, params['autoplay_volume'])
 
     return output_file_path, output_file_url, output_cache_url
+
+def detect_language(text: str) -> str:
+    """
+    Detect the language of the given text.
+
+    :param text: Text to analyze.
+    :return: Detected language code (e.g., 'en', 'fr').
+    """
+    try:
+        detected_lang = detect(text)
+        print_message(f"Detected language: {detected_lang}", "debug", "LANG_DETECTION")
+        return detected_lang
+    except LangDetectException as e:
+        print_message(f"Language detection error: {str(e)}", "error", "LANG_DETECTION")
+        raise ValueError("Could not detect language")
 
 @app.post("/api/tts-generate", response_class=JSONResponse)
 async def apifunction_generate_tts_standard(
