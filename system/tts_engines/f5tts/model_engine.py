@@ -401,8 +401,15 @@ class tts_class:
                 # First try to find model_*.safetensors files
                 model_files = list(model_dir.glob("model_*.safetensors"))
                 if not model_files:
+                # Try finding the pt model file as fallback
+                    # If no model_*.safetensors found, try finding a .pt model file
+                    model_files = list(model_dir.glob("model_*.pt"))
+                if not model_files:
                     # If no model_*.safetensors found, try any .safetensors file
                     model_files = list(model_dir.glob("*.safetensors"))
+                if not model_files:
+                    # If no model_*.safetensors found, try any .pt file
+                    model_files = list(model_dir.glob("*.pt"))
                     
                 vocab_file = model_dir / "vocab.txt"
                 vocos_dir = model_dir / "vocos"
@@ -509,8 +516,14 @@ class tts_class:
             # Dynamically find the safetensors model file
             model_files = list(model_dir.glob("model_*.safetensors"))
             if not model_files:
+                # Try finding the pt model file as fallback
+                model_files = list(model_dir.glob("model_*.pt"))
+            if not model_files:
                 # Try finding any safetensors file as fallback
                 model_files = list(model_dir.glob("*.safetensors"))
+            if not model_files:
+                # Try finding any pt file as fallback
+                model_files = list(model_dir.glob("*.pt"))
                 
             if not model_files:
                 print(f"[{self.branding}ENG] \033[91mError\033[0m: No model's safetensors file was found in the F5-TTS models directory.")
