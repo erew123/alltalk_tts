@@ -350,6 +350,7 @@ class tts_class:
         self.def_character_voice = model_settings_file["settings"]["def_character_voice"]
         self.def_narrator_voice = model_settings_file["settings"]["def_narrator_voice"]
         self.deepspeed_enabled = model_settings_file["settings"]["deepspeed_enabled"]
+        self.streaming_enabled = model_settings_file["settings"]["streaming_enabled"]
         self.engine_installed = model_settings_file["settings"]["engine_installed"]
         self.generationspeed_set = model_settings_file["settings"]["generationspeed_set"]
         self.lowvram_enabled = model_settings_file["settings"]["lowvram_enabled"]

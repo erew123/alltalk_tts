@@ -237,6 +237,11 @@ class AllTalkHelpContent:
         - Accelerates TTS generation using optimized inference
         - Only available for engines and models that support DeepSpeed
         - Requires NVIDIA GPU with CUDA support
+        
+    - **Stream Response Capability**
+        - Enables real-time streaming of generated speech output
+        - Reduces latency for faster feedback during synthesis
+        - Only available for engines and models that support Streaming
 
     - **Temperature Control**
         - Adjusts the variability in speech generation
