@@ -945,22 +945,34 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
     if language == "auto":
         language = detect_language(text)
 
-    response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming)
-
+    # Streaming mode
     if streaming:
-        async def stream_response():
+        print_message("Streaming mode enabled", "debug", "TTS")
+        response = model_engine.generate_tts(
+            text, voice, language, temperature, repetition_penalty, speed, pitch, output_file=None, streaming=True
+        )
+
+        async def stream_audio():
             try:
                 async for chunk in response:
                     yield chunk
             except Exception as e:
                 print_message(f"Error during streaming audio generation: {str(e)}", "error", "GEN")
                 raise
-        return stream_response()
+
+        return stream_audio()
+
+    # Non-streaming mode
+    print_message("Non-streaming mode enabled", "debug", "TTS")
+    response = model_engine.generate_tts(
+        text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False
+    )
+
     try:
         async for _ in response:
             pass
     except Exception as e:
-        print_message(f"Error during audio generation: {str(e)}", "error", "GEN")
+        print_message(f"Error during audio generation: {str(e)}", "error", "TTS")
         raise
 
 ###########################
@@ -1110,22 +1122,24 @@ async def openai_tts_generate(request: Request):
         # Extract and validate parameters
         input_text = json_data["input"]
         voice = json_data["voice"]
-        response_format = json_data.get("response_format", "wav").lower()
         speed = json_data.get("speed", 1.0)
 
         print_message(f"Input text: {input_text}", "debug_openai", "TTS")
         print_message(f"Voice: {voice}", "debug_openai", "TTS")
         print_message(f"Speed: {speed}", "debug_openai", "TTS")
 
+        # Load current model engine configuration
+        current_model_engine = tts_class()
+
         # Process text and map voice
         cleaned_string = html.unescape(standard_filtering(input_text))
         voice_mapping = {
-            "alloy": model_engine.openai_alloy,
-            "echo": model_engine.openai_echo,
-            "fable": model_engine.openai_fable,
-            "nova": model_engine.openai_nova,
-            "onyx": model_engine.openai_onyx,
-            "shimmer": model_engine.openai_shimmer
+            "alloy": current_model_engine.openai_alloy,
+            "echo": current_model_engine.openai_echo,
+            "fable": current_model_engine.openai_fable,
+            "nova": current_model_engine.openai_nova,
+            "onyx": current_model_engine.openai_onyx,
+            "shimmer": current_model_engine.openai_shimmer
         }
 
         mapped_voice = voice_mapping.get(voice)
@@ -1135,37 +1149,48 @@ async def openai_tts_generate(request: Request):
 
         print_message(f"Mapped voice: {mapped_voice}", "debug_openai", "TTS")
 
-        # Generate audio
-        unique_id = uuid.uuid4()
-        timestamp = int(time.time())
-        output_file_path = f'{this_dir / config.get_output_directory() / f"openai_output_{unique_id}_{timestamp}.{model_engine.audio_format}"}'
-
-        if config.debugging.debug_fullttstext:
-            print_message(cleaned_string, component="TTS")
+        if current_model_engine.streaming_enabled:
+            audio_stream = await generate_audio(
+                cleaned_string, mapped_voice, "auto", current_model_engine.temperature_set,
+                float(str(current_model_engine.repetitionpenalty_set).replace(',', '.')), speed, current_model_engine.pitch_set,
+                output_file=None, streaming=True
+            )
+            return StreamingResponse(audio_stream, media_type="audio/wav")
         else:
-            print_message(f"{cleaned_string[:90]}{'...' if len(cleaned_string) > 90 else ''}", component="TTS")
+            # Generate audio
+            unique_id = uuid.uuid4()
+            timestamp = int(time.time())
+            output_file_path = f'{this_dir / config.get_output_directory() / f"openai_output_{unique_id}_{timestamp}.{current_model_engine.audio_format}"}'
+            response_format = json_data.get("response_format", "wav").lower()
 
-        await generate_audio(cleaned_string, mapped_voice, "auto", model_engine.temperature_set,
-                           model_engine.repetitionpenalty_set, speed, model_engine.pitch_set,
-                           output_file_path, model_engine.streaming_enabled)
-
-        print_message(f"Audio generated at: {output_file_path}", "debug_openai", "TTS")
-
-        # Handle RVC processing
-        if config.rvc_settings.rvc_enabled:
-            if config.rvc_settings.rvc_char_model_file.lower() in ["disabled", "disable"]:
-                print_message("Pass rvccharacter_voice_gen", "debug_openai", "TTS")
+            if config.debugging.debug_fullttstext:
+                print_message(cleaned_string, component="TTS")
             else:
-                print_message("send to rvc", "debug_openai", "TTS")
-                pth_path = this_dir / "models" / "rvc_voices" / config.rvc_settings.rvc_char_model_file
-                pitch = config.rvc_settings.pitch
-                run_rvc(output_file_path, pth_path, pitch, infer_pipeline)
+                print_message(f"{cleaned_string[:90]}{'...' if len(cleaned_string) > 90 else ''}", component="TTS")
 
-        transcoded_file_path = await transcode_for_openai(output_file_path, response_format)
-        print_message(f"Audio transcoded to: {transcoded_file_path}", "debug_openai", "TTS")
+            await generate_audio(
+                cleaned_string, mapped_voice, "auto", current_model_engine.temperature_set,
+                float(str(current_model_engine.repetitionpenalty_set).replace(',', '.')), speed, current_model_engine.pitch_set,
+                output_file_path, streaming=False
+            )
 
-        response = FileResponse(transcoded_file_path, media_type=f"audio/{response_format}",
-                              filename=f"output.{response_format}")
+            print_message(f"Audio generated at: {output_file_path}", "debug_openai", "TTS")
+
+            # Handle RVC processing
+            if config.rvc_settings.rvc_enabled:
+                if config.rvc_settings.rvc_char_model_file.lower() in ["disabled", "disable"]:
+                    print_message("Pass rvccharacter_voice_gen", "debug_openai", "TTS")
+                else:
+                    print_message("send to rvc", "debug_openai", "TTS")
+                    pth_path = this_dir / "models" / "rvc_voices" / config.rvc_settings.rvc_char_model_file
+                    pitch = config.rvc_settings.pitch
+                    run_rvc(output_file_path, pth_path, pitch, infer_pipeline)
+
+            transcoded_file_path = await transcode_for_openai(output_file_path, response_format)
+            print_message(f"Audio transcoded to: {transcoded_file_path}", "debug_openai", "TTS")
+
+            return FileResponse(transcoded_file_path, media_type=f"audio/{response_format}",
+                                    filename=f"output.{response_format}")
 
     except ValueError as e:
         print_message(f"Value error occurred: {str(e)}", "error", "TTS")
