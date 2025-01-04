@@ -140,7 +140,7 @@ def transcribe_files(model_name: str, use_cpu: bool = False, progress=gr.Progres
 # dictionaries with the values provided as arguments, and save the updated settings back to the JSON file.
 #
 # You do not need to modify the function's logic or any other part of the code.
-def f5tts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
+def f5tts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
     # Load the model_config_data from the JSON file
     with open(os.path.join(this_dir, "model_settings.json"), "r") as f:
         model_config_data = json.load(f)
@@ -155,6 +155,7 @@ def f5tts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, l
     model_config_data["openai_voices"]["shimmer"] = shimmer_gr
     model_config_data["settings"]["lowvram_enabled"] = lowvram_enabled_gr == "Enabled"
     model_config_data["settings"]["deepspeed_enabled"] = deepspeed_enabled_gr == "Enabled"
+    model_config_data["settings"]["streaming_enabled"] = streaming_enabled_gr == "Enabled"
     model_config_data["settings"]["temperature_set"] = temperature_set_gr
     model_config_data["settings"]["repetitionpenalty_set"] = repetitionpenalty_set_gr
     model_config_data["settings"]["pitch_set"] = pitch_set_gr
@@ -192,6 +193,7 @@ def f5tts_model_alltalk_settings(model_config_data):
             with gr.Row():
                 lowvram_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Low VRAM" if model_config_data["model_capabilties"]["lowvram_capable"] else "Low VRAM N/A", value="Enabled" if model_config_data["settings"]["lowvram_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["lowvram_capable"])
                 deepspeed_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="DeepSpeed Activate" if model_config_data["model_capabilties"]["deepspeed_capable"] else "DeepSpeed N/A", value="Enabled" if model_config_data["settings"]["deepspeed_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["deepspeed_capable"])
+                streaming_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Streaming" if model_config_data["model_capabilties"]["streaming_capable"] else "Streaming N/A", value="Enabled" if model_config_data["settings"]["streaming_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["streaming_capable"])
                 temperature_set_gr = gr.Slider(value=float(model_config_data["settings"]["temperature_set"]), minimum=0, maximum=1, step=0.05, label="Temperature" if model_config_data["model_capabilties"]["temperature_capable"] else "Temperature N/A", interactive=model_config_data["model_capabilties"]["temperature_capable"])
                 repetitionpenalty_set_gr = gr.Slider(value=float(model_config_data["settings"]["repetitionpenalty_set"]), minimum=1, maximum=20, step=1, label="Repetition Penalty" if model_config_data["model_capabilties"]["repetitionpenalty_capable"] else "Repetition N/A", interactive=model_config_data["model_capabilties"]["repetitionpenalty_capable"])
                 pitch_set_gr = gr.Slider(value=float(model_config_data["settings"]["pitch_set"]), minimum=-10, maximum=10, step=1, label="Pitch" if model_config_data["model_capabilties"]["pitch_capable"] else "Pitch N/A", interactive=model_config_data["model_capabilties"]["pitch_capable"])
@@ -226,7 +228,7 @@ def f5tts_model_alltalk_settings(model_config_data):
                 with gr.Row():
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")                
-            submit_button.click(f5tts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
+            submit_button.click(f5tts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
         # Do not change this section apart from "TTS Engine Name" value to match your engine name #
