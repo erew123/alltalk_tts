@@ -1147,7 +1147,7 @@ async def openai_tts_generate(request: Request):
 
         await generate_audio(cleaned_string, mapped_voice, "auto", model_engine.temperature_set,
                            model_engine.repetitionpenalty_set, speed, model_engine.pitch_set,
-                           output_file_path, streaming=False)
+                           output_file_path, model_engine.streaming_enabled)
 
         print_message(f"Audio generated at: {output_file_path}", "debug_openai", "TTS")
 
