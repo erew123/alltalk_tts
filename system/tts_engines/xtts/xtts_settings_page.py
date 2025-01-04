@@ -49,7 +49,7 @@ def xtts_voices_file_list():
 #
 # You do not need to modify the function's logic or any other part of the code.
 
-def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
+def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, ash_gr, coral_gr, echo_gr, fable_gr, nova_gr, onyx_gr, sage_gr, shimmer_gr):
     # Load the model_config_data from the JSON file
     with open(os.path.join(this_dir, "model_settings.json"), "r") as f:
         model_config_data = json.load(f)
@@ -58,10 +58,13 @@ def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lo
     model_config_data["settings"]["def_character_voice"] = def_character_voice_gr
     model_config_data["settings"]["def_narrator_voice"] = def_narrator_voice_gr
     model_config_data["openai_voices"]["alloy"] = alloy_gr
+    model_config_data["openai_voices"]["ash"] = ash_gr
+    model_config_data["openai_voices"]["coral"] = coral_gr
     model_config_data["openai_voices"]["echo"] = echo_gr
     model_config_data["openai_voices"]["fable"] = fable_gr
     model_config_data["openai_voices"]["nova"] = nova_gr
     model_config_data["openai_voices"]["onyx"] = onyx_gr
+    model_config_data["openai_voices"]["sage"] = sage_gr
     model_config_data["openai_voices"]["shimmer"] = shimmer_gr
     model_config_data["settings"]["lowvram_enabled"] = lowvram_enabled_gr == "Enabled"
     model_config_data["settings"]["deepspeed_enabled"] = deepspeed_enabled_gr == "Enabled"
@@ -117,12 +120,17 @@ def xtts_model_alltalk_settings(model_config_data):
                     with gr.Group():
                         with gr.Row():
                             alloy_gr = gr.Dropdown(value=model_config_data["openai_voices"]["alloy"], label="Alloy", choices=voice_list, allow_custom_value=True)
+                            ash_gr = gr.Dropdown(value=model_config_data["openai_voices"]["ash"], label="Ash", choices=voice_list, allow_custom_value=True)
+                        with gr.Row():
+                            coral_gr = gr.Dropdown(value=model_config_data["openai_voices"]["coral"], label="Coral", choices=voice_list, allow_custom_value=True)
                             echo_gr = gr.Dropdown(value=model_config_data["openai_voices"]["echo"], label="Echo", choices=voice_list, allow_custom_value=True)
                         with gr.Row():
                             fable_gr = gr.Dropdown(value=model_config_data["openai_voices"]["fable"], label="Fable", choices=voice_list, allow_custom_value=True)
                             nova_gr = gr.Dropdown(value=model_config_data["openai_voices"]["nova"], label="Nova", choices=voice_list, allow_custom_value=True)
                         with gr.Row():
                             onyx_gr = gr.Dropdown(value=model_config_data["openai_voices"]["onyx"], label="Onyx", choices=voice_list, allow_custom_value=True)
+                            sage_gr = gr.Dropdown(value=model_config_data["openai_voices"]["sage"], label="Sage", choices=voice_list, allow_custom_value=True)
+                        with gr.Row():
                             shimmer_gr = gr.Dropdown(value=model_config_data["openai_voices"]["shimmer"], label="Shimmer", choices=voice_list, allow_custom_value=True)
                 with gr.Column():
                     gr.Markdown("### Default Voices")         
@@ -141,7 +149,7 @@ def xtts_model_alltalk_settings(model_config_data):
                 with gr.Row():
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")  
-            submit_button.click(xtts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
+            submit_button.click(xtts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, ash_gr, coral_gr, echo_gr, fable_gr, nova_gr, onyx_gr, sage_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
         # Do not change this section apart from "TTS Engine Name" value to match your engine name #
@@ -288,9 +296,6 @@ def xtts_model_alltalk_settings(model_config_data):
 #
 # After making these changes, this function will create and return the Gradio app for your TTS engine's settings page.
 
-def xtts_at_gradio_settings_page(model_config_data):
-    app = xtts_model_alltalk_settings(model_config_data)
-    return app
 def xtts_at_gradio_settings_page(model_config_data):
     app = xtts_model_alltalk_settings(model_config_data)
     return app

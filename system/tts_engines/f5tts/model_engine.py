@@ -155,10 +155,13 @@ class tts_class:
         self.pitch_set = tts_model_loaded["settings"]["pitch_set"]                                          # What is the currenly set pitch of the model (If it support temp)
         # Gather the OpenAI API Voice Mappings
         self.openai_alloy = tts_model_loaded["openai_voices"]["alloy"]                                      # The TTS engine voice that will be mapped to Open AI Alloy voice
+        self.openai_ash = tts_model_loaded["openai_voices"]["ash"]                                          # The TTS engine voice that will be mapped to Open AI Ash voice
+        self.openai_coral = tts_model_loaded["openai_voices"]["coral"]                                      # The TTS engine voice that will be mapped to Open AI Coral voice
         self.openai_echo = tts_model_loaded["openai_voices"]["echo"]                                        # The TTS engine voice that will be mapped to Open AI Echo voice
         self.openai_fable = tts_model_loaded["openai_voices"]["fable"]                                      # The TTS engine voice that will be mapped to Open AI Fable voice
         self.openai_nova = tts_model_loaded["openai_voices"]["nova"]                                        # The TTS engine voice that will be mapped to Open AI Nova voice
         self.openai_onyx = tts_model_loaded["openai_voices"]["onyx"]                                        # The TTS engine voice that will be mapped to Open AI Onyx voice
+        self.openai_sage = tts_model_loaded["openai_voices"]["sage"]                                        # The TTS engine voice that will be mapped to Open AI Sage voice
         self.openai_shimmer = tts_model_loaded["openai_voices"]["shimmer"]                                  # The TTS engine voice that will be mapped to Open AI Shimmer voice
         ###################################################################
         # DONT CHANGE #  Load params and api_defaults from confignew.json #

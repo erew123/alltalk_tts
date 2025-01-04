@@ -270,10 +270,13 @@ class tts_class:
            
            OpenAI Voice Mappings:
            - self.openai_alloy: Alloy voice mapping
+           - self.openai_ash: Ash voice mapping
+           - self.openai_coral: Coral voice mapping
            - self.openai_echo: Echo voice mapping
            - self.openai_fable: Fable voice mapping
            - self.openai_nova: Nova voice mapping
            - self.openai_onyx: Onyx voice mapping
+           - self.openai_sage: Sage voice mapping
            - self.openai_shimmer: Shimmer voice mapping
         
         Integration Requirements:
@@ -339,11 +342,14 @@ class tts_class:
         
         # DO NOT MODIFY - OpenAI voice mappings from model_settings.json
         self.openai_alloy = model_settings_file["openai_voices"]["alloy"]
+        self.openai_ash = model_settings_file["openai_voices"]["ash"]
+        self.openai_coral = model_settings_file["openai_voices"]["coral"]
         self.openai_echo = model_settings_file["openai_voices"]["echo"]
         self.openai_fable = model_settings_file["openai_voices"]["fable"]
         self.openai_nova = model_settings_file["openai_voices"]["nova"]
         self.openai_onyx = model_settings_file["openai_voices"]["onyx"]
-        self.openai_shimmer = model_settings_file["openai_voices"]["shimmer"]        
+        self.openai_sage = model_settings_file["openai_voices"]["sage"]
+        self.openai_shimmer = model_settings_file["openai_voices"]["shimmer"]
 
         """
         Below is the name of the folder that will be created-used under `/models/{folder}`

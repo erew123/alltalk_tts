@@ -34,10 +34,13 @@
     },
     "openai_voices": {
         "alloy": "enthusiastic_female",
+        "ash": "enthusiastic_female",
+        "coral": "enthusiastic_female",
         "echo": "enthusiastic_female",
         "fable": "enthusiastic_female",
         "nova": "enthusiastic_female",
         "onyx": "enthusiastic_female",
+        "sage": "enthusiastic_female",
         "shimmer": "enthusiastic_female"
     }
 }

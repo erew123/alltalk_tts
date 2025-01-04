@@ -1078,7 +1078,7 @@ class OpenAIInput(BaseModel):
     @classmethod
     def validate_voice(cls, value):
         """Validate that the requested voice is supported by OpenAI TTS."""
-        supported_voices = ["alloy", "echo", "fable", "nova", "onyx", "shimmer"]
+        supported_voices = ["alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"]
         if value not in supported_voices:
             raise ValueError(f"Voice must be one of {supported_voices}")
         return value
@@ -1148,10 +1148,13 @@ async def openai_tts_generate(request: Request):
         cleaned_string = html.unescape(standard_filtering(input_text))
         voice_mapping = {
             "alloy": current_model_engine.openai_alloy,
+            "ash": current_model_engine.openai_ash,
+            "coral": current_model_engine.openai_coral,
             "echo": current_model_engine.openai_echo,
             "fable": current_model_engine.openai_fable,
             "nova": current_model_engine.openai_nova,
             "onyx": current_model_engine.openai_onyx,
+            "sage": current_model_engine.openai_sage,
             "shimmer": current_model_engine.openai_shimmer
         }
 
@@ -1276,10 +1279,13 @@ async def transcode_for_openai(input_file, output_format):
 class VoiceMappings(BaseModel):
     """OpenAI to engine voice mapping configuration."""
     alloy: str
+    ash: str
+    coral: str
     echo: str
     fable: str
     nova: str
     onyx: str
+    sage: str
     shimmer: str
 
 @app.put("/api/openai-voicemap")
@@ -1291,10 +1297,13 @@ async def update_openai_voice_mappings(mappings: VoiceMappings):
         # Update in-memory mappings
         print_message("Updating in-memory voice mappings", "debug_openai", "TTS")
         model_engine.openai_alloy = mappings.alloy
+        model_engine.openai_ash = mappings.ash
+        model_engine.openai_coral = mappings.coral
         model_engine.openai_echo = mappings.echo
         model_engine.openai_fable = mappings.fable
         model_engine.openai_nova = mappings.nova
         model_engine.openai_onyx = mappings.onyx
+        model_engine.openai_sage = mappings.sage
         model_engine.openai_shimmer = mappings.shimmer
 
         # Update settings file

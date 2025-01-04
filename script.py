@@ -2653,6 +2653,7 @@ if gradio_enabled is True:
             if module:
                 # Load the engine's config from its JSON file
                 json_file_path = os.path.join(this_dir, "system", "tts_engines", engine_name, "model_settings.json")
+                print("SILY")
                 try:
                     with open(json_file_path, "r", encoding="utf-8") as config_file:
                         globals()[f"{engine_name}_model_config_data"] = json.load(config_file)

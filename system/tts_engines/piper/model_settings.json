@@ -34,10 +34,13 @@
     },
     "openai_voices": {
         "alloy": "en_US-ljspeech-high.onnx",
+        "ash": "en_US-ljspeech-high.onnx",
+        "coral": "en_US-ljspeech-high.onnx",
         "echo": "en_US-ljspeech-high.onnx",
         "fable": "en_US-ljspeech-high.onnx",
         "nova": "en_US-ljspeech-high.onnx",
         "onyx": "en_US-ljspeech-high.onnx",
+        "sage": "en_US-ljspeech-high.onnx",
         "shimmer": "en_US-ljspeech-high.onnx"
     }
 }

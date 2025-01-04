@@ -272,12 +272,15 @@ class AllTalkHelpContent:
 
     ### OpenAI Voice Mappings
     - Only relevant when using the OpenAI-compatible API endpoint
-    - Maps OpenAI's six standard voices to equivalent voices in the current engine:
+    - Maps OpenAI's nine standard voices to equivalent voices in the current engine:
         - `alloy`
+        - `ash`
+        - `coral`
         - `echo`
         - `fable`
         - `nova`
         - `onyx`
+        - `sage`
         - `shimmer`
     - Essential for maintaining compatibility with OpenAI API calls
     - Each mapping can be customized to any available voice in the current engine
