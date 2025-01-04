@@ -30,9 +30,61 @@ main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up sel
 # in your TTS engine's settings page.
 
 def xtts_voices_file_list():
-    directory = main_dir / "voices"
-    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")]
-    return files
+    """
+    Adapted from `tts_class.voices_file_list`
+
+    Scan and compile a list of available voice samples and latents.
+
+    This function scans multiple directories to find voice samples in different formats:
+    1. Individual WAV files in the main voices directory
+    2. Collections of WAV files in the xtts_multi_voice_sets directory
+    3. Pre-computed voice latents in the xtts_latents directory
+
+    Returns:
+        list: Available voices with appropriate prefixes:
+             - Standard WAV: filename.wav
+             - Voice sets: "voiceset:foldername"
+             - Latents: "latent:filename.json"
+
+    Note: Returns ["No Voices Found"] if no valid voices are detected.
+    """
+    try:
+        voices = []  # List to store all detected voices
+        directory = main_dir / "voices"  # Base directory for voices
+
+        json_latents_dir = directory / "xtts_latents"  # Directory for JSON latents
+        multi_voice_dir = directory / "xtts_multi_voice_sets"  # Directory for multi voice sets
+
+        # Scan for individual WAV files
+        voices.extend(
+            [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")]
+        )
+
+        # Scan for voice sets
+        if os.path.exists(multi_voice_dir):
+            for voice_set in os.listdir(multi_voice_dir):
+                voice_set_path = multi_voice_dir / voice_set
+                if os.path.isdir(voice_set_path):
+                    if any(f.endswith(".wav") for f in os.listdir(voice_set_path)):
+                        voices.append(f"voiceset:{voice_set}")
+
+        # Scan for JSON latents
+        if os.path.exists(json_latents_dir):
+            json_files = [f for f in os.listdir(json_latents_dir) if f.endswith(".json")]
+            for json_file in json_files:
+                voices.append(f"latent:{json_file}")
+
+        # Sort voices by type alphabetically
+        voices.sort(key=lambda x: (x.startswith("voiceset:"), x.startswith("latent:"), x))
+
+        # Return the list of voices or a default message if none found
+        if not voices:
+            return ["No Voices Found"]
+        return voices
+
+    except Exception as e:
+        print(f"Error scanning for voices: {str(e)}")
+        return ["No Voices Found"]
 
 ######################################################
 # REQUIRED CHANGE                                    #
@@ -102,6 +154,7 @@ def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lo
 # settings page, allowing users to configure various options and voice selections.
 
 def xtts_model_alltalk_settings(model_config_data):
+    # This is a copy of voices_file_list
     features_list = model_config_data['model_capabilties']
     voice_list = xtts_voices_file_list()
     with gr.Blocks(title="Xtts TTS", analytics_enabled=False) as app:
