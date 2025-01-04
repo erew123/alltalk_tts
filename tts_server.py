@@ -46,6 +46,19 @@ logging.disable(logging.WARNING)
 
 DetectorFactory.seed = 0  # Ensure deterministic behavior
 
+# Mapping of detected languages to xtts-supported languages
+LANG_FALLBACKS = {
+    "en": "en", "es": "es", "fr": "fr", "de": "de", "it": "it",
+    "pt": "pt", "pl": "pl", "tr": "tr", "ru": "ru", "nl": "nl",
+    "cs": "cs", "ar": "ar", "zh-cn": "zh", "zh-tw": "zh", "ja": "ja",
+    "hu": "hu", "ko": "ko",
+
+    # Additional fallbacks for unsupported languages
+    "uk": "ru",  # Ukrainian → Russian
+    "bg": "ru",  # Bulgarian → Russian
+    "ca": "fr",
+}
+
 ########################################################################################
 # START-UP # Silence RVC warning about torch.nn.utils.weight_norm even though not used #
 ########################################################################################
@@ -2107,16 +2120,25 @@ async def tts_finalize_output(audio_files: List[Path], params: dict) -> Tuple[Pa
 
 def detect_language(text: str) -> str:
     """
-    Detect the language of the given text.
+    Detect the language of the given text and apply a fallback for unsupported languages.
 
     :param text: Text to analyze.
-    :return: Detected language code (e.g., 'en', 'fr').
+    :return: A supported language code (e.g., 'en', 'fr').
     """
     try:
+        # Detect the language of the text
         detected_lang = detect(text)
         print_message(f"Detected language: {detected_lang}", "debug", "LANG_DETECTION")
-        return detected_lang
+
+        # Use the fallback language if the detected one is unsupported
+        fallback_lang = LANG_FALLBACKS.get(detected_lang, "en")  # Default fallback: French
+        if detected_lang != fallback_lang:
+            print_message(f"Language '{detected_lang}' not supported, using fallback '{fallback_lang}'", "warn",
+                          "LANG_FALLBACK")
+
+        return fallback_lang
     except LangDetectException as e:
+        # Handle errors in language detection
         print_message(f"Language detection error: {str(e)}", "error", "LANG_DETECTION")
         raise ValueError("Could not detect language")
 
