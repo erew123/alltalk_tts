@@ -231,7 +231,7 @@ def download_language_pack(lang_code, progress=gr.Progress()):
 # dictionaries with the values provided as arguments, and save the updated settings back to the JSON file.
 #
 # You do not need to modify the function's logic or any other part of the code.
-def vits_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
+def vits_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, ash_gr, coral_gr, echo_gr, fable_gr, nova_gr, onyx_gr, sage_gr, shimmer_gr):
     # Load the model_config_data from the JSON file
     with open(os.path.join(this_dir, "model_settings.json"), "r") as f:
         model_config_data = json.load(f)
@@ -239,13 +239,17 @@ def vits_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lo
     model_config_data["settings"]["def_character_voice"] = def_character_voice_gr
     model_config_data["settings"]["def_narrator_voice"] = def_narrator_voice_gr
     model_config_data["openai_voices"]["alloy"] = alloy_gr
+    model_config_data["openai_voices"]["ash"] = ash_gr
+    model_config_data["openai_voices"]["coral"] = coral_gr
     model_config_data["openai_voices"]["echo"] = echo_gr
     model_config_data["openai_voices"]["fable"] = fable_gr
     model_config_data["openai_voices"]["nova"] = nova_gr
     model_config_data["openai_voices"]["onyx"] = onyx_gr
+    model_config_data["openai_voices"]["sage"] = sage_gr
     model_config_data["openai_voices"]["shimmer"] = shimmer_gr
     model_config_data["settings"]["lowvram_enabled"] = lowvram_enabled_gr == "Enabled"
     model_config_data["settings"]["deepspeed_enabled"] = deepspeed_enabled_gr == "Enabled"
+    model_config_data["settings"]["streaming_enabled"] = streaming_enabled_gr == "Enabled"
     model_config_data["settings"]["temperature_set"] = temperature_set_gr
     model_config_data["settings"]["repetitionpenalty_set"] = repetitionpenalty_set_gr
     model_config_data["settings"]["pitch_set"] = pitch_set_gr
@@ -283,6 +287,7 @@ def vits_model_alltalk_settings(model_config_data):
             with gr.Row():
                 lowvram_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Low VRAM" if model_config_data["model_capabilties"]["lowvram_capable"] else "Low VRAM N/A", value="Enabled" if model_config_data["settings"]["lowvram_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["lowvram_capable"])
                 deepspeed_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="DeepSpeed Activate" if model_config_data["model_capabilties"]["deepspeed_capable"] else "DeepSpeed N/A", value="Enabled" if model_config_data["settings"]["deepspeed_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["deepspeed_capable"])
+                streaming_enabled_gr = gr.Radio(choices={"Enabled": "true", "Disabled": "false"}, label="Streaming" if model_config_data["model_capabilties"]["streaming_capable"] else "Streaming N/A", value="Enabled" if model_config_data["settings"]["streaming_enabled"] else "Disabled", interactive=model_config_data["model_capabilties"]["streaming_capable"])
                 temperature_set_gr = gr.Slider(value=float(model_config_data["settings"]["temperature_set"]), minimum=0, maximum=1, step=0.05, label="Temperature" if model_config_data["model_capabilties"]["temperature_capable"] else "Temperature N/A", interactive=model_config_data["model_capabilties"]["temperature_capable"])
                 repetitionpenalty_set_gr = gr.Slider(value=float(model_config_data["settings"]["repetitionpenalty_set"]), minimum=1, maximum=20, step=1, label="Repetition Penalty" if model_config_data["model_capabilties"]["repetitionpenalty_capable"] else "Repetition N/A", interactive=model_config_data["model_capabilties"]["repetitionpenalty_capable"])
                 pitch_set_gr = gr.Slider(value=float(model_config_data["settings"]["pitch_set"]), minimum=-10, maximum=10, step=1, label="Pitch" if model_config_data["model_capabilties"]["pitch_capable"] else "Pitch N/A", interactive=model_config_data["model_capabilties"]["pitch_capable"])
@@ -293,12 +298,17 @@ def vits_model_alltalk_settings(model_config_data):
                     with gr.Group():
                         with gr.Row():
                             alloy_gr = gr.Dropdown(value=model_config_data["openai_voices"]["alloy"], label="Alloy", choices=voice_list, allow_custom_value=True)
+                            ash_gr = gr.Dropdown(value=model_config_data["openai_voices"]["ash"], label="Ash", choices=voice_list, allow_custom_value=True)
+                        with gr.Row():
+                            coral_gr = gr.Dropdown(value=model_config_data["openai_voices"]["coral"], label="Coral", choices=voice_list, allow_custom_value=True)
                             echo_gr = gr.Dropdown(value=model_config_data["openai_voices"]["echo"], label="Echo", choices=voice_list, allow_custom_value=True)
                         with gr.Row():
                             fable_gr = gr.Dropdown(value=model_config_data["openai_voices"]["fable"], label="Fable", choices=voice_list, allow_custom_value=True)
                             nova_gr = gr.Dropdown(value=model_config_data["openai_voices"]["nova"], label="Nova", choices=voice_list, allow_custom_value=True)
                         with gr.Row():
                             onyx_gr = gr.Dropdown(value=model_config_data["openai_voices"]["onyx"], label="Onyx", choices=voice_list, allow_custom_value=True)
+                            sage_gr = gr.Dropdown(value=model_config_data["openai_voices"]["sage"], label="Sage", choices=voice_list, allow_custom_value=True)
+                        with gr.Row():
                             shimmer_gr = gr.Dropdown(value=model_config_data["openai_voices"]["shimmer"], label="Shimmer", choices=voice_list, allow_custom_value=True)
                 with gr.Column():
                     gr.Markdown("### Default Voices")         
@@ -317,7 +327,7 @@ def vits_model_alltalk_settings(model_config_data):
                 with gr.Row():
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")                 
-            submit_button.click(vits_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
+            submit_button.click(vits_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, streaming_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, ash_gr, coral_gr, echo_gr, fable_gr, nova_gr, onyx_gr, sage_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
         # Do not change this section apart from "TTS Engine Name" value to match your engine name #

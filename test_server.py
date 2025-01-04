@@ -729,7 +729,7 @@ class AllTalkTester:
         self.logger.info("Testing OpenAI compatible endpoint")
         self.logger.info(f"Testing OpenAI generation with text: {text}")
         
-        test_voices = ["alloy", "echo", "fable", "nova", "onyx", "shimmer"]
+        test_voices = ["alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"]
         test_formats = ["wav", "mp3", "opus", "aac"]
         
         for voice in test_voices[:2]:  # Test first two voices only
