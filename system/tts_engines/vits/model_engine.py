@@ -638,7 +638,7 @@ class tts_class:
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 
         generate_end_time = time.time()  # Record the end time to generate TTS
         generate_elapsed_time = generate_end_time - generate_start_time
-        print(f"[{self.branding}GEN] \033[94mTTS Generate: \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{self.lowvram_enabled} \033[94mDeepSpeed: \033[33m{self.deepspeed_enabled}\033[0m")
+        print(f"[{self.branding}GEN] \033[94mTTS Generate: \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{self.lowvram_enabled} \033[94mDeepSpeed: \033[33m{self.deepspeed_enabled} \033[94mStreaming: \033[33m{self.streaming_enabled}\033[0m")
         if self.lowvram_enabled and self.device == "cuda" and self.tts_narrator_generatingtts == False:
             await self.handle_lowvram_change()
         self.tts_generating_lock = False # Unlock the TTS generation queue to allow TTS generation requests to come in again.

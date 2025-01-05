@@ -24,6 +24,7 @@
         "def_character_voice": "en_US-ljspeech-high.onnx",
         "def_narrator_voice": "en_US-ljspeech-high.onnx",
         "deepspeed_enabled": false,
+        "streaming_enabled": false,
         "engine_installed": true,
         "generationspeed_set": 1,
         "lowvram_enabled": false,
