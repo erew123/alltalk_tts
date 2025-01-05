@@ -44,9 +44,8 @@ from langdetect.lang_detect_exception import LangDetectException
 from config import AlltalkConfig, AlltalkTTSEnginesConfig
 logging.disable(logging.WARNING)
 
-DetectorFactory.seed = 0  # Ensure deterministic behavior
+DetectorFactory.seed = 0  # Ensure deterministic behavior of language detector
 
-# Mapping of detected languages to xtts-supported languages
 LANG_FALLBACKS = {
     "en": "en", "es": "es", "fr": "fr", "de": "de", "it": "it",
     "pt": "pt", "pl": "pl", "tr": "tr", "ru": "ru", "nl": "nl",
