@@ -735,6 +735,12 @@ class tts_class:
             self.print_message("Scanning for individual voice files", message_type="debug_tts")
             voices.extend([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) 
                         and f.endswith(".wav")])
+
+            # Valid language codes
+            language_codes = {
+                "en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs",
+                "ar", "zh-cn", "ja", "hu", "ko", "hi"
+            }
             
             # Scan for voice sets
             if os.path.exists(multi_voice_dir):
@@ -745,7 +751,20 @@ class tts_class:
                         if any(f.endswith(".wav") for f in os.listdir(voice_set_path)):
                             voices.append(f"voiceset:{voice_set}")
                             self.print_message(f"Added voice set: {voice_set}", message_type="debug_tts_variables")
-                
+                            continue  # Skip checking subdirectories if .wav files are found at root
+
+                        # Check for .wav files in valid language subdirectories
+                        language_folders = [
+                            sub for sub in os.listdir(voice_set_path)
+                            if os.path.isdir(voice_set_path / sub) and sub in language_codes
+                        ]
+                        if any(
+                                any(f.endswith(".wav") for f in os.listdir(voice_set_path / lang))
+                                for lang in language_folders
+                        ):
+                            voices.append(f"voiceset:{voice_set}")
+                            self.print_message(f"Added voice set: {voice_set}", message_type="debug_tts_variables")
+
             # Scan for JSON latents
             if not self.current_model_loaded.startswith("apitts"): # APITTS doesnt support latents
                 if os.path.exists(json_latents_dir):
@@ -973,32 +992,55 @@ class tts_class:
         self.print_message(f"\033[94mModel Loadtime: \033[93m{generate_elapsed_time:.2f}\033[94m seconds\033[0m")
         return True
 
-    async def prepare_voice_inputs(self, voice):
-        """Prepares latents and embeddings based on the voice input."""
+    async def prepare_voice_inputs(self, voice, language):
+        """Prepares latents and embeddings based on the voice input and language parameter."""
         gpt_cond_latent = None
         speaker_embedding = None
 
+        # Handle latent voices
         if voice.startswith('latent:'):
             if self.current_model_loaded.startswith("xtts"):
                 gpt_cond_latent, speaker_embedding = self._load_latents(voice)
 
+        # Handle voiceset
         elif voice.startswith('voiceset:'):
             voice_set = voice.replace("voiceset:", "")
             voice_set_path = os.path.join(self.main_dir, "voices", "xtts_multi_voice_sets", voice_set)
             self.print_message(f"Processing voice set from: {voice_set_path}", message_type="debug_tts")
 
-            wavs_files = glob.glob(os.path.join(voice_set_path, "*.wav"))
+            wavs_files = []
+
+            # If a language is specified, try to find WAV files in the language subfolder
+            if language:
+                language_path = os.path.join(voice_set_path, language)
+                if os.path.exists(language_path) and os.path.isdir(language_path):
+                    wavs_files = glob.glob(os.path.join(language_path, "*.wav"))
+                    # If there are more than 5 files, pick 5 randomly
+                    if len(wavs_files) > 5:
+                        wavs_files = random.sample(wavs_files, 5)
+
+            # Fallback: Collect files from the root and all subfolders if the language folder is missing or empty
+            if not wavs_files:
+                all_wav_files = glob.glob(os.path.join(voice_set_path, "*.wav"))  # Files at the root
+                for subdir in os.listdir(voice_set_path):
+                    subdir_path = os.path.join(voice_set_path, subdir)
+                    if os.path.isdir(subdir_path):
+                        all_wav_files.extend(glob.glob(os.path.join(subdir_path, "*.wav")))
+
+                # Select up to 5 random files from the combined list
+                if all_wav_files:
+                    wavs_files = random.sample(all_wav_files, min(len(all_wav_files), 5))
+
+            # Raise an error if no WAV files are found at all
             if not wavs_files:
                 self.print_message(f"No WAV files found in voice set: {voice_set}", message_type="error")
                 raise HTTPException(status_code=400, detail=f"No WAV files found in voice set: {voice_set}")
 
-            if len(wavs_files) > 5:
-                wavs_files = random.sample(wavs_files, 5)
-                self.print_message(f"Using 5 random samples from voice set", message_type="debug_tts")
-
+            # Generate conditioning latents for the WAV files
             if self.current_model_loaded.startswith("xtts"):
                 gpt_cond_latent, speaker_embedding = self._generate_conditioning_latents(wavs_files)
 
+        # Handle single voice files
         else:
             normalized_path = os.path.normpath(os.path.join(self.main_dir, "voices", voice))
             wavs_files = [normalized_path]
@@ -1061,7 +1103,7 @@ class tts_class:
 
         try:
             # Preparation of latents and embeddings
-            gpt_cond_latent, speaker_embedding = await self.prepare_voice_inputs(voice)
+            gpt_cond_latent, speaker_embedding = await self.prepare_voice_inputs(voice, language)
 
             common_args = {
                 "text": text,

@@ -60,12 +60,30 @@ def xtts_voices_file_list():
             [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")]
         )
 
+        # Valid language codes
+        language_codes = {
+            "en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs",
+            "ar", "zh-cn", "ja", "hu", "ko", "hi"
+        }
+
         # Scan for voice sets
         if os.path.exists(multi_voice_dir):
             for voice_set in os.listdir(multi_voice_dir):
                 voice_set_path = multi_voice_dir / voice_set
                 if os.path.isdir(voice_set_path):
                     if any(f.endswith(".wav") for f in os.listdir(voice_set_path)):
+                        voices.append(f"voiceset:{voice_set}")
+                        continue  # Skip checking subdirectories if .wav files are found at root
+
+                    # Check for .wav files in valid language subdirectories
+                    language_folders = [
+                        sub for sub in os.listdir(voice_set_path)
+                        if os.path.isdir(voice_set_path / sub) and sub in language_codes
+                    ]
+                    if any(
+                            any(f.endswith(".wav") for f in os.listdir(voice_set_path / lang))
+                            for lang in language_folders
+                    ):
                         voices.append(f"voiceset:{voice_set}")
 
         # Scan for JSON latents
