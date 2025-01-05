@@ -49,7 +49,7 @@ DetectorFactory.seed = 0  # Ensure deterministic behavior of language detector
 LANG_FALLBACKS = {
     "en": "en", "es": "es", "fr": "fr", "de": "de", "it": "it",
     "pt": "pt", "pl": "pl", "tr": "tr", "ru": "ru", "nl": "nl",
-    "cs": "cs", "ar": "ar", "zh-cn": "zh", "zh-tw": "zh", "ja": "ja",
+    "cs": "cs", "ar": "ar", "zh": "zh", "zh-cn": "zh-cn", "ja": "ja",
     "hu": "hu", "ko": "ko",
 
     # Additional fallbacks for unsupported languages
