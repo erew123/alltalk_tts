@@ -24,6 +24,7 @@
         "def_character_voice": "female_01.wav",
         "def_narrator_voice": "female_01.wav",
         "deepspeed_enabled": false,
+        "streaming_enabled": false,
         "engine_installed": true,
         "generationspeed_set": 0.9,
         "lowvram_enabled": true,
@@ -33,10 +34,13 @@
     },
     "openai_voices": {
         "alloy": "female_01.wav",
+        "ash": "female_01.wav",
+        "coral": "female_01.wav",
         "echo": "female_01.wav",
         "fable": "female_01.wav",
         "nova": "female_01.wav",
         "onyx": "female_01.wav",
-        "shimmer": "female_01.wavf"
+        "sage": "female_01.wav",
+        "shimmer": "female_01.wav"
     }
 }

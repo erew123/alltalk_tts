@@ -237,6 +237,11 @@ class AllTalkHelpContent:
         - Accelerates TTS generation using optimized inference
         - Only available for engines and models that support DeepSpeed
         - Requires NVIDIA GPU with CUDA support
+        
+    - **Stream Response Capability**
+        - Enables real-time streaming of generated speech output
+        - Reduces latency for faster feedback during synthesis
+        - Only available for engines and models that support Streaming
 
     - **Temperature Control**
         - Adjusts the variability in speech generation
@@ -267,12 +272,15 @@ class AllTalkHelpContent:
 
     ### OpenAI Voice Mappings
     - Only relevant when using the OpenAI-compatible API endpoint
-    - Maps OpenAI's six standard voices to equivalent voices in the current engine:
+    - Maps OpenAI's nine standard voices to equivalent voices in the current engine:
         - `alloy`
+        - `ash`
+        - `coral`
         - `echo`
         - `fable`
         - `nova`
         - `onyx`
+        - `sage`
         - `shimmer`
     - Essential for maintaining compatibility with OpenAI API calls
     - Each mapping can be customized to any available voice in the current engine
@@ -310,6 +318,11 @@ class AllTalkHelpContent:
         - Requires NVIDIA GPU with CUDA support
         - 2-3x speed improvement in generation
         - Recommended when available
+        
+    - **Streaming Support**
+        - Enables real-time streaming of generated speech output
+        - Reduces latency for faster feedback during synthesis
+        - Only available for engines and models that support Streaming
 
     - **Multi-Language Support**
         - Clone voices across multiple languages
