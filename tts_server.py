@@ -2127,18 +2127,18 @@ def detect_language(text: str) -> str:
     try:
         # Detect the language of the text
         detected_lang = detect(text)
-        print_message(f"Detected language: {detected_lang}", "debug", "LANG_DETECTION")
+        print_message(f"Detected language: {detected_lang}",
+                      message_type="debug_tts")
 
         # Use the fallback language if the detected one is unsupported
         fallback_lang = LANG_FALLBACKS.get(detected_lang, "en")  # Default fallback: French
         if detected_lang != fallback_lang:
-            print_message(f"Language '{detected_lang}' not supported, using fallback '{fallback_lang}'", "warn",
-                          "LANG_FALLBACK")
+            print_message(f"Language '{detected_lang}' not supported, using fallback '{fallback_lang}'", message_type="debug_tts")
 
         return fallback_lang
     except LangDetectException as e:
         # Handle errors in language detection
-        print_message(f"Language detection error: {str(e)}", "error", "LANG_DETECTION")
+        print_message(f"Language detection error: {str(e)}", message_type="debug_tts")
         raise ValueError("Could not detect language")
 
 @app.post("/api/tts-generate", response_class=JSONResponse)
