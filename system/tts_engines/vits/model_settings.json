@@ -24,6 +24,7 @@
         "def_character_voice": "p225",
         "def_narrator_voice": "p226",
         "deepspeed_enabled": false,
+        "streaming_enabled": false,
         "engine_installed": true,
         "generationspeed_set": 1,
         "lowvram_enabled": true,
@@ -33,10 +34,13 @@
     },
     "openai_voices": {
         "alloy": "p225",
+        "ash": "p225",
+        "coral": "p225",
         "echo": "p225",
         "fable": "p225",
         "nova": "p225",
         "onyx": "p225",
+        "sage": "p225",
         "shimmer": "p225"
     }
 }

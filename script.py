@@ -3309,6 +3309,7 @@ if gradio_enabled is True:
                         gen_lang = gr.Dropdown(
                             value=config.api_def.api_language,
                             choices=[
+                                "auto",
                                 "ar",
                                 "zh",
                                 "cs",
