@@ -947,7 +947,6 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
 
     # Streaming mode
     if streaming:
-        print_message("Streaming mode enabled", "debug", "TTS")
         response = model_engine.generate_tts(
             text, voice, language, temperature, repetition_penalty, speed, pitch, output_file=None, streaming=True
         )
@@ -963,7 +962,6 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
         return stream_audio()
 
     # Non-streaming mode
-    print_message("Non-streaming mode enabled", "debug", "TTS")
     response = model_engine.generate_tts(
         text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False
     )
