@@ -8,7 +8,7 @@ importlib_metadata>=7.1.0
 inputimeout>=1.0.4
 Jinja2>=3.1.0
 librosa>=0.10.2.post1
-local_attention>=1.9.0
+local_attention==1.9.10
 onnxruntime-gpu>=1.18.0
 pydantic>=2.7.0
 python-Levenshtein>=0.25.1
