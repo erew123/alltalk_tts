@@ -1,5 +1,5 @@
 coqui-tts==0.24.3
-filelock>=3.16.1
+filelock>=3.13.4
 fuzzywuzzy>=0.18.0
 ffmpeg-python>=0.2.0
 gradio==4.44.1
@@ -7,7 +7,7 @@ importlib_metadata>=7.2.1
 inputimeout>=1.0.4
 Jinja2>=3.1.4
 librosa>=0.10.2.post1
-local_attention>=1.9.0
+local_attention==1.9.10
 openai-whisper
 onnxruntime-gpu>=1.18.1
 pydantic>=2.8.2
