@@ -3389,6 +3389,16 @@ def create_refresh_button_next(
         outputs=refresh_components)
     return refresh_button
 
+def str2bool(value):
+    if isinstance(value, bool):
+        return value
+    if value.lower() in ('true', '1', 'yes', 'y'):
+        return True
+    elif value.lower() in ('false', '0', 'no', 'n'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
+
 
 if __name__ == "__main__":
     # Register the signal handler
@@ -3429,6 +3439,50 @@ if __name__ == "__main__":
         type=int,
         help="Max permitted audio size in seconds. Default: 11",
         default=11,
+    )
+    parser.add_argument(
+        "--api",
+        type=str2bool,
+        nargs="?",
+        const=True,
+        default=False,
+        help="Enable api in Gradio",
+    )
+    parser.add_argument(
+        "--inbrowser",
+        type=str2bool,
+        nargs="?",
+        const=True,
+        default=True,
+        help="Automatically open Gradio in Browser or not",
+    )
+    parser.add_argument(
+        "--share",
+        type=str2bool,
+        nargs="?",
+        const=True,
+        default=False,
+        help="Gradio share value",
+    )
+    parser.add_argument(
+        "--debug",
+        type=str2bool,
+        nargs="?",
+        const=True,
+        default=False,
+        help="Enables or disables debug mode in Gradio",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=7052,
+        help="Gradio server port",
+    )
+    parser.add_argument(
+        "--server_name",
+        type=str,
+        default="127.0.0.1",
+        help="Gradio server host",
     )
 
     args = parser.parse_args()
@@ -4800,10 +4854,10 @@ if __name__ == "__main__":
                 None)
 
     demo.queue().launch(
-        show_api=False,
-        inbrowser=True,
-        share=False,
-        debug=False,
-        server_port=7052,
-        server_name="127.0.0.1",
+        show_api=args.api,
+        inbrowser=args.inbrowser,
+        share=args.share,
+        debug=args.debug,
+        server_port=args.port,
+        server_name=args.server_name,
     )
