@@ -493,6 +493,7 @@ if errorlevel 1 (
 
 echo ** Requirements file **
 pip install -r system\requirements\requirements_standalone.txt
+pip install -r system\requirements\requirements_llasa.txt
 echo.
 
 :update_gradio

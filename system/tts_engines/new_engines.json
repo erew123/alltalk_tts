@@ -11,6 +11,10 @@
         {
             "name": "f5tts",
             "selected_model": "f5tts - f5tts_v1"
+        },
+        {
+            "name": "llasa",
+            "selected_model": "llasa - llasa-3b"
         }
     ]
 }
