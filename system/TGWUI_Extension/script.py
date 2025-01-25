@@ -708,6 +708,13 @@ def send_and_generate(
 def output_modifier(string, state):
     """Modifies TGWUI output to include TTS audio"""
     debug_func_entry()
+    
+    # Input validation
+    if string is None:
+        print_func("Error: Received no text input from TGWUI so cannot generate TTS.", message_type="error")
+        print_func(f"Input text first 100 char's: {string[:100]}...", message_type="error")
+        return string    
+    
     if not mode_manager.config["tgwui"]["tgwui_activate_tts"]:
         return string
 
@@ -722,7 +729,9 @@ def output_modifier(string, state):
     img_info = ""
     cleaned_text, img_info = tgwui_extract_and_remove_images(string)
     if cleaned_text is None:
-        return
+        print_func("Error: Image processing resulted in no text to generate TTS", message_type="error")
+        print_func(f"Input text first 100 char's: {cleaned_text[:100]}...", message_type="error")
+        return string    
 
     # Get current settings
     language_code = languages.get(mode_manager.config["tgwui"]["tgwui_language"])
@@ -796,6 +805,11 @@ def output_modifier(string, state):
 
                 if mode_manager.config["tgwui"]["tgwui_show_text"]:
                     string += tgwui_reinsert_images(cleaned_text, img_info)
+
+                if string is None:
+                    print_func("Error: Final processed text is None after image reinsertion", message_type="error")
+                    print_func(f"Input text first 100 char's: {string[:100]}...", message_type="error")
+                    return cleaned_text
 
                 shared.processing_message = "*Is typing...*"
                 return string
