@@ -765,8 +765,7 @@ def output_modifier(string, state):
         try:
             output_file = (state["character_menu"] if "character_menu" in state else str("TTSOUT_"))
             output_file = (state["character_menu"] if "character_menu" in state and state["character_menu"] is not None else "TTSOUT_")
-            # Ensure the file name matches the allowed pattern of AllTalk
-            output_file = re.sub(r"[^a-zA-Z0-9_]", "", output_file) or "TTSOUT_"  # Fallback if empty
+            output_file = re.sub(r'[^a-zA-Z0-9_]', '', output_file.replace(" ", "_")) or "TTSOUT_"
 
             generate_response, status_message = send_and_generate(
                 cleaned_text,
