@@ -652,7 +652,7 @@ def send_and_generate(
         return streaming_url, str("TTS Streaming Audio Generated")
 
     data = {
-        "text_input": gen_text,
+        "text_input": gen_text[0] if isinstance(gen_text, tuple) else gen_text, 
         "text_filtering": gen_filter,
         "character_voice_gen": gen_character_voice,
         "rvccharacter_voice_gen": gen_rvccharacter_voice,
@@ -718,6 +718,9 @@ def output_modifier(string, state):
     if not mode_manager.config["tgwui"]["tgwui_activate_tts"]:
         return string
 
+    # Store original string before any processing
+    original_string = string
+
     if mode_manager.debug_tgwui:
         print_func(
             "Processing text for TTS generation",
@@ -725,9 +728,8 @@ def output_modifier(string, state):
             debug_type="output_modifier",
         )
 
-    # Strip out Images
-    img_info = ""
-    cleaned_text, img_info = tgwui_extract_and_remove_images(string)
+    # Strip out Images so only TTS is sent to the TTS engine
+    cleaned_text = tgwui_extract_and_remove_images(string)
     if cleaned_text is None:
         print_func("Error: Image processing resulted in no text to generate TTS", message_type="error")
         print_func(f"Input text first 100 char's: {cleaned_text[:100]}...", message_type="error")
@@ -765,7 +767,7 @@ def output_modifier(string, state):
         try:
             output_file = (state["character_menu"] if "character_menu" in state else str("TTSOUT_"))
             output_file = (state["character_menu"] if "character_menu" in state and state["character_menu"] is not None else "TTSOUT_")
-            output_file = re.sub(r'[^a-zA-Z0-9_]', '', output_file.replace(" ", "_")) or "TTSOUT_"
+            output_file = sanitize_windows_filename(output_file) # Ensure filenames dont hit any Windows file name limits
 
             generate_response, status_message = send_and_generate(
                 cleaned_text,
@@ -802,12 +804,12 @@ def output_modifier(string, state):
                 )
 
                 if mode_manager.config["tgwui"]["tgwui_show_text"]:
-                    string += tgwui_reinsert_images(cleaned_text, img_info)
+                    string += f'\n\n{original_string}'  # Use original_string
 
                 if string is None:
                     print_func("Error: Final processed text is None after image reinsertion", message_type="error")
                     print_func(f"Input text first 100 char's: {string[:100]}...", message_type="error")
-                    return cleaned_text
+                    return string
 
                 shared.processing_message = "*Is typing...*"
                 return string
@@ -825,6 +827,44 @@ def output_modifier(string, state):
         )
         return
 
+img_pattern = r'<img[^>]*src\s*=\s*["\'][^"\'>]+["\'][^>]*>'
+
+def tgwui_extract_and_remove_images(text):
+    """Extracts and removes image tags from text for clean TTS processing"""
+    debug_func_entry()
+    cleaned_text = re.sub(img_pattern, "", text)
+
+    if mode_manager.debug_tgwui:
+        print_func(
+            f"Found {len(re.findall(img_pattern, text))} images in text",
+            message_type="debug",
+            debug_type="extract_images",
+        )
+
+    return cleaned_text  # Just return the cleaned text
+
+def sanitize_windows_filename(original_name):
+    # First conversion
+    filename = original_name.replace(" ", "_")
+    # Remove invalid characters
+    filename = re.sub(r'[^a-zA-Z0-9_]', '', filename)
+    
+    # Check for Windows reserved names
+    reserved = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 
+               'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 
+               'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']
+    
+    if filename.upper() in reserved:
+        filename = f"_{filename}"
+    
+    # Use TTSOUT_ if empty
+    filename = filename or "TTSOUT_"
+    
+    # Print if changes were made
+    if original_name != filename:
+        print_func(f"Character name '{original_name}' contained special characters - sanitized to '{filename}'", message_type="warning")
+    
+    return filename
 
 def voice_preview(string):
     """Generates a preview of the selected voice settings"""
@@ -878,34 +918,6 @@ def voice_preview(string):
         return f'<audio src="{generate_response}?{int(time.time())}" controls {autoplay}></audio>'
     else:
         return f"[{mode_manager.branding}Server] Audio generation failed. Status code:\n{status_message}"
-
-
-img_pattern = r'<img[^>]*src\s*=\s*["\'][^"\'>]+["\'][^>]*>'
-
-
-def tgwui_extract_and_remove_images(text):
-    """Extracts and removes image tags from text for clean TTS processing"""
-    debug_func_entry()
-    img_matches = re.findall(img_pattern, text)
-    img_info = "\n".join(img_matches)
-    cleaned_text = re.sub(img_pattern, "", text)
-
-    if mode_manager.debug_tgwui:
-        print_func(
-            f"Found {len(img_matches)} images in text",
-            message_type="debug",
-            debug_type="extract_images",
-        )
-
-    return cleaned_text, img_info
-
-
-def tgwui_reinsert_images(text, img_info):
-    """Reinserts the previously extracted image data back into the text"""
-    debug_func_entry()
-    if img_info:  # Check if there are images to reinsert
-        text += f"\n\n{img_info}"
-    return text
 
 
 ################################################################
