@@ -2,5 +2,6 @@
     "fcpe.pt": "https://huggingface.co/erew123/atrvc/resolve/main/fcpe.pt?download=true",
     "hubert_base.pt": "https://huggingface.co/erew123/atrvc/resolve/main/hubert_base.pt?download=true",
     "rmvpe.onnx": "https://huggingface.co/erew123/atrvc/resolve/main/rmvpe.onnx?download=true",
+    "contentvec_base.pt": "https://huggingface.co/erew123/atrvc/resolve/main/contentvec_base.pt?download=true",
     "rmvpe.pt": "https://huggingface.co/erew123/atrvc/resolve/main/rmvpe.pt?download=true"
 }
