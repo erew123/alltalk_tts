@@ -41,7 +41,7 @@ COPY docker/conda/build/environment-*.yml environment.yml
 RUN <<EOR
     RESULT=$( { conda env create -f environment.yml ; } 2>&1 )
 
-    if echo $RESULT | grep -izq error ; then
+    if [ ! -f /environment-cu-${CUDA_VERSION}-cp-${PYTHON_VERSION}.yml] ; then
       echo "Failed to install conda dependencies: $RESULT"
       exit 1
     fi
@@ -129,9 +129,9 @@ COPY . .
 # Create script to execute firstrun.py and run it:
 ##############################################################################
 RUN echo $'#!/usr/bin/env bash \n\
-source ~/.bashrc \n\
-conda activate alltalk \n\
-python ./system/config/firstrun.py $@' > ./start_firstrun.sh
+  source ~/.bashrc \n\
+  conda activate alltalk \n\
+  python ./system/config/firstrun.py $@' > ./start_firstrun.sh
 
 RUN chmod +x start_firstrun.sh
 RUN ./start_firstrun.sh --tts_model $TTS_MODEL
