@@ -54,7 +54,7 @@ RUN <<EOR
       -c anaconda \
       -c nvidia ; } 2>&1 )
 
-    if echo $RESULT | grep -izq error ; then
+    if [ ! -f /environment-cu-${CUDA_VERSION}-cp-${PYTHON_VERSION}.yml] ; then
       echo "Failed to install conda dependencies: $RESULT"
       exit 1
     fi
