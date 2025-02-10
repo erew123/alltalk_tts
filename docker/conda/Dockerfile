@@ -54,7 +54,7 @@ RUN <<EOR
       -c anaconda \
       -c nvidia ; } 2>&1 )
 
-    if echo $RESULT | grep -izq error ; then
+    if [ $? -ne 0 ] ; then
       echo "Failed to install conda dependencies: $RESULT"
       exit 1
     fi
