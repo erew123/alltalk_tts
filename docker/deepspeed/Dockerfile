@@ -57,7 +57,11 @@ RUN <<EOR
 
   pip install \
       deepspeed-kernels \
-      scikit-learn
+      scikit-learn \
+      torch \
+      torchvision \
+      torchaudio \
+      libaio
 EOR
 
 
