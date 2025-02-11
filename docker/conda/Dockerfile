@@ -43,11 +43,14 @@ RUN <<EOR
       gxx_linux-64 \
       pytorch \
       pytorch-cuda=${CUDA_SHORT_VERSION} \
+      torchvision \
+      torchaudio \
       nvidia/label/cuda-${CUDA_SHORT_VERSION}.0::cuda-toolkit \
       faiss-gpu=1.9.0 \
       libaio \
       conda-forge::ffmpeg=7.1.0 \
       conda-forge::portaudio=19.7.0 \
+      -c pytorch
       -c anaconda \
       -c nvidia ; } 2>&1 )
 
