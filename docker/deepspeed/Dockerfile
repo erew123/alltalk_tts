@@ -40,7 +40,7 @@ COPY build/environment-*.yml environment.yml
 RUN <<EOR
     RESULT=$( { conda env create -f environment.yml ; } 2>&1 )
 
-    if echo $RESULT | grep -izq error ; then
+    if [ $? -ne 0 ] ; then
       echo "Failed to install conda dependencies: $RESULT"
       exit 1
     fi
