@@ -36,7 +36,7 @@ The Docker image currently works on Windows and Linux, optionally supporting NVI
 4. Download CUDA toolkit keyring: `wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.1-1_all.deb`
 5. Install keyring: `sudo dpkg -i cuda-keyring_1.1-1_all.deb`
 6. Update package list: `sudo apt-get update`
-7. Install CUDA toolkit: `sudo apt-get -y install cuda-toolkit-12-4`
+7. Install CUDA toolkit: `sudo apt-get -y install cuda-toolkit-12-6`
 8. Install Docker Desktop using WSL2 as the backend
 9. Restart
 10. If you wish to monitor the terminal remotely via SSH, follow [this guide](https://www.hanselman.com/blog/how-to-ssh-into-wsl2-on-windows-10-from-an-external-machine).

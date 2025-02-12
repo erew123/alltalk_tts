@@ -29,6 +29,12 @@ while [ "$#" -gt 0 ]; do
       DOCKER_TAG="$2"
       shift
       ;;
+    --github-repository)
+      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
+        GITHUB_REPOSITORY="$2"
+        shift
+      fi
+      ;;
     *)
       # Allow to pass arbitrary arguments to docker as well to be flexible:
       ADDITIONAL_ARGS+=( $1 )
@@ -65,4 +71,4 @@ docker run \
   --name alltalk \
  "${DOCKER_ARGS[@]}" \
  "${ADDITIONAL_ARGS[@]}" \
-  alltalk_beta:${DOCKER_TAG} &> /dev/stdout
+  ${GITHUB_REPOSITORY}alltalk_beta:${DOCKER_TAG} &> /dev/stdout

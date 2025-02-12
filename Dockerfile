@@ -1,53 +1,18 @@
-FROM continuumio/miniconda3:24.7.1-0
+ARG GITHUB_REPOSITORY
+FROM ${GITHUB_REPOSITORY}alltalk_environment:latest
 
 # Argument to choose the model: piper, vits, xtts
 ARG TTS_MODEL="xtts"
 ENV TTS_MODEL=$TTS_MODEL
 
-ARG ALLTALK_DIR=/opt/alltalk
+ARG DEEPSPEED_VERSION=0.16.2
+ENV DEEPSPEED_VERSION=$DEEPSPEED_VERSION
 
-SHELL ["/bin/bash", "-l", "-c"]
-ENV SHELL=/bin/bash
-ENV HOST=0.0.0.0
-ENV DEBIAN_FRONTEND=noninteractive
-ENV CUDA_DOCKER_ARCH=all
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV CONDA_AUTO_UPDATE_CONDA="false"
+ARG ALLTALK_DIR=/opt/alltalk
 
 ENV GRADIO_SERVER_NAME="0.0.0.0"
 
-##############################################################################
-# Installation/Basic Utilities
-##############################################################################
-RUN <<EOR
-    apt-get update
-    apt-get upgrade -y
-    apt-get install --no-install-recommends -y \
-      espeak-ng \
-      curl \
-      wget \
-      jq \
-      vim
-
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-EOR
-
 WORKDIR ${ALLTALK_DIR}
-
-##############################################################################
-# Create a conda environment and install dependencies:
-##############################################################################
-COPY docker/conda/build/environment-*.yml environment.yml
-RUN <<EOR
-    RESULT=$( { conda env create -f environment.yml ; } 2>&1 )
-
-    if [ $? -ne 0 ] ; then
-      echo "Failed to install conda dependencies: $RESULT"
-      exit 1
-    fi
-
-    conda clean -a && pip cache purge
-EOR
 
 ##############################################################################
 # Install python dependencies (cannot use --no-deps because requirements are not complete)
@@ -59,7 +24,7 @@ ENV PIP_CACHE_DIR=${ALLTALK_DIR}/pip_cache
 RUN <<EOR
     conda activate alltalk
 
-    mkdir ${ALLTALK_DIR}k/pip_cache
+    mkdir ${ALLTALK_DIR}/pip_cache
     pip install --no-cache-dir --cache-dir=${ALLTALK_DIR}/pip_cache -r system/requirements/requirements_standalone.txt
     pip install --no-cache-dir --cache-dir=${ALLTALK_DIR}/pip_cache --upgrade gradio==4.32.2
     # Parler:
@@ -77,10 +42,11 @@ RUN <<EOR
     DEEPSPEED_WHEEL=$(realpath /tmp/deepspeed/*.whl)
     conda activate alltalk
 
-    RESULT=$( { CFLAGS="-I$CONDA_PREFIX/include/" LDFLAGS="-L$CONDA_PREFIX/lib/" \
-      pip install --no-cache-dir ${DEEPSPEED_WHEEL} ; } 2>&1 )
+    echo "Using precompiled DeepSpeed wheel at ${DEEPSPEED_WHEEL}"
+    CFLAGS="-I$CONDA_PREFIX/include/" LDFLAGS="-L$CONDA_PREFIX/lib/" \
+      pip install --no-cache-dir ${DEEPSPEED_WHEEL}
 
-    if echo $RESULT | grep -izq error ; then
+    if [ $? -ne 0 ] ; then
       echo "Failed to install pip dependencies: $RESULT"
       exit 1
     fi
@@ -118,7 +84,6 @@ conda activate alltalk
 python diagnostics.py
 EOF
     chmod +x start_alltalk.sh
-    chmod +x start_environment.sh
     chmod +x start_finetune.sh
     chmod +x start_diagnostics.sh
 EOR
@@ -129,9 +94,9 @@ COPY . .
 # Create script to execute firstrun.py and run it:
 ##############################################################################
 RUN echo $'#!/usr/bin/env bash \n\
-  source ~/.bashrc \n\
-  conda activate alltalk \n\
-  python ./system/config/firstrun.py $@' > ./start_firstrun.sh
+source ~/.bashrc \n\
+conda activate alltalk \n\
+python ./system/config/firstrun.py $@' > ./start_firstrun.sh
 
 RUN chmod +x start_firstrun.sh
 RUN ./start_firstrun.sh --tts_model $TTS_MODEL

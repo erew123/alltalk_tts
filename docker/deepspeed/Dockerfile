@@ -1,52 +1,14 @@
-FROM continuumio/miniconda3:24.7.1-0
+ARG GITHUB_REPOSITORY
+FROM ${GITHUB_REPOSITORY}alltalk_environment:latest
 
-ARG DEEPSPEED_VERSION=0.16.2
+ARG DEEPSPEED_VERSION=0.16.3
 ENV DEEPSPEED_VERSION=$DEEPSPEED_VERSION
-
-SHELL ["/bin/bash", "-l", "-c"]
-ENV SHELL=/bin/bash
-ENV HOST=0.0.0.0
-ENV DEBIAN_FRONTEND=noninteractive
-ENV CUDA_DOCKER_ARCH=all
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV CONDA_AUTO_UPDATE_CONDA="false"
 
 ##############################################################################
 # Directories:
 ##############################################################################
 ENV STAGE_DIR=/tmp
 RUN mkdir -p ${STAGE_DIR}
-
-##############################################################################
-# Installation/Basic Utilities
-##############################################################################
-RUN <<EOR
-  apt-get update
-  apt-get upgrade -y
-  apt-get install --no-install-recommends -y \
-      espeak-ng \
-      curl \
-      wget \
-      jq \
-      vim
-
-   apt-get clean && rm -rf /var/lib/apt/lists/*
-EOR
-
-##############################################################################
-# Create a conda environment and install dependencies:
-##############################################################################
-COPY build/environment-*.yml environment.yml
-RUN <<EOR
-    RESULT=$( { conda env create -f environment.yml ; } 2>&1 )
-
-    if [ $? -ne 0 ] ; then
-      echo "Failed to install conda dependencies: $RESULT"
-      exit 1
-    fi
-
-    conda clean -a && pip cache purge
-EOR
 
 ##############################################################################
 # Install python dependencies
@@ -56,8 +18,7 @@ RUN <<EOR
   conda activate alltalk
 
   pip install \
-      deepspeed-kernels \
-      scikit-learn
+      deepspeed-kernels
 EOR
 
 
@@ -69,6 +30,15 @@ RUN <<EOR
   cd ${STAGE_DIR}/DeepSpeed
   git checkout .
   git checkout "tags/v${DEEPSPEED_VERSION}" -b "v${DEEPSPEED_VERSION}"
+
+  # Patching some files due to bug https://github.com/microsoft/DeepSpeed/issues/6709
+  START_LINE=`awk '/#ifndef BF16_AVAILABLE/{ print NR; exit }' csrc/transformer/inference/csrc/gelu.cu`
+  TO_LINE=$((START_LINE + 2))
+  sed -i "${START_LINE},${TO_LINE}d" ./csrc/transformer/inference/csrc/gelu.cu
+
+  START_LINE=`awk '/#ifndef BF16_AVAILABLE/{ print NR; exit }' csrc/transformer/inference/csrc/transform.cu`
+  TO_LINE=$((START_LINE + 2))
+  sed -i "${START_LINE},${TO_LINE}d" ./csrc/transformer/inference/csrc/transform.cu
 EOR
 
 ##############################################################################
