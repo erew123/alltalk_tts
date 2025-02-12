@@ -2,6 +2,8 @@ import numpy as np
 import re
 import unicodedata
 from fairseq import checkpoint_utils
+from fairseq.data import Dictionary
+import torch
 
 import logging
 
@@ -66,6 +68,7 @@ def load_embedding(embedder_model):
         #print("MODEL PATH IS", model_path)
         
         # Load model ensemble and task
+        torch.serialization.add_safe_globals([Dictionary])
         models = checkpoint_utils.load_model_ensemble_and_task(
             [f"{model_path}"],
             suffix="",

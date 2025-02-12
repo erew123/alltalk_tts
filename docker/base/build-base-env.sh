@@ -5,10 +5,7 @@ cd $SCRIPT_DIR
 
 . ${SCRIPT_DIR=}/../variables.sh
 
-if [ -f $SCRIPT_DIR/build/environment-cu-${CUDA_VERSION}-cp-${PYTHON_VERSION}.yml ]; then
-   echo "Environment file already exists - skipping..."
-   exit 0
-fi
+DOCKER_TAG=latest
 
 # Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -21,8 +18,17 @@ while [ "$#" -gt 0 ]; do
       PYTHON_VERSION="$2"
       shift
       ;;
+    --tag)
+      DOCKER_TAG="$2"
+      shift
+      ;;
+    --github-repository)
+      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
+        GITHUB_REPOSITORY="$2"
+        shift
+      fi
+      ;;
     *)
-      # Allow to pass arbitrary arguments to docker as well to be flexible:
       echo "Unknown argument '$1'"
       exit 1
       ;;
@@ -32,12 +38,10 @@ done
 
 echo "Building conda environment using python ${PYTHON_VERSION} with CUDA ${CUDA_VERSION}"
 
-rm -rf build # make sure to properly clean up
-mkdir -p build
-
 docker buildx \
   build \
+  --progress=plain \
   --build-arg CUDA_VERSION=$CUDA_VERSION \
   --build-arg PYTHON_VERSION=$PYTHON_VERSION \
-  --output=$SCRIPT_DIR/build \
+  -t ${GITHUB_REPOSITORY}alltalk_environment:${DOCKER_TAG} \
   .

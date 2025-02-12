@@ -173,5 +173,4 @@ cython_debug/
 .idea/*
 
 # Docker build
-docker/conda/build
 docker/deepspeed/build

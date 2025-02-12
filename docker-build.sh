@@ -10,7 +10,6 @@ DOCKER_TAG=latest
 CLEAN=false
 
 # Create required build directories if they don't exist
-mkdir -p ${SCRIPT_DIR=}/docker/conda/build
 mkdir -p ${SCRIPT_DIR=}/docker/deepspeed/build
 echo "Created build directories"
 
@@ -29,9 +28,19 @@ while [ "$#" -gt 0 ]; do
       TTS_MODEL="$2"
       shift
       ;;
+    --deepspeed-version)
+      DEEPSPEED_VERSION="$2"
+      shift
+      ;;
     --tag)
       DOCKER_TAG="$2"
       shift
+      ;;
+    --github-repository)
+      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
+        GITHUB_REPOSITORY="$2"
+        shift
+      fi
       ;;
     --clean)
       CLEAN=true
@@ -45,20 +54,34 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$CLEAN" = true ]; then
-  rm -rf ${SCRIPT_DIR=}/docker/conda/build
   rm -rf ${SCRIPT_DIR=}/docker/deepspeed/build
   # Recreate directories after clean
-  mkdir -p ${SCRIPT_DIR=}/docker/conda/build
   mkdir -p ${SCRIPT_DIR=}/docker/deepspeed/build
   echo "Cleaned and recreated build directories"  
 fi
 
-$SCRIPT_DIR/docker/conda/build-conda-env.sh \
+echo "Building base environment image"
+$SCRIPT_DIR/docker/base/build-base-env.sh \
   --cuda-version ${CUDA_VERSION} \
-  --python-version ${PYTHON_VERSION}
+  --python-version ${PYTHON_VERSION} \
+  --github-repository ${GITHUB_REPOSITORY} \
+  --tag ${DOCKER_TAG}
 
+if [ $? -ne 0 ]; then
+  echo "Failed to build base environment image"
+  exit 1
+fi
+
+echo "Building DeepSpeed"
 $SCRIPT_DIR/docker/deepspeed/build-deepspeed.sh \
-  --python-version ${PYTHON_VERSION}
+  --python-version ${PYTHON_VERSION} \
+  --github-repository ${GITHUB_REPOSITORY} \
+  --tag ${DOCKER_TAG}
+
+if [ $? -ne 0 ]; then
+  echo "Failed to build DeepSpeed"
+  exit 1
+fi
 
 echo "Starting docker build process using TTS model '${TTS_MODEL}' and docker tag '${DOCKER_TAG}'"
 echo "Building for CUDA $CUDA_VERSION using python ${PYTHON_VERSION}"
@@ -68,7 +91,8 @@ docker buildx \
   --progress=plain \
   --build-arg TTS_MODEL=$TTS_MODEL \
   --build-arg ALLTALK_DIR=$ALLTALK_DIR \
-  -t alltalk_beta:${DOCKER_TAG} \
+  --build-arg DEEPSPEED_VERSION=$DEEPSPEED_VERSION \
+  -t ${GITHUB_REPOSITORY}alltalk_beta:${DOCKER_TAG} \
   .
 
 echo "Docker build process finished. Use docker-start.sh to start the container."

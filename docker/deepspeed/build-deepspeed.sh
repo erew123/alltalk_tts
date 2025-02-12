@@ -5,6 +5,8 @@ cd $SCRIPT_DIR
 
 . ${SCRIPT_DIR=}/../variables.sh
 
+DOCKER_TAG=latest
+
 # Parse arguments
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -16,8 +18,17 @@ while [ "$#" -gt 0 ]; do
       DEEPSPEED_VERSION="$2"
       shift
       ;;
+    --tag)
+      DOCKER_TAG="$2"
+      shift
+      ;;
+    --github-repository)
+      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
+        GITHUB_REPOSITORY="$2"
+        shift
+      fi
+      ;;
     *)
-      # Allow to pass arbitrary arguments to docker as well to be flexible:
       echo "Unknown argument '$1'"
       exit 1
       ;;
@@ -33,22 +44,16 @@ then
    exit 0
 fi
 
-CONDA_ENV=${SCRIPT_DIR=}/../conda/build/environment-cu-${CUDA_VERSION}-cp-${PYTHON_VERSION}.yml
-if [ ! -f ${CONDA_ENV} ]; then
-    echo "No conda environment found. Please run 'build-conda-env.sh' first."
-    exit 1
-fi
-
 echo "Building DeepSpeed $DEEPSPEED_VERSION using python ${PYTHON_VERSION}"
 
 rm -rf build # make sure to properly clean up
 mkdir -p build
-cp ${CONDA_ENV} ${SCRIPT_DIR=}/build
 
 docker buildx \
   build \
+  --build-arg GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
   --build-arg DEEPSPEED_VERSION=$DEEPSPEED_VERSION \
-  -t deepspeed:$DEEPSPEED_VERSION \
+  -t ${GITHUB_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG} \
   .
 
 docker run \
@@ -57,4 +62,4 @@ docker run \
   --gpus=all \
   --name deepspeed \
   -v $SCRIPT_DIR/build:/deepspeed \
-  deepspeed:$DEEPSPEED_VERSION
+  ${GITHUB_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG}
