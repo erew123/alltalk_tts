@@ -343,7 +343,7 @@ install_custom_standalone() {
 	
     # Install git
     echo "Installing git"
-	conda install -y git
+    conda install -y git
 	
     # pip install torch==2.2.1+cu121 torchaudio==2.2.1+cu121 --upgrade --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
     conda install -y pytorch=2.2.1 torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
