@@ -596,28 +596,24 @@ echo Installation process completed.
 
 @rem Create start_environment.bat to run AllTalk environment
 echo @echo off > start_environment.bat
-echo cd /D "%~dp0" >> start_environment.bat
-echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_environment.bat
-echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_environment.bat
+echo set CONDA_ROOT_PREFIX=.\alltalk_environment\conda >> start_environment.bat
+echo set INSTALL_ENV_DIR=.\alltalk_environment\env >> start_environment.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_environment.bat
 @rem Create start_alltalk.bat to run AllTalk
 echo @echo off > start_alltalk.bat
-echo cd /D "%~dp0" >> start_alltalk.bat
-echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_alltalk.bat
-echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_alltalk.bat
+echo set CONDA_ROOT_PREFIX=.\alltalk_environment\conda >> start_alltalk.bat
+echo set INSTALL_ENV_DIR=.\alltalk_environment\env >> start_alltalk.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_alltalk.bat
 echo call python script.py >> start_alltalk.bat
 @rem Create start_finetune.bat to run AllTalk
 echo @echo off > start_finetune.bat
-echo cd /D "%~dp0" >> start_finetune.bat
-echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_finetune.bat
-echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_finetune.bat
+echo set CONDA_ROOT_PREFIX=.\alltalk_environment\conda >> start_finetune.bat
+echo set INSTALL_ENV_DIR=.\alltalk_environment\env >> start_finetune.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_finetune.bat
 echo call python finetune.py >> start_finetune.bat
 echo @echo off > start_diagnostics.bat
-echo cd /D "%~dp0" >> start_diagnostics.bat
-echo set CONDA_ROOT_PREFIX=%cd%\alltalk_environment\conda >> start_diagnostics.bat
-echo set INSTALL_ENV_DIR=%cd%\alltalk_environment\env >> start_diagnostics.bat
+echo set CONDA_ROOT_PREFIX=.\alltalk_environment\conda >> start_diagnostics.bat
+echo set INSTALL_ENV_DIR=.\alltalk_environment\env >> start_diagnostics.bat
 echo call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" >> start_diagnostics.bat
 echo call python diagnostics.py >> start_diagnostics.bat
 Echo.
