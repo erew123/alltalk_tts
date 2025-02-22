@@ -1,5 +1,6 @@
 ARG GITHUB_REPOSITORY
-FROM ${GITHUB_REPOSITORY}alltalk_environment:latest
+ARG DOCKER_TAG=latest
+FROM ${GITHUB_REPOSITORY}alltalk_tts_environment:${DOCKER_TAG}
 
 # Argument to choose the model: piper, vits, xtts
 ARG TTS_MODEL="xtts"
@@ -36,11 +37,22 @@ EOR
 ##############################################################################
 # Install DeepSpeed
 ##############################################################################
-RUN mkdir -p /tmp/deepseped
-COPY docker/deepspeed/build/*.whl /tmp/deepspeed/
+RUN mkdir -p /tmp/deepspeed
+COPY docker/deepspeed/build*/*.whl /tmp/deepspeed/
 RUN <<EOR
-    DEEPSPEED_WHEEL=$(realpath /tmp/deepspeed/*.whl)
+    DEEPSPEED_WHEEL=$(realpath -q /tmp/deepspeed/*.whl)
     conda activate alltalk
+
+    # Download DeepSpeed wheel if it was not built locally:
+    if [ -z "${DEEPSPEED_WHEEL}" ] || [ ! -f $DEEPSPEED_WHEEL ] ; then
+      echo "Downloading pre-built DeepSpeed wheel"
+      CURL_ERROR=$( { curl --output-dir /tmp/deepspeed -fLO "https://github.com/erew123/alltalk_tts/releases/download/DeepSpeed-for-docker/deepspeed-0.16.2+b344c04d-cp311-cp311-linux_x86_64.whl" ; } 2>&1 )
+      if [ $? -ne 0 ] ; then
+        echo "Failed to download DeepSpeed: $CURL_ERROR"
+        exit 1
+      fi
+      DEEPSPEED_WHEEL=$(realpath -q /tmp/deepspeed/*.whl)
+    fi
 
     echo "Using precompiled DeepSpeed wheel at ${DEEPSPEED_WHEEL}"
     CFLAGS="-I$CONDA_PREFIX/include/" LDFLAGS="-L$CONDA_PREFIX/lib/" \
@@ -75,7 +87,7 @@ EOF
 source ~/.bashrc
 export TRAINER_TELEMETRY=0
 conda activate alltalk
-python finetune.py
+python -m trainer.distribute --script finetune.py
 EOF
     cat << EOF > start_diagnostics.sh
 #!/usr/bin/env bash

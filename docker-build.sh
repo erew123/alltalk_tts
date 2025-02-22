@@ -8,6 +8,7 @@ cd $SCRIPT_DIR
 TTS_MODEL=xtts
 DOCKER_TAG=latest
 CLEAN=false
+LOCAL_DEEPSPEED_BUILD=false
 
 # Create required build directories if they don't exist
 mkdir -p ${SCRIPT_DIR=}/docker/deepspeed/build
@@ -37,10 +38,13 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --github-repository)
-      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
+      if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
         GITHUB_REPOSITORY="$2"
         shift
       fi
+      ;;
+    --local-deepspeed-build)
+      LOCAL_DEEPSPEED_BUILD=true
       ;;
     --clean)
       CLEAN=true
@@ -72,15 +76,17 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "Building DeepSpeed"
-$SCRIPT_DIR/docker/deepspeed/build-deepspeed.sh \
-  --python-version ${PYTHON_VERSION} \
-  --github-repository ${GITHUB_REPOSITORY} \
-  --tag ${DOCKER_TAG}
+if [ "$LOCAL_DEEPSPEED_BUILD" = true ]; then
+  echo "Building DeepSpeed"
+  $SCRIPT_DIR/docker/deepspeed/build-deepspeed.sh \
+    --python-version ${PYTHON_VERSION} \
+    --github-repository ${GITHUB_REPOSITORY} \
+    --tag ${DOCKER_TAG}
 
-if [ $? -ne 0 ]; then
-  echo "Failed to build DeepSpeed"
-  exit 1
+  if [ $? -ne 0 ]; then
+    echo "Failed to build DeepSpeed"
+    exit 1
+  fi
 fi
 
 echo "Starting docker build process using TTS model '${TTS_MODEL}' and docker tag '${DOCKER_TAG}'"
@@ -92,7 +98,8 @@ docker buildx \
   --build-arg TTS_MODEL=$TTS_MODEL \
   --build-arg ALLTALK_DIR=$ALLTALK_DIR \
   --build-arg DEEPSPEED_VERSION=$DEEPSPEED_VERSION \
-  -t ${GITHUB_REPOSITORY}alltalk_beta:${DOCKER_TAG} \
+  --build-arg DOCKER_TAG=$DOCKER_TAG \
+  -t ${GITHUB_REPOSITORY}alltalk_tts:${DOCKER_TAG} \
   .
 
 echo "Docker build process finished. Use docker-start.sh to start the container."

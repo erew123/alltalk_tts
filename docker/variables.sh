@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 
-export CUDA_VERSION=12.6.0
-export PYTHON_VERSION=3.11.11
-export DEEPSPEED_VERSION=0.16.2
-export ALLTALK_DIR=/opt/alltalk
-export GITHUB_REPOSITORY=
+declare -A ALLTALK_VARS
+ALLTALK_VARS["CUDA_VERSION"]=12.6.0
+ALLTALK_VARS["PYTHON_VERSION"]=3.11.11
+ALLTALK_VARS["DEEPSPEED_VERSION"]=0.16.2
+ALLTALK_VARS["ALLTALK_DIR"]=/opt/alltalk
+ALLTALK_VARS["GITHUB_REPOSITORY"]=
+
+# Export single variables (needed by Docker locally)
+for key in "${!ALLTALK_VARS[@]}"
+do
+  export "${key}=${ALLTALK_VARS[${key}]}"
+done
+
+# Export the entire associative array (needed by Github action)
+export ALLTALK_VARS
