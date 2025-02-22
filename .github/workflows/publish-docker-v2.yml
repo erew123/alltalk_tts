@@ -1,0 +1,117 @@
+name: Publish Docker v2
+
+on:
+  workflow_dispatch:
+  release:
+    types: [ published ]
+  push:
+    branches:
+      - 'alltalkbeta'
+    tags:
+      - 'v*'
+
+jobs:
+  build_base_environment_docker_image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup docker
+        uses: ./.github/actions/docker-setup
+        with:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_REPO_NAME: ${{ vars.DOCKERHUB_REPO_NAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}_environment
+          tags: |
+            # Use sematic versioning on push tag event:
+            type=semver,pattern={{version}}
+            # set latest tag for main and alltalkbeta branch:
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') || github.ref == format('refs/heads/{0}', 'alltalkbeta') }}
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            docker-base:
+              - 'docker/variables.sh'
+              - 'docker/base/Dockerfile'
+            docker-workflow:
+              - '.github/workflows/publish-docker*.yml'
+
+      - name: Build and push base Docker image
+        if: |
+          steps.changes.outputs.docker-base == 'true' ||
+          steps.changes.outputs.docker-workflow == 'true' ||
+          github.event_name == 'release' ||
+          (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/base
+          file: ./docker/base/Dockerfile
+          platforms: "linux/amd64"
+          push: true
+          build-args: |
+            CUDA_VERSION=${{ env.CUDA_VERSION }}
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}_environment:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}_environment:buildcache,mode=max
+
+  build_main_docker_image:
+    needs: build_base_environment_docker_image
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tts: [ xtts, vits, piper ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup docker
+        uses: ./.github/actions/docker-setup
+        with:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_REPO_NAME: ${{ vars.DOCKERHUB_REPO_NAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}
+          flavor: |
+            suffix=-${{ matrix.tts }},onlatest=true
+          tags: |
+            # Use sematic versioning on push tag event:
+            type=semver,pattern={{version}}
+            # set latest tag for main and alltalkbeta branch:
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') || github.ref == format('refs/heads/{0}', 'alltalkbeta') }}
+
+      - name: Build and push base Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: "linux/amd64"
+          push: true
+          build-args: |
+            TTS_MODEL=${{ matrix.tts }}
+            ALLTALK_DIR=${{ env.ALLTALK_DIR }}
+            DEEPSPEED_VERSION=${{ env.DEEPSPEED_VERSION }}
+            DOCKER_TAG=${{ env.DOCKER_TAG }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}:buildcache,mode=max
