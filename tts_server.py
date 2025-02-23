@@ -1425,7 +1425,7 @@ def standard_filtering(text_input):
 #################################################################
 # /api/tts-generate Generation API Endpoint Narration Combining #
 #################################################################
-def combine(output_file_timestamp, output_file_name, audio_files, target_sample_rate=44100, delete_originals=True):
+def combine(output_folder, output_file_timestamp, output_file_name, audio_files, target_sample_rate=44100, delete_originals=True):
     """
     Combine multiple audio files into one, with optional resampling and timestamping.
     
@@ -1468,7 +1468,11 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
         else:
             filename = f'{output_file_name}_combined.wav'
 
-        output_file_path = os.path.join(this_dir / "outputs" / filename)
+
+        if output_folder == "":
+            output_file_path = this_dir / config.get_output_directory() / filename
+        else:
+            output_file_path = output_folder / filename
         sf.write(output_file_path, audio, target_sample_rate)
 
         # Generate URLs based on API configuration
@@ -1731,6 +1735,9 @@ def get_api_text_not_inside():
 def get_api_language():
     """Get API language setting."""
     return config.api_def.api_language
+def get_api_output_folder():
+    """Get output folder template."""
+    return config.api_def.api_output_folder
 def get_api_output_file_name():
     """Get output filename template."""
     return config.api_def.api_output_file_name
@@ -1836,7 +1843,7 @@ async def tts_validate_and_prepare_input(
 
     return params, validation_result
 
-async def tts_handle_output_paths(output_file_name: str, timestamp: bool = True) -> Tuple[Path, str, str]:
+async def tts_handle_output_paths(output_file_name: str, output_folder: str, timestamp: bool = True) -> Tuple[Path, str, str]:
     """Generate output paths and URLs for TTS files."""
     debug_func_entry()
 
@@ -1848,7 +1855,10 @@ async def tts_handle_output_paths(output_file_name: str, timestamp: bool = True)
     else:
         filename = f"{output_file_name}.{model_engine.audio_format}"
 
-    output_path = this_dir / config.get_output_directory() / filename
+    if output_folder == "":
+        output_path = this_dir / config.get_output_directory() / filename
+    else:
+        output_path = output_folder / filename
 
     if config.api_def.api_use_legacy_api:
         base_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}'
@@ -1960,7 +1970,7 @@ async def tts_generate_part(part: str, voice: str, params: dict) -> Optional[Pat
     """Generate audio for text part."""
     debug_func_entry()
     cleaned_part = tts_clean_text(part, params['text_filtering'])
-    output_file = await tts_handle_output_paths(params['output_file_name'])
+    output_file = await tts_handle_output_paths(params['output_file_name'], params['output_folder'])
 
     try:
         await generate_audio(
@@ -2021,6 +2031,7 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
 
     output_file_path, output_file_url, output_cache_url = await tts_handle_output_paths( # pylint: disable=unused-variable # Do not remove output_file_url, output_cache_url
         params['output_file_name'],
+        params['output_folder'],
         params['output_file_timestamp']
     )
 
@@ -2098,6 +2109,7 @@ async def tts_finalize_output(audio_files: List[Path], params: dict) -> Tuple[Pa
     debug_func_entry()
 
     output_file_path, output_file_url, output_cache_url = combine(
+        params['output_folder'],
         params['output_file_timestamp'],
         params['output_file_name'],
         audio_files
@@ -2154,6 +2166,7 @@ async def apifunction_generate_tts_standard(
     rvcnarrator_pitch: float = Form(None),
     text_not_inside: str = Form(None),
     language: str = Form(None),
+    output_folder: str = Form(None),
     output_file_name: str = Form(None),
     output_file_timestamp: bool = Form(None),
     autoplay: bool = Form(None),
@@ -2173,6 +2186,7 @@ async def apifunction_generate_tts_standard(
     _rvcnarrator_pitch: str = Depends(get_rvcnarrator_pitch),
     _text_not_inside: str = Depends(get_api_text_not_inside),
     _language: str = Depends(get_api_language),
+    _output_folder: str = Depends(get_api_output_folder),
     _output_file_name: str = Depends(get_api_output_file_name),
     _output_file_timestamp: bool = Depends(get_api_output_file_timestamp),
     _autoplay: bool = Depends(get_api_autoplay),
@@ -2197,6 +2211,7 @@ async def apifunction_generate_tts_standard(
             "rvcnarrator_pitch": rvcnarrator_pitch,
             "text_not_inside": text_not_inside,
             "language": language,
+            "output_folder": output_folder,
             "output_file_name": output_file_name,
             "output_file_timestamp": output_file_timestamp,
             "autoplay": autoplay,
@@ -2219,6 +2234,7 @@ async def apifunction_generate_tts_standard(
             "rvcnarrator_pitch": _rvcnarrator_pitch,
             "text_not_inside": _text_not_inside,
             "language": _language,
+            "output_folder": _output_folder,
             "output_file_name": _output_file_name,
             "output_file_timestamp": _output_file_timestamp,
             "autoplay": _autoplay,
