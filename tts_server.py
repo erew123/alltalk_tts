@@ -1470,9 +1470,14 @@ def combine(output_folder, output_file_timestamp, output_file_name, audio_files,
 
 
         if output_folder == "":
-            output_file_path = this_dir / config.get_output_directory() / filename
+            output_file_path = os.path.join(this_dir / config.get_output_directory() / filename)
         else:
-            output_file_path = output_folder / filename
+            output_path = Path(output_folder)
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+            output_file_path = os.path.join(output_path / filename)
+            
+            
         sf.write(output_file_path, audio, target_sample_rate)
 
         # Generate URLs based on API configuration
@@ -1858,7 +1863,10 @@ async def tts_handle_output_paths(output_file_name: str, output_folder: str, tim
     if output_folder == "":
         output_path = this_dir / config.get_output_directory() / filename
     else:
-        output_path = output_folder / filename
+        output_path = Path(output_folder)
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        output_path = Path(output_folder) / filename
 
     if config.api_def.api_use_legacy_api:
         base_url = f'http://{config.api_def.api_legacy_ip_address}:{config.api_def.api_port_number}'
