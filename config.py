@@ -70,6 +70,7 @@ class AlltalkConfigApiDef(BaseModel):
     api_narrator_enabled: str = "false"
     api_text_not_inside: str = "character"
     api_language: str = "en"
+    api_output_folder: str = ""
     api_output_file_name: str = "myoutputfile"
     api_output_file_timestamp: bool = True
     api_autoplay: bool = False
