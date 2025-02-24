@@ -56,7 +56,6 @@ def format_title(title):
 
 
 def load_embedding(embedder_model):
-    #print("EMBEDDER MODEL IS", embedder_model)
     embedding_list = {
         "contentvec": "contentvec_base.pt",
         "hubert": "hubert_base.pt",
@@ -65,16 +64,26 @@ def load_embedding(embedder_model):
     try:
         this_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
         model_path = this_dir / "models" / "rvc_base" / embedding_list[embedder_model]
-        #print("MODEL PATH IS", model_path)
         
-        # Load model ensemble and task
-        torch.serialization.add_safe_globals([Dictionary])
+        # Import Dictionary class from fairseq
+        from fairseq.data.dictionary import Dictionary
+        
+        # For PyTorch 2.2+, try using add_safe_globals directly but with proper import 
+        # of the Dictionary class from fairseq
+        try:
+            torch.serialization.add_safe_globals([Dictionary])
+        except (AttributeError, ImportError) as e:
+            # If add_safe_globals doesn't exist, we'll need to load with weights_only=False
+            # But that's a security risk with untrusted models
+            logging.warning("Could not use add_safe_globals, loading model with reduced security")
+            pass
+        
+        # Load model
         models = checkpoint_utils.load_model_ensemble_and_task(
             [f"{model_path}"],
             suffix="",
         )
         
-        #print(f"Embedding model {embedder_model} loaded successfully.")
         return models
     except KeyError as e:
         logging.error(f"Invalid embedder model name: {embedder_model}")
