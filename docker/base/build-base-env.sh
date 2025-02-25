@@ -43,5 +43,5 @@ docker buildx \
   --progress=plain \
   --build-arg CUDA_VERSION=$CUDA_VERSION \
   --build-arg PYTHON_VERSION=$PYTHON_VERSION \
-  -t ${GITHUB_REPOSITORY}alltalk_environment:${DOCKER_TAG} \
+  -t ${GITHUB_REPOSITORY}alltalk_tts_environment:${DOCKER_TAG} \
   .

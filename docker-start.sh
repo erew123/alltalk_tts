@@ -30,7 +30,7 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --github-repository)
-      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
+      if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
         GITHUB_REPOSITORY="$2"
         shift
       fi
@@ -71,4 +71,4 @@ docker run \
   --name alltalk \
  "${DOCKER_ARGS[@]}" \
  "${ADDITIONAL_ARGS[@]}" \
-  ${GITHUB_REPOSITORY}alltalk_beta:${DOCKER_TAG} &> /dev/stdout
+  ${GITHUB_REPOSITORY}alltalk_tts:${DOCKER_TAG} &> /dev/stdout

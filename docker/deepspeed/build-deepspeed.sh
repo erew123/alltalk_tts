@@ -61,5 +61,6 @@ docker run \
   -it \
   --gpus=all \
   --name deepspeed \
+  --build-arg DOCKER_TAG=$DOCKER_TAG \
   -v $SCRIPT_DIR/build:/deepspeed \
   ${GITHUB_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG}
