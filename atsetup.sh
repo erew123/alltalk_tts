@@ -62,6 +62,11 @@ else
     echo "Continue with the main menu."
 fi
 
+# Check for "-silent" install command-line argument
+if [$1 = "-silent"]; then
+ install_custom_standalone ;;
+fi
+
 # Main Menu
 main_menu() {
     while true; do
