@@ -87,7 +87,7 @@ EOF
 source ~/.bashrc
 export TRAINER_TELEMETRY=0
 conda activate alltalk
-python -m trainer.distribute --script finetune.py
+python finetune.py
 EOF
     cat << EOF > start_diagnostics.sh
 #!/usr/bin/env bash

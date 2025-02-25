@@ -4805,5 +4805,5 @@ if __name__ == "__main__":
         share=False,
         debug=False,
         server_port=7052,
-        server_name="127.0.0.1",
+        server_name="0.0.0.0",
     )
