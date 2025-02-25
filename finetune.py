@@ -273,21 +273,21 @@ def debug_print(
     elif is_info:
         prefix += ""
 
-    if level == "GPU_MEMORY" and DebugLevels.GPU_MEMORY:
+    if level == "GPU_MEMORY" and (DebugLevels.GPU_MEMORY or is_error):
         print(f"{prefix} [GPU] {message}")
-    elif level == "MODEL_OPS" and DebugLevels.MODEL_OPS:
+    elif level == "MODEL_OPS" and (DebugLevels.MODEL_OPS or is_error):
         print(f"{prefix} [MODEL] {message}")
-    elif level == "DATA_PROCESS" and DebugLevels.DATA_PROCESS:
+    elif level == "DATA_PROCESS" and (DebugLevels.DATA_PROCESS or is_error):
         print(f"{prefix} [DATA] {message}")
-    elif level == "GENERAL" and DebugLevels.GENERAL:
+    elif level == "GENERAL" and (DebugLevels.GENERAL or is_error):
         print(f"{prefix} [INFO] {message}")
-    elif level == "AUDIO" and DebugLevels.AUDIO:
+    elif level == "AUDIO" and (DebugLevels.AUDIO or is_error):
         print(f"{prefix} [AUDIO] {message}")
-    elif level == "SEGMENTS" and DebugLevels.SEGMENTS:
+    elif level == "SEGMENTS" and (DebugLevels.SEGMENTS or is_error):
         print(f"{prefix} [SEG] {message}")
-    elif level == "DUPLICATES" and DebugLevels.DUPLICATES:
+    elif level == "DUPLICATES" and (DebugLevels.DUPLICATES or is_error):
         print(f"{prefix} [DUP] {message}")
-    elif level == "VALIDATION" and DebugLevels.VALIDATION:
+    elif level == "VALIDATION" and (DebugLevels.VALIDATION or is_error):
         print(f"{prefix} [VAL] {message}")        
 
 
