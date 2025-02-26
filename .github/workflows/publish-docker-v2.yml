@@ -10,6 +10,11 @@ on:
     tags:
       - 'v*'
 
+# Limit the concurrency of entire workflow runs for a specific branch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_base_environment_docker_image:
     runs-on: ubuntu-latest
@@ -111,7 +116,8 @@ jobs:
             ALLTALK_DIR=${{ env.ALLTALK_DIR }}
             DEEPSPEED_VERSION=${{ env.DEEPSPEED_VERSION }}
             DOCKER_TAG=${{ env.DOCKER_TAG }}
+            GITHUB_REPOSITORY=${{ env.DOCKERHUB_USERNAME }}/
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}:buildcache-${{ matrix.tts }}
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPO_NAME }}:buildcache-${{ matrix.tts }},mode=max
