@@ -5,6 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 WITH_UI=true
 DOCKER_TAG=latest
+DOCKER_REPOSITORY=erew123
 declare -a ADDITIONAL_ARGS=()
 
 # Parse arguments
@@ -29,10 +30,12 @@ while [ "$#" -gt 0 ]; do
       DOCKER_TAG="$2"
       shift
       ;;
-    --github-repository)
+    --docker-repository)
       if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
-        GITHUB_REPOSITORY="$2"
+        DOCKER_REPOSITORY="$2"
         shift
+      else
+        DOCKER_REPOSITORY=""
       fi
       ;;
     *)
@@ -45,6 +48,8 @@ done
 
 # Compose docker arguments based on user input to the script:
 declare -a DOCKER_ARGS=()
+echo "REPO = $DOCKER_REPOSITORY"
+exit 0
 
 if [[ -n $CONFIG ]]; then
   # Mount the config file to docker_confignew.json:
@@ -71,4 +76,4 @@ docker run \
   --name alltalk \
  "${DOCKER_ARGS[@]}" \
  "${ADDITIONAL_ARGS[@]}" \
-  ${GITHUB_REPOSITORY}alltalk_tts:${DOCKER_TAG} &> /dev/stdout
+  ${DOCKER_REPOSITORY}alltalk_tts:${DOCKER_TAG} &> /dev/stdout

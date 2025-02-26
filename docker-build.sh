@@ -6,9 +6,10 @@ cd $SCRIPT_DIR
 . ${SCRIPT_DIR=}/docker/variables.sh
 
 TTS_MODEL=xtts
-DOCKER_TAG=latest
+DOCKER_TAG=latest-${TTS_MODEL}
 CLEAN=false
 LOCAL_DEEPSPEED_BUILD=false
+DOCKER_REPOSITORY=erew123
 
 # Create required build directories if they don't exist
 mkdir -p ${SCRIPT_DIR=}/docker/deepspeed/build
@@ -37,10 +38,12 @@ while [ "$#" -gt 0 ]; do
       DOCKER_TAG="$2"
       shift
       ;;
-    --github-repository)
+    --docker-repository)
       if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
-        GITHUB_REPOSITORY="$2"
+        DOCKER_REPOSITORY="$2"
         shift
+      else
+        DOCKER_REPOSITORY=""
       fi
       ;;
     --local-deepspeed-build)
@@ -68,7 +71,7 @@ echo "Building base environment image"
 $SCRIPT_DIR/docker/base/build-base-env.sh \
   --cuda-version ${CUDA_VERSION} \
   --python-version ${PYTHON_VERSION} \
-  --github-repository ${GITHUB_REPOSITORY} \
+  --docker-repository ${DOCKER_REPOSITORY} \
   --tag ${DOCKER_TAG}
 
 if [ $? -ne 0 ]; then
@@ -80,7 +83,7 @@ if [ "$LOCAL_DEEPSPEED_BUILD" = true ]; then
   echo "Building DeepSpeed"
   $SCRIPT_DIR/docker/deepspeed/build-deepspeed.sh \
     --python-version ${PYTHON_VERSION} \
-    --github-repository ${GITHUB_REPOSITORY} \
+    --docker-repository ${DOCKER_REPOSITORY} \
     --tag ${DOCKER_TAG}
 
   if [ $? -ne 0 ]; then
@@ -99,7 +102,8 @@ docker buildx \
   --build-arg ALLTALK_DIR=$ALLTALK_DIR \
   --build-arg DEEPSPEED_VERSION=$DEEPSPEED_VERSION \
   --build-arg DOCKER_TAG=$DOCKER_TAG \
-  -t ${GITHUB_REPOSITORY}alltalk_tts:${DOCKER_TAG} \
+  --build-arg DOCKER_REPOSITORY=$DOCKER_REPOSITORY \
+  -t ${DOCKER_REPOSITORY}alltalk_tts:${DOCKER_TAG} \
   .
 
 echo "Docker build process finished. Use docker-start.sh to start the container."

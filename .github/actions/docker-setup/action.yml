@@ -2,10 +2,13 @@ name: 'Setting up docker'
 
 inputs:
   DOCKERHUB_USERNAME:
+    description: "Docker hub username"
     required: true
   DOCKERHUB_REPO_NAME:
+    description: "Docker hub repo name"
     required: true
   DOCKERHUB_TOKEN:
+    description: "Docker hub token"
     required: true
 
 runs:

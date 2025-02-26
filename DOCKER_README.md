@@ -1,21 +1,19 @@
 # Docker
-The Docker image currently works on Windows and Linux, optionally supporting NVIDIA GPUs.
+The Docker image currently works on Windows and Linux supporting NVIDIA GPUs.
 
-## General Remarks
-- The resulting Docker image is 21 GB in size. Building might require even more disk space temporarily.
-    - Another 15 GB is required for building DeepSpeed
-- Build time depends on your hardware and internet connection. Expect at least 20-30min to be normal for a full build.
-  - This includes building the conda environment as well as DeepSpeed, which is the basis for the alltalk Docker image.
-- The Docker build for alltalk:
-  - Downloads XTTS as default TTS engine
-  - Enables RVC by default
-  - Downloads all supported RVC models
-  - Enables deepspeed by default
-- Starting the Docker image should only a few seconds due to all the steps that were already executed during build.
+## System requirements
+- AMD compatible Windows or Linux system
+- CUDA 12.6
+- Nvidia Docker Container Toolkit
+- At least 25GB of free disk space
 
-## Docker for Linux
+## Quickstart
+Use `docker-start.sh` to pull the latest docker image using the XTTS model from Docker Hub and 
+visit `http://localhost:7851/`. See instructions below for passing more arguments to the start script.
 
-### Ubuntu Specific Setup for GPUs
+## Installing Prerequisites
+### Docker for Linux
+#### Ubuntu Specific Setup for GPUs
 1. Make sure the latest nvidia drivers are installed: `sudo ubuntu-drivers install`
 1. Install Docker your preferred way. One way to do it is to follow the official documentation [here](https://docs.docker.com/engine/install/ubuntu/#uninstall-old-versions).
     - Start by uninstalling the old versions
@@ -27,8 +25,8 @@ The Docker image currently works on Windows and Linux, optionally supporting NVI
       ```sudo nvidia-ctk runtime configure --runtime=docker```
     - Restart docker
 
-## Docker for Windows (WSL2)
-### Windows Specific Setup for GPUs
+### Docker for Windows (WSL2)
+#### Windows Specific Setup for GPUs
 > Make sure your Nvidia drivers are up to date: https://www.nvidia.com/download/index.aspx
 1. Install WSL2 in PowerShell with `wsl --install` and restart
 2. Open PowerShell, type and enter ```ubuntu```.  It should now load you into wsl2
@@ -40,39 +38,49 @@ The Docker image currently works on Windows and Linux, optionally supporting NVI
 8. Install Docker Desktop using WSL2 as the backend
 9. Restart
 10. If you wish to monitor the terminal remotely via SSH, follow [this guide](https://www.hanselman.com/blog/how-to-ssh-into-wsl2-on-windows-10-from-an-external-machine).
-11. Open PowerShell, type ```ubuntu```, [then follow below](#building-and-running-in-docker)
+11. Open PowerShell, type ```ubuntu```, [then follow below](#quickstart)
 
-## Building and Running in Docker
+## Arguments for starting the Docker container
+To make it as simple as possible to use Docker, the script `docker-start.sh` can be used. It provides the 
+following optional arguments:
 
-1. Open a terminal (or Ubuntu WSL) and go where you cloned the repo
-3. Build the image with `./docker-build.sh`
-4. Start the container with `./docker-start.sh`
-5. Visit `http://localhost:7851/` or remotely with `http://<ip>:7851`
-
-## Arguments for building and starting docker
-There are various arguments to customize the build and start of the docker image.
-
-### Arguments for `docker-build.sh`
-- `--tts_model` allows to choose the TTS model that is used by default. Valid values are `piper`, `vits`, `xtts`. Defaults to `xtts`.
-  - Example: `docker-build.sh --tts_model piper`
-- `--tag` allows to choose the docker tag. Defaults to `latest`.
-  - Example: `docker-build.sh --tag mytag`
-- `--clean` allows remove existing dependency build like conda environment or DeepSpeed.
-    - Example: `docker-build.sh --clean`
-
-### Arguments for `docker-start.sh`
-- `--config` lets you choose a config JSON file which can subset of `confignew.json`. This allows you to change only 
+- `--config` lets you choose a config JSON file which can subset of `confignew.json`. This allows you to change only
   few values and leave the rest as defined in the default `confignew.json` file.
-  - Example: `docker-start.sh --config /my/config/file.json` with content `{"branding": "My Brand "}` will just change
-    the branding in `confignew.json`.
+    - Example: `docker-start.sh --config /my/config/file.json` with content `{"branding": "My Brand "}` will just change
+      the branding in `confignew.json`.
 - `--voices` lets you add voices for the TTS engine in WAV format. You have to specify the folder containing all
   voice files.
-  - Example: `docker-start.sh --voices /my/voices/dir`
+    - Example: `docker-start.sh --voices /my/voices/dir`
 - `--rvc_voices` similar to voices, this option lets you pick the folder containing the RVC models.
-  - Example: `docker-start.sh --rvc_voices /my/rvc/voices/dir`
+    - Example: `docker-start.sh --rvc_voices /my/rvc/voices/dir`
 - `--no_ui` allows you to not expose port 7852 for the gradio interface. Note that you still have to set `launch_gradio`
   to `false` via JSON file passed to `--config`.
 - `--tag` allows to choose the docker tag of the image to run. Defaults to `latest`.
     - Example: `docker-start.sh --tag mytag`
-- Since the above commands only address the most important options, you might pass additional arbitrary docker commands
-    to the `docker-start.sh`.
+- `--docker-repository` allows to choose another Docker repository for pulling the image from. Use an empty 
+  string for the local repo.
+- Since the above commands only address the most important options, you might pass additional arbitrary docker arguments
+  to the `docker-start.sh`.
+
+Of course, like any other Docker image, you can also directly use `docker run` directly and use `docker-start.sh` 
+as an inspiration.
+
+
+## Building your own images (advanced)
+> Be aware that building the images requires good hardware and bandwidth. Expect this process to require >
+> 40 GB of disk space and > 30min execution time depending on your hardware.
+
+Under normal circumstances, there should be no need to build the Docker images locally. However, if needed for some
+reason, you may want to use `docker-build.sh` with the following arguments:
+
+- `--tts_model` allows to choose the TTS model that is used by default. Valid values are `piper`, `vits`, `xtts`. Defaults to `xtts`.
+    - Example: `docker-build.sh --tts_model piper`
+- `--tag` allows to choose the docker tag. Defaults to `latest-xtts`.
+    - Example: `docker-build.sh --tag mytag`
+- `--docker-repository` allows to choose another Docker repository for tagging the image from. Use an empty
+  string for the local repo.
+- `--local-deepspeed-build` should only be used in rare cases where DeepSpeed needs to be rebuilt. Defaults to `false`.
+- `--clean` allows remove existing dependency build like conda environment or DeepSpeed.
+    - Example: `docker-build.sh --clean`
+
+

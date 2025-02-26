@@ -6,6 +6,7 @@ cd $SCRIPT_DIR
 . ${SCRIPT_DIR=}/../variables.sh
 
 DOCKER_TAG=latest
+DOCKER_REPOSITORY=erew123
 
 # Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -22,10 +23,12 @@ while [ "$#" -gt 0 ]; do
       DOCKER_TAG="$2"
       shift
       ;;
-    --github-repository)
-      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
-        GITHUB_REPOSITORY="$2"
+    --docker-repository)
+      if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
+        DOCKER_REPOSITORY="$2"
         shift
+      else
+        DOCKER_REPOSITORY=""
       fi
       ;;
     *)
@@ -43,5 +46,5 @@ docker buildx \
   --progress=plain \
   --build-arg CUDA_VERSION=$CUDA_VERSION \
   --build-arg PYTHON_VERSION=$PYTHON_VERSION \
-  -t ${GITHUB_REPOSITORY}alltalk_tts_environment:${DOCKER_TAG} \
+  -t ${DOCKER_REPOSITORY}alltalk_tts_environment:${DOCKER_TAG} \
   .
