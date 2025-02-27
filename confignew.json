@@ -59,6 +59,7 @@
         "api_narrator_enabled": "false",
         "api_text_not_inside": "character",
         "api_language": "en",
+        "api_output_folder": "",
         "api_output_file_name": "myoutputfile",
         "api_output_file_timestamp": true,
         "api_autoplay": false,
