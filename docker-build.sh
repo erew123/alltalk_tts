@@ -60,6 +60,9 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
+# Append slash if missing:
+DOCKER_REPOSITORY=$(echo "$DOCKER_REPOSITORY" | sed 's![^/]$!&/!')
+
 if [ "$CLEAN" = true ]; then
   rm -rf ${SCRIPT_DIR=}/docker/deepspeed/build
   # Recreate directories after clean

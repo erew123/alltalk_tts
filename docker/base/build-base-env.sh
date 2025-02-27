@@ -39,6 +39,9 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
+# Append slash if missing:
+DOCKER_REPOSITORY=$(echo "$DOCKER_REPOSITORY" | sed 's![^/]$!&/!')
+
 echo "Building conda environment using python ${PYTHON_VERSION} with CUDA ${CUDA_VERSION}"
 
 docker buildx \

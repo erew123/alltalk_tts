@@ -4,7 +4,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 . ${SCRIPT_DIR=}/docker/variables.sh
 
 WITH_UI=true
-DOCKER_TAG=latest
+DOCKER_TAG=latest-xtts
 DOCKER_REPOSITORY=erew123
 declare -a ADDITIONAL_ARGS=()
 
@@ -46,10 +46,11 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
+# Append slash if missing:
+DOCKER_REPOSITORY=$(echo "$DOCKER_REPOSITORY" | sed 's![^/]$!&/!')
+
 # Compose docker arguments based on user input to the script:
 declare -a DOCKER_ARGS=()
-echo "REPO = $DOCKER_REPOSITORY"
-exit 0
 
 if [[ -n $CONFIG ]]; then
   # Mount the config file to docker_confignew.json:

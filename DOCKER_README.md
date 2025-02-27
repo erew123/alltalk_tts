@@ -55,7 +55,7 @@ following optional arguments:
     - Example: `docker-start.sh --rvc_voices /my/rvc/voices/dir`
 - `--no_ui` allows you to not expose port 7852 for the gradio interface. Note that you still have to set `launch_gradio`
   to `false` via JSON file passed to `--config`.
-- `--tag` allows to choose the docker tag of the image to run. Defaults to `latest`.
+- `--tag` allows to choose the docker tag of the image to run. Defaults to `latest-xtts`.
     - Example: `docker-start.sh --tag mytag`
 - `--docker-repository` allows to choose another Docker repository for pulling the image from. Use an empty 
   string for the local repo.
@@ -80,7 +80,7 @@ reason, you may want to use `docker-build.sh` with the following arguments:
 - `--docker-repository` allows to choose another Docker repository for tagging the image from. Use an empty
   string for the local repo.
 - `--local-deepspeed-build` should only be used in rare cases where DeepSpeed needs to be rebuilt. Defaults to `false`.
-- `--clean` allows remove existing dependency build like conda environment or DeepSpeed.
+- `--clean` allows remove existing dependency build like conda environment or DeepSpeed. Defaults to `false`.
     - Example: `docker-build.sh --clean`
 
 
