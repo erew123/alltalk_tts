@@ -21,14 +21,14 @@ import glob
 import json
 from pathlib import Path
 from tqdm import tqdm
-from faster_whisper import WhisperModel  
+from faster_whisper import WhisperModel
 # Use a local Tokenizer to resolve Japanese support
 # from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
 from system.ft_tokenizer.tokenizer import multilingual_cleaners
 import importlib.metadata as metadata
 from packaging import version
 
-# STARTUP VARIABLES 
+# STARTUP VARIABLES
 this_dir = Path(__file__).parent.resolve()
 audio_folder = this_dir / "finetune" / "put-voice-samples-in-here"
 out_path = this_dir / "finetune" / "tmp-trn"
@@ -111,7 +111,7 @@ def test_cuda():
     else:
         cuda_status = "CUDA is not available."
         pfc_status = "fail"  # Update global status
-    return cuda_status, cuda_icon, cuda_home 
+    return cuda_status, cuda_icon, cuda_home
 
 def find_files_in_path_with_wildcard(pattern):
     # Get the site-packages directory of the current Python environment
@@ -136,18 +136,18 @@ def find_files_in_path_with_wildcard(pattern):
 def generate_cuda_markdown():
     global pfc_status
     cuda_status, cuda_icon, cuda_home = test_cuda()
-    file_name = 'cublas64_11.*' if platform.system() == "Windows" else 'libcublas.so.11*'
+    file_name = 'cublas64_12.*' if platform.system() == "Windows" else 'libcublas.so.12*'
     found_paths = find_files_in_path_with_wildcard(file_name)
     if found_paths:
         found_paths_str = ' '.join(found_paths)
         found_path_icon = '✅'
     else:
-        found_paths_str = "cublas64_11 is not accessible."
+        found_paths_str = "cublas64_12 is not accessible."
         found_path_icon = '❌'
         pfc_status = "fail"  # Update global status
         # Check if 'cu118' or 'cu121' is in the PyTorch version string
     pytorch_version = torch.__version__
-    if 'cu118' in pytorch_version or 'cu121' in pytorch_version:
+    if 'cu121' in pytorch_version or 'cu124' in pytorch_version:
         pytorch_cuda_version_status = ''
         pytorch_icon = '✅'
     else:
@@ -156,12 +156,12 @@ def generate_cuda_markdown():
         pfc_status = "fail"  # Update global status
     cuda_markdown = f"""
     ### 🟨 <u>CUDA Information</u><br>
-    &nbsp;&nbsp;&nbsp;&nbsp; {found_path_icon} **Cublas64_11 found:** {found_paths_str}  
+    &nbsp;&nbsp;&nbsp;&nbsp; {found_path_icon} **Cublas64_12 found:** {found_paths_str}
     &nbsp;&nbsp;&nbsp;&nbsp; {pytorch_icon} **CUDA_HOME path:** {cuda_home}
     """
     pytorch_markdown = f"""
-    ### 🟦 <u>Python & Pytorch Information</u>  
-    &nbsp;&nbsp;&nbsp;&nbsp; {pytorch_icon} **PyTorch Version:** {pytorch_cuda_version_status} {torch.__version__}  
+    ### 🟦 <u>Python & Pytorch Information</u>
+    &nbsp;&nbsp;&nbsp;&nbsp; {pytorch_icon} **PyTorch Version:** {pytorch_cuda_version_status} {torch.__version__}
     &nbsp;&nbsp;&nbsp;&nbsp; {cuda_icon} **CUDA is working:** {cuda_status}
     """
     return cuda_markdown, pytorch_markdown
@@ -182,7 +182,7 @@ def get_system_ram_markdown():
 
     if torch.cuda.is_available():
         gpu_device_id = torch.cuda.current_device()
-        gpu_device_name = torch.cuda.get_device_name(gpu_device_id) 
+        gpu_device_name = torch.cuda.get_device_name(gpu_device_id)
         # Get the total and available memory in bytes, then convert to GB
         gpu_total_mem_gb = torch.cuda.get_device_properties(gpu_device_id).total_memory / (1024 ** 3)
         # gpu_available_mem_gb = (torch.cuda.get_device_properties(gpu_device_id).total_memory - torch.cuda.memory_allocated(gpu_device_id)) / (1024 ** 3)
@@ -238,26 +238,26 @@ def generate_base_model_markdown(base_model_detected):
     """
     return base_model_markdown
 
-def check_tts_version(required_version="0.22.0"):
+def check_tts_version(required_version="0.24.1"):
     global pfc_status
     try:
         # Get the installed version of TTS
-        installed_version = metadata.version("tts")
+        installed_version = metadata.version("coqui-tts")
         # Check if the installed version meets the required version
         if version.parse(installed_version) >= version.parse(required_version):
-            tts_status = f"TTS version {installed_version} is installed and meets the requirement."
+            tts_status = f"Coqui-TTS version {installed_version} is installed and meets the requirement."
             tts_status_icon = "✅"
         else:
-            tts_status = f"❌ Fail - TTS version {installed_version} is installed but does not meet the required version {required_version}."
+            tts_status = f"❌ Fail - Coqui-TTS version {installed_version} is installed but does not meet the required version {required_version}."
             tts_status_icon = "❌"
             pfc_status = "fail"  # Update global status
     except metadata.PackageNotFoundError:
-        # If TTS is not installed
-        tts_status = "TTS is not installed."
+        # If Coqui-TTS is not installed
+        tts_status = "Coqui-TTS is not installed."
         pfc_status = "fail"  # Update global status
     tts_markdown = f"""
-    ### 🟥 <u>TTS Information</u><br>
-    &nbsp;&nbsp;&nbsp;&nbsp; {tts_status_icon} **TTS Version:** {tts_status}
+    ### 🟥 <u>Coqui-TTS Information</u><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; {tts_status_icon} **Coqui-TTS Version:** {tts_status}
     """
     return tts_markdown
 
@@ -527,7 +527,7 @@ from TTS.utils.manage import ModelManager
 
 
 def basemodel_or_finetunedmodel_choice(value):
-    global basemodel_or_finetunedmodel 
+    global basemodel_or_finetunedmodel
     if value == "Base Model":
         basemodel_or_finetunedmodel = True
     elif value == "Existing finetuned model":
@@ -716,7 +716,7 @@ def clear_gpu_cache():
     # clear the GPU cache
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-        
+
 def find_a_speaker_file(folder_path):
     search_path = folder_path / "*" / "speakers_xtts.pth"
     files = glob.glob(str(search_path), recursive=True)
@@ -812,14 +812,14 @@ def compact_model(xtts_checkpoint_copy):
     print("THIS DIR:", this_dir)
     best_model_path_str = str(xtts_checkpoint_copy)  # Convert to string
     print("best_model_path_str", best_model_path_str)
-    
+
     # Check if the best model file exists
     if not best_model_path_str:
         print("[FINETUNE] No trained model was found.")
         return "No trained model was found."
-    
+
     print(f"[FINETUNE] Best model path: {best_model_path_str}")
-    
+
     # Attempt to load the model
     try:
         checkpoint = torch.load(best_model_path_str, map_location=torch.device("cpu"))
@@ -827,10 +827,10 @@ def compact_model(xtts_checkpoint_copy):
     except Exception as e:
         print("[FINETUNE] Error loading checkpoint:", e)
         raise
-    
+
     # Define the target directory
     target_dir = this_dir / "models" / "trainedmodel"
-    
+
     # Create the target directory if it doesn't exist
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -839,29 +839,29 @@ def compact_model(xtts_checkpoint_copy):
     for key in list(checkpoint["model"].keys()):
         if "dvae" in key:
             del checkpoint["model"][key]
-    
+
     # Save the modified checkpoint in the target directory
     torch.save(checkpoint, str(target_dir / "model.pth"))  # Convert to string
 
     # Specify the files you want to copy
     files_to_copy = ["vocab.json", "config.json", "speakers_xtts.pth", "mel_stats.pth", "dvae.pth"]
-    
+
     for file_name in files_to_copy:
         src_path = this_dir / base_path / base_model_path / file_name
         dest_path = target_dir / file_name
         shutil.copy(str(src_path), str(dest_path))  # Convert to string
-    
+
     source_wavs_dir = this_dir / "finetune" / "tmp-trn" / "wavs"
     target_wavs_dir = target_dir / "wavs"
     target_wavs_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Iterate through files in the source directory
     for file_path in source_wavs_dir.iterdir():
         # Check if it's a file and larger than 1000 KB
         if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:
             # Copy the file to the target directory
             shutil.copy(str(file_path), str(target_wavs_dir / file_path.name))  # Convert to string
-    
+
     print("[FINETUNE] Model copied to '/models/trainedmodel/'")
     return "Model copied to '/models/trainedmodel/'"
 
@@ -920,7 +920,7 @@ def compact_lastfinetuned_model(xtts_checkpoint_copy):
         if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:
             # Copy the file to the target directory
             shutil.copy(str(file_path), str(target_wavs_dir / file_path.name))
-    
+
     print("[FINETUNE] Model copied to '/models/lastfinetuned/'")
     return "Model copied to '/models/lastfinetuned/'"
 
@@ -979,7 +979,7 @@ def compact_custom_model(xtts_checkpoint_copy, folder_path):
         if file_path.is_file() and file_path.stat().st_size > 1000 * 1024:
             # Copy the file to the target directory
             shutil.copy(str(file_path), str(target_wavs_dir / file_path.name))
-    
+
     print("[FINETUNE] Model copied to '/models/",folder_path,"/")
     return f"Model copied to '/models/{folder_path}/'"
 
@@ -1033,7 +1033,7 @@ def delete_voice_sample_contents():
 #######################
 #### OTHER Generic ####
 #######################
-# define a logger to redirect 
+# define a logger to redirect
 class Logger:
     def __init__(self, filename="finetune.log"):
         self.log_file = filename
@@ -1134,7 +1134,7 @@ if __name__ == "__main__":
         description="""XTTS fine-tuning demo\n\n"""
         """
         Example runs:
-        python3 TTS/demos/xtts_ft_demo/xtts_demo.py --port 
+        python3 TTS/demos/xtts_ft_demo/xtts_demo.py --port
         """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -1174,7 +1174,7 @@ if __name__ == "__main__":
             with gr.Tab("🚀 Pre-Flight Checklist"):
                 gr.Markdown(
                 f"""
-                {pfc_markdown}       
+                {pfc_markdown}
                 {disk_space_results}
                 {system_ram_results}
                 {cuda_results}
@@ -1209,42 +1209,42 @@ if __name__ == "__main__":
             )
             with gr.Tab("🟨 CUDA & Cublas Help"):
                 gr.Markdown(
-                f"""         
+                f"""
                 {cuda_results}<br><br>
-                ◽ It DOESNT matter what version of CUDA you have installed within Python either, CUDA 11.8, CUDA 12.1 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing from Python/PyTorch.<br>
-                ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit 11.8 called Cublas64_11.<br>
+                ◽ It DOESNT matter what version of CUDA you have installed within Python either, CUDA 12.1, CUDA 12.4 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing from Python/PyTorch.<br>
+                ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit 12.4 called Cublas64_12.<br>
                 ◽ If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.<br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ You will need to download the Nvidia Cuda Toolkit 11.8<span style="color: #3366ff;"> network install</span> from <a href="https://developer.nvidia.com/cuda-11-8-0-download-archive" target="_blank">link here</a><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ You will need to download the Nvidia Cuda Toolkit 12.4<span style="color: #3366ff;"> network install</span> from <a href="https://developer.nvidia.com/cuda-12-4-0-download-archive" target="_blank">link here</a><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 1) Run the installer and select <span style="color: #3366ff;">Custom Advanced</span> Uncheck <span style="color: #3366ff;">everything</span> at the top then expand <span style="color: #3366ff;">CUDA</span>, <span style="color: #3366ff;">Development</span> > <span style="color: #3366ff;">Compiler</span> > and select <span style="color: #3366ff;;">nvcc</span> then expand <span style="color: #3366ff;;">Libraries</span> and select <span style="color: #3366ff;;">CUBLAS</span>.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 2) Back at the top of <span style="color: #3366ff;">CUDA</span>, expand <span style="color: #3366ff;">Runtime</span> > <span style="color: #3366ff;">Libraries</span> and select <span style="color: #3366ff;">CUBLAS</span>. Click <span style="color: #3366ff;;">Next</span>, accept the default path (taking a note of its location) and let the install run. <br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>. If it does you are good to go. If it doesn't > Step 4.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 3) You should be able to drop to your terminal or command prompt and type <span style="color: #3366ff;">nvcc --version</span> and have it report <span style="color: #00a000;">Cuda compilation tools, release 12.4</span>. If it does you are good to go. If it doesn't > Step 4.<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 4) <strong>Linux users</strong>, you can temporarily add these paths on your current terminal window with (you may need to confirm these are correct for your flavour of Linux):<br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64&colon;&dollar;&lbrace;LD_LIBRARY_PATH&colon;&plus;&colon;&dollar;&lbrace;LD_LIBRARY_PATH&rbrace;&rbrace;</span> (Add it to your ~/.bashrc if you want this to be permanent)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-11.8/bin</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64&colon;&dollar;&lbrace;LD_LIBRARY_PATH&colon;&plus;&colon;&dollar;&lbrace;LD_LIBRARY_PATH&rbrace;&rbrace;</span> (Add it to your ~/.bashrc if you want this to be permanent)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">export LD_LIBRARY_PATH=/usr/local/cuda-12.4/bin</span><br><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Windows users</strong> need the add the following to the PATH environment variable. Start menu and search for "Environment Variables" or "Edit the system environment variables.". <br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Find and select the "Path" variable, then click on the "Edit...". Click on the "New" button and add:<br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">C:&bsol;Program Files&bsol;NVIDIA GPU Computing Toolkit&bsol;CUDA&bsol;v11.8&bsol;bin.</span><br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 5) Once you have these set correctly, you should be able to open a new command prompt/terminal and <span style="color: #3366ff;">nvcc --version</span> at the command prompt/terminal, resulting in <span style="color: #00a000;">Cuda compilation tools, release 11.8</span>.<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 6) If the nvcc command doesn't work OR it reports a version different from 11.8, finetuning wont work, so you will to double check your environment variables and get them working correctly.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #3366ff;">C:&bsol;Program Files&bsol;NVIDIA GPU Computing Toolkit&bsol;CUDA&bsol;v12.4&bsol;bin.</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 5) Once you have these set correctly, you should be able to open a new command prompt/terminal and <span style="color: #3366ff;">nvcc --version</span> at the command prompt/terminal, resulting in <span style="color: #00a000;">Cuda compilation tools, release 12.4</span>.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;◽ 6) If the nvcc command doesn't work OR it reports a version different from 12.4, finetuning wont work, so you will to double check your environment variables and get them working correctly.<br>
                 """
             )
             with gr.Tab("🟦 Python & PyTorch Help"):
                 gr.Markdown(
-                f"""         
+                f"""
                 {pytorch_results}<br><br>
                 ◽ On the PyTorch version the:<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- first few digits are the version of PyTorch e.g. 2.1.0 is PyTorch 2.1.0<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- last few digits refer to the CUDA version e.g. cu118 is Cuda 11.8. cu121 is Cuda 12.1.<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- last few digits refer to the CUDA version e.g. cu124 is Cuda 12.4.<br>
                 ◽ Ensure you have started your Python envuronment before running finetuning otherwise you will have failures on the above checks.<br>
                 ◽ If PyTorch does not show a CUDA version, then PyTorch will need reinstalling with CUDA. I would suggest running <span style="color: #3366ff;">pip cache purge</span> before installing PyTorch again.<br>
-                ◽ It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 11.8, CUDA 12.1 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing.<br>
-                ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit called Cublas64_11.<br>
+                ◽ It DOESNT matter what version of PyTorch and CUDA you have installed within Python, CUDA 12.1, CUDA 12.4 etc. The NVIDIA CUDA Development Toolkit is a completly different and seperate thing.<br>
+                ◽ Finetuning simply wants to access a tool within the CUDA Development Toolkit called Cublas64_12.<br>
                 ◽ If you dont have the toolkit installed, the idea is just to install the smallest bit possible and this will not affect or impact other things on your system.<br>
                 """
             )
             with gr.Tab("⬛ XTTS Base Model Help"):
                 gr.Markdown(
-                f"""         
+                f"""
                 {base_model_results}<br><br>
                 ◽ If your basemodel is not being detected, please ensure that <span style="color: #3366ff;">finetune.py</span> is being run from the AllTalk main folder.<br>
                 ◽ Ensure you have started AllTalk normally at least once. You can start it again and it will download any missing files.<br>
@@ -1254,13 +1254,13 @@ if __name__ == "__main__":
             )
             with gr.Tab("🟥 TTS Version Help"):
                 gr.Markdown(
-                f"""         
+                f"""
                 {tts_version_status}<br><br>
                 ◽ If your TTS version is showing as the incorrect version, please reinstall the Finetuning requirements at the command prompt/terminal.<br>
                 ◽ <span style="color: #3366ff;">pip install -r requirements_finetune.txt</span><br>
                 """
             )
-                
+
         with gr.Tab("ℹ️ General Finetuning info"):
             gr.Markdown(
             f"""
@@ -1299,7 +1299,7 @@ if __name__ == "__main__":
                 ◽ You can find information about the Whisper model [here](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages) and you can find data about manually building training data [here](https://docs.coqui.ai/en/latest/formatting_your_dataset.html), as well as details below about the file structure this step performs.<br>
                 ### 🟦 <u>What you need to do</u>
                 ◽ Please read Coqui's guide on what makes a good dataset [here](https://docs.coqui.ai/en/latest/what_makes_a_good_dataset.html#what-makes-a-good-dataset)<br>
-                ◽ Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>          
+                ◽ Place your audio files in <span style="color: #3366ff;">{str(audio_folder)}</span>
                 ◽ Your audio samples can be in the format <span style="color: #3366ff;">mp3, wav,</span> or <span style="color: #3366ff;">flac.</span><br>
                 ◽ You will need a minimum of <span style="color: #3366ff;">2 minutes</span> of audio in either one or multiple audio files. 5 to 10 minutes of audio would probably be better, allowing for more varied sample data to be generated.<br>
                 ◽ Very small sample files cause errors, so I would recommend that the samples are at least 30 seconds and longer.<br>
@@ -1319,7 +1319,7 @@ if __name__ == "__main__":
                 ◽ First time, it needs to download the Whisper model which is 3GB. After that a few minutes on an average 3-4 year old system.<br>
                 """
             )
-                 
+
             out_path = gr.Textbox(
                 label="Output path (where data and checkpoints will be saved):",
                 value=out_path,
@@ -1383,7 +1383,7 @@ if __name__ == "__main__":
             demo.load(read_logs, None, logs, every=1)
 
             prompt_compute_btn = gr.Button(value="Step 1 - Create dataset")
-        
+
             def preprocess_dataset(language, whisper_model, out_path, eval_split_number, speaker_name_input, progress=gr.Progress(track_tqdm=True)):
                 clear_gpu_cache()
                 test_for_audio_files = [file for file in os.listdir(audio_folder) if any(file.lower().endswith(ext) for ext in ['.wav', '.mp3', '.flac'])]
@@ -1408,7 +1408,7 @@ if __name__ == "__main__":
 
                 print("[FINETUNE] Dataset Generated. Move to Step 2")
                 return "Dataset Generated. Move to Step 2", train_meta, eval_meta
-            
+
 #######################
 #### GRADIO STEP 2 ####
 #######################
@@ -1418,7 +1418,7 @@ if __name__ == "__main__":
                     f"""
                     ### 💻 <u>Training</u><br>
                     ### 🟥 <u>Important Note - Language support.</u>
-                    ◽ If this step is failing/erroring you may wish to check your training data was created correctly (Detailed in Step 1), confirming that wav files have been generated and your `metadata_train.csv` and `metadata_eval.csv` files have been populated.<br>             
+                    ◽ If this step is failing/erroring you may wish to check your training data was created correctly (Detailed in Step 1), confirming that wav files have been generated and your `metadata_train.csv` and `metadata_eval.csv` files have been populated.<br>
                     ### 🟦 <u>What you need to do</u>
                     ◽ The <span style="color: #3366ff;">Train CSV</span> and <span style="color: #3366ff;">Eval CSV</span> should already be populated. If not, just go back to Step 1 and click "Create Dataset" again.<br>
                     ◽ The default settings below are the suggested settings for most purposes, however you may choose to alter them depending on your specific use case.<br>
@@ -1612,11 +1612,11 @@ if __name__ == "__main__":
                     """
                 )
 
-                
+
 #######################
 #### GRADIO STEP 3 ####
 #######################
-            
+
         with gr.Tab("✅ Step 3 - Testing"):
             gr.Markdown(
                 f"""
@@ -1747,7 +1747,7 @@ if __name__ == "__main__":
                 ◽ If you are not going to train anything again, you can delete the whisper model from inside of your huggingface cache (3GB approx) <br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Linux:** <span style="color: #3366ff;">~/.cache/huggingface/hub/(folder-here)</span><br>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◽ **Windows:** <span style="color: #3366ff;">C:&bsol;users&lpar;your-username&rpar;&bsol;.cache&bsol;huggingface&bsol;hub&bsol;(folder-here)</span>.<br>
-                ◽ You can also uninstall the Nvidia CUDA 11.8 Toolkit if you wish and remove your environment variable entries.<br>
+                ◽ You can also uninstall the Nvidia CUDA 12.4 Toolkit if you wish and remove your environment variable entries.<br>
                 """
             )
             final_progress_data = gr.Label(
@@ -1832,7 +1832,7 @@ if __name__ == "__main__":
                 ],
                 outputs=[progress_train, xtts_config, xtts_vocab, xtts_checkpoint, speaker_reference_audio],
             )
-            
+
             load_btn.click(
                 fn=load_model,
                 inputs=[
@@ -1851,7 +1851,7 @@ if __name__ == "__main__":
                     speaker_reference_audio,
                 ],
                 outputs=[progress_gen, tts_output_audio, reference_audio],
-            )    
+            )
             compact_btn.click(
                 fn=compact_model,
                 inputs=[xtts_checkpoint_copy],
@@ -1885,4 +1885,3 @@ if __name__ == "__main__":
         server_port=7052,
         server_name="127.0.0.1",
     )
-

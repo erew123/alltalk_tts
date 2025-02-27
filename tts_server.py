@@ -499,7 +499,7 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
     if params["low_vram"] and device == "cpu":
         await switch_device()
     generate_start_time = time.time()  # Record the start time of generating TTS
-    
+
     # XTTSv2 LOCAL & Xttsv2 FT Method
     if params["tts_method_xtts_local"] or tts_method_xtts_ft:
         print(f"[{params['branding']}TTSGen] {text}")
@@ -560,12 +560,12 @@ async def generate_audio_internal(text, voice, language, temperature, repetition
                 chunk = np.clip(chunk, -1, 1)
                 chunk = (chunk * 32767).astype(np.int16)
                 yield chunk.tobytes()
-                print(f"[{params['branding']}Debug] Stream audio generation: Yielded audio chunk {i}.") if debug_generate_audio else None   
+                print(f"[{params['branding']}Debug] Stream audio generation: Yielded audio chunk {i}.") if debug_generate_audio else None
         else:
             # Non-streaming-specific operation
             torchaudio.save(output_file, torch.tensor(output["wav"]).unsqueeze(0), 24000)
 
-    
+
     # API LOCAL Methods
     elif params["tts_method_api_local"]:
         # Streaming only allowed for XTTSv2 local
@@ -645,7 +645,7 @@ def list_files(directory):
         for f in os.listdir(directory)
         if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")
     ]
-    return files
+    return sorted(files)
 
 #############################
 #### JSON CONFIG UPDATER ####
@@ -774,7 +774,7 @@ async def get_audio(filename: str):
     audio_path = Path("outputs") / filename
     if not audio_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
-    
+
     response = FileResponse(
         path=audio_path,
         media_type='audio/wav',
@@ -808,7 +808,7 @@ async def preview_voice(request: Request, voice: str = Form(...)):
         # Clean the voice filename for inclusion in the text
         clean_voice_filename = re.sub(r'\.wav$', '', voice.replace(' ', '_'))
         clean_voice_filename = re.sub(r'[^a-zA-Z0-9]', ' ', clean_voice_filename)
-        
+
         # Generate the audio
         text = f"Hello, this is a preview of voice {clean_voice_filename}."
 
@@ -1134,10 +1134,10 @@ async def tts_generate(
             else:
                 cleaned_string = text_input
             response = await generate_audio(cleaned_string, character_voice_gen, language, temperature, repetition_penalty, output_file_path, streaming)
-        if sounddevice_installed == False or streaming == True:
+        if not sounddevice_installed or streaming:
             autoplay = False
         if autoplay:
-            play_audio(output_file_path, autoplay_volume)       
+            play_audio(output_file_path, autoplay_volume)
         if streaming:
             return StreamingResponse(response, media_type="audio/wav")
         return JSONResponse(content={"status": "generate-success", "output_file_path": str(output_file_path), "output_file_url": str(output_file_url), "output_cache_url": str(output_cache_url)}, status_code=200)
@@ -1238,11 +1238,11 @@ async def srt_generation():
     ttslist_path = this_dir / "outputs" / "ttsList.json"
     wavfile_path = this_dir / "outputs"
     subprocess.run(["python", "tts_srt.py", f"--ttslistpath={ttslist_path}", f"--wavfilespath={wavfile_path}"], cwd=this_dir / "system" / "tts_srt", env=env)
-    
+
     srt_file_path = this_dir / "outputs" / "subtitles.srt"
     if not srt_file_path.exists():
         raise HTTPException(status_code=404, detail="Subtitle file not found.")
-    
+
     return FileResponse(path=srt_file_path, filename="subtitles.srt", media_type='application/octet-stream')
 
 ###################################################
