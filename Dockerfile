@@ -1,6 +1,6 @@
-ARG GITHUB_REPOSITORY
+ARG DOCKER_REPOSITORY
 ARG DOCKER_TAG=latest
-FROM ${GITHUB_REPOSITORY}alltalk_tts_environment:${DOCKER_TAG}
+FROM ${DOCKER_REPOSITORY}alltalk_tts_environment:${DOCKER_TAG}
 
 # Argument to choose the model: piper, vits, xtts
 ARG TTS_MODEL="xtts"

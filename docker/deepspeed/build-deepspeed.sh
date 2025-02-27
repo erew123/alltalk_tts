@@ -6,6 +6,7 @@ cd $SCRIPT_DIR
 . ${SCRIPT_DIR=}/../variables.sh
 
 DOCKER_TAG=latest
+DOCKER_REPOSITORY=erew123
 
 # Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -23,9 +24,11 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --github-repository)
-      if [ -n "${GITHUB_REPOSITORY}" ] && ! [[ $GITHUB_REPOSITORY =~ ^--.* ]]; then
-        GITHUB_REPOSITORY="$2"
+      if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
+        DOCKER_REPOSITORY="$2"
         shift
+      else
+        DOCKER_REPOSITORY=""
       fi
       ;;
     *)
@@ -51,9 +54,9 @@ mkdir -p build
 
 docker buildx \
   build \
-  --build-arg GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
+  --build-arg DOCKER_REPOSITORY=$DOCKER_REPOSITORY \
   --build-arg DEEPSPEED_VERSION=$DEEPSPEED_VERSION \
-  -t ${GITHUB_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG} \
+  -t ${DOCKER_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG} \
   .
 
 docker run \
@@ -63,4 +66,4 @@ docker run \
   --name deepspeed \
   --build-arg DOCKER_TAG=$DOCKER_TAG \
   -v $SCRIPT_DIR/build:/deepspeed \
-  ${GITHUB_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG}
+  ${DOCKER_REPOSITORY}alltalk_deepspeed:${DOCKER_TAG}
