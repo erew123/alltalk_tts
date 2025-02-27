@@ -340,6 +340,11 @@ install_custom_standalone() {
     # Activate the environment and install requirements
     source "${CONDA_ROOT_PREFIX}/etc/profile.d/conda.sh"
     conda activate "${INSTALL_ENV_DIR}"
+	
+    # Install git
+    echo "Installing git"
+    conda install -y git
+	
     # pip install torch==2.2.1+cu121 torchaudio==2.2.1+cu121 --upgrade --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
     conda install -y pytorch=2.2.1 torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
     conda install -y nvidia/label/cuda-12.1.0::cuda-toolkit=12.1
