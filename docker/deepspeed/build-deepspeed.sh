@@ -23,7 +23,7 @@ while [ "$#" -gt 0 ]; do
       DOCKER_TAG="$2"
       shift
       ;;
-    --github-repository)
+    --docker-repository)
       if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
         DOCKER_REPOSITORY="$2"
         shift
@@ -38,6 +38,9 @@ while [ "$#" -gt 0 ]; do
   esac
   shift
 done
+
+# Append slash if missing:
+DOCKER_REPOSITORY=$(echo "$DOCKER_REPOSITORY" | sed 's![^/]$!&/!')
 
 PYTHON_SHORT_VERSION=${PYTHON_VERSION%.*}
 PYTHON_VERSION_NO_DOT=${PYTHON_SHORT_VERSION//./}
