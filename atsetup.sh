@@ -553,6 +553,10 @@ reapply_standalone() {
     echo
 }
 
-
-# Start the main menu
-main_menu
+# Check for "-silent" install command-line argument
+if [[ $1 == "-silent" ]]; then
+	install_custom_standalone
+else 
+	# Start the main menu
+	main_menu
+fi
