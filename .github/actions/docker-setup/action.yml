@@ -1,0 +1,73 @@
+name: 'Setting up docker'
+
+inputs:
+  DOCKERHUB_USERNAME:
+    description: "Docker hub username"
+    required: true
+  DOCKERHUB_REPO_NAME:
+    description: "Docker hub repo name"
+    required: true
+  DOCKERHUB_TOKEN:
+    description: "Docker hub token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
+        swap-storage: false
+        large-packages: false
+    - name: Read variables
+      shell: bash
+      run: |
+        source ./docker/variables.sh
+        for key in "${!ALLTALK_VARS[@]}"
+        do
+          echo "${key}=${ALLTALK_VARS[${key}]}"
+          echo "${key}=${ALLTALK_VARS[${key}]}" >> $GITHUB_ENV
+        done
+
+    - name: Extract version from Git Tag
+      shell: bash {0}
+      run: |
+        # Use the git tag if existing, otherwise 'latest':
+        DOCKER_TAG=$( echo "${{ github.ref }}" | grep -q tags | cut -d'/' -f 3 )
+        if [ -z "${DOCKER_TAG}" ]; then
+          DOCKER_TAG="latest"
+        fi
+        echo "Using DOCKER_TAG=${DOCKER_TAG}"
+        echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_ENV
+
+    - name: Extract Docker Hub User and Repo Name
+      shell: bash
+      env:
+        DOCKERHUB_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
+        DOCKERHUB_REPO_NAME: ${{ inputs.DOCKERHUB_REPO_NAME }}
+      run: |
+        if [ -n "${DOCKERHUB_USERNAME}" ]; then
+          echo "Using Github repository variable 'DOCKERHUB_USERNAME' as Docker hub username with value: '${DOCKERHUB_USERNAME}'"
+          echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> $GITHUB_ENV
+        else
+          echo "Using Github repository name as Docker hub username"
+          echo "DOCKERHUB_USERNAME=$(echo ${{ github.repository }} | cut -d'/' -f 1)" >> $GITHUB_ENV
+        fi
+
+        if [ -n "${DOCKERHUB_REPO_NAME}" ]; then
+          echo "Using Github repository variable 'DOCKERHUB_REPO_NAME' as Docker hub repo name with value: '${DOCKERHUB_REPO_NAME}'"
+          echo "DOCKERHUB_REPO_NAME=${DOCKERHUB_REPO_NAME}" >> $GITHUB_ENV
+        else
+          echo "Using Github repository name as Docker hub repo name"
+          echo "DOCKERHUB_REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f 2)" >> $GITHUB_ENV
+        fi
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ inputs.DOCKERHUB_USERNAME }}
+        password: ${{ inputs.DOCKERHUB_TOKEN }}
