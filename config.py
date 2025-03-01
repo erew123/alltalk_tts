@@ -134,7 +134,7 @@ class AbstractJsonConfig(ABC):
 
     def _reload_on_change(self):
         # Check if config file has been modified and reload if needed
-        if time.time() - self.__last_read_time >= self.__file_check_interval:
+        if self.__file_check_interval != 0 and time.time() - self.__last_read_time >= self.__file_check_interval:
             try:
                 most_recent_modification = self.get_config_path().stat().st_mtime
                 if most_recent_modification > self.__last_read_time:
@@ -369,3 +369,45 @@ class AlltalkConfig(AbstractJsonConfig, AlltalkConfigFields):
         model = AlltalkConfigModel.model_validate_json(json_string)
         model.get_output_directory().mkdir(parents=True, exist_ok=True)
         return model
+
+class AlltalkMultiEngineManagerConfigFields:
+    base_port: int = 7001
+    api_server_port: int = 7851
+    auto_start_engines: int = 0
+    max_instances: int = 8
+    gradio_interface_port: int = 7500
+    max_retries: int = 12
+    initial_wait: float = 2
+    backoff_factor: float = 1.2
+    debug_mode: bool = False
+    max_queue_time: int = 60,  # Maximum time a request can wait in the queue (in seconds)
+    queue_check_interval: float = 0.1,  # Time between checks for available instances (in seconds)
+    tts_request_timeout: int = 30,  # Timeout for individual TTS requests (in seconds)
+    text_length_factor: float = 0.2,  # Increase timeout by 20% per 100 characters
+    concurrent_request_factor: float = 0.5,  # Increase timeout by 50% per concurrent request
+    diminishing_factor: float = 0.5,  # Reduce additional time for long-running requests by 50%
+    queue_position_factor: float = 1.0  # Add 100% of base timeout for each queue position
+
+class AlltalkMultiEngineManagerConfigModel(BaseModel, AlltalkMultiEngineManagerConfigFields):
+    pass
+
+class AlltalkMultiEngineManagerConfig(AbstractJsonConfig, AlltalkMultiEngineManagerConfigFields):
+    __instance = None
+    __this_dir = Path(__file__).parent.resolve()
+
+    def __init__(self, config_path: Path | str = os.path.join(__this_dir, "mem_config.json")):
+        super().__init__(config_path, 0)
+        self._load_config()
+
+    @staticmethod
+    def get_instance():
+        if AlltalkMultiEngineManagerConfig.__instance is None:
+            AlltalkMultiEngineManagerConfig.__instance = AlltalkMultiEngineManagerConfig()
+        AlltalkMultiEngineManagerConfig.__instance._reload_on_change()
+        return AlltalkMultiEngineManagerConfig.__instance
+
+    def _handle_loaded_config(self, json_string: str):
+        return AlltalkMultiEngineManagerConfigModel.model_validate_json(json_string)
+
+    def save(self, path: Path | str | None = None):
+        self._save_file(path)

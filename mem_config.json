@@ -1,0 +1,18 @@
+{
+  "base_port": 7001,
+  "api_server_port": 7851,
+  "auto_start_engines": 0,
+  "max_instances": 8,
+  "gradio_interface_port": 7500,
+  "max_retries": 12,
+  "initial_wait": 2.0,
+  "backoff_factor": 1.2,
+  "debug_mode": false,
+  "max_queue_time": 60,
+  "queue_check_interval": 0.1,
+  "tts_request_timeout": 30,
+  "text_length_factor": 0.2,
+  "concurrent_request_factor": 0.5,
+  "diminishing_factor": 0.5,
+  "queue_position_factor": 1.0
+}

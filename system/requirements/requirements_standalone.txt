@@ -1,5 +1,7 @@
 coqui-tts==0.24.3
 filelock>=3.13.4
+flask[async]==3.1.0
+flask-cors==5.0.1
 fuzzywuzzy>=0.18.0
 ffmpeg-python>=0.2.0
 gradio==4.44.1

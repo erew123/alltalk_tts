@@ -1227,16 +1227,17 @@ else:
         + str(config.api_def.api_port_number)
         + "\033[00m"
     )
-    print_message(
-        "\033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:"
-        + str(config.gradio_port_number)
-        + "\033[00m"
-    )
-    print_message(
-        "\033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:"
-        + str(config.gradio_port_number)
-        + "?__theme=dark\033[00m"
-    )
+    if config.launch_gradio:
+        print_message(
+            "\033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:"
+            + str(config.gradio_port_number)
+            + "\033[00m"
+        )
+        print_message(
+            "\033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:"
+            + str(config.gradio_port_number)
+            + "?__theme=dark\033[00m"
+        )
     print_message("")
 
 print_message(

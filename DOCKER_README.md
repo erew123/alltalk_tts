@@ -51,10 +51,14 @@ following optional arguments:
 - `--voices` lets you add voices for the TTS engine in WAV format. You have to specify the folder containing all
   voice files.
     - Example: `docker-start.sh --voices /my/voices/dir`
-- `--rvc_voices` similar to voices, this option lets you pick the folder containing the RVC models.
+- `--rvc-voices` similar to voices, this option lets you pick the folder containing the [RVC models](https://github.com/erew123/alltalk_tts/wiki/RVC-(Retrieval%E2%80%90based-Voice-Conversion)).
     - Example: `docker-start.sh --rvc_voices /my/rvc/voices/dir`
-- `--no_ui` allows you to not expose port 7852 for the gradio interface. Note that you still have to set `launch_gradio`
-  to `false` via JSON file passed to `--config`.
+- `--no-ui` allows you to not expose port 7852 for the gradio interface and sets `launch_gradio` to `false`.
+- `--with-multi-engine-manager` enables the use of the [multi engine manager (MEM)](https://github.com/erew123/alltalk_tts/wiki/Multi-Engine-Manager)
+    which allows for more parallel requests. By default, one TTS engine is started. Optionally, you can pass the
+    file path of a JSON file which can be a subset of `mem_config.json` with more fine-grained configuration options.
+  - Example: `docker-start.sh --with-multi_engine_manager` to use MEM with default settings or 
+    `docker-start.sh --with-multi_engine_manager /my/config/file.json` to pass a JSON file containing more settings.
 - `--tag` allows to choose the docker tag of the image to run. Defaults to `latest-xtts`.
     - Example: `docker-start.sh --tag mytag`
 - `--docker-repository` allows to choose another Docker repository for pulling the image from. Use an empty 
