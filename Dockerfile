@@ -13,6 +13,9 @@ ARG ALLTALK_DIR=/opt/alltalk
 
 ENV GRADIO_SERVER_NAME="0.0.0.0"
 
+ENV ENABLE_MULTI_ENGINE_MANAGER=false
+ENV WITH_UI=true
+
 WORKDIR ${ALLTALK_DIR}
 
 ##############################################################################
@@ -28,6 +31,10 @@ RUN <<EOR
     mkdir ${ALLTALK_DIR}/pip_cache
     pip install --no-cache-dir --cache-dir=${ALLTALK_DIR}/pip_cache -r system/requirements/requirements_standalone.txt
     pip install --no-cache-dir --cache-dir=${ALLTALK_DIR}/pip_cache --upgrade gradio==4.32.2
+
+    # By default, version 1.9.10 is used causing this warning on startup: 'FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated'
+    pip install --no-cache-dir --cache-dir=${ALLTALK_DIR}/pip_cache local-attention==1.11.1
+
     # Parler:
     pip install --no-cache-dir --cache-dir=${ALLTALK_DIR}/pip_cache -r system/requirements/requirements_parler.txt
 
@@ -75,12 +82,26 @@ RUN <<EOR
 #!/usr/bin/env bash
 source ~/.bashrc
 
+# Enabling or disabling UI:
+jq ".launch_gradio = \$WITH_UI" docker_default_config.json > docker_default_config.json.tmp
+mv docker_default_config.json.tmp docker_default_config.json
+
 # Merging config from docker_confignew.json into confignew.json:
 jq -s '.[0] * .[1] * .[2]' confignew.json docker_default_config.json docker_confignew.json  > confignew.json.tmp
 mv confignew.json.tmp confignew.json
 
 conda activate alltalk
-python script.py
+
+if [ "\$ENABLE_MULTI_ENGINE_MANAGER" = true ] ; then
+  echo "Starting alltalk using multi engine manager"
+  # Merging config from docker_mem_config.json into mem_config.json:
+  jq -s '.[0] * .[1] * .[2]' mem_config.json docker_default_mem_config.json docker_mem_config.json  > mem_config.json.tmp
+  mv mem_config.json.tmp mem_config.json
+  python tts_mem.py
+else
+  echo "Starting alltalk"
+  python script.py
+fi
 EOF
     cat << EOF > start_finetune.sh
 #!/usr/bin/env bash

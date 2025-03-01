@@ -4,6 +4,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 . ${SCRIPT_DIR=}/docker/variables.sh
 
 WITH_UI=true
+ENABLE_MULTI_ENGINE_MANAGER=false
+MULTI_ENGINE_MANAGER_CONFIG=
 DOCKER_TAG=latest-xtts
 DOCKER_REPOSITORY=erew123
 declare -a ADDITIONAL_ARGS=()
@@ -19,12 +21,19 @@ while [ "$#" -gt 0 ]; do
       VOICES="$2"
       shift
       ;;
-    --rvc_voices)
+    --rvc-voices)
       RVC_VOICES="$2"
       shift
       ;;
-    --no_ui)
+    --no-ui)
       WITH_UI=false
+      ;;
+    --with-multi-engine-manager)
+      ENABLE_MULTI_ENGINE_MANAGER=true
+      if [ -n "$2" ] && ! [[ $2 =~ ^--.* ]]; then
+        MULTI_ENGINE_MANAGER_CONFIG=$2
+        shift
+      fi
       ;;
     --tag)
       DOCKER_TAG="$2"
@@ -66,8 +75,20 @@ if [[ -n $RVC_VOICES ]]; then
 fi
 
 if [ "$WITH_UI" = true ] ; then
-    DOCKER_ARGS+=( -p 7852:7852 )
+    if [ "$ENABLE_MULTI_ENGINE_MANAGER" = true ] ; then
+      DOCKER_ARGS+=( -p 7500:7500 )
+    else
+      DOCKER_ARGS+=( -p 7852:7852 )
+    fi
 fi
+
+if [[ -n $MULTI_ENGINE_MANAGER_CONFIG ]]; then
+  DOCKER_ARGS+=( -v ${MULTI_ENGINE_MANAGER_CONFIG}:${ALLTALK_DIR}/docker_mem_config.json )
+fi
+
+# Pass env variables:
+DOCKER_ARGS+=( -e ENABLE_MULTI_ENGINE_MANAGER=${ENABLE_MULTI_ENGINE_MANAGER} )
+DOCKER_ARGS+=( -e WITH_UI=${WITH_UI} )
 
 docker run \
   --rm \

@@ -40,15 +40,12 @@ import os
 import io
 import sys
 import time
-import json
 import queue
 import socket
-import random
 import signal
 import asyncio
 import aiohttp
 import requests
-import importlib
 import threading
 import subprocess
 import gradio as gr
@@ -58,43 +55,7 @@ from collections import deque
 from datetime import datetime, timedelta
 from requests.exceptions import RequestException
 from werkzeug.serving import make_server, WSGIRequestHandler
-from concurrent.futures import ThreadPoolExecutor
-
-def ensure_flask_dependencies():
-    # Check for Flask async support
-    try:
-        import flask.json
-        if not hasattr(flask.json, 'loads'):
-            raise ImportError("Flask async support not found")
-    except ImportError:
-        print("Flask async support not found. Installing...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "flask[async]"])
-            print("Flask async support installed successfully.")
-            import flask
-            importlib.reload(flask)  # Reload the module to ensure fresh state after install
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install Flask async support. Error: {e}")
-            print("Please run 'pip install flask[async]' manually.")
-            sys.exit(1)
-
-    # Check for Flask-CORS
-    try:
-        import flask_cors
-    except ImportError:
-        print("Flask-CORS not found. Installing...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "flask-cors"])
-            print("Flask-CORS installed successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install Flask-CORS. Error: {e}")
-            print("Please run 'pip install flask-cors' manually.")
-            sys.exit(1)
-
-# Check Flask Dependencies
-ensure_flask_dependencies()
-
-# Flask app setup
+from config import AlltalkMultiEngineManagerConfig
 from flask_cors import CORS, cross_origin
 from flask import Flask, request, jsonify, send_from_directory, send_file
 
@@ -115,52 +76,14 @@ should_exit = threading.Event()
 # Global variable to hold the monitor thread
 stop_monitor = threading.Event()
 monitor = None
+WITH_UI = os.getenv("WITH_UI", True).lower() == 'true'
 
 flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app.config['OUTPUT_FOLDER'] = str(Path(os.getcwd()) / 'outputs')
 
-# Default configuration
-default_config = {
-    "base_port": 7001,
-    "api_server_port": 7851,
-    "auto_start_engines": 0,
-    "max_instances": 8,
-    "gradio_interface_port": 7500,
-    "max_retries": 12,
-    "initial_wait": 2,
-    "backoff_factor": 1.2,
-    "debug_mode": False,
-    "max_queue_time": 60,  # Maximum time a request can wait in the queue (in seconds)
-    "queue_check_interval": 0.1,  # Time between checks for available instances (in seconds)
-    "tts_request_timeout": 30,  # Timeout for individual TTS requests (in seconds)
-    "text_length_factor": 0.2,  # Increase timeout by 20% per 100 characters
-    "concurrent_request_factor": 0.5,  # Increase timeout by 50% per concurrent request
-    "diminishing_factor": 0.5,  # Reduce additional time for long-running requests by 50%
-    "queue_position_factor": 1.0  # Add 100% of base timeout for each queue position    
-}
-
-def load_config():
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as f:
-            loaded_config = json.load(f)
-            # Update loaded_config with any missing keys from default_config
-            for key, value in default_config.items():
-                if key not in loaded_config:
-                    loaded_config[key] = value
-            # Ensure debug_mode is a boolean
-            loaded_config['debug_mode'] = bool(loaded_config['debug_mode'])
-            return loaded_config
-    return default_config.copy()
-
-def save_config(config):
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f, indent=2)
-
 # Load configuration at the start of the script
-config = load_config()
-current_base_port = config['base_port']
-max_instances = config['max_instances']
+config = AlltalkMultiEngineManagerConfig.get_instance()
 
 def signal_handler(signum, frame):
     print("[AllTalk MEM] Interrupt received, shutting down...")
@@ -201,9 +124,10 @@ print(f"[AllTalk MEM]")
 print(f"[AllTalk MEM] \033[93m     MEM is not intended for production use and\033[00m")
 print(f"[AllTalk MEM] \033[93m      there is NO support being offered on MEM\033[00m")
 print(f"[AllTalk MEM]")
-print(f"[AllTalk MEM] \033[94mAPI/Queue   :\033[00m \033[92mhttp://127.0.0.1:{config['api_server_port']}/api/tts-generate\033[00m")
-print(f"[AllTalk MEM] \033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:{config['gradio_interface_port']}\033[00m")
-print(f"[AllTalk MEM] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{config['gradio_interface_port']}?__theme=dark\033[00m")
+print(f"[AllTalk MEM] \033[94mAPI/Queue   :\033[00m \033[92mhttp://127.0.0.1:{config.api_server_port}/api/tts-generate\033[00m")
+if WITH_UI:
+    print(f"[AllTalk MEM] \033[94mGradio Light:\033[00m \033[92mhttp://127.0.0.1:{config.gradio_interface_port}\033[00m")
+    print(f"[AllTalk MEM] \033[94mGradio Dark :\033[00m \033[92mhttp://127.0.0.1:{config.gradio_interface_port}?__theme=dark\033[00m")
 print(f"[AllTalk MEM]")
 
 def is_port_in_use(port):
@@ -267,21 +191,21 @@ def check_subprocess_status(instance_id, port):
 # to allow for longer startup times of the TTS engine. 
 def retry_with_backoff(func):
     retries = 0
-    wait_time = config['initial_wait']
-    while retries < config['max_retries']:
+    wait_time = config.initial_wait
+    while retries < config.max_retries:
         try:
             result = func()
-            print(f"[AllTalk MEM] Operation successful on attempt {retries + 1}") if config['debug_mode'] else None
+            print(f"[AllTalk MEM] Operation successful on attempt {retries + 1}") if config.debug_mode else None
             return result
         except RequestException as e:
             retries += 1
-            print(f"[AllTalk MEM] Attempt {retries}") if config['debug_mode'] else None
-            if retries == config['max_retries']:
-                print(f"[AllTalk MEM] All {max_retries} attempts failed waiting for this instance of the Engine to load.") if config['debug_mode'] else None
+            print(f"[AllTalk MEM] Attempt {retries}") if config.debug_mode else None
+            if retries == config.max_retries:
+                print(f"[AllTalk MEM] All {config.max_retries} attempts failed waiting for this instance of the Engine to load.") if config.debug_mode else None
                 return False
-            print(f"[AllTalk MEM] Retrying in {wait_time} seconds...") if config['debug_mode'] else None
+            print(f"[AllTalk MEM] Retrying in {wait_time} seconds...") if config.debug_mode else None
             time.sleep(wait_time)
-            wait_time = round(wait_time * config['backoff_factor'], 1)
+            wait_time = round(wait_time * config.backoff_factor, 1)
     return False
 
 def is_server_ready(port, timeout=3):
@@ -294,14 +218,14 @@ def is_server_ready(port, timeout=3):
 
 def stop_all_instances():
     instance_ids = list(processes.keys())
-    results = ["❌ Not running"] * max_instances
+    results = ["❌ Not running"] * config.max_instances
     for instance_id in instance_ids:
         stop_subprocess(instance_id)
         results[instance_id-1] = "❌ Not running"
     return results
 
-def update_all_statuses(base_port):
-    return [check_subprocess_status(i, base_port + i - 1) for i in range(1, max_instances + 1)]            
+def update_all_statuses():
+    return [check_subprocess_status(i, config.base_port + i - 1) for i in range(1, config.max_instances + 1)]
 
 def count_running_instances():
     return sum(1 for p in processes.values() if p.poll() is None)
@@ -336,7 +260,7 @@ def test_tts(engine, voice, text):
         return None, "Please select both an engine and a voice" 
     try:
         engine_num = int(engine.split()[1])
-        port = current_base_port + engine_num - 1
+        port = config.base_port + engine_num - 1
         formatted_text = text.format(engine=engine_num, port=port, voice=voice)
         
         audio_url, debug_msg = generate_tts(port, engine_num, formatted_text, voice)
@@ -351,7 +275,7 @@ def test_tts(engine, voice, text):
 # Gradio Code and functions #
 #############################
 def create_gradio_interface():
-    global current_base_port, max_instances, config, monitor
+    global monitor
     monitor = MonitoringControl()
     with gr.Blocks(title="AllTalk Multi Engine Manager", theme=gr.themes.Base()) as interface:
         with gr.Row():
@@ -371,17 +295,17 @@ def create_gradio_interface():
             }""", show_api=False)
         with gr.Tab("Engine Management"):
             with gr.Row():
-                num_instances_input = gr.Slider(minimum=1, maximum=max_instances, step=1, value=1, label="Number of Instances to Start")
+                num_instances_input = gr.Slider(minimum=1, maximum=config.max_instances, step=1, value=1, label="Number of Instances to Start")
                 start_MEMple_button = gr.Button("Start Instances")
                 stop_all_button = gr.Button("Stop All Instances")
                 refresh_button = gr.Button("Refresh Status")
             error_box = gr.Textbox(label="Error Messages", visible=False)
             
             instance_statuses = []
-            for i in range(0, max_instances, 8):  # Create rows with 8 instances each
+            for i in range(0, config.max_instances, 8):  # Create rows with 8 instances each
                 with gr.Row():
                     for j in range(8):
-                        if i + j < max_instances:
+                        if i + j < config.max_instances:
                             instance_id = i + j + 1
                             
                             # Use a column for each engine instance to control layout
@@ -396,15 +320,15 @@ def create_gradio_interface():
                                     restart_btn = gr.Button("♻️ Re-St", size="sm", scale=1, min_width=10)
 
                                 # Define click behavior for each button
-                                start_btn.click(lambda id=instance_id: start_and_update(id, current_base_port + id - 1), outputs=status)
+                                start_btn.click(lambda id=instance_id: start_and_update(id, config.base_port + id - 1), outputs=status)
                                 stop_btn.click(lambda id=instance_id: stop_and_update(id), outputs=status)
-                                restart_btn.click(lambda id=instance_id: restart_and_update(id, current_base_port + id - 1), outputs=status)
+                                restart_btn.click(lambda id=instance_id: restart_and_update(id, config.base_port + id - 1), outputs=status)
 
                             instance_statuses.append(status)
             
             def refresh_and_update_slider():
                 running_count = count_running_instances()
-                statuses = update_all_statuses(current_base_port)
+                statuses = update_all_statuses()
                 return [gr.update(value=running_count)] + statuses
 
             refresh_button.click(
@@ -414,9 +338,9 @@ def create_gradio_interface():
                 
             def validate_and_start(num_instances):
                 if num_instances < 1:
-                    return [gr.update(value=1)] + ["❌ Not running"] * max_instances + ["Invalid number of instances"]
+                    return [gr.update(value=1)] + ["❌ Not running"] * config.max_instances + ["Invalid number of instances"]
                 
-                results = start_MEMple_instances(num_instances, current_base_port)
+                results = start_MEMple_instances(num_instances)
                 running_count = count_running_instances()
                 return [gr.update(value=running_count)] + results + [""]
 
@@ -463,7 +387,7 @@ def create_gradio_interface():
             async def update_voice_selector(engine):
                 if engine:
                     engine_num = int(engine.split()[1])
-                    port = current_base_port + engine_num - 1
+                    port = config.base_port + engine_num - 1
                     voices = await get_available_voices(port)
                     debug_str = f"Fetched voices for Engine {engine_num} (Port {port}): {voices}"
                     return gr.update(choices=voices, value=voices[0] if voices else None), debug_str
@@ -489,17 +413,17 @@ def create_gradio_interface():
                     gr.Markdown("### 🟦 Engine Instance Management")
                     with gr.Row():
                         base_port_input = gr.Number(
-                            value=config['base_port'],
-                            label=f"Starting Port Number (Current: {config['base_port']})",
+                            value=config.base_port,
+                            label=f"Starting Port Number (Current: {config.base_port})",
                             step=1
                         )
                         max_instances_input = gr.Number(
-                            value=config['max_instances'],
-                            label=f"Maximum Engine Instances (Current: {config['max_instances']})",
+                            value=config.max_instances,
+                            label=f"Maximum Engine Instances (Current: {config.max_instances})",
                             step=1
                         )
                         auto_start_engines = gr.Number(
-                            value=config['auto_start_engines'],
+                            value=config.auto_start_engines,
                             label="Auto-start Engine Instances (0 to disable)",
                             step=1
                         )
@@ -508,13 +432,13 @@ def create_gradio_interface():
                     gr.Markdown("### 🟨 Gradio Port & API Port")                                      
                     with gr.Row():
                         gradio_port_input = gr.Number(
-                            value=config['gradio_interface_port'],
-                            label=f"Gradio Interface Port (Current: {config['gradio_interface_port']})",
+                            value=config.gradio_interface_port,
+                            label=f"Gradio Interface Port (Current: {config.gradio_interface_port})",
                             step=1
                         )
                         api_server_port_input = gr.Number(
-                            value=config['api_server_port'],
-                            label=f"API Server Port (Current: {config['api_server_port']})",
+                            value=config.api_server_port,
+                            label=f"API Server Port (Current: {config.api_server_port})",
                             step=1
                         )                                     
                                         
@@ -523,18 +447,18 @@ def create_gradio_interface():
                     gr.Markdown("### 🟥 Engine Start-up Time Contol")
                     with gr.Row():
                         max_retries_input = gr.Number(
-                            value=config['max_retries'],
-                            label=f"Max Retries (Current: {config['max_retries']})",
+                            value=config.max_retries,
+                            label=f"Max Retries (Current: {config.max_retries})",
                             step=1
                         )
                         initial_wait_input = gr.Number(
-                            value=config['initial_wait'],
-                            label=f"Initial Wait (Current: {config['initial_wait']})",
+                            value=config.initial_wait,
+                            label=f"Initial Wait (Current: {config.initial_wait})",
                             step=0.1
                         )
                         backoff_factor_input = gr.Number(
-                            value=config['backoff_factor'],
-                            label=f"Backoff Factor (Current: {config['backoff_factor']})",
+                            value=config.backoff_factor,
+                            label=f"Backoff Factor (Current: {config.backoff_factor})",
                             step=0.1
                         )
                 with gr.Column(scale=1):
@@ -542,7 +466,7 @@ def create_gradio_interface():
                     with gr.Row():                        
                         debug_mode_input = gr.Dropdown(
                             choices=["Disabled", "Enabled"],
-                            value="Enabled" if config['debug_mode'] else "Disabled",
+                            value="Enabled" if config.debug_mode else "Disabled",
                             label="Debug Mode"
                         ) 
 
@@ -551,41 +475,41 @@ def create_gradio_interface():
                     gr.Markdown("### 🟩 Core Queue Management")                  
                     with gr.Row(): 
                         max_queue_time_input = gr.Number(
-                            value=config['max_queue_time'],
-                            label=f"Max Queue Time (seconds) (Current: {config['max_queue_time']})",
+                            value=config.max_queue_time,
+                            label=f"Max Queue Time (seconds) (Current: {config.max_queue_time})",
                             step=1
                         )
                         queue_check_interval_input = gr.Number(
-                            value=config['queue_check_interval'],
-                            label=f"Queue Check Interval (seconds) (Current: {config['queue_check_interval']})",
+                            value=config.queue_check_interval,
+                            label=f"Queue Check Interval (seconds) (Current: {config.queue_check_interval})",
                             step=0.1
                         )
                 with gr.Column(scale=3):
                     gr.Markdown("### 🟩 TTS Request Dynamic Timeout Factors")                  
                     with gr.Row():
                         tts_request_timeout_input = gr.Number(
-                            value=config['tts_request_timeout'],
-                            label=f"TTS Request Timeout (seconds) (Current: {config['tts_request_timeout']})",
+                            value=config.tts_request_timeout,
+                            label=f"TTS Request Timeout (seconds) (Current: {config.tts_request_timeout})",
                             step=1
                         )                                                         
                         text_length_factor_input = gr.Number(
-                            value=config['text_length_factor'],
-                            label=f"Text Length Factor Per 100 chrs (Current: {config['text_length_factor']})",
+                            value=config.text_length_factor,
+                            label=f"Text Length Factor Per 100 chrs (Current: {config.text_length_factor})",
                             step=0.1
                         )
                         concurrent_request_factor_input = gr.Number(
-                            value=config['concurrent_request_factor'],
-                            label=f"Concurrent Request Factor (Current: {config['concurrent_request_factor']})",
+                            value=config.concurrent_request_factor,
+                            label=f"Concurrent Request Factor (Current: {config.concurrent_request_factor})",
                             step=0.1
                         )
                         diminishing_factor_input = gr.Number(
-                            value=config['diminishing_factor'],
-                            label=f"Diminishing Factor Calc (Current: {config['diminishing_factor']})",
+                            value=config.diminishing_factor,
+                            label=f"Diminishing Factor Calc (Current: {config.diminishing_factor})",
                             step=0.1
                         )
                         queue_position_factor_input = gr.Number(
-                            value=config['queue_position_factor'],
-                            label=f"Queue Position Factor (Current: {config['queue_position_factor']})",
+                            value=config.queue_position_factor,
+                            label=f"Queue Position Factor (Current: {config.queue_position_factor})",
                             step=0.1
                         )                                                           
                                           
@@ -599,69 +523,63 @@ def create_gradio_interface():
                                 new_queue_check_interval, new_tts_request_timeout,
                                 new_text_length_factor, new_concurrent_request_factor,
                                 new_diminishing_factor, new_queue_position_factor):
-                global current_base_port, max_instances, config, server_port
-                
                 if new_port < 1024:
                     new_port = 7001
                 
                 new_auto_start = min(int(new_auto_start), int(new_max_instances))
                 
-                current_base_port = int(new_port)
-                max_instances = int(new_max_instances)
-                server_port = int(new_gradio_port)
+                config.base_port = int(new_port)
+                config.max_instances = int(new_max_instances)
+                config.auto_start_engines = new_auto_start
+                config.gradio_interface_port = int(new_gradio_port)
+                config.api_server_port = int(new_api_server_port)
+                config.max_retries = int(new_max_retries)
+                config.initial_wait = float(new_initial_wait)
+                config.backoff_factor = float(new_backoff_factor)
+                config.debug_mode = (new_debug_mode == "Enabled")
+                config.max_queue_time = int(new_max_queue_time)
+                config.queue_check_interval = float(new_queue_check_interval)
+                config.tts_request_timeout = int(new_tts_request_timeout)
+                config.text_length_factor = float(new_text_length_factor)
+                config.concurrent_request_factor = float(new_concurrent_request_factor)
+                config.diminishing_factor = float(new_diminishing_factor)
+                config.queue_position_factor = float(new_queue_position_factor)
                 
-                config['base_port'] = current_base_port
-                config['max_instances'] = max_instances
-                config['auto_start_engines'] = new_auto_start
-                config['gradio_interface_port'] = server_port
-                config['api_server_port'] = int(new_api_server_port)
-                config['max_retries'] = int(new_max_retries)
-                config['initial_wait'] = float(new_initial_wait)
-                config['backoff_factor'] = float(new_backoff_factor)
-                config['debug_mode'] = (new_debug_mode == "Enabled")
-                config['max_queue_time'] = int(new_max_queue_time)
-                config['queue_check_interval'] = float(new_queue_check_interval)
-                config['tts_request_timeout'] = int(new_tts_request_timeout)
-                config['text_length_factor'] = float(new_text_length_factor)
-                config['concurrent_request_factor'] = float(new_concurrent_request_factor)
-                config['diminishing_factor'] = float(new_diminishing_factor)
-                config['queue_position_factor'] = float(new_queue_position_factor)
-                
-                save_config(config)
+                config.save()
                 
                 status_message = (
-                    f"Settings updated: Start port: {current_base_port}, Max instances: {max_instances}, "
-                    f"Auto-start engines: {config['auto_start_engines']}, Gradio port: {server_port}, "
-                    f"API Server Port: {config['api_server_port']}, "
-                    f"Max retries: {config['max_retries']}, Initial wait: {config['initial_wait']}, "
-                    f"Backoff factor: {config['backoff_factor']}, Debug mode: {config['debug_mode']}, "
-                    f"Max queue time: {config['max_queue_time']}, "
-                    f"Queue check interval: {config['queue_check_interval']}, "
-                    f"TTS request timeout: {config['tts_request_timeout']}, "
-                    f"Text length factor: {config['text_length_factor']}, "
-                    f"Concurrent request factor: {config['concurrent_request_factor']}, "
-                    f"Diminishing factor: {config['diminishing_factor']}, "
-                    f"Queue position factor: {config['queue_position_factor']}"
+                    f"Settings updated: Start port: {config.base_port}, Max instances: {config.max_instances}, "
+                    f"Auto-start engines: {config.auto_start_engines}, Gradio port: {config.gradio_interface_port}, "
+                    f"API Server Port: {config.api_server_port}, "
+                    f"Max retries: {config.max_retries}, Initial wait: {config.initial_wait}, "
+                    f"Backoff factor: {config.backoff_factor}, Debug mode: {config.debug_mode}, "
+                    f"Max queue time: {config.max_queue_time}, "
+                    f"Queue check interval: {config.queue_check_interval}, "
+                    f"TTS request timeout: {config.tts_request_timeout}, "
+                    f"Text length factor: {config.text_length_factor}, "
+                    f"Concurrent request factor: {config.concurrent_request_factor}, "
+                    f"Diminishing factor: {config.diminishing_factor}, "
+                    f"Queue position factor: {config.queue_position_factor}"
                 )
                 
                 return (
                     status_message,
-                    gr.update(value=current_base_port, label=f"Starting Port Number (Current: {current_base_port})"),
-                    gr.update(value=max_instances, label=f"Maximum Instances (Current: {max_instances})"),
-                    gr.update(value=config['auto_start_engines']),
-                    gr.update(value=server_port, label=f"Gradio Interface Port (Current: {server_port})"),
-                    gr.update(value=config['api_server_port'], label=f"API Server Port (Current: {config['api_server_port']})"),
-                    gr.update(value=config['max_retries']),
-                    gr.update(value=config['initial_wait']),
-                    gr.update(value=config['backoff_factor']),
-                    gr.update(value="Enabled" if config['debug_mode'] else "Disabled"),
-                    gr.update(value=config['max_queue_time'], label=f"Max Queue Time (seconds) (Current: {config['max_queue_time']})"),
-                    gr.update(value=config['queue_check_interval'], label=f"Queue Check Interval (seconds) (Current: {config['queue_check_interval']})"),
-                    gr.update(value=config['tts_request_timeout'], label=f"TTS Request Timeout (seconds) (Current: {config['tts_request_timeout']})"),
-                    gr.update(value=config['text_length_factor'], label=f"Text Length Factor (Current: {config['text_length_factor']})"),
-                    gr.update(value=config['concurrent_request_factor'], label=f"Concurrent Request Factor (Current: {config['concurrent_request_factor']})"),
-                    gr.update(value=config['diminishing_factor'], label=f"Diminishing Factor (Current: {config['diminishing_factor']})"),
-                    gr.update(value=config['queue_position_factor'], label=f"Queue Position Factor (Current: {config['queue_position_factor']})")
+                    gr.update(value=config.base_port, label=f"Starting Port Number (Current: {config.base_port})"),
+                    gr.update(value=config.max_instances, label=f"Maximum Instances (Current: {config.max_instances})"),
+                    gr.update(value=config.auto_start_engines),
+                    gr.update(value=config.gradio_interface_port, label=f"Gradio Interface Port (Current: {config.gradio_interface_port})"),
+                    gr.update(value=config.api_server_port, label=f"API Server Port (Current: {config.api_server_port})"),
+                    gr.update(value=config.max_retries),
+                    gr.update(value=config.initial_wait),
+                    gr.update(value=config.backoff_factor),
+                    gr.update(value="Enabled" if config.debug_mode else "Disabled"),
+                    gr.update(value=config.max_queue_time, label=f"Max Queue Time (seconds) (Current: {config.max_queue_time})"),
+                    gr.update(value=config.queue_check_interval, label=f"Queue Check Interval (seconds) (Current: {config.queue_check_interval})"),
+                    gr.update(value=config.tts_request_timeout, label=f"TTS Request Timeout (seconds) (Current: {config.tts_request_timeout})"),
+                    gr.update(value=config.text_length_factor, label=f"Text Length Factor (Current: {config.text_length_factor})"),
+                    gr.update(value=config.concurrent_request_factor, label=f"Concurrent Request Factor (Current: {config.concurrent_request_factor})"),
+                    gr.update(value=config.diminishing_factor, label=f"Diminishing Factor (Current: {config.diminishing_factor})"),
+                    gr.update(value=config.queue_position_factor, label=f"Queue Position Factor (Current: {config.queue_position_factor})")
                 )
 
             set_settings_button.click(
@@ -866,7 +784,7 @@ def create_gradio_interface():
                     queue_data = []
                     for i, item in enumerate(list(queue_items)[:10]):
                         wait_time = datetime.now() - item.start_time
-                        timeout = timedelta(seconds=config['max_queue_time']) - wait_time
+                        timeout = timedelta(seconds=config.max_queue_time) - wait_time
                         queue_data.append([
                             i+1,
                             str(wait_time).split(".")[0],
@@ -1114,19 +1032,19 @@ def restart_and_update(instance_id, port):
     result = restart_subprocess(instance_id, port)
     return check_subprocess_status(instance_id, port)
 
-def start_MEMple_instances(num_instances, base_port):
+def start_MEMple_instances(num_instances):
     currently_running = count_running_instances()
     
     if currently_running >= num_instances:
-        return update_all_statuses(base_port)  # All requested instances are already running
+        return update_all_statuses()  # All requested instances are already running
     
     instances_to_start = num_instances - currently_running
-    start_port, available_ports = find_available_port(base_port + currently_running, instances_to_start)
+    start_port, available_ports = find_available_port(config.base_port + currently_running, instances_to_start)
     
     if len(available_ports) < instances_to_start:
-        return ["Not enough available ports"] * max_instances
+        return ["Not enough available ports"] * config.max_instances
 
-    results = update_all_statuses(base_port)
+    results = update_all_statuses()
     for i, port in enumerate(available_ports[:instances_to_start], start=currently_running+1):
         result = start_subprocess(i, port)
         results[i-1] = result
@@ -1152,8 +1070,8 @@ def initialize_instances():
     global tts_instances
     with lock:
         tts_instances.clear()
-        for i in range(1, max_instances + 1):
-            port = current_base_port + i - 1
+        for i in range(1, config.max_instances + 1):
+            port = config.base_port + i - 1
             tts_instances[i] = {"port": port, "locked": False}
 
 def get_available_instance():
@@ -1183,23 +1101,23 @@ def update_tts_instances():
         tts_instances.clear()
         for i, process in processes.items():
             if process.poll() is None:  # Check if the process is running
-                port = current_base_port + i - 1
+                port = config.base_port + i - 1
                 tts_instances[i] = {"port": port, "locked": False}
 
 def calculate_dynamic_timeout(text, concurrent_requests, queue_position, total_queue_length, request_start_time):
-    base_timeout = config['tts_request_timeout'] * (1 + (concurrent_requests * 0.5))
+    base_timeout = config.tts_request_timeout * (1 + (concurrent_requests * 0.5))
     
     text_length_factor = len(text) / 100
     adjusted_timeout = base_timeout * (1 + (text_length_factor * 0.2))
     
     time_in_process = time.time() - request_start_time
     diminishing_factor = max(0, 1 - (time_in_process / base_timeout))
-    timeout_with_diminishing = adjusted_timeout * (1 + (diminishing_factor * config['diminishing_factor']))
+    timeout_with_diminishing = adjusted_timeout * (1 + (diminishing_factor * config.diminishing_factor))
     
     queue_position_factor = queue_position / total_queue_length
-    final_timeout = timeout_with_diminishing + (config['tts_request_timeout'] * queue_position_factor)
+    final_timeout = timeout_with_diminishing + (config.tts_request_timeout * queue_position_factor)
     
-    return min(final_timeout, config['max_queue_time'])  # Ensure we don't exceed max queue time
+    return min(final_timeout, config.max_queue_time)  # Ensure we don't exceed max queue time
 
 ########################################
 ## WEBSERVER # Client Facing Endpoints #
@@ -1207,7 +1125,7 @@ def calculate_dynamic_timeout(text, concurrent_requests, queue_position, total_q
 @flask_app.route('/api/tts-generate', methods=['POST'])
 @cross_origin(origins='*', methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
 def tts_generate():
-    print("[AllTalk MEM] Received TTS generate request") if config['debug_mode'] else None
+    print("[AllTalk MEM] Received TTS generate request") if config.debug_mode else None
     start_time = datetime.now()
     request_data = request.form.to_dict()
     
@@ -1215,11 +1133,11 @@ def tts_generate():
     queue_item = QueueItem(request_data['text_input'], start_time)
     queue_items.append(queue_item)
     
-    while (datetime.now() - start_time).total_seconds() < config['max_queue_time']:
+    while (datetime.now() - start_time).total_seconds() < config.max_queue_time:
         instance = get_available_instance()
         if instance:
             try:
-                print(f"[AllTalk MEM] Processing request with instance {instance}") if config['debug_mode'] else None
+                print(f"[AllTalk MEM] Processing request with instance {instance}") if config.debug_mode else None
                 
                 # Update engine status
                 engine_statuses[instance] = EngineStatus()
@@ -1236,7 +1154,7 @@ def tts_generate():
                 )
                 
                 result = process_tts_request(instance, request_data, dynamic_timeout)
-                print(f"[AllTalk MEM] Request processed, result: {result}") if config['debug_mode'] else None
+                print(f"[AllTalk MEM] Request processed, result: {result}") if config.debug_mode else None
                 
                 # Remove request from queue
                 queue_items.popleft()
@@ -1249,7 +1167,7 @@ def tts_generate():
                 print(f"[AllTalk MEM] Error processing request: {str(e)}")
                 release_instance(instance)
                 return jsonify({"status": "error", "message": str(e)})
-        time.sleep(config['queue_check_interval'])
+        time.sleep(config.queue_check_interval)
     
     # Remove request from queue if it times out
     queue_items.popleft()
@@ -1270,7 +1188,7 @@ def process_tts_request(instance, data, timeout):
 @flask_app.route('/v1/audio/speech', methods=['POST'])
 @cross_origin(origins='*', methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
 def openai_speech():
-    print("[AllTalk MEM] Received OpenAI-style TTS generate request") if config['debug_mode'] else None
+    print("[AllTalk MEM] Received OpenAI-style TTS generate request") if config.debug_mode else None
     start_time = datetime.now()
     request_data = request.json
 
@@ -1278,11 +1196,11 @@ def openai_speech():
     queue_item = QueueItem(request_data['input'], start_time)
     queue_items.append(queue_item)
 
-    while (datetime.now() - start_time).total_seconds() < config['max_queue_time']:
+    while (datetime.now() - start_time).total_seconds() < config.max_queue_time:
         instance = get_available_instance()
         if instance:
             try:
-                print(f"[AllTalk MEM] Processing OpenAI-style request with instance {instance}") if config['debug_mode'] else None
+                print(f"[AllTalk MEM] Processing OpenAI-style request with instance {instance}") if config.debug_mode else None
 
                 # Update engine status
                 engine_statuses[instance] = EngineStatus()
@@ -1299,7 +1217,7 @@ def openai_speech():
                 )
 
                 result = process_openai_tts_request(instance, request_data, dynamic_timeout)
-                print(f"[AllTalk MEM] OpenAI-style request processed, result: {result}") if config['debug_mode'] else None
+                print(f"[AllTalk MEM] OpenAI-style request processed, result: {result}") if config.debug_mode else None
 
                 # Remove request from queue
                 queue_items.popleft()
@@ -1322,7 +1240,7 @@ def openai_speech():
                 release_instance(instance)
                 return jsonify({"error": str(e)}), 500
 
-        time.sleep(config['queue_check_interval'])
+        time.sleep(config.queue_check_interval)
 
     # Remove request from queue if it times out
     queue_items.popleft()
@@ -1427,7 +1345,7 @@ async def get_available_voices(port):
 async def update_voice_selector(engine):
     if engine:
         engine_num = int(engine.split()[1])
-        port = current_base_port + engine_num - 1
+        port = config.base_port + engine_num - 1
         voices = await get_available_voices(port)
         debug_str = f"Fetched voices for Engine {engine_num} (Port {port}): {voices}"
         return gr.update(choices=voices, value=voices[0] if voices else None), debug_str
@@ -1437,7 +1355,7 @@ async def update_voice_selector(engine):
 ## WEBSERVER # Load Testing #
 #############################
 async def run_load_test_gradio(num_requests, base_text, voice):
-    api_url = f"http://127.0.0.1:{config['api_server_port']}/api/tts-generate"
+    api_url = f"http://127.0.0.1:{config.api_server_port}/api/tts-generate"
     start_time = time.time()
 
     async with aiohttp.ClientSession() as session:
@@ -1455,7 +1373,7 @@ async def run_load_test_gradio(num_requests, base_text, voice):
     results = []
     for i, response in enumerate(responses):
         if response and response.get("status") == "generate-success":
-            audio_url = f"http://127.0.0.1:{config['api_server_port']}{response['output_file_url']}"
+            audio_url = f"http://127.0.0.1:{config.api_server_port}{response['output_file_url']}"
             # Round time to 1 decimal place
             rounded_time = round(response['time'], 1)
             results.append([f"Request {i+1}", rounded_time, "Success", audio_url])
@@ -1505,12 +1423,12 @@ class SilentWSGIRequestHandler(WSGIRequestHandler):
 class ServerThread(threading.Thread):
     def __init__(self, app):
         threading.Thread.__init__(self)
-        self.server = make_server('0.0.0.0', config['api_server_port'], app, threaded=True, request_handler=SilentWSGIRequestHandler)
+        self.server = make_server('0.0.0.0', config.api_server_port, app, threaded=True, request_handler=SilentWSGIRequestHandler)
         self.ctx = app.app_context()
         self.ctx.push()
 
     def run(self):
-        print(f"[AllTalk MEM] Starting API server on port {config['api_server_port']}") if config['debug_mode'] else None
+        print(f"[AllTalk MEM] Starting API server on port {config.api_server_port}") if config.debug_mode else None
         self.server.serve_forever()
 
     def shutdown(self):
@@ -1520,7 +1438,7 @@ def start_api_server():
     global server_thread
     server_thread = ServerThread(flask_app)  # Use flask_app here
     server_thread.start()
-    print(f"[AllTalk MEM] API server thread started on port {config['api_server_port']}") if config['debug_mode'] else None
+    print(f"[AllTalk MEM] API server thread started on port {config.api_server_port}") if config.debug_mode else None
 
 def stop_api_server():
     global server_thread
@@ -1563,10 +1481,10 @@ print(f"[AllTalk MEM] ")
 print(f"[AllTalk MEM] MEM Server Ready")
 
 def auto_start_engines():
-    num_engines = config['auto_start_engines']
+    num_engines = config.auto_start_engines
     if num_engines > 0:
         print(f"[AllTalk MEM] Auto-starting {num_engines} engines...")
-        results = start_MEMple_instances(num_engines, current_base_port)
+        results = start_MEMple_instances(num_engines)
         update_tts_instances()
         print(f"[AllTalk MEM] Auto-start complete.")
         print(f"[AllTalk MEM] {results}")   
@@ -1574,9 +1492,13 @@ def auto_start_engines():
 # Main execution
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
-    interface = create_gradio_interface()
-    # Start the Gradio interface
-    interface.launch(quiet=True, server_port=config['gradio_interface_port'], prevent_thread_lock=True)
+    if WITH_UI:
+        print("[AllTalk MEM] Starting gradio...")
+        interface = create_gradio_interface()
+        # Start the Gradio interface
+        interface.launch(quiet=True, server_port=config.gradio_interface_port, prevent_thread_lock=True)
+    else:
+        print("[AllTalk MEM] Skipping gradio start...")
     # Start the API server
     start_api_server()
     initialize_instances()

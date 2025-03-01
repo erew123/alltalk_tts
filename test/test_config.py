@@ -2,7 +2,7 @@ import os.path
 import tempfile
 from unittest import TestCase
 from pathlib import Path
-from config import AlltalkConfig, AlltalkTTSEnginesConfig, AlltalkNewEnginesConfig
+from config import AlltalkConfig, AlltalkTTSEnginesConfig, AlltalkNewEnginesConfig, AlltalkMultiEngineManagerConfig
 
 
 class TestAlltalkConfig(TestCase):
@@ -242,3 +242,27 @@ class TestAlltalkNewEnginesConfig(TestCase):
     def test_no_private_fields(self):
         for attr in self.new_engines_config.to_dict().keys():
             self.assertTrue(not attr.startswith("_"))
+
+class TestAlltalkMultiEngineManagerConfig(TestCase):
+
+    def setUp(self):
+        self.mem_config = AlltalkMultiEngineManagerConfig.get_instance()
+        self.mem_config.reload()
+
+    def test_defaults(self):
+        self.assertEqual(self.mem_config.base_port, 7001)
+        self.assertEqual(self.mem_config.api_server_port, 7851)
+        self.assertEqual(self.mem_config.auto_start_engines, 0)
+        self.assertEqual(self.mem_config.max_instances, 8)
+        self.assertEqual(self.mem_config.gradio_interface_port, 7500)
+        self.assertEqual(self.mem_config.max_retries, 12)
+        self.assertEqual(self.mem_config.initial_wait, 2.0)
+        self.assertEqual(self.mem_config.backoff_factor, 1.2)
+        self.assertFalse(self.mem_config.debug_mode)
+        self.assertEqual(self.mem_config.max_queue_time, 60)
+        self.assertEqual(self.mem_config.queue_check_interval, 0.1)
+        self.assertEqual(self.mem_config.tts_request_timeout, 30)
+        self.assertEqual(self.mem_config.text_length_factor, 0.2)
+        self.assertEqual(self.mem_config.concurrent_request_factor, 0.5)
+        self.assertEqual(self.mem_config.diminishing_factor, 0.5)
+        self.assertEqual(self.mem_config.queue_position_factor, 1.0)
