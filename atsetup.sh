@@ -540,7 +540,7 @@ reapply_standalone() {
     echo "    Downloading and installing PyTorch. This step can take a long time"
     echo "    depending on your internet connection and hard drive speed. Please"
     echo "    be patient."
-    pip install torch>=2.2.1+cu121 torchaudio>=2.2.1+cu121 --upgrade --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu121
+    pip install torch>=2.5.1+cu124 torchaudio>=2.5.1+cu124 --upgrade --force-reinstall --extra-index-url https://download.pytorch.org/whl/cu124
     echo
     echo "    Installing additional requirements."
     echo

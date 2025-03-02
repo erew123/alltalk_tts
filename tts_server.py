@@ -7,6 +7,16 @@ It supports features like streaming, file format transcoding, and real-time conf
 
 Github: https://github.com/erew123/
 """
+import sys
+import os
+from pathlib import Path
+
+####################
+# Setup local path #
+####################
+this_dir = Path(__file__).parent.resolve()  # Set this_dir as the current alltalk_tts folder
+sys.path.append(os.path.join(this_dir, "xcodec2"))
+
 import warnings
 from contextlib import asynccontextmanager
 import argparse
@@ -16,16 +26,13 @@ import importlib
 import inspect
 import json
 import logging
-import os
 import re
 import html
 import uuid
 import hashlib
-import sys
 import time
 import shutil
 import subprocess
-from pathlib import Path
 from typing import Union, List, Optional, Tuple
 import aiofiles
 import uvicorn
@@ -67,10 +74,6 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.functio
 warnings.filterwarnings("ignore", message="ComplexHalf support is experimental")
 # Filter Flash Attention warning
 warnings.filterwarnings("ignore", message="1Torch was not compiled with flash attention")
-####################
-# Setup local path #
-####################
-this_dir = Path(__file__).parent.resolve()  # Set this_dir as the current alltalk_tts folder
 
 infer_pipeline = None
 config: AlltalkConfig | None = None
