@@ -39,7 +39,7 @@ def load_config(file_path):
     with open(file_path, "r") as config_file:
         config = json.load(config_file)
     return config
-                               
+
 config_file_path = this_dir / "confignew.json"
 # Load the params dictionary from the confignew.json file
 params = load_config(config_file_path)
@@ -112,7 +112,7 @@ params = load_config(config_file_path)
 #########################################
 #### Continue on with Startup Checks ####
 #########################################
-            
+
 # Required for sentence splitting
 try:
     from TTS.api import TTS
@@ -122,7 +122,7 @@ except ModuleNotFoundError:
     print(f"[{params['branding']}]\033[91mWarning\033[0m Could not find the TTS module. Make sure to install the requirements for the {params['branding']} extension.")
     print(f"[{params['branding']}]\033[91mWarning\033[0m Please use the ATSetup utility or check the Github installation instructions.")
     # Re-raise the ModuleNotFoundError to stop the program and print the traceback
-    raise 
+    raise
 
 # Suppress logging
 logging.disable(logging.ERROR)
