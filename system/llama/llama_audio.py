@@ -12,6 +12,7 @@
 import asyncio
 import json
 import os
+from pathlib import Path
 import time
 from typing import Generator
 import wave
@@ -19,6 +20,8 @@ from llama_cpp import Llama
 import numpy as np
 import torch
 from snac import SNAC
+
+from system.proxy_module.twisted_server import print_message
 
 SAMPLE_RATE = 24000
 
@@ -28,7 +31,6 @@ MAX_CACHE_SIZE = 10000  # Increased cache size for better performance
 
 # Check if CUDA is available and set device accordingly
 snac_device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-print(f"Using device: {snac_device}")
 
 cuda_stream = None
 if snac_device == "cuda":
@@ -51,6 +53,14 @@ class LlamaAudio:
         self.model = SNAC.from_pretrained("hubertsiuzdak/snac_24khz").eval()
         self.model = self.model.to(snac_device)
 
+        # Define the path to the confignew.json file
+        configfile_path = Path(__file__).parent.parent.parent.resolve() / "confignew.json"
+        # Load config file and get settings
+        with open(configfile_path, "r") as configfile:
+            configfile_data = json.load(configfile)
+        self.debug_tts = configfile_data.get("debugging").get("debug_tts")
+        self.debug_variables = configfile_data.get("debugging").get("debug_tts_variables")
+
     
     def generate(self, text, output_file, **kwargs):
         result = self.generate_tokens(text, **kwargs)
@@ -63,8 +73,13 @@ class LlamaAudio:
         token_counter = 0
         start_time = time.time()
 
-        print("Generating tokens...")
-        print(kwargs)
+        if self.debug_variables:
+            print_message("Llama parameters: ", "debug_tts_variables", "LLAMA")
+            keys = list(kwargs.keys())
+            for i, key in enumerate(keys):
+                # Use └─ for the last item, and ├─ for others
+                prefix = "└─" if i == len(keys) - 1 else "├─"
+                print_message(f"{prefix} {key}: {kwargs[key]}", "debug_tts_variables", "LLAMA")
 
         for data in self.llama.create_completion(text, **kwargs, stream=True):
 
@@ -84,7 +99,9 @@ class LlamaAudio:
                 
         generation_time = time.time() - start_time
         tokens_per_second = token_counter / generation_time if generation_time > 0 else 0
-        print(f"Token generation complete: {token_counter} tokens in {generation_time:.2f}s ({tokens_per_second:.1f} tokens/sec)")
+
+        if self.debug_tts:
+            print_message(f"Token generation complete: {token_counter} tokens in {generation_time:.2f}s ({tokens_per_second:.1f} tokens/sec)", "debug_tts", "LLAMA")
         return
     
 
@@ -130,7 +147,8 @@ class LlamaAudio:
                         current_time = time.time()
                         if current_time - last_log_time >= 3.0:
                             elapsed = current_time - last_log_time
-                            print(f"Audio generation rate: {chunk_count / elapsed:.2f} chunks/second")
+                            if (self.debug_tts):
+                                print_message(f"Audio generation rate: {chunk_count / elapsed:.2f} chunks/second", "debug_tts", "LLAMA")
                             last_log_time = current_time
                             chunk_count = 0
             except Exception as e:
@@ -164,7 +182,8 @@ class LlamaAudio:
 
         if wav_file:
             wav_file.close()
-            print(f"Audio saved to {output_file}")
+            if self.debug_tts:
+                print_message(f"Audio saved to {output_file}", "debug_tts", "LLAMA")
 
         return audio_segments
     
@@ -198,8 +217,8 @@ class LlamaAudio:
                 current_time = time.time()
                 if current_time - last_log_time > 5.0:  # Every 5 seconds
                     elapsed = current_time - start_time
-                    if elapsed > 0:
-                        print(f"Token processing rate: {token_count/elapsed:.1f} tokens/second")
+                    if self.debug_tts and elapsed > 0:
+                        print_message(f"Token processing rate: {token_count/elapsed:.1f} tokens/second", "debug_tts", "LLAMA")
                     last_log_time = current_time
 
                 # Different processing paths based on whether first chunk has been processed
@@ -209,7 +228,9 @@ class LlamaAudio:
                         buffer_to_proc = buffer[-min_frames_first:]
 
                         # Process the first chunk for immediate audio feedback
-                        print(f"Processing first audio chunk with {len(buffer_to_proc)} tokens")
+                        if self.debug_tts:
+                            print_message(f"Processing first audio chunk with {len(buffer_to_proc)} tokens", "debug_tts", "LLAMA")
+
                         audio_samples = self.convert_to_audio(buffer_to_proc, count)
                         if audio_samples is not None:
                             first_chunk_processed = True  # Mark first chunk as processed
@@ -221,8 +242,8 @@ class LlamaAudio:
                         buffer_to_proc = buffer[-min_frames_subsequent:]
 
                         # Debug output to help diagnose issues
-                        if count % 28 == 0:
-                            print(f"Processing buffer with {len(buffer_to_proc)} tokens, total collected: {len(buffer)}")
+                        if self.debug_tts and count % 28 == 0:
+                            print_message(f"Processing buffer with {len(buffer_to_proc)} tokens, total collected: {len(buffer)}", "debug_tts", "LLAMA")
 
                         # Process the tokens
                         audio_samples = self.convert_to_audio(buffer_to_proc, count)
