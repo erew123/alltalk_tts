@@ -4,6 +4,8 @@ import requests
 import gradio as gr
 from tqdm import tqdm
 from pathlib import Path
+
+from system.tts_engines.orpheus.model_engine import AVAILABLE_VOICES
 from .help_content import AllTalkHelpContent
 this_dir = Path(__file__).parent.resolve()                         # Sets up self.this_dir as a variable for the folder THIS script is running in.
 main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up self.main_dir as a variable for the folder AllTalk is running in
@@ -28,10 +30,9 @@ main_dir = Path(__file__).parent.parent.parent.parent.resolve()    # Sets up sel
 # After making the necessary changes, this function should return a list of available voices that can be used
 # in your TTS engine's settings page.
 
-def xtts_voices_file_list():
-    directory = main_dir / "voices"
-    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f.endswith(".wav")]
-    return files
+def orpheus_voices_file_list():
+    # Orpheus uses just hard coded voices.
+    return AVAILABLE_VOICES
 
 ######################################################
 # REQUIRED CHANGE                                    #
@@ -48,7 +49,7 @@ def xtts_voices_file_list():
 #
 # You do not need to modify the function's logic or any other part of the code.
 
-def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
+def orpheus_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr,  alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr):
     # Load the model_config_data from the JSON file
     with open(os.path.join(this_dir, "model_settings.json"), "r") as f:
         model_config_data = json.load(f)
@@ -96,9 +97,9 @@ def xtts_model_update_settings(def_character_voice_gr, def_narrator_voice_gr, lo
 # After making these changes, this function will create and return the Gradio interface for your TTS engine's
 # settings page, allowing users to configure various options and voice selections.
 
-def xtts_model_alltalk_settings(model_config_data):
+def orpheus_model_alltalk_settings(model_config_data):
     features_list = model_config_data['model_capabilties']
-    voice_list = xtts_voices_file_list()
+    voice_list = orpheus_voices_file_list()
     with gr.Blocks(title="Xtts TTS", analytics_enabled=False) as app:
         with gr.Tab("Default Settings"):
             with gr.Row():
@@ -138,7 +139,7 @@ def xtts_model_alltalk_settings(model_config_data):
                 with gr.Row():
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS1, elem_classes="custom-markdown")
                     gr.Markdown(AllTalkHelpContent.DEFAULT_SETTINGS2, elem_classes="custom-markdown")  
-            submit_button.click(xtts_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
+            submit_button.click(orpheus_model_update_settings, inputs=[def_character_voice_gr, def_narrator_voice_gr, lowvram_enabled_gr, deepspeed_enabled_gr, temperature_set_gr, repetitionpenalty_set_gr, pitch_set_gr, generationspeed_set_gr, alloy_gr, echo_gr, fable_gr, nova_gr, onyx_gr, shimmer_gr], outputs=output_message)
 
         ###########################################################################################
         # Do not change this section apart from "TTS Engine Name" value to match your engine name #
@@ -165,7 +166,7 @@ def xtts_model_alltalk_settings(model_config_data):
                     with gr.Row():                       
                         gr.Textbox(label="Multi Voice Capable Models", value='Yes' if features_list['multivoice_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Default Audio output format", value=model_config_data['model_capabilties']['audio_format'], interactive=False)
-                        gr.Textbox(label="TTS Engine Name", value="XTTS", interactive=False)
+                        gr.Textbox(label="Orpheus TTS", value="XTTS", interactive=False)
                     with gr.Row():
                         gr.Textbox(label="Windows Support", value='Yes' if features_list['windows_capable'] else 'No', interactive=False)
                         gr.Textbox(label="Linux Support", value='Yes' if features_list['linux_capable'] else 'No', interactive=False)
@@ -198,7 +199,7 @@ def xtts_model_alltalk_settings(model_config_data):
                 selected_model = next(model for model in available_models["models"] if model["model_name"] == model_name)
 
                 # Get the folder path and files to download
-                folder_path = os.path.join(main_dir, "models", "xtts", selected_model["folder_path"])
+                folder_path = os.path.join(main_dir, "models", "orpheus", selected_model["folder_path"])
                 files_to_download = selected_model["files_to_download"]
 
                 # Check if all files are already downloaded
@@ -233,7 +234,7 @@ def xtts_model_alltalk_settings(model_config_data):
             download_button.click(download_model, inputs=model_dropdown, outputs=download_status)
 
             def show_confirm_cancel(model_name):
-                all_files_exists = all(os.path.exists(os.path.join(main_dir, "models", "xtts", model["folder_path"], file)) for model in available_models["models"] if model["model_name"] == model_name for file in model["files_to_download"])
+                all_files_exists = all(os.path.exists(os.path.join(main_dir, "models", "orpheus", model["folder_path"], file)) for model in available_models["models"] if model["model_name"] == model_name for file in model["files_to_download"])
 
                 if all_files_exists:
                     return [gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)]
@@ -286,5 +287,5 @@ def xtts_model_alltalk_settings(model_config_data):
 # After making these changes, this function will create and return the Gradio app for your TTS engine's settings page.
 
 def orpheus_at_gradio_settings_page(model_config_data):
-    app = xtts_model_alltalk_settings(model_config_data)
+    app = orpheus_model_alltalk_settings(model_config_data)
     return app

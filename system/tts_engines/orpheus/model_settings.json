@@ -1,18 +1,18 @@
 {
     "model_details": {
-        "manufacturer_name": "Orpheus",
-        "manufacturer_website": "https://something here",
-        "model_description": "A bit of blurb about the manufacturer/TTS engine"
+        "manufacturer_name": "Canopy Labs",
+        "manufacturer_website": "https://github.com/canopyai/Orpheus-TTS",
+        "model_description": "Orpheus TTS is a SOTA open-source text-to-speech system built on the Llama-3b backbone. Orpheus demonstrates the emergent capabilities of using LLMs for speech synthesis."
     },
     "model_capabilties": {
         "audio_format": "wav",
-        "deepspeed_capable": true,
+        "deepspeed_capable": false,
         "generationspeed_capable": true,
-        "languages_capable": true,
+        "languages_capable": false,
         "lowvram_capable": true,
         "multimodel_capable": true,
         "repetitionpenalty_capable": true,
-        "streaming_capable": true,
+        "streaming_capable": false,
         "temperature_capable": true,
         "multivoice_capable": true,
         "pitch_capable": false,
@@ -21,9 +21,9 @@
         "mac_capable": true
     },
     "settings": {
-        "def_character_voice": "female_01.wav",
-        "def_narrator_voice": "male_01.wav",
-        "deepspeed_enabled": true,
+        "def_character_voice": "tara",
+        "def_narrator_voice": "tara",
+        "deepspeed_enabled": false,
         "engine_installed": true,
         "generationspeed_set": 1,
         "lowvram_enabled": false,
