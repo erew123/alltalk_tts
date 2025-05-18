@@ -166,10 +166,16 @@ class tts_class:
 
         print("in setup - self.selected_model:", self.selected_model) if self.debug_tts else None
          
+        if self.selected_model and self.selected_model != "No Models Found":
+            try:
+                await self.api_manual_load_model(self.selected_model)
+                self.current_model_loaded = self.selected_model
+            except Exception as e:
+                print(f"[{self.branding}ENG] \033[91mError loading model: {str(e)}\033[0m")
+                self.is_tts_model_loaded = False
          
          
-         
-         
+        print(f"[{self.branding}ENG]\033[94m Model/Engine :\033[93m Orpheus-TTS\033[94m Ready\033[0m")
          
          
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
