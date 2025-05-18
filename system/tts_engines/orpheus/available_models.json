@@ -1,32 +1,25 @@
 {
-    "first_start_model": "xttsv2_2.0.3",
+    "first_start_model": "Orpheus-3b-FT-Q8_0",
     "models": [
       {
-        "model_name": "xttsv2_2.0.3",
-        "folder_path": "xttsv2_2.0.3",
+        "model_name": "Orpheus-3b-FT-Q8_0",
+        "folder_path": "Orpheus-3b-FT-Q8_0",
         "files_to_download": {
-          "LICENSE.txt": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/LICENSE.txt?download=true",
-          "README.md": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/README.md?download=true",
-          "config.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/config.json?download=true",
-          "model.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/model.pth?download=true",
-          "dvae.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/dvae.pth?download=true",
-          "mel_stats.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/mel_stats.pth?download=true",
-          "speakers_xtts.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/speakers_xtts.pth?download=true",
-          "vocab.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.3/vocab.json?download=true"
+          "model.gguf": "https://huggingface.co/lex-au/Orpheus-3b-FT-Q8_0.gguf/resolve/main/Orpheus-3b-FT-Q8_0.gguf?download=true"
         }
       },
       {
-        "model_name": "xttsv2_2.0.2",
-        "folder_path": "xttsv2_2.0.2",
+        "model_name": "Orpheus-3b-FT-Q4_K_M",
+        "folder_path": "Orpheus-3b-FT-Q4_K_M",
         "files_to_download": {
-          "LICENSE.txt": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true",
-          "README.md": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true",
-          "config.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true",
-          "model.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true",
-          "dvae.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/dvae.pth?download=true",
-          "mel_stats.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/mel_stats.pth?download=true",
-          "speakers_xtts.pth": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/speakers_xtts.pth?download=true",
-          "vocab.json": "https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true"
+          "model.gguf": "https://huggingface.co/lex-au/Orpheus-3b-FT-Q4_K_M.gguf/resolve/main/Orpheus-3b-FT-Q4_K_M.gguf?download=true"
+        }
+      },
+      {
+        "model_name": "Orpheus-3b-FT-Q2_K",
+        "folder_path": "Orpheus-3b-FT-Q2_K",
+        "files_to_download": {
+          "model.gguf": "https://huggingface.co/lex-au/Orpheus-3b-FT-Q2_K.gguf/resolve/main/Orpheus-3b-FT-Q2_K.gguf?download=true"
         }
       }
     ]

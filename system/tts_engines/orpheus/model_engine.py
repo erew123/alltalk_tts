@@ -246,8 +246,11 @@ class tts_class:
             self.available_models["No Models Found"] = "orpheus"
             return self.available_models
 
-        for model_name in models_dir.glob("*.gguf"):
-            self.available_models[model_name.stem] = "orpheus"
+        for subdir in models_dir.iterdir():
+            if subdir.is_dir():
+                model_file = subdir / "model.gguf"
+                if model_file.exists():
+                    self.available_models[subdir.name] = "orpheus"
 
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
@@ -314,7 +317,7 @@ class tts_class:
         print(f"[{self.branding}ENG]\033[94m Model/Engine :\033[93m {model_name}\033[94m loading into\033[93m", self.device,"\033[0m")
 
         # get model path from models/orpheus
-        model_path = f"./models/orpheus/{model_name}.gguf"
+        model_path = f"./models/orpheus/{model_name}/model.gguf"
         
         self.model = LlamaAudio(
             model_path=model_path,
