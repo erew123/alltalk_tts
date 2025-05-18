@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import time
+from llama_cpp import LLAMA_ROPE_SCALING_TYPE_LINEAR
 import torch
 import logging
 from pathlib import Path
@@ -41,7 +42,6 @@ from system.llama.llama_audio import LlamaAudio
 AVAILABLE_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe"]
 DEFAULT_VOICE = "tara"  # Best voice according to documentation
 
-MAX_TOKENS = 2048
 TEMPERATURE = 0.6
 TOP_P = 0.9
 REPETITION_PENALTY = 1.1
@@ -197,6 +197,7 @@ class tts_class:
     # However, its quite a simple check along the lines of "if CUDA is available and model is
     # in X place, then send it to Y place (or Y to X).
     async def handle_lowvram_change(self):
+        # TODO: Add loading to CPU
         pass # Piper does not stay in CUDA or support swapping of location
         
     ########################################
@@ -328,8 +329,8 @@ class tts_class:
         self.model = LlamaAudio(
             model_path=model_path,
             n_gpu_layers=29, # Uncomment to use GPU acceleration
-            # seed=1337, # Uncomment to set a specific seed
             n_ctx=2048, # Uncomment to increase the context window
+            rope_scaling_type=LLAMA_ROPE_SCALING_TYPE_LINEAR 
         )
         
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -445,7 +446,9 @@ class tts_class:
         formatted_prompt = format_prompt(text, voice)
         print(f"Generating speech for: {formatted_prompt}")
         
-        await self.model.generate(formatted_prompt, output_file, temperature=temperature, max_tokens=MAX_TOKENS, repeat_penalty=repetition_penalty)
+        # Repetition penalty is hardcoded to 1.1 and cannot be changed as this is the only value that produces stable, high-quality output.
+
+        await self.model.generate(formatted_prompt, output_file, temperature=temperature, max_tokens=2048, repeat_penalty=1.1, top_p=0.9)
 
          # Fake Streaming function here
          # TODO: Llama supports audio streaming, it just isn't implemented yet
