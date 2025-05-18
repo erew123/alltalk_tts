@@ -2039,7 +2039,7 @@ def process_audio_files(
                     "processing_date": datetime.now().isoformat(),
                     "validation_messages": validation_messages,
                 },
-                f,
+                file,
                 indent=4,
             )
 
