@@ -276,12 +276,15 @@ class tts_class:
         # ↑↑↑ Keep everything above this line ↑↑↑
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
+        # Scan available models first
+        self.available_models = self.scan_models_folder()
+        
         print(f"[{self.branding}ENG] \033[92mLoading Chatterbox TTS model...\033[0m")
         try:
             # Load the ChatterboxTTS model with device detection
             self.model = ChatterboxTTS.from_pretrained(device=self.device)
             self.is_tts_model_loaded = True
-            self.current_model_loaded = "chatterbox-default"
+            self.current_model_loaded = "Chatterbox TTS"
             print(f"[{self.branding}ENG] \033[92mChatterbox TTS model loaded successfully on {self.device}\033[0m")
         except Exception as e:
             print(f"[{self.branding}ENG] \033[91mError loading Chatterbox TTS model: {str(e)}\033[0m")
@@ -326,10 +329,13 @@ class tts_class:
         # ↑↑↑ Keep everything above this line ↑↑↑
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-        # Chatterbox TTS uses auto-downloaded models, so we'll return a simple list
-        available_models = [
-            {"model_name": "chatterbox-default", "folder_path": "chatterbox-default"}
-        ]
+        # Chatterbox TTS uses auto-downloaded models, return as dictionary for API compatibility
+        available_models = {
+            "Chatterbox TTS": {"model_name": "Chatterbox TTS", "folder_path": "chatterbox-default"}
+        }
+        
+        # Set self.available_models for API access
+        self.available_models = available_models
         
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
@@ -337,12 +343,35 @@ class tts_class:
         return available_models
         
     def voices_file_list(self):       
-        # For Chatterbox TTS, voices are provided via audio prompts
-        # Return empty list as voices are dynamically provided
-        return []
+        try:
+            voices = []
+            directory = self.main_dir / "voices"
+            
+            # Step 1: Add .wav files in the main "voices" directory to the list
+            for f in directory.glob("*.wav"):
+                voices.append(f.name)
+            
+            # Step 2: Walk through subfolders and add subfolder names if they contain wav files
+            for folder in directory.iterdir():
+                if folder.is_dir():
+                    has_wav_files = any(folder.glob("*.wav"))
+                    if has_wav_files:
+                        folder_name = folder.name + "/"
+                        voices.append(folder_name)
+            
+            # Remove "voices/" from the list if it somehow got added
+            voices = [v for v in voices if v != "voices/"]
+                        
+            if not voices:
+                return ["No Voices Found"] 
+            return voices 
+        except Exception as e:
+            print(f"[{self.branding}ENG] \033[91mError\033[0m: Voices/Voice Models not found. Cannot load a list of voices.")
+            print(f"[{self.branding}ENG]")
+            return ["No Voices Found"]
 
     async def api_manual_load_model(self, model_name):
-        if model_name == "chatterbox-default":
+        if model_name == "Chatterbox TTS":
             if not self.is_tts_model_loaded:
                 await self.setup()
             return f"Chatterbox TTS model loaded: {model_name}"
@@ -372,6 +401,10 @@ class tts_class:
         pass
 
     async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming):
+        if voice == "No Voices Found":
+            print(f"[{self.branding}ENG] \033[91mError\033[0m: No voices found to generate TTS.")
+            raise HTTPException(status_code=400, detail="No voices found to generate TTS.")
+            
         if not self.is_tts_model_loaded:
             raise HTTPException(status_code=500, detail="Chatterbox TTS model not loaded")
             
@@ -379,6 +412,7 @@ class tts_class:
             raise HTTPException(status_code=503, detail="TTS generation already in progress")
         
         self.tts_generating_lock = True
+        generate_start_time = time.time()
         
         try:
             print(f"[{self.branding}ENG] \033[92mGenerating TTS with Chatterbox...\033[0m")
@@ -393,13 +427,44 @@ class tts_class:
                 self.tts_generating_lock = False
                 return
             
-            # Generate TTS - check if voice is provided as an audio prompt
-            if voice and voice.endswith('.wav') and os.path.exists(voice):
-                # Use voice cloning with audio prompt
-                wav = self.model.generate(text, audio_prompt_path=voice)
-            else:
-                # Use default generation
-                wav = self.model.generate(text)
+            # Determine the audio prompt path
+            audio_prompt_path = None
+            if voice and voice != "No Voices Found":
+                if voice.endswith('/'):
+                    # It's a folder, pick the first wav file
+                    voice_dir = self.main_dir / "voices" / voice.rstrip('/')
+                    for wav_file in voice_dir.glob("*.wav"):
+                        audio_prompt_path = str(wav_file)
+                        break
+                else:
+                    # It's a direct file
+                    audio_prompt_path = str(self.main_dir / "voices" / voice)
+                
+                # Verify the file exists
+                if audio_prompt_path and not os.path.exists(audio_prompt_path):
+                    print(f"[{self.branding}ENG] \033[91mWarning: Voice file not found: {audio_prompt_path}\033[0m")
+                    audio_prompt_path = None
+            
+            # Map AllTalk parameters to Chatterbox parameters
+            chatterbox_params = {
+                'text': text,
+                'temperature': float(temperature),
+                'repetition_penalty': float(repetition_penalty),
+                'exaggeration': 0.5,  # Default exaggeration value
+                'cfg_weight': 0.5,    # Default CFG weight
+                'min_p': 0.05,        # Default min_p
+                'top_p': 1.0,         # Default top_p (disabled)
+            }
+            
+            # Add audio prompt if available
+            if audio_prompt_path:
+                chatterbox_params['audio_prompt_path'] = audio_prompt_path
+                print(f"[{self.branding}ENG] Using voice prompt: {audio_prompt_path}") if self.debug_tts else None
+            
+            print(f"[{self.branding}ENG] Generation parameters: temp={temperature}, rep_penalty={repetition_penalty}") if self.debug_tts else None
+            
+            # Generate TTS
+            wav = self.model.generate(**chatterbox_params)
             
             # Check for stop generation flag again
             if self.tts_stop_generation:
@@ -410,12 +475,19 @@ class tts_class:
             # Save the generated audio
             ta.save(output_file, wav, self.model.sr)
             
-            print(f"[{self.branding}ENG] \033[92mTTS generation complete\033[0m")
+            generate_end_time = time.time()
+            generate_elapsed_time = generate_end_time - generate_start_time
+            print(f"[{self.branding}GEN] \033[94mTTS Generate: \033[93m{generate_elapsed_time:.2f} seconds. \033[94mLowVRAM: \033[33m{self.lowvram_enabled} \033[94mDeepSpeed: \033[33m{self.deepspeed_enabled}\033[0m")
             
             # Handle low VRAM cleanup
-            if self.lowvram_enabled and self.cuda_is_available:
+            if self.lowvram_enabled and self.cuda_is_available and not self.tts_narrator_generatingtts:
                 self.model.to('cpu')
                 torch.cuda.empty_cache()
+            
+            # Handle streaming if requested
+            if streaming:
+                with open(output_file, 'rb') as f:
+                    yield f.read()
                 
         except Exception as e:
             print(f"[{self.branding}ENG] \033[91mError during TTS generation: {str(e)}\033[0m")

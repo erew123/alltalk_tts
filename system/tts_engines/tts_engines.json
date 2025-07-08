@@ -22,9 +22,9 @@
         },
         {
             "name": "chatterbox",
-            "selected_model": "chatterbox - chatterbox-default"
+            "selected_model": "chatterbox - Chatterbox TTS"
         }
     ],
     "engine_loaded": "chatterbox",
-    "selected_model": "chatterbox - chatterbox-default"
+    "selected_model": "chatterbox - Chatterbox TTS"
 }
