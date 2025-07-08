@@ -2720,6 +2720,11 @@ if gradio_enabled is True:
             gr.Slider(interactive=_state['srv_settings_capabilities']['pitch_capable']),
             gr.Slider(interactive=_state['srv_settings_capabilities']['temperature_capable']),
             gr.Slider(interactive=_state['srv_settings_capabilities']['repetitionpenalty_capable']),
+            gr.Number(interactive=True),  # gen_seed
+            gr.Slider(interactive=True),  # gen_exaggeration
+            gr.Slider(interactive=True),  # gen_cfg_weight
+            gr.Slider(interactive=True),  # gen_min_p
+            gr.Slider(interactive=True),  # gen_top_p
             gr.Dropdown(interactive=_state['srv_settings_capabilities']['languages_capable'], label=language_label),
             gr.Dropdown(choices=_state['srv_models_available'], value=_state['srv_current_model_loaded']),
             gr.Dropdown(choices=_state['srv_engines_available'], value=_state['srv_current_engine_loaded'])
@@ -2942,6 +2947,11 @@ if gradio_enabled is True:
         gen_filetime,
         gen_stream,
         gen_stopcurrentgen,
+        gen_seed,
+        gen_exaggeration,
+        gen_cfg_weight,
+        gen_min_p,
+        gen_top_p,
     ):
         """
         Send TTS request from the gradio interface to the API address
@@ -2999,6 +3009,11 @@ if gradio_enabled is True:
             "pitch": str(gen_pitch),
             "temperature": str(gen_temperature),
             "repetition_penalty": str(gen_repetition),
+            "seed": str(gen_seed) if gen_seed is not None else "",
+            "exaggeration": str(gen_exaggeration),
+            "cfg_weight": str(gen_cfg_weight),
+            "min_p": str(gen_min_p),
+            "top_p": str(gen_top_p),
         }
         print_message(
             "\033[94mDebug of data > def generate_tts > script.py\033[0m",
@@ -3440,6 +3455,51 @@ if gradio_enabled is True:
                             value=10,
                             interactive=_state['srv_settings_capabilities']['repetitionpenalty_capable']
                         )
+                    with gr.Row():
+                        gen_seed = gr.Number(
+                            label="Seed (Random if empty)",
+                            info="Set a specific seed for reproducible results, leave empty for random",
+                            value=None,
+                            precision=0,
+                            interactive=True,
+                        )
+                        gen_exaggeration = gr.Slider(
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.1,
+                            label="Exaggeration",
+                            info="Controls how exaggerated the speech characteristics are",
+                            value=0.5,
+                            interactive=True,
+                        )
+                        gen_cfg_weight = gr.Slider(
+                            minimum=0.0,
+                            maximum=1.0,
+                            step=0.05,
+                            label="CFG Weight (Pace)",
+                            info="Controls the pace and flow of the generated speech",
+                            value=0.5,
+                            interactive=True,
+                        )
+                    with gr.Row():
+                        gen_min_p = gr.Slider(
+                            minimum=0.01,
+                            maximum=0.5,
+                            step=0.01,
+                            label="Min P",
+                            info="Minimum probability threshold for token selection",
+                            value=0.05,
+                            interactive=True,
+                        )
+                        gen_top_p = gr.Slider(
+                            minimum=0.1,
+                            maximum=1.0,
+                            step=0.05,
+                            label="Top P",
+                            info="Nucleus sampling threshold (1.0 = disabled)",
+                            value=1.0,
+                            interactive=True,
+                        )
 
                 # Toggle narrator selection on Streaming select
                 def update_narren_and_autopl(gen_stream):
@@ -3483,6 +3543,11 @@ if gradio_enabled is True:
                         gen_pitch,
                         gen_temperature,
                         gen_repetition,
+                        gen_seed,
+                        gen_exaggeration,
+                        gen_cfg_weight,
+                        gen_min_p,
+                        gen_top_p,
                         gen_lang,
                         model_choices_gr,
                         engine_choices,
@@ -3502,6 +3567,11 @@ if gradio_enabled is True:
                         gen_pitch,
                         gen_temperature,
                         gen_repetition,
+                        gen_seed,
+                        gen_exaggeration,
+                        gen_cfg_weight,
+                        gen_min_p,
+                        gen_top_p,
                         gen_lang,
                         model_choices_gr,
                         engine_choices,
@@ -3527,7 +3597,7 @@ if gradio_enabled is True:
                     at_update_dropdowns,
                     None,
                     [gen_stream, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_speed, gen_pitch,
-                    gen_temperature, gen_repetition, gen_lang, model_choices_gr, engine_choices],
+                    gen_temperature, gen_repetition, gen_seed, gen_exaggeration, gen_cfg_weight, gen_min_p, gen_top_p, gen_lang, model_choices_gr, engine_choices],
                 )
                 stop_button.click(
                     stop_generate_tts, inputs=[], outputs=[output_message]
@@ -3556,6 +3626,11 @@ if gradio_enabled is True:
                         gen_filetime,
                         gen_stream,
                         gen_stopcurrentgen,
+                        gen_seed,
+                        gen_exaggeration,
+                        gen_cfg_weight,
+                        gen_min_p,
+                        gen_top_p,
                     ],
                     outputs=[output_audio, output_message],
                 )

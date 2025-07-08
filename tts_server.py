@@ -944,7 +944,7 @@ async def tts_generate_streaming(_request: Request, text: str = Form(...), voice
 ###################################
 # Central generate_audio function #
 ###################################
-async def generate_audio(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False):
+async def generate_audio(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming=False, seed=None, exaggeration=0.5, cfg_weight=0.5, min_p=0.05, top_p=1.0):
     """Generate TTS audio with specified parameters. Supports streaming and non-streaming modes."""
     debug_func_entry()
 
@@ -957,7 +957,7 @@ async def generate_audio(text, voice, language, temperature, repetition_penalty,
     if language == "auto":
         language = detect_language(text)
 
-    response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming)
+    response = model_engine.generate_tts(text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming, seed, exaggeration, cfg_weight, min_p, top_p)
 
     if streaming:
         async def stream_response():
@@ -1757,6 +1757,21 @@ def get_params_repetition():
 def get_params_pitch():
     """Get voice pitch setting."""
     return model_engine.pitch_set
+def get_params_seed():
+    """Get seed for random generation."""
+    return getattr(model_engine, 'seed_set', None)
+def get_params_exaggeration():
+    """Get exaggeration parameter."""
+    return getattr(model_engine, 'exaggeration_set', 0.5)
+def get_params_cfg_weight():
+    """Get CFG weight parameter."""
+    return getattr(model_engine, 'cfg_weight_set', 0.5)
+def get_params_min_p():
+    """Get min_p parameter."""
+    return getattr(model_engine, 'min_p_set', 0.05)
+def get_params_top_p():
+    """Get top_p parameter."""
+    return getattr(model_engine, 'top_p_set', 1.0)
 def get_character_voice_gen():
     """Get default character voice."""
     return model_engine.def_character_voice
@@ -1967,7 +1982,10 @@ async def tts_generate_part(part: str, voice: str, params: dict) -> Optional[Pat
             cleaned_part, voice, params['language'],
             params['temperature'], params['repetition_penalty'],
             params['speed'], params['pitch'],
-            output_file[0], False
+            output_file[0], False,
+            params.get('seed'), params.get('exaggeration', 0.5),
+            params.get('cfg_weight', 0.5), params.get('min_p', 0.05),
+            params.get('top_p', 1.0)
         )
         return output_file[0]
     except ValueError as e:
@@ -2037,7 +2055,10 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
                 cleaned_text, params['character_voice_gen'], params['language'],
                 params['temperature'], params['repetition_penalty'],
                 params['speed'], params['pitch'],
-                output_file_path, True
+                output_file_path, True,
+                params.get('seed'), params.get('exaggeration', 0.5),
+                params.get('cfg_weight', 0.5), params.get('min_p', 0.05),
+                params.get('top_p', 1.0)
             )
             return StreamingResponse(stream, media_type="audio/wav")
 
@@ -2045,7 +2066,10 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
             cleaned_text, params['character_voice_gen'], params['language'],
             params['temperature'], params['repetition_penalty'],
             params['speed'], params['pitch'],
-            output_file_path, False
+            output_file_path, False,
+            params.get('seed'), params.get('exaggeration', 0.5),
+            params.get('cfg_weight', 0.5), params.get('min_p', 0.05),
+            params.get('top_p', 1.0)
         )
 
         if config.rvc_settings.rvc_enabled:
@@ -2163,6 +2187,11 @@ async def apifunction_generate_tts_standard(
     temperature: float = Form(None),
     repetition_penalty: float = Form(None),
     pitch: float = Form(None),
+    seed: int = Form(None),
+    exaggeration: float = Form(None),
+    cfg_weight: float = Form(None),
+    min_p: float = Form(None),
+    top_p: float = Form(None),
     _text_filtering: str = Depends(get_api_text_filtering),
     _character_voice_gen: str = Depends(get_character_voice_gen),
     _rvccharacter_voice_gen: str = Depends(get_rvccharacter_voice_gen),
@@ -2181,6 +2210,11 @@ async def apifunction_generate_tts_standard(
     _temperature: float = Depends(get_params_temperature),
     _repetition_penalty: float = Depends(get_params_repetition),
     _pitch: float = Depends(get_params_pitch),
+    _seed: int = Depends(get_params_seed),
+    _exaggeration: float = Depends(get_params_exaggeration),
+    _cfg_weight: float = Depends(get_params_cfg_weight),
+    _min_p: float = Depends(get_params_min_p),
+    _top_p: float = Depends(get_params_top_p),
 ):
     """Generate TTS audio with optional narrator mode and RVC processing."""
     debug_func_entry()
@@ -2205,7 +2239,12 @@ async def apifunction_generate_tts_standard(
             "speed": speed,
             "temperature": temperature,
             "repetition_penalty": repetition_penalty,
-            "pitch": pitch
+            "pitch": pitch,
+            "seed": seed,
+            "exaggeration": exaggeration,
+            "cfg_weight": cfg_weight,
+            "min_p": min_p,
+            "top_p": top_p
         }
 
         default_params = {
@@ -2226,7 +2265,12 @@ async def apifunction_generate_tts_standard(
             "speed": _speed,
             "temperature": _temperature,
             "repetition_penalty": _repetition_penalty,
-            "pitch": _pitch
+            "pitch": _pitch,
+            "seed": _seed,
+            "exaggeration": _exaggeration,
+            "cfg_weight": _cfg_weight,
+            "min_p": _min_p,
+            "top_p": _top_p
         }
 
         # Validate and prepare input

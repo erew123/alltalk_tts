@@ -6,6 +6,8 @@ import sys
 import json
 import time
 import torch
+import random
+import numpy as np
 import logging
 from pathlib import Path
 from fastapi import (HTTPException)
@@ -323,6 +325,20 @@ class tts_class:
     async def handle_deepspeed_change(self, value):
         # Chatterbox TTS doesn't support DeepSpeed
         print(f"[{self.branding}ENG] \033[93mChatterbox TTS does not support DeepSpeed\033[0m")
+
+    def set_seed(self, seed: int):
+        """Set seed for reproducible generation across PyTorch, CUDA, and NumPy."""
+        # If seed is 0, generate a random seed
+        if seed == 0:
+            seed = random.randint(1, 2**31 - 1)
+            print(f"[{self.branding}ENG] \033[93mGenerated random seed: {seed}\033[0m") if self.debug_tts else None
+        
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+        print(f"[{self.branding}ENG] \033[93mSeed set to: {seed}\033[0m") if self.debug_tts else None
         
     def scan_models_folder(self):
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -400,7 +416,7 @@ class tts_class:
         # Chatterbox TTS is simple and doesn't need method changes
         pass
 
-    async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming):
+    async def generate_tts(self, text, voice, language, temperature, repetition_penalty, speed, pitch, output_file, streaming, seed=None, exaggeration=0.5, cfg_weight=0.5, min_p=0.05, top_p=1.0):
         if voice == "No Voices Found":
             print(f"[{self.branding}ENG] \033[91mError\033[0m: No voices found to generate TTS.")
             raise HTTPException(status_code=400, detail="No voices found to generate TTS.")
@@ -450,18 +466,22 @@ class tts_class:
                 'text': text,
                 'temperature': float(temperature),
                 'repetition_penalty': float(repetition_penalty),
-                'exaggeration': 0.5,  # Default exaggeration value
-                'cfg_weight': 0.5,    # Default CFG weight
-                'min_p': 0.05,        # Default min_p
-                'top_p': 1.0,         # Default top_p (disabled)
+                'exaggeration': float(exaggeration),
+                'cfg_weight': float(cfg_weight),
+                'min_p': float(min_p),
+                'top_p': float(top_p),
             }
+            
+            # Set seed for reproducible generation if provided
+            if seed is not None:
+                self.set_seed(int(seed))
             
             # Add audio prompt if available
             if audio_prompt_path:
                 chatterbox_params['audio_prompt_path'] = audio_prompt_path
                 print(f"[{self.branding}ENG] Using voice prompt: {audio_prompt_path}") if self.debug_tts else None
             
-            print(f"[{self.branding}ENG] Generation parameters: temp={temperature}, rep_penalty={repetition_penalty}") if self.debug_tts else None
+            print(f"[{self.branding}ENG] Generation parameters: temp={temperature}, rep_penalty={repetition_penalty}, exag={exaggeration}, cfg={cfg_weight}, min_p={min_p}, top_p={top_p}, seed={seed}") if self.debug_tts else None
             
             # Generate TTS
             wav = self.model.generate(**chatterbox_params)
