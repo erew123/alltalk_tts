@@ -416,6 +416,13 @@ class tts_class:
         
         # Set self.available_models for API access
         self.available_models = available_models
+        # Chatterbox TTS uses auto-downloaded models, return as dictionary for API compatibility
+        available_models = {
+            "Chatterbox TTS": {"model_name": "Chatterbox TTS", "folder_path": "chatterbox-default"}
+        }
+        
+        # Set self.available_models for API access
+        self.available_models = available_models
         
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
@@ -449,8 +456,35 @@ class tts_class:
             print(f"[{self.branding}ENG] \033[91mError\033[0m: Voices/Voice Models not found. Cannot load a list of voices.")
             print(f"[{self.branding}ENG]")
             return ["No Voices Found"]
+        try:
+            voices = []
+            directory = self.main_dir / "voices"
+            
+            # Step 1: Add .wav files in the main "voices" directory to the list
+            for f in directory.glob("*.wav"):
+                voices.append(f.name)
+            
+            # Step 2: Walk through subfolders and add subfolder names if they contain wav files
+            for folder in directory.iterdir():
+                if folder.is_dir():
+                    has_wav_files = any(folder.glob("*.wav"))
+                    if has_wav_files:
+                        folder_name = folder.name + "/"
+                        voices.append(folder_name)
+            
+            # Remove "voices/" from the list if it somehow got added
+            voices = [v for v in voices if v != "voices/"]
+                        
+            if not voices:
+                return ["No Voices Found"] 
+            return voices 
+        except Exception as e:
+            print(f"[{self.branding}ENG] \033[91mError\033[0m: Voices/Voice Models not found. Cannot load a list of voices.")
+            print(f"[{self.branding}ENG]")
+            return ["No Voices Found"]
 
     async def api_manual_load_model(self, model_name):
+        if model_name == "Chatterbox TTS":
         if model_name == "Chatterbox TTS":
             if not self.is_tts_model_loaded:
                 await self.setup()
