@@ -1,6 +1,4 @@
 {
-    "engine_loaded": "piper",
-    "selected_model": "piper",
     "engines_available": [
         {
             "name": "parler",
@@ -20,7 +18,13 @@
         },
         {
             "name": "f5tts",
-            "selected_model": "f5tts - f5tts_v1"
+            "selected_model": "f5tts - f5tts_v1a"
+        },
+        {
+            "name": "chatterbox",
+            "selected_model": "chatterbox - chatterbox-default"
         }
-    ]
+    ],
+    "engine_loaded": "chatterbox",
+    "selected_model": "chatterbox - chatterbox-default"
 }

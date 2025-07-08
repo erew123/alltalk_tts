@@ -26,7 +26,7 @@
         "deepspeed_enabled": false,
         "engine_installed": true,
         "generationspeed_set": 1,
-        "lowvram_enabled": true,
+        "lowvram_enabled": false,
         "pitch_set": 0,
         "repetitionpenalty_set": 10,
         "temperature_set": 0.75
