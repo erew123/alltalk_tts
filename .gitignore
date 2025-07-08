@@ -174,3 +174,4 @@ cython_debug/
 
 # Docker build
 docker/deepspeed/build
+gradio_tts_app.py

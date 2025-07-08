@@ -1,0 +1,52 @@
+{
+    "model_details": {
+        "manufacturer_name": "Chatterbox TTS",
+        "manufacturer_website": "https://github.com/chatterbox/tts",
+        "model_description": "Chatterbox TTS is a neural text-to-speech system that supports voice cloning via audio prompts. It automatically downloads models and supports CUDA, MPS, and CPU inference with excellent voice quality and natural speech generation."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": false,
+        "languages_capable": true,
+        "lowvram_capable": true,
+        "multimodel_capable": false,
+        "repetitionpenalty_capable": true,
+        "streaming_capable": false,
+        "temperature_capable": true,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "seed_capable": true,
+        "exaggeration_capable": true,
+        "cfg_weight_capable": true,
+        "min_p_capable": true,
+        "top_p_capable": true,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "default",
+        "def_narrator_voice": "default",
+        "deepspeed_enabled": false,
+        "engine_installed": true,
+        "generationspeed_set": 1,
+        "lowvram_enabled": false,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 10,
+        "temperature_set": 0.75,
+        "seed_set": null,
+        "exaggeration_set": 0.5,
+        "cfg_weight_set": 0.5,
+        "min_p_set": 0.05,
+        "top_p_set": 1.0
+    },
+    "openai_voices": {
+        "alloy": "default",
+        "echo": "default",
+        "fable": "default",
+        "nova": "default",
+        "onyx": "default",
+        "shimmer": "default"
+    }
+} 

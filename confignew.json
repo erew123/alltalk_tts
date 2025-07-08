@@ -4,7 +4,7 @@
     "gradio_interface": true,
     "output_folder": "outputs",
     "gradio_port_number": 7852,
-    "firstrun_model": true,
+    "firstrun_model": false,
     "firstrun_splash": true,
     "launch_gradio": true,
     "transcode_audio_format": "Disabled",

@@ -1,0 +1,12 @@
+{
+    "first_start_model": "chatterbox-default",
+    "models": [
+        {
+            "model_name": "chatterbox-default",
+            "folder_path": "chatterbox-default",
+            "files_to_download": {
+                "note": "Chatterbox TTS automatically downloads models via ChatterboxTTS.from_pretrained(). No manual downloads required."
+            }
+        }
+    ]
+} 
