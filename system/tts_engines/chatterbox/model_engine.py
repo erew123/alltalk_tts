@@ -38,6 +38,7 @@ except ImportError:
 import torchaudio as ta
 import tempfile
 import subprocess
+import re
 
 def install_and_restart():
     try:
@@ -295,7 +296,7 @@ class tts_class:
 
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         # ↓↓↓ Keep everything below this line ↓↓↓
-        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 
         self.setup_has_run = True # Flag that setup has run, so the /api/ready endpoint will send a "Ready" status and load the webui
     
     ##################################
@@ -339,6 +340,69 @@ class tts_class:
         random.seed(seed)
         np.random.seed(seed)
         print(f"[{self.branding}ENG] \033[93mSeed set to: {seed}\033[0m") if self.debug_tts else None
+
+    def chunk_text(self, text: str, max_chars: int = 500):
+        """
+        Split text into chunks without overlaps at sentence boundaries only.
+        Each character appears in exactly one chunk to avoid audio repeats.
+        
+        Args:
+            text (str): The input text to split
+            max_chars (int): Maximum characters per chunk (default: 500)
+            
+        Returns:
+            list: List of text chunks with no overlaps
+        """
+        if len(text) <= max_chars:
+            return [text.strip()]
+        
+        chunks = []
+        remaining_text = text.strip()
+        
+        while remaining_text:
+            if len(remaining_text) <= max_chars:
+                # Last chunk
+                chunks.append(remaining_text)
+                break
+            
+            # Find the best split point within max_chars
+            chunk_end = max_chars
+            
+            # Look for sentence endings (. ! ?) - go backwards from max_chars
+            for i in range(min(max_chars, len(remaining_text)), 0, -1):
+                if remaining_text[i-1] in '.!?' and i < len(remaining_text) and remaining_text[i].isspace():
+                    chunk_end = i
+                    break
+            else:
+                # No sentence ending found, split at last space before max_chars
+                for i in range(min(max_chars, len(remaining_text)), 0, -1):
+                    if remaining_text[i-1].isspace():
+                        chunk_end = i - 1  # Don't include the space
+                        break
+                else:
+                    # No space found, hard split at max_chars (shouldn't happen with normal text)
+                    chunk_end = max_chars
+            
+            # Extract the chunk and update remaining text
+            chunk = remaining_text[:chunk_end].strip()
+            if chunk:
+                chunks.append(chunk)
+            
+            # Remove processed text (skip any leading whitespace in remaining text)
+            remaining_text = remaining_text[chunk_end:].lstrip()
+        
+        # Filter out any empty chunks
+        chunks = [chunk for chunk in chunks if chunk.strip()]
+        
+        # Debug: verify no overlaps by checking total length
+        total_chars = sum(len(chunk) for chunk in chunks)
+        original_chars = len(''.join(text.split()))  # Count non-whitespace chars
+        reconstructed_chars = len(''.join(''.join(chunks).split()))
+        
+        print(f"[{self.branding}ENG] \033[96mText split into {len(chunks)} clean parts (sentence endings only)\033[0m") if self.debug_tts else None
+        print(f"[{self.branding}ENG] \033[94mCharacter verification - Original: {len(text)}, Chunks total: {sum(len(chunk) for chunk in chunks)}\033[0m") if self.debug_tts else None
+        
+        return chunks
         
     def scan_models_folder(self):
         # ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -461,39 +525,51 @@ class tts_class:
                     print(f"[{self.branding}ENG] \033[91mWarning: Voice file not found: {audio_prompt_path}\033[0m")
                     audio_prompt_path = None
             
-            # Map AllTalk parameters to Chatterbox parameters
-            chatterbox_params = {
-                'text': text,
-                'temperature': float(temperature),
-                'repetition_penalty': float(repetition_penalty),
-                'exaggeration': float(exaggeration),
-                'cfg_weight': float(cfg_weight),
-                'min_p': float(min_p),
-                'top_p': float(top_p),
-            }
-            
             # Set seed for reproducible generation if provided
             if seed is not None:
                 self.set_seed(int(seed))
             
-            # Add audio prompt if available
-            if audio_prompt_path:
-                chatterbox_params['audio_prompt_path'] = audio_prompt_path
-                print(f"[{self.branding}ENG] Using voice prompt: {audio_prompt_path}") if self.debug_tts else None
-            
             print(f"[{self.branding}ENG] Generation parameters: temp={temperature}, rep_penalty={repetition_penalty}, exag={exaggeration}, cfg={cfg_weight}, min_p={min_p}, top_p={top_p}, seed={seed}") if self.debug_tts else None
             
-            # Generate TTS
-            wav = self.model.generate(**chatterbox_params)
+            # Check if text needs chunking (longer than 500 characters)
+            print(f"[{self.branding}ENG] \033[96mText length: {len(text)} characters, using chunking\033[0m") if self.debug_tts else None
+            text_chunks = self.chunk_text(text, max_chars=500)
+            audio_chunks = []
             
-            # Check for stop generation flag again
-            if self.tts_stop_generation:
-                self.tts_stop_generation = False
-                self.tts_generating_lock = False
-                return
+            for i, chunk in enumerate(text_chunks):
+                # Check for stop generation flag
+                if self.tts_stop_generation:
+                    self.tts_stop_generation = False
+                    self.tts_generating_lock = False
+                    return
+                
+                print(f"[{self.branding}ENG] \033[96mGenerating chunk {i+1}/{len(text_chunks)}: {chunk[:50]}...\033[0m") if self.debug_tts else None
+                
+                # Prepare parameters for this chunk
+                chunk_params = {
+                    'text': chunk,
+                    'temperature': float(temperature),
+                    'repetition_penalty': float(repetition_penalty),
+                    'exaggeration': float(exaggeration),
+                    'cfg_weight': float(cfg_weight),
+                    'min_p': float(min_p),
+                    'top_p': float(top_p),
+                }
+                
+                # Add audio prompt if available
+                if audio_prompt_path:
+                    chunk_params['audio_prompt_path'] = audio_prompt_path
+                
+                # Generate TTS for this chunk
+                chunk_wav = self.model.generate(**chunk_params)
+                audio_chunks.append(chunk_wav)
             
-            # Save the generated audio
-            ta.save(output_file, wav, self.model.sr)
+            # Concatenate all audio chunks
+            print(f"[{self.branding}ENG] \033[96mCombining {len(audio_chunks)} audio chunks...\033[0m")
+            combined_wav = torch.cat(audio_chunks, dim=-1)
+            
+            # Save the combined audio
+            ta.save(output_file, combined_wav, self.model.sr)
             
             generate_end_time = time.time()
             generate_elapsed_time = generate_end_time - generate_start_time
