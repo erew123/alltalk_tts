@@ -549,7 +549,7 @@ class SystemChecks:
                 except BaseException:
                     cuda_working = False
 
-                pytorch_cuda_status = cuda_version in ["11.8", "12.1"]
+                pytorch_cuda_status = cuda_version in ["11.8", "12.8"]
             else:
                 cuda_working = False
                 cuda_version = "N/A"
