@@ -898,7 +898,7 @@ class tts_class:
         
         self.is_tts_model_loaded = True
         self.print_message("\033[94mModel License : \033[93mhttps://coqui.ai/cpml.txt\033[0m")
-        
+        await self.handle_lowvram_change()
         return self.model
 
 
@@ -1197,3 +1197,4 @@ class tts_class:
         except Exception as e:
             self.print_message(f"Failed to load speaker latents: {str(e)}", message_type="error")
             raise HTTPException(status_code=400, detail=f"Failed to load voice latents: {str(e)}")
+
