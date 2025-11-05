@@ -172,7 +172,7 @@ def setup_piper():
     os.makedirs(this_dir / 'models/xtts', exist_ok=True)
     download_file("https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx?download=true",
                   this_dir / "models/piper/en_US-ljspeech-high.onnx")
-    download_file("https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx.json?download=true.json",
+    download_file("https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx.json?download=true",
                   this_dir / "models/piper/en_US-ljspeech-high.onnx.json")
 
 def setup_vits():
