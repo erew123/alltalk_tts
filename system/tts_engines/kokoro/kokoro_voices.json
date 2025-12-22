@@ -1,0 +1,382 @@
+{
+  "voices": [
+    {
+      "voice_name": "af_heart",
+      "voice_code": "af_heart",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Heart. Warm and expressive, highest quality voice."
+    },
+    {
+      "voice_name": "af_alloy",
+      "voice_code": "af_alloy",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Alloy. Versatile and balanced tone."
+    },
+    {
+      "voice_name": "af_aoede",
+      "voice_code": "af_aoede",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Aoede. Clear and melodic voice."
+    },
+    {
+      "voice_name": "af_bella",
+      "voice_code": "af_bella",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Bella. Natural and engaging, excellent quality."
+    },
+    {
+      "voice_name": "af_jessica",
+      "voice_code": "af_jessica",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Jessica. Professional and articulate."
+    },
+    {
+      "voice_name": "af_kore",
+      "voice_code": "af_kore",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Kore. Youthful and bright tone."
+    },
+    {
+      "voice_name": "af_nicole",
+      "voice_code": "af_nicole",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Nicole. Smooth and pleasant voice."
+    },
+    {
+      "voice_name": "af_nova",
+      "voice_code": "af_nova",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Nova. Modern and dynamic tone."
+    },
+    {
+      "voice_name": "af_river",
+      "voice_code": "af_river",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - River. Calm and flowing voice."
+    },
+    {
+      "voice_name": "af_sarah",
+      "voice_code": "af_sarah",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Sarah. Friendly and conversational."
+    },
+    {
+      "voice_name": "af_sky",
+      "voice_code": "af_sky",
+      "language": "en-us",
+      "gender": "female",
+      "description": "American English female - Sky. Light and airy quality."
+    },
+    {
+      "voice_name": "am_adam",
+      "voice_code": "am_adam",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Adam. Deep and authoritative voice."
+    },
+    {
+      "voice_name": "am_echo",
+      "voice_code": "am_echo",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Echo. Resonant and clear tone."
+    },
+    {
+      "voice_name": "am_eric",
+      "voice_code": "am_eric",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Eric. Natural and friendly voice."
+    },
+    {
+      "voice_name": "am_fenrir",
+      "voice_code": "am_fenrir",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Fenrir. Strong and commanding presence."
+    },
+    {
+      "voice_name": "am_liam",
+      "voice_code": "am_liam",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Liam. Warm and approachable tone."
+    },
+    {
+      "voice_name": "am_michael",
+      "voice_code": "am_michael",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Michael. Professional and confident."
+    },
+    {
+      "voice_name": "am_onyx",
+      "voice_code": "am_onyx",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Onyx. Rich and deep voice."
+    },
+    {
+      "voice_name": "am_puck",
+      "voice_code": "am_puck",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Puck. Playful and energetic."
+    },
+    {
+      "voice_name": "am_santa",
+      "voice_code": "am_santa",
+      "language": "en-us",
+      "gender": "male",
+      "description": "American English male - Santa. Jolly and warm character voice."
+    },
+    {
+      "voice_name": "bf_alice",
+      "voice_code": "bf_alice",
+      "language": "en-gb",
+      "gender": "female",
+      "description": "British English female - Alice. Refined and elegant accent."
+    },
+    {
+      "voice_name": "bf_emma",
+      "voice_code": "bf_emma",
+      "language": "en-gb",
+      "gender": "female",
+      "description": "British English female - Emma. Clear and sophisticated voice."
+    },
+    {
+      "voice_name": "bf_isabella",
+      "voice_code": "bf_isabella",
+      "language": "en-gb",
+      "gender": "female",
+      "description": "British English female - Isabella. Warm British accent."
+    },
+    {
+      "voice_name": "bf_lily",
+      "voice_code": "bf_lily",
+      "language": "en-gb",
+      "gender": "female",
+      "description": "British English female - Lily. Sweet and gentle tone."
+    },
+    {
+      "voice_name": "bm_daniel",
+      "voice_code": "bm_daniel",
+      "language": "en-gb",
+      "gender": "male",
+      "description": "British English male - Daniel. Professional British accent."
+    },
+    {
+      "voice_name": "bm_fable",
+      "voice_code": "bm_fable",
+      "language": "en-gb",
+      "gender": "male",
+      "description": "British English male - Fable. Storytelling quality voice."
+    },
+    {
+      "voice_name": "bm_george",
+      "voice_code": "bm_george",
+      "language": "en-gb",
+      "gender": "male",
+      "description": "British English male - George. Classic British gentleman voice."
+    },
+    {
+      "voice_name": "bm_lewis",
+      "voice_code": "bm_lewis",
+      "language": "en-gb",
+      "gender": "male",
+      "description": "British English male - Lewis. Modern British accent."
+    },
+    {
+      "voice_name": "ef_dora",
+      "voice_code": "ef_dora",
+      "language": "es",
+      "gender": "female",
+      "description": "Spanish female - Dora. Clear and expressive Spanish voice."
+    },
+    {
+      "voice_name": "em_alex",
+      "voice_code": "em_alex",
+      "language": "es",
+      "gender": "male",
+      "description": "Spanish male - Alex. Natural Spanish speaking voice."
+    },
+    {
+      "voice_name": "em_santa",
+      "voice_code": "em_santa",
+      "language": "es",
+      "gender": "male",
+      "description": "Spanish male - Santa. Warm Spanish character voice."
+    },
+    {
+      "voice_name": "ff_siwis",
+      "voice_code": "ff_siwis",
+      "language": "fr",
+      "gender": "female",
+      "description": "French female - Siwis. Elegant French speaking voice."
+    },
+    {
+      "voice_name": "hf_alpha",
+      "voice_code": "hf_alpha",
+      "language": "hi",
+      "gender": "female",
+      "description": "Hindi female - Alpha. Clear Hindi speaking voice."
+    },
+    {
+      "voice_name": "hf_beta",
+      "voice_code": "hf_beta",
+      "language": "hi",
+      "gender": "female",
+      "description": "Hindi female - Beta. Natural Hindi female voice."
+    },
+    {
+      "voice_name": "hm_omega",
+      "voice_code": "hm_omega",
+      "language": "hi",
+      "gender": "male",
+      "description": "Hindi male - Omega. Deep Hindi speaking voice."
+    },
+    {
+      "voice_name": "hm_psi",
+      "voice_code": "hm_psi",
+      "language": "hi",
+      "gender": "male",
+      "description": "Hindi male - Psi. Professional Hindi voice."
+    },
+    {
+      "voice_name": "if_sara",
+      "voice_code": "if_sara",
+      "language": "it",
+      "gender": "female",
+      "description": "Italian female - Sara. Expressive Italian voice."
+    },
+    {
+      "voice_name": "im_nicola",
+      "voice_code": "im_nicola",
+      "language": "it",
+      "gender": "male",
+      "description": "Italian male - Nicola. Natural Italian speaking voice."
+    },
+    {
+      "voice_name": "jf_alpha",
+      "voice_code": "jf_alpha",
+      "language": "ja",
+      "gender": "female",
+      "description": "Japanese female - Alpha. Clear and natural Japanese voice."
+    },
+    {
+      "voice_name": "jf_gongitsune",
+      "voice_code": "jf_gongitsune",
+      "language": "ja",
+      "gender": "female",
+      "description": "Japanese female - Gongitsune. Gentle Japanese female voice."
+    },
+    {
+      "voice_name": "jf_nezumi",
+      "voice_code": "jf_nezumi",
+      "language": "ja",
+      "gender": "female",
+      "description": "Japanese female - Nezumi. Youthful Japanese voice."
+    },
+    {
+      "voice_name": "jf_tebukuro",
+      "voice_code": "jf_tebukuro",
+      "language": "ja",
+      "gender": "female",
+      "description": "Japanese female - Tebukuro. Warm Japanese female voice."
+    },
+    {
+      "voice_name": "jm_kumo",
+      "voice_code": "jm_kumo",
+      "language": "ja",
+      "gender": "male",
+      "description": "Japanese male - Kumo. Natural Japanese male voice."
+    },
+    {
+      "voice_name": "pf_dora",
+      "voice_code": "pf_dora",
+      "language": "pt",
+      "gender": "female",
+      "description": "Brazilian Portuguese female - Dora. Clear Portuguese voice."
+    },
+    {
+      "voice_name": "pm_alex",
+      "voice_code": "pm_alex",
+      "language": "pt",
+      "gender": "male",
+      "description": "Brazilian Portuguese male - Alex. Natural Portuguese voice."
+    },
+    {
+      "voice_name": "pm_santa",
+      "voice_code": "pm_santa",
+      "language": "pt",
+      "gender": "male",
+      "description": "Brazilian Portuguese male - Santa. Warm Portuguese character voice."
+    },
+    {
+      "voice_name": "zf_xiaobei",
+      "voice_code": "zf_xiaobei",
+      "language": "zh",
+      "gender": "female",
+      "description": "Mandarin Chinese female - Xiaobei. Youthful Chinese voice."
+    },
+    {
+      "voice_name": "zf_xiaoni",
+      "voice_code": "zf_xiaoni",
+      "language": "zh",
+      "gender": "female",
+      "description": "Mandarin Chinese female - Xiaoni. Gentle Chinese female voice."
+    },
+    {
+      "voice_name": "zf_xiaoxiao",
+      "voice_code": "zf_xiaoxiao",
+      "language": "zh",
+      "gender": "female",
+      "description": "Mandarin Chinese female - Xiaoxiao. Clear and natural Mandarin."
+    },
+    {
+      "voice_name": "zf_xiaoyi",
+      "voice_code": "zf_xiaoyi",
+      "language": "zh",
+      "gender": "female",
+      "description": "Mandarin Chinese female - Xiaoyi. Professional Chinese voice."
+    },
+    {
+      "voice_name": "zm_yunjian",
+      "voice_code": "zm_yunjian",
+      "language": "zh",
+      "gender": "male",
+      "description": "Mandarin Chinese male - Yunjian. Strong Chinese male voice."
+    },
+    {
+      "voice_name": "zm_yunxi",
+      "voice_code": "zm_yunxi",
+      "language": "zh",
+      "gender": "male",
+      "description": "Mandarin Chinese male - Yunxi. Natural Mandarin male voice."
+    },
+    {
+      "voice_name": "zm_yunxia",
+      "voice_code": "zm_yunxia",
+      "language": "zh",
+      "gender": "male",
+      "description": "Mandarin Chinese male - Yunxia. Warm Chinese male voice."
+    },
+    {
+      "voice_name": "zm_yunyang",
+      "voice_code": "zm_yunyang",
+      "language": "zh",
+      "gender": "male",
+      "description": "Mandarin Chinese male - Yunyang. Professional Mandarin voice."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "first_start_model": "kokoro_v1.0",
+  "models": [
+    {
+      "model_name": "kokoro_v1.0",
+      "description": "Kokoro 82M parameter model - automatically downloaded by the kokoro package",
+      "auto_managed": true,
+      "files_to_download": []
+    }
+  ]
+}

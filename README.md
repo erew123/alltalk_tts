@@ -80,12 +80,13 @@ Screenshots are available [here](https://github.com/erew123/alltalk_tts/discussi
 - DeepSpeed works with NVIDIA GPUs.
 - Limited experimental support for AMD GPUs (mainly for XTTS).
 
-#### Mac (Theoretical)
-- Installation process is untested and theoretical.
-- No GPU acceleration for AllTalk TTS engines.
-- Some TTS engines may have limited or no support on Mac.
+#### macOS Apple Silicon (M1/M2/M3)
+- Native ARM64 installation with Miniforge
+- GPU acceleration via Metal Performance Shaders (MPS)
+- Includes start/stop scripts for easy management
+- RVC voice conversion support
 
-For more details on Mac support limitations, please refer to the [Mac Support Disclaimer](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Manual-Installation-Guide).
+For detailed installation instructions, see [osx_install.md](osx_install.md).
 
 #### GPU Support
 GPU support is provided by the developer of the individual TTS engine. If their TTS engine support's X GPU, then I can support X GPU, if it doesnt support X GPU, then I cannot support X GPU. Most of the engines will run on CPU, but some may be very slow on CPU.
@@ -93,7 +94,7 @@ GPU support is provided by the developer of the individual TTS engine. If their 
 - NVIDIA GPUs: Full support on Windows and Linux.
 - AMD GPUs: Limited experimental support on Linux (mainly for XTTS).
 - Intel ARC GPUs: No specific support currently.
-- Apple Silicon (M1/M2): No GPU acceleration for AllTalk TTS engines currently.
+- Apple Silicon (M1/M2/M3): GPU acceleration via Metal Performance Shaders (MPS).
 
 ---
 
@@ -105,6 +106,10 @@ For a fast and straightforward installation and recommended:
   - For users who want to run AllTalk TTS as a standalone application.
   - Available for Windows and Linux.
   - Most users will want a Standalone Installation and should use this choice.
+
+- [macOS Apple Silicon Installation](osx_install.md)
+  - For users with M1/M2/M3 Macs.
+  - Native ARM64 installation with MPS GPU acceleration.
 
 - [Text-generation-webui Installation](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Text%E2%80%90generation%E2%80%90webui-Installation)
   - For users who want to integrate AllTalk TTS as a part of [Text-generation-webui](https://github.com/oobabooga/text-generation-webui).
@@ -120,8 +125,9 @@ For users who prefer more control over the installation process or need to troub
 
 - [Manual Installation Guide](https://github.com/erew123/alltalk_tts/wiki/Install-%E2%80%90-Manual-Installation-Guide)
   - Detailed step-by-step instructions for manual installation.
-  - Available for Windows, Linux, and Mac (theoretical).
+  - Available for Windows and Linux.
   - Recommended for advanced users or those with specific setup requirements.
+  - For macOS, see [osx_install.md](osx_install.md).
 
 ### 🟩 Google Colab Installation
 

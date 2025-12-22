@@ -7,6 +7,7 @@ import faiss
 import numpy as np
 import soundfile as sf
 import librosa
+import noisereduce as nr
 from functools import lru_cache
 
 from config import AlltalkConfig
@@ -155,12 +156,16 @@ def voice_conversion(
                 f0_file=f0_file,
             )
             
+        # Apply noise reduction to clean up background noise
+        print("Applying noise reduction...") if debug_rvc else None
+        audio_opt = nr.reduce_noise(y=audio_opt, sr=tgt_sr, prop_decrease=0.6)
+
         # Resample the audio to the target sample rate before saving
         if tgt_sr != resample_sr and resample_sr >= 16000:
             print(f"Resampling audio from {tgt_sr} to {resample_sr}") if debug_rvc else None
             audio_opt = librosa.resample(audio_opt, tgt_sr, resample_sr)
             tgt_sr = resample_sr
-            
+
         if output_path is not None:
             print(f"Saving file to {output_path}") if debug_rvc else None
             sf.write(output_path, audio_opt, tgt_sr, format="WAV")

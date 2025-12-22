@@ -1,0 +1,42 @@
+{
+    "model_details": {
+        "manufacturer_name": "Fish Audio",
+        "manufacturer_website": "https://github.com/fishaudio/fish-speech",
+        "model_description": "Fish Speech (OpenAudio S1) is a leading open-source text-to-speech model featuring zero-shot and few-shot voice cloning. Supports English, Japanese, Korean, Chinese, French, German, Arabic, and Spanish. Uses RLHF training for high-quality natural speech synthesis."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": true,
+        "languages_capable": true,
+        "lowvram_capable": true,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": true,
+        "streaming_capable": false,
+        "temperature_capable": true,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "female_01.wav",
+        "def_narrator_voice": "female_01.wav",
+        "deepspeed_enabled": false,
+        "engine_installed": true,
+        "generationspeed_set": 1,
+        "lowvram_enabled": false,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 1.2,
+        "temperature_set": 0.7
+    },
+    "openai_voices": {
+        "alloy": "female_01.wav",
+        "echo": "female_01.wav",
+        "fable": "female_01.wav",
+        "nova": "female_01.wav",
+        "onyx": "female_01.wav",
+        "shimmer": "female_01.wav"
+    }
+}

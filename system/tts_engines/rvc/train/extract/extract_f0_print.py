@@ -133,7 +133,30 @@ class FeatureInput:
         if not hasattr(self, "model_rmvpe"):
             from rvc.lib.rmvpe import RMVPE
 
-            self.model_rmvpe = RMVPE(current_directory / "models" / "rvc_base" / "rmvpe.pt", is_half=False, device="cpu")
+            # Select device: CUDA > MPS > CPU
+            if torch.cuda.is_available():
+                device = "cuda"
+            elif torch.backends.mps.is_available():
+                device = "mps"
+            else:
+                device = "cpu"
+
+            # Find rmvpe.pt - check multiple possible locations
+            possible_paths = [
+                os.path.join(current_directory, "models", "rvc_base", "rmvpe.pt"),
+                os.path.join(current_directory, "..", "..", "..", "models", "rvc_base", "rmvpe.pt"),
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "models", "rvc_base", "rmvpe.pt"),
+            ]
+            rmvpe_path = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    rmvpe_path = os.path.abspath(path)
+                    break
+
+            if rmvpe_path is None:
+                raise FileNotFoundError(f"rmvpe.pt not found. Searched: {possible_paths}")
+
+            self.model_rmvpe = RMVPE(rmvpe_path, is_half=False, device=device)
         return self.model_rmvpe.infer_from_audio(x, thred=0.03)
 
     def get_f0_method_dict(self):

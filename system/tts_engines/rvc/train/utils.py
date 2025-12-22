@@ -141,6 +141,8 @@ def latest_checkpoint_path(dir_path, regex="G_*.pth"):
 
 
 def plot_spectrogram_to_numpy(spectrogram):
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-interactive backend for compatibility
     import matplotlib.pylab as plt
     import numpy as np
 
@@ -152,8 +154,11 @@ def plot_spectrogram_to_numpy(spectrogram):
     plt.tight_layout()
 
     fig.canvas.draw()
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
-    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    # Use buffer_rgba() for newer matplotlib versions (works on macOS)
+    buf = fig.canvas.buffer_rgba()
+    data = np.asarray(buf, dtype=np.uint8)
+    # Convert RGBA to RGB by dropping alpha channel
+    data = data[:, :, :3]
     plt.close()
     return data
 
@@ -252,8 +257,15 @@ def get_hparams():
     )
 
     args = parser.parse_args()
-    name = args.experiment_dir
-    experiment_dir = os.path.join("./logs", args.experiment_dir)
+
+    # Handle both absolute and relative paths for experiment_dir
+    if os.path.isabs(args.experiment_dir):
+        experiment_dir = args.experiment_dir
+        name = os.path.basename(experiment_dir)  # Extract model name from path
+    else:
+        experiment_dir = os.path.abspath(os.path.join("./logs", args.experiment_dir))
+        name = args.experiment_dir
+
     config_save_path = os.path.join(experiment_dir, "config.json")
     with open(config_save_path, "r") as f:
         config = json.load(f)

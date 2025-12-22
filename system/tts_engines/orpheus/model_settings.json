@@ -1,0 +1,42 @@
+{
+    "model_details": {
+        "manufacturer_name": "Canopy AI",
+        "manufacturer_website": "https://github.com/canopyai/Orpheus-TTS",
+        "model_description": "Orpheus is a state-of-the-art LLM-based TTS built on Llama 3B. It produces natural speech with human-like intonation, supports emotion tags (<laugh>, <sigh>, <cough>, etc.), and offers zero-shot voice cloning. Supports Metal acceleration on Mac and CUDA on Windows/Linux."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": false,
+        "languages_capable": false,
+        "lowvram_capable": false,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": true,
+        "streaming_capable": true,
+        "temperature_capable": true,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "tara",
+        "def_narrator_voice": "leah",
+        "deepspeed_enabled": false,
+        "engine_installed": false,
+        "generationspeed_set": 1.0,
+        "lowvram_enabled": false,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 1.1,
+        "temperature_set": 0.7
+    },
+    "openai_voices": {
+        "alloy": "tara",
+        "echo": "leo",
+        "fable": "leah",
+        "nova": "jess",
+        "onyx": "dan",
+        "shimmer": "mia"
+    }
+}

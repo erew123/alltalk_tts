@@ -4,7 +4,7 @@
     "gradio_interface": true,
     "output_folder": "outputs",
     "gradio_port_number": 7852,
-    "firstrun_model": true,
+    "firstrun_model": false,
     "firstrun_splash": true,
     "launch_gradio": true,
     "transcode_audio_format": "Disabled",
@@ -13,18 +13,18 @@
         "class": "gradio/base"
     },
     "rvc_settings": {
-        "rvc_enabled": false,
-        "rvc_char_model_file": "Disabled",
+        "rvc_enabled": true,
+        "rvc_char_model_file": "ayesha_soft.pth",
         "rvc_narr_model_file": "Disabled",
-        "split_audio": true,
+        "split_audio": false,
         "autotune": false,
         "pitch": 0,
-        "filter_radius": 3,
+        "filter_radius": 5,
         "index_rate": 0.75,
         "rms_mix_rate": 1,
         "protect": 0.5,
         "hop_length": 130,
-        "f0method": "fcpe",
+        "f0method": "rmvpe",
         "embedder_model": "hubert",
         "training_data_size": 45000,
         "model_cache_size": 1
@@ -58,7 +58,7 @@
         "api_legacy_ip_address": "127.0.0.1",
         "api_text_filtering": "standard",
         "api_narrator_enabled": "false",
-        "api_text_not_inside": "character",
+        "api_text_not_inside": "narrator",
         "api_language": "en",
         "api_output_file_name": "myoutputfile",
         "api_output_file_timestamp": true,
@@ -67,11 +67,11 @@
     },
     "debugging": {
         "debug_transcode": false,
-        "debug_tts": false,
+        "debug_tts": true,
         "debug_openai": false,
         "debug_concat": false,
-        "debug_tts_variables": false,
-        "debug_rvc": false,
+        "debug_tts_variables": true,
+        "debug_rvc": true,
         "debug_func": false,
         "debug_api": false,
         "debug_fullttstext": false,
@@ -106,5 +106,16 @@
         "cert_validation": true,
         "logging_enabled": true,
         "log_level": "INFO"
+    },
+    "narrative_emotion": {
+        "enabled": true,
+        "detection_mode": "compound",
+        "use_llm_inference": true,
+        "llm_api_url": "http://127.0.0.1:1234",
+        "llm_api_key": "",
+        "llm_model": "qwen2.5-1.5b-instruct",
+        "apply_to_narrator": true,
+        "apply_to_character": true,
+        "apply_to_ambiguous": true
     }
 }

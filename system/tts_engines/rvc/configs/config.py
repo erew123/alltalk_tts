@@ -66,14 +66,18 @@ class Config:
         print(
             f"Using FP32 config instead of FP16 due to GPU compatibility ({self.gpu_name})"
         )
+        # Use path relative to this file, not cwd
+        base_path = Path(__file__).resolve().parent
+        rvc_root = base_path.parent
+
         for config_file in version_config_list:
-            config_path = os.path.join(os.getcwd(), "system", "tts_engines", "rvc", "configs", config_file)
+            config_path = base_path / config_file
             with open(config_path, "r") as f:
                 config_data = f.read().replace("true", "false")
             with open(config_path, "w") as f:
                 f.write(config_data)
-        
-        preprocess_path = os.path.join(os.getcwd(), "system", "tts_engines", "rvc", "train", "preprocess", "preprocess.py")
+
+        preprocess_path = rvc_root / "train" / "preprocess" / "preprocess.py"
         with open(preprocess_path, "r") as f:
             preprocess_data = f.read().replace("3.7", "3.0")
         with open(preprocess_path, "w") as f:
@@ -104,7 +108,8 @@ class Config:
                 + 0.4
             )
             if self.gpu_mem <= 4:
-                preprocess_path = os.path.join(os.getcwd(), "system", "tts_engines", "rvc", "train", "preprocess", "preprocess.py")
+                rvc_root = Path(__file__).resolve().parent.parent
+                preprocess_path = rvc_root / "train" / "preprocess" / "preprocess.py"
                 with open(preprocess_path, "r") as f:
                     strr = f.read().replace("3.7", "3.0")
                 with open(preprocess_path, "w") as f:
@@ -129,10 +134,11 @@ class Config:
             x_center = 60
             x_max = 65
         else:
-            x_pad = 1
-            x_query = 6
-            x_center = 38
-            x_max = 41
+            # Increased padding for MPS/CPU to prevent word clipping
+            x_pad = 3
+            x_query = 10
+            x_center = 60
+            x_max = 65
 
         if self.gpu_mem is not None and self.gpu_mem <= 4:
             x_pad = 1

@@ -1,0 +1,29 @@
+{
+  "first_start_model": "fish-speech-1.5",
+  "models": [
+      {
+          "model_name": "fish-speech-1.5",
+          "folder_path": "fish-speech-1.5",
+          "description": "Fish Speech 1.5 - Latest stable release. Good quality, widely available.",
+          "files_to_download": {
+              "firefly-gan-vq-fsq-8x1024-21hz-generator.pth": "https://huggingface.co/fishaudio/fish-speech-1.5/resolve/main/firefly-gan-vq-fsq-8x1024-21hz-generator.pth",
+              "model.pth": "https://huggingface.co/fishaudio/fish-speech-1.5/resolve/main/model.pth",
+              "config.json": "https://huggingface.co/fishaudio/fish-speech-1.5/resolve/main/config.json",
+              "special_tokens.json": "https://huggingface.co/fishaudio/fish-speech-1.5/resolve/main/special_tokens.json",
+              "tokenizer.tiktoken": "https://huggingface.co/fishaudio/fish-speech-1.5/resolve/main/tokenizer.tiktoken"
+          }
+      },
+      {
+          "model_name": "openaudio-s1-mini",
+          "folder_path": "openaudio-s1-mini",
+          "description": "OpenAudio S1 Mini - 0.5B parameter model with RLHF. Requires HuggingFace access approval.",
+          "files_to_download": {
+              "codec.pth": "https://huggingface.co/fishaudio/openaudio-s1-mini/resolve/main/codec.pth",
+              "model.pth": "https://huggingface.co/fishaudio/openaudio-s1-mini/resolve/main/model.pth",
+              "config.json": "https://huggingface.co/fishaudio/openaudio-s1-mini/resolve/main/config.json",
+              "special_tokens.json": "https://huggingface.co/fishaudio/openaudio-s1-mini/resolve/main/special_tokens.json",
+              "tokenizer.tiktoken": "https://huggingface.co/fishaudio/openaudio-s1-mini/resolve/main/tokenizer.tiktoken"
+          }
+      }
+  ]
+}

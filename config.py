@@ -69,7 +69,7 @@ class AlltalkConfigApiDef(BaseModel):
     api_legacy_ip_address: str = "127.0.0.1"
     api_text_filtering: str = "standard"
     api_narrator_enabled: str = "false"
-    api_text_not_inside: str = "character"
+    api_text_not_inside: str = "narrator"
     api_language: str = "en"
     api_output_file_name: str = "myoutputfile"
     api_output_file_timestamp: bool = True
@@ -117,6 +117,18 @@ class AlltalkConfigProxySettings(BaseModel):
     cert_validation: bool = True
     logging_enabled: bool = True
     log_level: str = "INFO"
+
+class AlltalkConfigNarrativeEmotion(BaseModel):
+    """Configuration for narrative emotion detection."""
+    enabled: bool = False
+    detection_mode: str = "basic"  # "basic" or "compound"
+    use_llm_inference: bool = False
+    llm_api_url: str = "http://127.0.0.1:11434"
+    llm_api_key: str = ""
+    llm_model: str = "llama3.2"
+    apply_to_narrator: bool = False
+    apply_to_character: bool = True
+    apply_to_ambiguous: bool = True
 
 class AbstractJsonConfig(ABC):
     def __init__(self, config_path: Path | str, file_check_interval: int):
@@ -332,6 +344,7 @@ class AlltalkConfigFields:
     debugging: AlltalkConfigDebug = AlltalkConfigDebug()
     gradio_pages: AlltalkConfigGradioPages = AlltalkConfigGradioPages()
     proxy_settings: AlltalkConfigProxySettings = AlltalkConfigProxySettings()
+    narrative_emotion: AlltalkConfigNarrativeEmotion = AlltalkConfigNarrativeEmotion()
 
 class AlltalkConfigModel(BaseModel, AlltalkConfigFields):
     __this_dir = Path(__file__).parent.resolve()

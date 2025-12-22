@@ -10,15 +10,30 @@ now_dir = os.getcwd()
 sys.path.append(now_dir)
 from rvc.lib.utils import load_embedding
 
-device = sys.argv[1]
+device_arg = sys.argv[1]
 n_parts = int(sys.argv[2])
 i_part = int(sys.argv[3])
 i_gpu = sys.argv[4]
 exp_dir = sys.argv[5]
-os.environ["CUDA_VISIBLE_DEVICES"] = str(i_gpu)
 version = sys.argv[6]
-is_half = bool(sys.argv[7])
+is_half = sys.argv[7].lower() in ("true", "1", "yes")
 embedder_model = sys.argv[8]
+
+# Determine device: use argument if valid, otherwise auto-detect
+if device_arg.startswith("cuda"):
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(i_gpu)
+    device = device_arg
+elif device_arg == "mps":
+    device = "mps"
+elif torch.cuda.is_available():
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(i_gpu)
+    device = f"cuda:{i_gpu}"
+elif torch.backends.mps.is_available():
+    device = "mps"
+    is_half = False  # MPS uses FP32
+else:
+    device = "cpu"
+    is_half = False
 
 
 wav_path = f"{exp_dir}/1_16k_wavs"

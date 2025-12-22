@@ -17,7 +17,8 @@ from random import randint, shuffle
 from time import sleep
 from time import time as ttime
 
-from torch.cuda.amp import GradScaler, autocast
+# Use device-agnostic amp imports (PyTorch 2.x)
+from torch.amp import GradScaler, autocast
 
 from torch.nn import functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -28,6 +29,36 @@ import torch.multiprocessing as mp
 
 now_dir = os.getcwd()
 sys.path.append(os.path.join(now_dir))
+
+# Get the directory where train.py is located for reliable path resolution
+TRAIN_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_device():
+    """Get the best available device (CUDA > MPS > CPU)"""
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        return torch.device("mps")
+    else:
+        return torch.device("cpu")
+
+
+def get_device_type():
+    """Get device type string for autocast (PyTorch 2.5+ supports MPS autocast)"""
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
+
+
+# Global device configuration
+DEVICE = get_device()
+DEVICE_TYPE = get_device_type()
+USE_MPS = torch.backends.mps.is_available() and not torch.cuda.is_available()
+USE_CUDA = torch.cuda.is_available()
 
 
 from data_utils import (
@@ -64,12 +95,22 @@ elif hps.version == "v2":
         MultiPeriodDiscriminatorV2 as MultiPeriodDiscriminator,
     )
 
-os.environ["CUDA_VISIBLE_DEVICES"] = hps.gpus.replace("-", ",")
-n_gpus = len(hps.gpus.split("-"))
+# Only set CUDA_VISIBLE_DEVICES for CUDA
+if USE_CUDA:
+    os.environ["CUDA_VISIBLE_DEVICES"] = hps.gpus.replace("-", ",")
+    n_gpus = len(hps.gpus.split("-"))
+else:
+    n_gpus = 1  # MPS and CPU are single-device
 
+# Force FP32 on MPS (fp16 not well supported for training)
+if USE_MPS:
+    hps.train.fp16_run = False
+    print("MPS detected: Forcing FP32 training (fp16 disabled)")
 
-torch.backends.cudnn.deterministic = False
-torch.backends.cudnn.benchmark = False
+# cuDNN settings only apply to CUDA
+if USE_CUDA:
+    torch.backends.cudnn.deterministic = False
+    torch.backends.cudnn.benchmark = False
 
 global_step = 0
 lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
@@ -92,9 +133,10 @@ class EpochRecorder:
 
 
 def main():
-    def start():
+    def start_distributed():
+        """Start distributed training (CUDA multi-GPU)"""
         children = []
-        pid_file_path = os.path.join(now_dir, "rvc", "train", "train_pid.txt")
+        pid_file_path = os.path.join(TRAIN_DIR, "train_pid.txt")
         with open(pid_file_path, "w") as pid_file:
             for i in range(n_gpus):
                 subproc = mp.Process(
@@ -108,13 +150,25 @@ def main():
         for i in range(n_gpus):
             children[i].join()
 
-    n_gpus = torch.cuda.device_count()
+    def start_single():
+        """Start single-device training (MPS or single CUDA GPU)"""
+        pid_file_path = os.path.join(TRAIN_DIR, "train_pid.txt")
+        with open(pid_file_path, "w") as pid_file:
+            pid_file.write(str(os.getpid()) + "\n")
+        run_single(hps)
 
-    if torch.cuda.is_available() == False and torch.backends.mps.is_available() == True:
+    # Determine number of GPUs
+    if USE_CUDA:
+        n_gpus = torch.cuda.device_count()
+    elif USE_MPS:
         n_gpus = 1
-    if n_gpus < 1:
+        print("Using MPS (Apple Silicon) for training")
+    else:
+        n_gpus = 1
         print("GPU not detected, reverting to CPU (not recommended)")
-        n_gpus = 1
+
+    # Choose start function based on device
+    start = start_single if (USE_MPS or n_gpus == 1) else start_distributed
 
     if hps.sync_graph == 1:
         print(
@@ -192,11 +246,131 @@ def main():
         start()
 
 
+def run_single(hps):
+    """Single-device training for MPS or single CUDA GPU (no DDP)"""
+    global global_step
+
+    device = DEVICE
+    print(f"Training on device: {device}")
+
+    writer = SummaryWriter(log_dir=hps.model_dir)
+    writer_eval = SummaryWriter(log_dir=os.path.join(hps.model_dir, "eval"))
+
+    torch.manual_seed(hps.train.seed)
+
+    if hps.if_f0 == 1:
+        train_dataset = TextAudioLoaderMultiNSFsid(hps.data)
+    else:
+        train_dataset = TextAudioLoader(hps.data)
+
+    if hps.if_f0 == 1:
+        collate_fn = TextAudioCollateMultiNSFsid()
+    else:
+        collate_fn = TextAudioCollate()
+
+    # Use regular DataLoader with shuffle for single-device training
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=hps.train.batch_size,
+        num_workers=4,
+        shuffle=True,
+        pin_memory=True if USE_CUDA else False,
+        collate_fn=collate_fn,
+        persistent_workers=True,
+        prefetch_factor=8,
+    )
+
+    if hps.if_f0 == 1:
+        net_g = RVC_Model_f0(
+            hps.data.filter_length // 2 + 1,
+            hps.train.segment_size // hps.data.hop_length,
+            **hps.model,
+            is_half=hps.train.fp16_run,
+            sr=hps.sample_rate,
+        )
+    else:
+        net_g = RVC_Model_nof0(
+            hps.data.filter_length // 2 + 1,
+            hps.train.segment_size // hps.data.hop_length,
+            **hps.model,
+            is_half=hps.train.fp16_run,
+        )
+
+    net_g = net_g.to(device)
+    net_d = MultiPeriodDiscriminator(hps.model.use_spectral_norm)
+    net_d = net_d.to(device)
+
+    optim_g = torch.optim.AdamW(
+        net_g.parameters(),
+        hps.train.learning_rate,
+        betas=hps.train.betas,
+        eps=hps.train.eps,
+    )
+    optim_d = torch.optim.AdamW(
+        net_d.parameters(),
+        hps.train.learning_rate,
+        betas=hps.train.betas,
+        eps=hps.train.eps,
+    )
+
+    try:
+        print("Starting training...")
+        _, _, _, epoch_str = load_checkpoint(
+            latest_checkpoint_path(hps.model_dir, "D_*.pth"), net_d, optim_d
+        )
+        _, _, _, epoch_str = load_checkpoint(
+            latest_checkpoint_path(hps.model_dir, "G_*.pth"), net_g, optim_g
+        )
+        global_step = (epoch_str - 1) * len(train_loader)
+
+    except:
+        epoch_str = 1
+        global_step = 0
+        if hps.pretrainG != "":
+            print(f"Loaded pretrained_G {hps.pretrainG}")
+            net_g.load_state_dict(
+                torch.load(hps.pretrainG, map_location="cpu")["model"]
+            )
+        if hps.pretrainD != "":
+            print(f"Loaded pretrained_D {hps.pretrainD}")
+            net_d.load_state_dict(
+                torch.load(hps.pretrainD, map_location="cpu")["model"]
+            )
+
+    scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
+        optim_g, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
+    )
+    scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
+        optim_d, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
+    )
+
+    # GradScaler for CUDA only, disabled for MPS (using FP32)
+    scaler = GradScaler(DEVICE_TYPE, enabled=hps.train.fp16_run and USE_CUDA)
+
+    cache = []
+    for epoch in range(epoch_str, hps.train.epochs + 1):
+        train_and_evaluate_single(
+            device,
+            epoch,
+            hps,
+            [net_g, net_d],
+            [optim_g, optim_d],
+            scaler,
+            [train_loader, None],
+            [writer, writer_eval],
+            cache,
+        )
+
+        scheduler_g.step()
+        scheduler_d.step()
+
+
 def run(
     rank,
     n_gpus,
     hps,
 ):
+    """Distributed training for multi-GPU CUDA"""
     global global_step
     if rank == 0:
         writer = SummaryWriter(log_dir=hps.model_dir)
@@ -329,7 +503,7 @@ def run(
         optim_d, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
     )
 
-    scaler = GradScaler(enabled=hps.train.fp16_run)
+    scaler = GradScaler("cuda", enabled=hps.train.fp16_run)
 
     cache = []
     for epoch in range(epoch_str, hps.train.epochs + 1):
@@ -362,7 +536,278 @@ def run(
         scheduler_d.step()
 
 
+def train_and_evaluate_single(device, epoch, hps, nets, optims, scaler, loaders, writers, cache):
+    """Single-device training loop for MPS or single CUDA GPU"""
+    global global_step, last_loss_gen_all, lowest_value, epochs_since_last_lowest
+
+    if epoch == 1:
+        lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
+        last_loss_gen_all = 0.0
+        epochs_since_last_lowest = 0
+
+    net_g, net_d = nets
+    optim_g, optim_d = optims
+    train_loader = loaders[0] if loaders is not None else None
+    if writers is not None:
+        writer = writers[0]
+
+    net_g.train()
+    net_d.train()
+
+    # For single-device, no GPU caching (simpler approach)
+    data_iterator = enumerate(train_loader)
+
+    epoch_recorder = EpochRecorder()
+    for batch_idx, info in data_iterator:
+        if hps.if_f0 == 1:
+            (
+                phone,
+                phone_lengths,
+                pitch,
+                pitchf,
+                spec,
+                spec_lengths,
+                wave,
+                wave_lengths,
+                sid,
+            ) = info
+        else:
+            phone, phone_lengths, spec, spec_lengths, wave, wave_lengths, sid = info
+
+        # Move data to device
+        phone = phone.to(device, non_blocking=True)
+        phone_lengths = phone_lengths.to(device, non_blocking=True)
+        if hps.if_f0 == 1:
+            pitch = pitch.to(device, non_blocking=True)
+            pitchf = pitchf.to(device, non_blocking=True)
+        sid = sid.to(device, non_blocking=True)
+        spec = spec.to(device, non_blocking=True)
+        spec_lengths = spec_lengths.to(device, non_blocking=True)
+        wave = wave.to(device, non_blocking=True)
+
+        with autocast(DEVICE_TYPE, enabled=hps.train.fp16_run):
+            if hps.if_f0 == 1:
+                (
+                    y_hat,
+                    ids_slice,
+                    x_mask,
+                    z_mask,
+                    (z, z_p, m_p, logs_p, m_q, logs_q),
+                ) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid)
+            else:
+                (
+                    y_hat,
+                    ids_slice,
+                    x_mask,
+                    z_mask,
+                    (z, z_p, m_p, logs_p, m_q, logs_q),
+                ) = net_g(phone, phone_lengths, spec, spec_lengths, sid)
+            mel = spec_to_mel_torch(
+                spec,
+                hps.data.filter_length,
+                hps.data.n_mel_channels,
+                hps.data.sampling_rate,
+                hps.data.mel_fmin,
+                hps.data.mel_fmax,
+            )
+            y_mel = commons.slice_segments(
+                mel, ids_slice, hps.train.segment_size // hps.data.hop_length
+            )
+            with autocast(DEVICE_TYPE, enabled=False):
+                y_hat_mel = mel_spectrogram_torch(
+                    y_hat.float().squeeze(1),
+                    hps.data.filter_length,
+                    hps.data.n_mel_channels,
+                    hps.data.sampling_rate,
+                    hps.data.hop_length,
+                    hps.data.win_length,
+                    hps.data.mel_fmin,
+                    hps.data.mel_fmax,
+                )
+            if hps.train.fp16_run == True:
+                y_hat_mel = y_hat_mel.half()
+            wave = commons.slice_segments(
+                wave, ids_slice * hps.data.hop_length, hps.train.segment_size
+            )
+
+            y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
+            with autocast(DEVICE_TYPE, enabled=False):
+                loss_disc, losses_disc_r, losses_disc_g = discriminator_loss(
+                    y_d_hat_r, y_d_hat_g
+                )
+
+        optim_d.zero_grad()
+        scaler.scale(loss_disc).backward()
+        scaler.unscale_(optim_d)
+        grad_norm_d = commons.clip_grad_value_(net_d.parameters(), None)
+        scaler.step(optim_d)
+
+        with autocast(DEVICE_TYPE, enabled=hps.train.fp16_run):
+            y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
+            with autocast(DEVICE_TYPE, enabled=False):
+                loss_mel = F.l1_loss(y_mel, y_hat_mel) * hps.train.c_mel
+                loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * hps.train.c_kl
+                loss_fm = feature_loss(fmap_r, fmap_g)
+                loss_gen, losses_gen = generator_loss(y_d_hat_g)
+                loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl
+
+                if loss_gen_all < lowest_value["value"]:
+                    lowest_value["value"] = loss_gen_all
+                    lowest_value["step"] = global_step
+                    lowest_value["epoch"] = epoch
+                    if epoch > lowest_value["epoch"]:
+                        print(
+                            "Alert: The lower generating loss has been exceeded by a lower loss in a subsequent epoch."
+                        )
+
+        optim_g.zero_grad()
+        scaler.scale(loss_gen_all).backward()
+        scaler.unscale_(optim_g)
+        grad_norm_g = commons.clip_grad_value_(net_g.parameters(), None)
+        scaler.step(optim_g)
+        scaler.update()
+
+        if global_step % hps.train.log_interval == 0:
+            lr = optim_g.param_groups[0]["lr"]
+
+            if loss_mel > 75:
+                loss_mel = 75
+            if loss_kl > 9:
+                loss_kl = 9
+
+            scalar_dict = {
+                "loss/g/total": loss_gen_all,
+                "loss/d/total": loss_disc,
+                "learning_rate": lr,
+                "grad_norm_d": grad_norm_d,
+                "grad_norm_g": grad_norm_g,
+            }
+            scalar_dict.update(
+                {
+                    "loss/g/fm": loss_fm,
+                    "loss/g/mel": loss_mel,
+                    "loss/g/kl": loss_kl,
+                }
+            )
+
+            scalar_dict.update(
+                {"loss/g/{}".format(i): v for i, v in enumerate(losses_gen)}
+            )
+            scalar_dict.update(
+                {"loss/d_r/{}".format(i): v for i, v in enumerate(losses_disc_r)}
+            )
+            scalar_dict.update(
+                {"loss/d_g/{}".format(i): v for i, v in enumerate(losses_disc_g)}
+            )
+            image_dict = {
+                "slice/mel_org": plot_spectrogram_to_numpy(
+                    y_mel[0].data.cpu().numpy()
+                ),
+                "slice/mel_gen": plot_spectrogram_to_numpy(
+                    y_hat_mel[0].data.cpu().numpy()
+                ),
+                "all/mel": plot_spectrogram_to_numpy(mel[0].data.cpu().numpy()),
+            }
+            summarize(
+                writer=writer,
+                global_step=global_step,
+                images=image_dict,
+                scalars=scalar_dict,
+            )
+
+        global_step += 1
+
+    if epoch % hps.save_every_epoch == 0:
+        checkpoint_suffix = "{}.pth".format(
+            global_step if hps.if_latest == 0 else 2333333
+        )
+        save_checkpoint(
+            net_g,
+            optim_g,
+            hps.train.learning_rate,
+            epoch,
+            os.path.join(hps.model_dir, "G_" + checkpoint_suffix),
+        )
+        save_checkpoint(
+            net_d,
+            optim_d,
+            hps.train.learning_rate,
+            epoch,
+            os.path.join(hps.model_dir, "D_" + checkpoint_suffix),
+        )
+
+        if hps.custom_save_every_weights == "1":
+            ckpt = net_g.state_dict()
+            extract_model(
+                ckpt,
+                hps.sample_rate,
+                hps.if_f0,
+                hps.name,
+                os.path.join(
+                    hps.model_dir, "{}_{}e_{}s.pth".format(hps.name, epoch, global_step)
+                ),
+                epoch,
+                global_step,
+                hps.version,
+                hps,
+            )
+
+    if hps.overtraining_detector == 1:
+        if lowest_value["value"] < last_loss_gen_all:
+            epochs_since_last_lowest += 1
+        else:
+            epochs_since_last_lowest = 0
+
+        if epochs_since_last_lowest >= hps.overtraining_threshold:
+            print(
+                "Stopping training due to possible overtraining. Lowest generator loss: {} at epoch {}, step {}".format(
+                    lowest_value["value"], lowest_value["epoch"], lowest_value["step"]
+                )
+            )
+            os._exit(2333333)
+
+    if epoch > 1:
+        print(
+            f"{hps.name} | epoch={epoch} | step={global_step} | {epoch_recorder.record()} | lowest_value={lowest_value['value']} (epoch {lowest_value['epoch']} and step {lowest_value['step']})"
+        )
+    else:
+        print(
+            f"{hps.name} | epoch={epoch} | step={global_step} | {epoch_recorder.record()}"
+        )
+    last_loss_gen_all = loss_gen_all
+
+    if epoch >= hps.custom_total_epoch:
+        print(
+            f"Training has been successfully completed with {epoch} epoch, {global_step} steps and {round(loss_gen_all.item(), 3)} loss gen."
+        )
+        print(
+            f"Lowest generator loss: {lowest_value['value']} at epoch {lowest_value['epoch']}, step {lowest_value['step']}"
+        )
+
+        pid_file_path = os.path.join(TRAIN_DIR, "train_pid.txt")
+        os.remove(pid_file_path)
+
+        ckpt = net_g.state_dict()
+
+        extract_model(
+            ckpt,
+            hps.sample_rate,
+            hps.if_f0,
+            hps.name,
+            os.path.join(
+                hps.model_dir, "{}_{}e_{}s.pth".format(hps.name, epoch, global_step)
+            ),
+            epoch,
+            global_step,
+            hps.version,
+            hps,
+        )
+        sleep(1)
+        os._exit(2333333)
+
+
 def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, loaders, writers, cache):
+    """Distributed training loop for multi-GPU CUDA"""
     global global_step, last_loss_gen_all, lowest_value, epochs_since_last_lowest
 
     if epoch == 1:
@@ -482,7 +927,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, loaders, writers,
             spec_lengths = spec_lengths.cuda(rank, non_blocking=True)
             wave = wave.cuda(rank, non_blocking=True)
 
-        with autocast(enabled=hps.train.fp16_run):
+        with autocast("cuda", enabled=hps.train.fp16_run):
             if hps.if_f0 == 1:
                 (
                     y_hat,
@@ -510,7 +955,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, loaders, writers,
             y_mel = commons.slice_segments(
                 mel, ids_slice, hps.train.segment_size // hps.data.hop_length
             )
-            with autocast(enabled=False):
+            with autocast("cuda", enabled=False):
                 y_hat_mel = mel_spectrogram_torch(
                     y_hat.float().squeeze(1),
                     hps.data.filter_length,
@@ -528,7 +973,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, loaders, writers,
             )
 
             y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
-            with autocast(enabled=False):
+            with autocast("cuda", enabled=False):
                 loss_disc, losses_disc_r, losses_disc_g = discriminator_loss(
                     y_d_hat_r, y_d_hat_g
                 )
@@ -538,9 +983,9 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, loaders, writers,
         grad_norm_d = commons.clip_grad_value_(net_d.parameters(), None)
         scaler.step(optim_d)
 
-        with autocast(enabled=hps.train.fp16_run):
+        with autocast("cuda", enabled=hps.train.fp16_run):
             y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
-            with autocast(enabled=False):
+            with autocast("cuda", enabled=False):
                 loss_mel = F.l1_loss(y_mel, y_hat_mel) * hps.train.c_mel
                 loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * hps.train.c_kl
                 loss_fm = feature_loss(fmap_r, fmap_g)
@@ -690,7 +1135,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, loaders, writers,
             f"Lowest generator loss: {lowest_value['value']} at epoch {lowest_value['epoch']}, step {lowest_value['step']}"
         )
 
-        pid_file_path = os.path.join(now_dir, "rvc", "train", "train_pid.txt")
+        pid_file_path = os.path.join(TRAIN_DIR, "train_pid.txt")
         os.remove(pid_file_path)
 
         if hasattr(net_g, "module"):

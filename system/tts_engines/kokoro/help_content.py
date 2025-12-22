@@ -1,0 +1,449 @@
+# help_content.py
+# pylint: disable=no-member
+
+class AllTalkHelpContent:
+    """CSS and help content for help_content.py"""
+    custom_css = """
+    /* Add this to your existing CSS */
+    .gradio-container .prose {
+        max-width: none !important;
+        padding: 0.5rem !important; /* Reduced padding */
+        margin: 0 !important;
+    }
+
+    .custom-markdown div {
+    border: none !important; /* Remove the inner border */
+    margin-top: 0 !important; /* Remove top margin */
+    margin-bottom: 0 !important; /* Remove bottom margin */
+    padding-top: 0 !important; /* Remove top padding */
+    padding-bottom: 0 !important; /* Remove bottom padding */
+    }
+
+    /* Update the existing custom-markdown class */
+    .custom-markdown {
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        color: var(--body-text-color) !important;
+        background-color: var(--background-fill-primary) !important;
+        border: 1px solid var(--border-color-primary) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+        margin: 0 !important; /* Changed from 1rem 0 to 0 */
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        /* Default text color for all content (grey) */
+        color: rgba(156, 163, 175, 1) !important; /* Adjust this grey value to match your interface */
+    }
+
+    /* Make headings white */
+    .custom-markdown h1,
+    .custom-markdown h2,
+    .custom-markdown h3,
+    .custom-markdown h4,
+    .custom-markdown h5,
+    .custom-markdown h6 {
+        color: var(--heading-text-color, var(--body-text-color)) !important;
+        font-weight: 600 !important;
+    }
+
+    /* Keep all other elements in the grey color */
+    .custom-markdown p,
+    .custom-markdown li,
+    .custom-markdown ul,
+    .custom-markdown ol {
+        color: rgba(156, 163, 175, 1) !important; /* Same grey as the base text */
+    }
+
+    /* Additional targeting for any wrapping elements */
+    .gradio-container .prose > * {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Update the list item spacing in your existing CSS */
+    .custom-markdown li {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.2rem !important; /* Reduced from 0.5rem to 0.3rem */
+    }
+
+    /* Add specific styling for definition-style lists (like your Default, Recommendation, Tip items) */
+    .custom-markdown li p {
+        margin: 0 !important; /* Remove paragraph margins within list items */
+    }
+
+    /* If you need even tighter spacing for specific types of lists */
+    .custom-markdown li + li {
+        margin-top: 0.2rem !important; /* Space between consecutive list items */
+    }
+
+    /* Ensure nested lists maintain proper spacing */
+    .custom-markdown li > ul,
+    .custom-markdown li > ol {
+        margin: 0.2rem 0 0.2rem 1rem !important; /* Reduced from 0.5rem */
+    }
+
+    /* Consistent heading styles */
+    .custom-markdown h2 {
+        font-size: 1.2rem !important; /* Fixed size relative to root */
+        font-weight: 600 !important;
+        margin: 1.5rem 0 1rem !important;
+        color: var(--heading-text-color, var(--body-text-color)) !important;
+        border-bottom: 1px solid var(--border-color-primary) !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    /* First paragraph styling */
+    .custom-markdown p:first-of-type {
+        font-size: 0.95rem !important; /* Match base size */
+        font-weight: 400 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Regular paragraphs */
+    .custom-markdown p {
+        font-size: 0.95rem !important;
+        margin: 0.8rem 0 !important;
+    }
+
+    /* List styling */
+    .custom-markdown ul,
+    .custom-markdown ol {
+        margin: 0.8rem 0 !important;
+        padding-left: 1.5rem !important;
+    }
+
+    /* Code styling */
+    .custom-markdown code {
+        font-family: ui-monospace, monospace !important;
+        background-color: var(--background-fill-secondary) !important;
+        padding: 0.2rem 0.4rem !important;
+        border-radius: 4px !important;
+        font-size: 0.8rem !important; /* Slightly smaller than regular text */
+        color: var(--body-text-color) !important;
+    }
+
+    /* Add styles for bold and emphasis */
+    .custom-markdown strong {
+        font-weight: 600 !important;
+        color: var(--body-text-color) !important;
+    }
+
+    .custom-markdown em {
+        font-style: italic !important;
+    }
+
+    /* Ensure both columns take equal width */
+    .gradio-row > div {
+        flex: 1 1 50% !important;
+        min-width: 0 !important; /* Prevents flex items from overflowing */
+    }
+    """
+
+    ENGINE_INFORMATION = """
+    ## TTS Engine Capabilities Help
+
+    This guide explains the various capabilities that **may** be available in different TTS engines and models. Each capability affects how the TTS engine processes and generates speech output.
+    """
+
+    ENGINE_INFORMATION1 = """
+    ## Performance Features
+
+    - **DeepSpeed Capable**: Enables GPU acceleration using the DeepSpeed optimization library.
+        - **Requires**: NVIDIA GPU with CUDA support
+        - **Benefit**: Significantly faster text-to-speech generation
+        - **Note**: Model must specifically support DeepSpeed inference
+
+    - **Low VRAM Capable**: Optimized for systems with limited GPU memory.
+        - **Benefit**: Efficient memory management between CPU and GPU
+        - **Use Case**: Ideal when running alongside other GPU-intensive applications like LLMs
+        - **Note**: May trade speed for memory efficiency
+
+    - **Streaming Capable**: Enables real-time speech generation.
+        - **Benefit**: Immediate playback without generating entire audio first
+        - **Use Case**: Interactive applications and real-time responses
+        - **Note**: Not all output formats support streaming
+
+    ## Voice Control Features
+
+    - **Pitch Capable**: Allows adjustment of voice pitch.
+        - **Benefit**: Creates more expressive and varied speech output
+        - **Use Case**: Customizing voice characteristics
+        - **Note**: Adjustment range varies by model
+
+    - **Generation Speed Capable**: Controls speech rate.
+        - **Benefit**: Adjustable playback speed during generation
+        - **Use Case**: Creating faster or slower speech output
+        - **Note**: May affect audio quality at extreme settings
+
+    - **Temperature Capable**: Controls output randomness.
+        - **Benefit**: Adjustable speech variation and creativity
+        - **Use Case**: Balancing consistency vs. naturality
+        - **Note**: Higher values increase variation but may reduce quality
+    """
+
+    ENGINE_INFORMATION2 = """
+    ## Quality Enhancement Features
+
+    - **Repetition Penalty Capable**: Prevents unnatural speech patterns.
+        - **Benefit**: Reduces repeated sounds and phrases
+        - **Use Case**: Improving natural flow of longer texts
+        - **Note**: Strength of penalty may be adjustable
+
+    ## Multi-Feature Support
+
+    - **Multi-Languages Capable Models**: Each model Supports multiple languages.
+        - **Benefit**: Generate speech in different languages
+        - **Note**: Quality may vary between languages
+        - **Tip**: Check model-specific language support
+
+    - **Multi-Voice Capable**: Supports multiple speaking voices.
+        - **Benefit**: Different voices or speaking styles
+        - **Types**: Pre-trained voices or voice cloning
+        - **Note**: Voice quality may vary by model
+
+    - **Multi-Model Capable Engine**: Supports multiple TTS models.
+        - **Benefit**: Flexibility in model selection
+        - **Use Case**: Switching between models for different needs
+        - **Note**: Each model may have different capabilities
+
+    ## Technical Features
+
+    - **Default Audio Output Format**: Specifies output file format.
+        - **Common Formats**: WAV, MP3, FLAC, Opus, AAC, PCM
+        - **Note**: Transcoding to different formats adds processing time
+        - **Warning**: Not all formats support streaming
+
+    - **Platform Support**: Operating system compatibility.
+        - **Platforms**: Windows, Linux, macOS
+        - **Note**: Additional setup may be required
+        - **Warning**: Support level may vary by platform
+    """
+
+    DEFAULT_SETTINGS = """
+    ## TTS Engine Settings Help
+
+    This guide explains the settings and configuration options available for individual Text-to-Speech engines within AllTalk.
+    """
+
+    DEFAULT_SETTINGS1 = """
+    ## Engine Capabilities & Controls
+
+    - **Low VRAM Mode**
+        - Optimizes memory usage for systems with limited GPU memory
+        - Efficiently manages resources by moving data between CPU and GPU
+        - Recommended for systems with less than 4GB VRAM or when running alongside other GPU-intensive applications
+
+    - **DeepSpeed Capability**
+        - Accelerates TTS generation using optimized inference
+        - Only available for engines and models that support DeepSpeed
+        - Requires NVIDIA GPU with CUDA support
+
+    - **Temperature Control**
+        - Adjusts the variability in speech generation
+        - **Range**: 0.0 to 1.0
+        - **Lower values** (0.1-0.5): More consistent, stable output
+        - **Higher values** (0.6-1.0): More variable, potentially more natural-sounding output
+
+    - **Repetition Penalty**
+        - Helps prevent repetitive speech patterns
+        - **Range**: 1.0 to 15.0
+        - Higher values more strongly discourage repetition
+        - Typically most effective between 1.0-3.0
+
+    - **Pitch Adjustment**
+        - Modifies the voice pitch when supported
+        - **Range**: -20 to +20
+        - Use subtle adjustments for most natural results
+
+    - **Generation Speed**
+        - Controls the pace of generated speech
+        - **Range**: 0.5 to 2.0
+        - 1.0 represents normal speed
+    """
+
+    DEFAULT_SETTINGS2 = """
+
+    ## Voice Configuration
+
+    ### OpenAI Voice Mappings
+    - Only relevant when using the OpenAI-compatible API endpoint
+    - Maps OpenAI's six standard voices to equivalent voices in the current engine:
+        - `alloy`
+        - `echo`
+        - `fable`
+        - `nova`
+        - `onyx`
+        - `shimmer`
+    - Essential for maintaining compatibility with OpenAI API calls
+    - Each mapping can be customized to any available voice in the current engine
+
+    Information on the OpenAI Endpoint is available in the [Github Wiki](https://github.com/erew123/alltalk_tts/wiki)
+
+    ### Default Voices
+    - **Default/Character Voice**: Used when no specific voice is specified in API calls
+    - **Narrator Voice**: Separate default for narrator-specific text
+    - These defaults are engine-specific and won't affect other TTS engines
+    - Can be overridden by explicitly specifying voices in API calls
+
+    ## Important Notes
+
+    - Settings availability is determined by engine capabilities
+    - Grayed-out options indicate features not supported by the current engine
+    - Changes only affect the currently selected TTS engine
+    - Settings here act as defaults but can be overridden via API parameters
+    - All changes require clicking "Update Settings" to take effect
+    - Some settings require an engine reload to take effect
+    """
+
+    HELP_PAGE = """
+    ## Kokoro TTS Engine Help
+
+    Kokoro is a lightweight 82M parameter text-to-speech model that achieves exceptional quality despite its small size. It uses a decoder-only architecture for fast inference and is Apache 2.0 licensed for both personal and commercial use.
+    """
+
+    HELP_PAGE1 = """
+    ## File Locations & Management
+
+    - **Model Storage**
+        - The Kokoro model is managed by the `kokoro` Python package
+        - No manual model downloads required - models are fetched automatically
+
+    ## Engine Capabilities
+
+    - **Low VRAM Mode**
+        - Available for optimized memory management
+        - Moves model between GPU and CPU as needed
+        - Recommended when running alongside other GPU applications
+
+    - **Speed Control**
+        - Adjustable speech generation speed
+        - Range: 0.5x (slower) to 2.0x (faster)
+        - Default: 1.0 (normal speed)
+
+    - **Multi-Language Support**
+        - **American English** (`en-us`): 11 female, 9 male voices
+        - **British English** (`en-gb`): 4 female, 4 male voices
+        - **Japanese** (`ja`): 4 female, 1 male voice
+        - **Mandarin Chinese** (`zh`): 4 female, 4 male voices
+        - **Spanish** (`es`): 1 female, 2 male voices
+        - **French** (`fr`): 1 female voice
+        - **Hindi** (`hi`): 2 female, 2 male voices
+        - **Italian** (`it`): 1 female, 1 male voice
+        - **Brazilian Portuguese** (`pt`): 1 female, 2 male voices
+
+    ## Voice System
+
+    ### Voice Naming Convention
+    Voice codes follow the pattern: `[language][gender]_[name]`
+    - **Language codes**: a (American), b (British), j (Japanese), z (Chinese), e (Spanish), f (French), h (Hindi), i (Italian), p (Portuguese)
+    - **Gender**: f (female), m (male)
+    - **Example**: `af_bella` = American Female Bella
+
+    ### Voice Blending
+    Create custom voices by mixing multiple Kokoro voices:
+    - **Syntax**: `voice1:weight,voice2:weight`
+    - **Example**: `af_sarah:60,am_adam:40` (60% Sarah, 40% Adam)
+    - Weights should sum to 100 for predictable results
+    - Use the Voice Blender tab to create and save custom blends
+    - Saved blends appear in voice dropdown menus
+    """
+
+    HELP_PAGE2 = """
+    ## Recommended Voices
+
+    ### English (American)
+    - **af_heart**: Highest quality female voice, warm and expressive
+    - **af_bella**: Excellent quality female voice, natural and engaging
+    - **am_adam**: Strong male voice, authoritative
+
+    ### English (British)
+    - **bf_emma**: Clear and sophisticated female voice
+    - **bm_george**: Classic British gentleman voice
+
+    ## Best Practices
+
+    - **Optimal Text Length**: 100-200 tokens for best quality
+    - **Short Text**: May have reduced quality under 10-20 tokens
+    - **Long Text**: May experience rushing over 400 tokens
+    - **Use Speed Parameter**: Adjust speed for long texts to prevent rushing
+
+    ## Installation & Setup
+
+    Kokoro requires the espeak-ng system library and Python packages. The Python packages will auto-install on first use, but espeak-ng must be installed manually.
+
+    ### Step 1: Install espeak-ng (Required)
+
+    **macOS (Homebrew)**:
+    ```bash
+    brew install espeak-ng
+    ```
+
+    **Linux (Ubuntu/Debian)**:
+    ```bash
+    sudo apt-get install espeak-ng
+    ```
+
+    **Linux (Fedora/RHEL)**:
+    ```bash
+    sudo dnf install espeak-ng
+    ```
+
+    **Linux (Arch)**:
+    ```bash
+    sudo pacman -S espeak-ng
+    ```
+
+    **Windows**:
+    1. Download the installer from: https://github.com/espeak-ng/espeak-ng/releases
+    2. Run the .msi installer
+    3. Add espeak-ng installation folder to your system PATH
+    4. Restart AllTalk
+
+    ### Step 2: Python Packages (Auto-Install)
+
+    These packages will be installed automatically when you first use Kokoro:
+    - `kokoro>=0.9.2`
+    - `soundfile`
+    - `phonemizer`
+
+    Or install manually:
+    ```bash
+    pip install kokoro>=0.9.2 soundfile phonemizer
+    ```
+
+    ### Verification
+
+    After installation, AllTalk will show:
+    - `[Kokoro] espeak-ng found and configured` - espeak-ng is working
+    - `[Kokoro] Kokoro pipeline initialized successfully` - Ready to use
+
+    ### Troubleshooting
+
+    | Error | Solution |
+    |-------|----------|
+    | `espeak-ng is not installed` | Install espeak-ng for your OS (see above) |
+    | `phonemizer` import errors | Ensure espeak-ng is in your PATH |
+    | `PHONEMIZER_ESPEAK_LIBRARY` errors | espeak-ng library not found in expected location |
+
+    ## Limitations
+
+    - No streaming support (generates complete audio)
+    - No DeepSpeed acceleration
+    - No pitch adjustment
+    - No temperature control
+    - No repetition penalty
+    - No voice cloning (use Voice Blending instead)
+
+    ## Voice Blending Examples
+
+    Create unique voices by blending existing ones:
+    - `af_heart:70,af_bella:30` - Mostly Heart with Bella undertones
+    - `am_adam:50,am_michael:50` - Equal mix of Adam and Michael
+    - `bf_emma:60,bm_george:40` - British female-dominant blend
+
+    ## Audio Output
+
+    - **Format**: WAV
+    - **Sample Rate**: 24kHz
+    - **Quality**: Comparable to larger models despite 82M parameters
+    """

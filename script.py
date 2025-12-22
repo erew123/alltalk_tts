@@ -375,6 +375,15 @@ def update_settings_at(
     tts_engines_settings_page,
     alltalk_documentation_page,
     api_documentation_page,
+    narrative_emotion_enabled,
+    narrative_emotion_use_llm,
+    narrative_emotion_api_url,
+    narrative_emotion_api_key,
+    narrative_emotion_llm_model,
+    narrative_emotion_apply_narrator,
+    narrative_emotion_apply_character,
+    narrative_emotion_apply_ambiguous,
+    narrative_emotion_mode,
 ):
     """Update AllTalk main settings using the centralized config system"""
     debug_func_entry()
@@ -402,6 +411,17 @@ def update_settings_at(
         upd_set_config.gradio_pages.TTS_Engines_Settings_page = tts_engines_settings_page
         upd_set_config.gradio_pages.alltalk_documentation_page = alltalk_documentation_page
         upd_set_config.gradio_pages.api_documentation_page = api_documentation_page
+
+        # Update narrative emotion settings
+        upd_set_config.narrative_emotion.enabled = narrative_emotion_enabled
+        upd_set_config.narrative_emotion.detection_mode = narrative_emotion_mode
+        upd_set_config.narrative_emotion.use_llm_inference = narrative_emotion_use_llm
+        upd_set_config.narrative_emotion.llm_api_url = narrative_emotion_api_url
+        upd_set_config.narrative_emotion.llm_api_key = narrative_emotion_api_key
+        upd_set_config.narrative_emotion.llm_model = narrative_emotion_llm_model
+        upd_set_config.narrative_emotion.apply_to_narrator = narrative_emotion_apply_narrator
+        upd_set_config.narrative_emotion.apply_to_character = narrative_emotion_apply_character
+        upd_set_config.narrative_emotion.apply_to_ambiguous = narrative_emotion_apply_ambiguous
 
         # Save the updated configuration
         upd_set_config.save()
@@ -3110,7 +3130,6 @@ if gradio_enabled is True:
                         // localStorage.setItem('darkMode', 'enabled');
                     }
                 }""",
-                    show_api=False,
                 )
             if config.firstrun_splash:
                 with gr.Tab("AllTalk v2 Welcome page"):
@@ -3521,7 +3540,6 @@ if gradio_enabled is True:
                                 // localStorage.setItem('darkMode', 'enabled');
                             }
                         }""",
-                    show_api=False,
                 )
                 refresh_button.click(
                     at_update_dropdowns,
@@ -3947,7 +3965,6 @@ if gradio_enabled is True:
                     waveform_opts = gr.WaveformOptions(
                         sample_rate=16000,  # Set to Whisper's expected rate
                         show_recording_waveform=True,
-                        show_controls=False,
                         waveform_color="#1f77b4",
                         waveform_progress_color="#2ecc71",
                     )
@@ -3974,7 +3991,6 @@ if gradio_enabled is True:
                         label="Live Transcription",
                         lines=10,
                         placeholder="Transcription will appear here as you speak...",
-                        show_copy_button=True,
                     )
 
                 # Dictatation Button click handlers
@@ -4193,6 +4209,234 @@ if gradio_enabled is True:
                                 value=config.gradio_pages.api_documentation_page,
                             )
 
+                    with gr.Group():
+                        gr.Markdown("### Narrative Emotion Detection")
+                        gr.Markdown("""
+                        Automatically detects emotions from narrative text and applies appropriate markers to TTS output.
+                        - **Basic**: Single emotion at the start of text (e.g., `<laugh> Hello there!`)
+                        - **Compound**: Multiple emotions with mid-text transitions (e.g., `<angry> I can't believe it! <sigh> But I understand.`)
+                        """, elem_classes="custom-markdown")
+                        with gr.Row():
+                            narrative_emotion_enabled = gr.Checkbox(
+                                label="Enable Emotion Detection",
+                                value=config.narrative_emotion.enabled,
+                                info="Automatically detect emotions in text and apply to TTS engines that support it",
+                            )
+                            narrative_emotion_mode = gr.Dropdown(
+                                label="Detection Mode",
+                                choices=["basic", "compound"],
+                                value=getattr(config.narrative_emotion, 'detection_mode', 'basic'),
+                                info="Basic: single emotion at start | Compound: multiple emotions with transitions",
+                            )
+                            narrative_emotion_use_llm = gr.Checkbox(
+                                label="Use LLM Inference",
+                                value=config.narrative_emotion.use_llm_inference,
+                                info="Use an LLM API for more accurate emotion detection",
+                            )
+                        with gr.Row():
+                            narrative_emotion_api_url = gr.Textbox(
+                                label="LLM API URL",
+                                value=config.narrative_emotion.llm_api_url,
+                                info="API endpoint (e.g., http://127.0.0.1:11434 for Ollama, or OpenAI-compatible URL)",
+                            )
+                            narrative_emotion_api_key = gr.Textbox(
+                                label="API Key",
+                                value=config.narrative_emotion.llm_api_key,
+                                info="API key (leave empty if not required)",
+                                type="password",
+                            )
+                        with gr.Row():
+                            narrative_emotion_llm_model = gr.Dropdown(
+                                label="LLM Model",
+                                value=config.narrative_emotion.llm_model,
+                                choices=[config.narrative_emotion.llm_model] if config.narrative_emotion.llm_model else [],
+                                allow_custom_value=True,
+                                info="Model name (e.g., llama3.2, gpt-4o-mini)",
+                            )
+                            narrative_emotion_refresh_models = gr.Button("🔄 Refresh Models", variant="secondary", scale=0)
+
+                        def fetch_llm_models(api_url, api_key):
+                            """Fetch available models from the LLM API."""
+                            import requests
+                            try:
+                                headers = {"Content-Type": "application/json"}
+                                if api_key:
+                                    headers["Authorization"] = f"Bearer {api_key}"
+
+                                api_url = api_url.rstrip('/')
+                                models = []
+
+                                if 'ollama' in api_url.lower() or ':11434' in api_url:
+                                    # Ollama API
+                                    response = requests.get(f"{api_url}/api/tags", headers=headers, timeout=5)
+                                    response.raise_for_status()
+                                    data = response.json()
+                                    models = [m['name'] for m in data.get('models', [])]
+                                else:
+                                    # OpenAI-compatible API
+                                    response = requests.get(f"{api_url}/v1/models", headers=headers, timeout=5)
+                                    response.raise_for_status()
+                                    data = response.json()
+                                    models = [m['id'] for m in data.get('data', [])]
+
+                                if models:
+                                    return gr.update(choices=models, value=models[0])
+                                return gr.update(choices=["No models found"], value="No models found")
+
+                            except Exception as e:
+                                return gr.update(choices=[f"Error: {str(e)}"], value=f"Error: {str(e)}")
+
+                        narrative_emotion_refresh_models.click(
+                            fetch_llm_models,
+                            inputs=[narrative_emotion_api_url, narrative_emotion_api_key],
+                            outputs=narrative_emotion_llm_model,
+                        )
+                        with gr.Row():
+                            narrative_emotion_apply_narrator = gr.Checkbox(
+                                label="Apply to Narrator",
+                                value=config.narrative_emotion.apply_to_narrator,
+                                info="Apply detected emotions to narrator text (*text*)",
+                            )
+                            narrative_emotion_apply_character = gr.Checkbox(
+                                label="Apply to Character",
+                                value=config.narrative_emotion.apply_to_character,
+                                info="Apply detected emotions to character dialogue (\"text\")",
+                            )
+                            narrative_emotion_apply_ambiguous = gr.Checkbox(
+                                label="Apply to Ambiguous",
+                                value=config.narrative_emotion.apply_to_ambiguous,
+                                info="Apply detected emotions to text not in quotes or asterisks",
+                            )
+                        with gr.Accordion("🧪 Test Emotion Detection", open=False):
+                            gr.Markdown("""
+                            Test how emotions are detected and applied. Select an example or enter your own text.
+                            """)
+                            with gr.Row():
+                                narrative_emotion_examples = gr.Dropdown(
+                                    label="Examples",
+                                    choices=[
+                                        "-- Select an example --",
+                                        '*She whispered angrily* "I can\'t believe you did that!"',
+                                        '"Hello there!" *he said cheerfully, then his voice dropped* "But we need to talk."',
+                                        '*laughing* "That\'s hilarious!" *but then she grew serious* "Wait, you\'re not joking?"',
+                                        '"I\'m so excited!" *she squealed, voice rising with enthusiasm*',
+                                        '*sighing heavily* "I suppose you\'re right..." *his voice trailed off sadly*',
+                                        '"STOP!" *she shouted, then softened* "Please, just listen to me."',
+                                        '*nervously fidgeting* "I... I don\'t know what to say..."',
+                                        '"This is amazing!" *he exclaimed, growing more excited* "I can\'t believe it worked!"',
+                                    ],
+                                    value="-- Select an example --",
+                                    info="Select a predefined example to test",
+                                )
+                                narrative_emotion_test_engine = gr.Dropdown(
+                                    label="Test Engine",
+                                    choices=["orpheus", "fishspeech", "parler"],
+                                    value="orpheus",
+                                    info="TTS engine format for emotion output",
+                                )
+                            with gr.Row():
+                                narrative_emotion_test_input = gr.Textbox(
+                                    label="Test Text",
+                                    value='*She whispered angrily* "I can\'t believe you did that!"',
+                                    lines=2,
+                                    info="Enter text to test emotion detection",
+                                )
+
+                            def load_example(example):
+                                if example == "-- Select an example --":
+                                    return ""
+                                return example
+
+                            narrative_emotion_examples.change(
+                                load_example,
+                                inputs=[narrative_emotion_examples],
+                                outputs=[narrative_emotion_test_input],
+                            )
+                        with gr.Row():
+                            narrative_emotion_test_btn = gr.Button("Test Emotion Detection", variant="secondary")
+                            narrative_emotion_test_output = gr.Textbox(
+                                label="Detection Result",
+                                interactive=False,
+                                lines=3,
+                            )
+
+                            def test_emotion_detection(test_text, engine_type, detection_mode, use_llm, api_url, api_key, llm_model):
+                                """Test the emotion detection with current settings."""
+                                from system.narrative_emotion import NarrativeEmotionDetector
+                                from system.narrative_patterns import get_valid_marker
+
+                                if not test_text:
+                                    return "Please enter text to test or select an example."
+
+                                # Create a mock config-like object
+                                class MockNarrativeEmotion:
+                                    pass
+                                class MockConfig:
+                                    pass
+
+                                mock_ne = MockNarrativeEmotion()
+                                mock_ne.detection_mode = detection_mode
+                                mock_ne.use_llm_inference = use_llm
+                                mock_ne.llm_api_url = api_url
+                                mock_ne.llm_api_key = api_key
+                                mock_ne.llm_model = llm_model
+                                mock_ne.apply_to_narrator = True
+                                mock_ne.apply_to_character = True
+                                mock_ne.apply_to_ambiguous = True
+
+                                mock_config = MockConfig()
+                                mock_config.narrative_emotion = mock_ne
+
+                                try:
+                                    detector = NarrativeEmotionDetector(mock_config)
+
+                                    # Pattern-based detection
+                                    pattern_emotions = detector.detect_emotions(test_text)
+
+                                    # Compound detection
+                                    compound_positions = []
+                                    if detection_mode == "compound":
+                                        compound_positions = detector.detect_compound_emotions(test_text)
+
+                                    # LLM-based detection (if enabled)
+                                    llm_emotions = set()
+                                    if use_llm:
+                                        llm_emotions = detector._llm_infer_emotion("", test_text, engine_type)
+
+                                    all_emotions = pattern_emotions | llm_emotions
+
+                                    # Apply to text based on mode
+                                    if detection_mode == "compound":
+                                        modified_text = detector.apply_compound_emotions(test_text, engine_type)
+                                    else:
+                                        modified_text = detector.apply_emotions_to_text(test_text, all_emotions, engine_type)
+
+                                    result = f"📊 Detection Mode: {detection_mode.upper()}\n"
+                                    result += f"🎭 Pattern Detected: {pattern_emotions if pattern_emotions else 'None'}\n"
+                                    if detection_mode == "compound":
+                                        result += f"🔄 Transitions Found: {len(compound_positions)} ({[e for _, e in compound_positions]})\n"
+                                    if use_llm:
+                                        result += f"🤖 LLM Detected: {llm_emotions if llm_emotions else 'None'}\n"
+                                    result += f"\n✨ Output ({engine_type}):\n{modified_text}"
+                                    return result
+
+                                except Exception as e:
+                                    return f"❌ Error: {str(e)}"
+
+                            narrative_emotion_test_btn.click(
+                                test_emotion_detection,
+                                inputs=[
+                                    narrative_emotion_test_input,
+                                    narrative_emotion_test_engine,
+                                    narrative_emotion_mode,
+                                    narrative_emotion_use_llm,
+                                    narrative_emotion_api_url,
+                                    narrative_emotion_api_key,
+                                    narrative_emotion_llm_model,
+                                ],
+                                outputs=narrative_emotion_test_output,
+                            )
+
                     with gr.Row():
                         submit_button = gr.Button("Update Settings")
                         output_message = gr.Textbox(
@@ -4238,6 +4482,15 @@ if gradio_enabled is True:
                             tts_engines_settings_page,
                             alltalk_documentation_page,
                             api_documentation_page,
+                            narrative_emotion_enabled,
+                            narrative_emotion_use_llm,
+                            narrative_emotion_api_url,
+                            narrative_emotion_api_key,
+                            narrative_emotion_llm_model,
+                            narrative_emotion_apply_narrator,
+                            narrative_emotion_apply_character,
+                            narrative_emotion_apply_ambiguous,
+                            narrative_emotion_mode,
                         ],
                         outputs=output_message,
                     )

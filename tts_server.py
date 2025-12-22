@@ -42,6 +42,7 @@ import librosa
 from langdetect import detect, DetectorFactory
 from langdetect.lang_detect_exception import LangDetectException
 from config import AlltalkConfig, AlltalkTTSEnginesConfig
+from system.narrative_emotion import NarrativeEmotionDetector
 logging.disable(logging.WARNING)
 
 DetectorFactory.seed = 0  # Ensure deterministic behavior of language detector
@@ -303,7 +304,8 @@ async def apifunction_enginereload(request: Request):
     print_message("", component="ENG")
 
     try:
-        tts_engines_config.change_engine(requested_engine).save()
+        tts_engines_config.change_engine(requested_engine)
+        tts_engines_config.save()
         print_message(f"Engine configuration updated to: {requested_engine}", "debug_api", "API")
     finally:
         tts_engines_config.reload()
@@ -1539,16 +1541,56 @@ def run_rvc(input_tts_path, pth_path, pitch, inference_pipeline):
 
     model_dir = os.path.dirname(pth_path)
     pth_filename = os.path.basename(pth_path)
+    model_name = os.path.splitext(pth_filename)[0]  # e.g., "GirlVoiceBySztef_e280_s3080"
     index_files = [file for file in os.listdir(model_dir) if file.endswith(".index")]
 
+    # Strip common RVC training suffixes like _e280_s3080 from model name for matching
+    base_model_name = re.sub(r'_e\d+_s\d+$', '', model_name)  # Remove _e###_s#### suffix
+
+    # Try to find matching index file
+    matched_index = None
+
     if len(index_files) == 1:
-        index_path = str(os.path.join(model_dir, index_files[0]))
-        index_filename_print = os.path.basename(index_path)
+        # Only one index file, use it
+        matched_index = index_files[0]
+    elif len(index_files) > 1:
+        # Multiple index files - try to match by name
+        # Priority 1: Exact match (model_name.index)
+        exact_match = f"{model_name}.index"
+        if exact_match in index_files:
+            matched_index = exact_match
+        else:
+            # Priority 2: Check both directions - model name in index OR index contains base model name
+            model_name_lower = model_name.lower()
+            base_name_lower = base_model_name.lower()
+
+            matching_indices = []
+            for f in index_files:
+                f_lower = f.lower()
+                # Check if full model name is in index file name
+                if model_name_lower in f_lower:
+                    matching_indices.append(f)
+                # Check if base model name (without training suffix) is in index file name
+                elif base_name_lower in f_lower:
+                    matching_indices.append(f)
+
+            if len(matching_indices) == 1:
+                matched_index = matching_indices[0]
+            elif len(matching_indices) > 1:
+                # Multiple partial matches - try to find best match
+                # Prefer shorter names that still contain the model name
+                matching_indices.sort(key=len)
+                matched_index = matching_indices[0]
+                print_message(f"RVC Convert: Multiple index files match '{model_name}', using: {matched_index}", "warning", "GEN")
+
+    if matched_index:
+        index_path = str(os.path.join(model_dir, matched_index))
+        index_filename_print = matched_index
         index_size_print = settings["training_data_size"]
     else:
         if len(index_files) > 1:
-            print_message(f"RVC Convert: Multiple RVC index files found in the models folder where {pth_filename} is", "warning", "GEN")
-            print_message("RVC Convert: located. Unable to determine which index to use. Continuing without an index file.", "warning", "GEN")
+            print_message(f"RVC Convert: No index file found matching model '{model_name}'.", "warning", "GEN")
+            print_message(f"RVC Convert: Available index files: {', '.join(index_files)}", "warning", "GEN")
         index_path = ""
         index_filename_print = "None used"
         index_size_print = "N/A"
@@ -1905,9 +1947,34 @@ async def tts_process_narrator_mode(params: dict, text_input: str) -> Tuple[Path
     print_message("Processing with narrator mode", "debug_tts", "GEN")
 
     processed_parts = process_text(text_input)
+
+    # Apply narrative emotion detection if enabled
+    emotion_detector = None
+    if config.narrative_emotion.enabled:
+        emotion_detector = NarrativeEmotionDetector(config)
+        # Get engine type for emotion application
+        engine_loaded = tts_engines_config.engine_loaded.lower()
+        if 'fishspeech' in engine_loaded:
+            engine_type = 'fishspeech'
+        elif 'orpheus' in engine_loaded:
+            engine_type = 'orpheus'
+        elif 'parler' in engine_loaded:
+            engine_type = 'parler'
+        else:
+            engine_type = 'other'
+        processed_parts = emotion_detector.process_segments(processed_parts, engine_type)
+        print_message(f"Narrative emotion detection enabled (engine: {engine_type})", "debug_tts", "GEN")
+
     audio_files = []
 
-    for part_type, part in processed_parts:
+    for segment in processed_parts:
+        # Unpack segment - may have emotions if detector was used
+        if len(segment) == 3:
+            part_type, part, emotions = segment
+        else:
+            part_type, part = segment
+            emotions = set()
+
         if len(part.strip()) <= int(config.api_def.api_length_stripping):
             continue
 
@@ -1915,7 +1982,15 @@ async def tts_process_narrator_mode(params: dict, text_input: str) -> Tuple[Path
         if not voice_to_use:
             continue
 
-        output_file = await tts_generate_part(part, voice_to_use, params)
+        # Apply emotions to text for Fish Speech engine
+        text_to_generate = part
+        if emotions and emotion_detector:
+            engine_type = 'fishspeech' if 'fishspeech' in tts_engines_config.engine_loaded else 'other'
+            text_to_generate = emotion_detector.apply_emotions_to_text(part, emotions, engine_type)
+            if text_to_generate != part:
+                print_message(f"Applied emotions {emotions} to text", "debug_tts", "GEN")
+
+        output_file = await tts_generate_part(text_to_generate, voice_to_use, params, emotions if emotion_detector else None)
         if output_file:
             await tts_apply_rvc(output_file, part_type, params)
             audio_files.append(output_file)
@@ -1956,8 +2031,15 @@ def tts_get_voice_for_part(part_type: str, params: dict, part: str) -> Optional[
 
     return voice
 
-async def tts_generate_part(part: str, voice: str, params: dict) -> Optional[Path]:
-    """Generate audio for text part."""
+async def tts_generate_part(part: str, voice: str, params: dict, emotions: set = None) -> Optional[Path]:
+    """Generate audio for text part.
+
+    Args:
+        part: Text to generate audio for
+        voice: Voice to use
+        params: Generation parameters
+        emotions: Optional set of detected emotions (for Parler voice description modification)
+    """
     debug_func_entry()
     cleaned_part = tts_clean_text(part, params['text_filtering'])
     output_file = await tts_handle_output_paths(params['output_file_name'])
@@ -2025,6 +2107,22 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
     )
 
     cleaned_text = tts_clean_text(text_input, params['text_filtering'])
+
+    # Apply narrative emotion detection if enabled (for Fish Speech or Orpheus)
+    if config.narrative_emotion.enabled:
+        engine_loaded = tts_engines_config.engine_loaded.lower()
+        engine_type = None
+        if 'fishspeech' in engine_loaded:
+            engine_type = 'fishspeech'
+        elif 'orpheus' in engine_loaded:
+            engine_type = 'orpheus'
+
+        if engine_type:
+            emotion_detector = NarrativeEmotionDetector(config)
+            emotions = emotion_detector.detect_emotions(cleaned_text)
+            if emotions:
+                cleaned_text = emotion_detector.apply_emotions_to_text(cleaned_text, emotions, engine_type)
+                print_message(f"Applied emotions {emotions} to text (engine: {engine_type})", "debug_tts", "GEN")
 
     if config.debugging.debug_fullttstext:
         print_message(cleaned_text, component="TTS")

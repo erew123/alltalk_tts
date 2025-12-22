@@ -1,0 +1,12 @@
+{
+    "voices": [
+        {"voice_name": "tara", "voice_code": "tara", "gender": "female", "description": "Most conversational and natural, recommended default"},
+        {"voice_name": "leah", "voice_code": "leah", "gender": "female", "description": "Natural female voice with clear articulation"},
+        {"voice_name": "jess", "voice_code": "jess", "gender": "female", "description": "Clear and professional female voice"},
+        {"voice_name": "mia", "voice_code": "mia", "gender": "female", "description": "Warm and friendly female voice"},
+        {"voice_name": "zoe", "voice_code": "zoe", "gender": "female", "description": "Youthful female voice"},
+        {"voice_name": "leo", "voice_code": "leo", "gender": "male", "description": "Natural and conversational male voice"},
+        {"voice_name": "dan", "voice_code": "dan", "gender": "male", "description": "Deep and authoritative male voice"},
+        {"voice_name": "zac", "voice_code": "zac", "gender": "male", "description": "Youthful male voice"}
+    ]
+}

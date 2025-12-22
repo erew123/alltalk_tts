@@ -1,6 +1,4 @@
 {
-    "engine_loaded": "piper",
-    "selected_model": "piper",
     "engines_available": [
         {
             "name": "parler",
@@ -21,6 +19,20 @@
         {
             "name": "f5tts",
             "selected_model": "f5tts - f5tts_v1"
+        },
+        {
+            "name": "fishspeech",
+            "selected_model": "fishspeech - openaudio-s1-mini"
+        },
+        {
+            "name": "kokoro",
+            "selected_model": "kokoro - kokoro_v1.0"
+        },
+        {
+            "name": "orpheus",
+            "selected_model": "orpheus - orpheus-3b-0.1-ft"
         }
-    ]
+    ],
+    "engine_loaded": "orpheus",
+    "selected_model": "orpheus - orpheus-3b-0.1-ft"
 }

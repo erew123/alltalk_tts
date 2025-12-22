@@ -174,3 +174,5 @@ cython_debug/
 
 # Docker build
 docker/deepspeed/build
+/system/tts_engines/rvc/logs
+/system/tts_engines/rvc/pretraineds
