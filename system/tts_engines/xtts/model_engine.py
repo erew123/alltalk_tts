@@ -562,6 +562,7 @@ class tts_class:
             del self.model            
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+        self.device = "cuda"
         return None
 
     ############################################################
@@ -813,6 +814,7 @@ class tts_class:
         # ↓↓↓ Keep everything below this line ↓↓↓
         # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         self.is_tts_model_loaded = True
+        await self.handle_lowvram_change()
         return self.model
 
     ###################################################################################################################
@@ -898,7 +900,8 @@ class tts_class:
         
         self.is_tts_model_loaded = True
         self.print_message("\033[94mModel License : \033[93mhttps://coqui.ai/cpml.txt\033[0m")
-        
+        await self.handle_lowvram_change()
+
         return self.model
 
 
