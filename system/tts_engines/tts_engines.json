@@ -1,6 +1,4 @@
 {
-    "engine_loaded": "piper",
-    "selected_model": "piper",
     "engines_available": [
         {
             "name": "parler",
@@ -21,6 +19,12 @@
         {
             "name": "f5tts",
             "selected_model": "f5tts - f5tts_v1"
+        },
+        {
+            "name": "llasa",
+            "selected_model": "llasa - llasa-3b"
         }
-    ]
+    ],
+    "engine_loaded": "llasa",
+    "selected_model": "llasa - llasa-3b"
 }

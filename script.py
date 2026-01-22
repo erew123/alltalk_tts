@@ -57,6 +57,13 @@ Supported Environments:
 - Text-Generation-WebUI (TGWUI)
 - Standalone mode
 """
+import sys
+import os
+from pathlib import Path
+
+this_dir = Path(__file__).parent.resolve()
+sys.path.append(os.path.join(this_dir, "xcodec2"))
+
 import atexit
 import argparse
 import gc
@@ -64,18 +71,15 @@ import inspect
 import importlib
 import json
 import mimetypes
-import os
 import platform
 import shutil
 import signal as system_signal
 import subprocess
-import sys
 import threading
 import time
 import warnings
 import zipfile
 from datetime import datetime, timedelta
-from pathlib import Path
 import gradio as gr
 import numpy as np
 import requests
@@ -101,7 +105,6 @@ except ImportError as e:
     print("Once the installation is complete, try running the script again.")
     print("=" * 50)
     sys.exit(1)  # Exit the script to avoid further errors
-this_dir = Path(__file__).parent.resolve()
 
 # Note: The following function names are reserved for TGWUI integration.
 # When running under text-generation-webui, these functions will be imported from
