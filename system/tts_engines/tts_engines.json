@@ -33,6 +33,6 @@
             "selected_model": "orpheus - orpheus-3b-0.1-ft"
         }
     ],
-    "engine_loaded": "orpheus",
-    "selected_model": "orpheus - orpheus-3b-0.1-ft"
+    "engine_loaded": "kokoro",
+    "selected_model": "kokoro - kokoro_v1.0"
 }

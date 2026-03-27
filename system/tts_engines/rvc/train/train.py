@@ -323,7 +323,7 @@ def run_single(hps):
         )
         global_step = (epoch_str - 1) * len(train_loader)
 
-    except:
+    except Exception:
         epoch_str = 1
         global_step = 0
         if hps.pretrainG != "":
@@ -462,7 +462,7 @@ def run(
         )
         global_step = (epoch_str - 1) * len(train_loader)
 
-    except:
+    except Exception:
         epoch_str = 1
         global_step = 0
         if hps.pretrainG != "":

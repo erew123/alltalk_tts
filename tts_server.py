@@ -661,7 +661,7 @@ async def voice2rvc(input_tts_path: str = Form(...), output_rvc_path: str = Form
     debug_func_entry()
 
     try:
-        if pth_name.lower() in ["disabled", "disable"]:
+        if pth_name.lower() in ["disabled", "disable", "null"]:
             print_message("\033[94mVoice2RVC Convert: No voice was specified or the name was Disabled\033[0m")
             return {"status": "error", "message": "No voice was specified or the name was Disabled"}
 
@@ -1013,7 +1013,7 @@ async def apifunction_preview_voice(
         )
 
         if config.rvc_settings.rvc_enabled:
-            if rvccharacter_voice_gen.lower() in ["disabled", "disable"]:
+            if rvccharacter_voice_gen.lower() in ["disabled", "disable", "null"]:
                 print_message("def apifunction_preview_voice RVC processing skipped", "debug_tts")
             else:
                 print_message(f"def apifunction_preview_voice processing with RVC: {rvccharacter_voice_gen}", "debug_tts")
@@ -1167,7 +1167,7 @@ async def openai_tts_generate(request: Request):
 
         # Handle RVC processing
         if config.rvc_settings.rvc_enabled:
-            if config.rvc_settings.rvc_char_model_file.lower() in ["disabled", "disable"]:
+            if config.rvc_settings.rvc_char_model_file.lower() in ["disabled", "disable", "null"]:
                 print_message("Pass rvccharacter_voice_gen", "debug_openai", "TTS")
             else:
                 print_message("send to rvc", "debug_openai", "TTS")
@@ -1623,7 +1623,7 @@ def process_rvc_narrator(part_type, voice_gen, pitch, default_model_file, output
     """Process RVC voice conversion for narrator segments."""
     debug_func_entry()
 
-    if voice_gen.lower() in ["disabled", "disable"]:
+    if voice_gen.lower() in ["disabled", "disable", "null"]:
         print_message(f"RVC processing skipped for {part_type} segment - voice disabled", "debug_rvc", "GEN")
         return
     try:
@@ -1695,7 +1695,7 @@ class JSONInput(BaseModel):
         """Validate RVC character voice file format (folder/file.pth or 'Disabled')."""
         debug_func_entry()
         try:
-            if v.lower() == "disabled":
+            if v.lower() in ["disabled", "disable", "null"]:
                 print_message("RVC character voice disabled", "debug_rvc", "GEN")
                 return v
             pattern = re.compile(r'^.*\.(pth)$')
@@ -1713,7 +1713,7 @@ class JSONInput(BaseModel):
         """Validate RVC narrator voice file format (folder/file.pth or 'Disabled')."""
         debug_func_entry()
         try:
-            if v.lower() == "disabled":
+            if v.lower() in ["disabled", "disable", "null"]:
                 print_message("RVC narrator voice disabled", "debug_rvc", "GEN")
                 return v
             pattern = re.compile(r'^.*\.(pth)$')
@@ -2158,7 +2158,7 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
 async def tts_handle_rvc_processing(output_file_path: Path, params: dict):
     """Handle RVC voice conversion if enabled."""
     debug_func_entry()
-    if params['rvccharacter_voice_gen'].lower() in ["disabled", "disable"]:
+    if params['rvccharacter_voice_gen'].lower() in ["disabled", "disable", "null"]:
         print_message("RVC processing skipped", "debug_tts", "GEN")
         return
 

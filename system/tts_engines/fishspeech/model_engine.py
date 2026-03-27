@@ -936,7 +936,7 @@ class tts_class:
             # Clean up temp file
             try:
                 os.unlink(ref_audio)
-            except:
+            except OSError:
                 pass
 
             generate_end_time = time.time()
