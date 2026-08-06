@@ -1236,6 +1236,8 @@ def format_audio_list(
                     language=fal_target_language,
                     word_timestamps=True
                 )
+                # Materialize generator before iterating twice
+                segments = list(segments)
                 # Convert Faster-Whisper format to OpenAI Whisper-like format
                 result = {
                     "text": "".join([segment.text for segment in segments]),
@@ -1249,7 +1251,7 @@ def format_audio_list(
                             "word": word.word,
                             "start": word.start,
                             "end": word.end,
-                            "confidence": word.confidence
+                            "confidence": word.probability
                         } for word in segment.words] if segment.words else []
                     } for i, segment in enumerate(segments)],
                     "language": info.language
@@ -1292,6 +1294,8 @@ def format_audio_list(
                 language=fal_target_language,
                 word_timestamps=True
             )
+            # Materialize generator before iterating twice
+            segments = list(segments)
             # Convert Faster-Whisper format to OpenAI Whisper-like format
             result = {
                 "text": "".join([segment.text for segment in segments]),
@@ -1305,7 +1309,7 @@ def format_audio_list(
                         "word": word.word,
                         "start": word.start,
                         "end": word.end,
-                        "confidence": word.confidence
+                        "confidence": word.probability
                     } for word in segment.words] if segment.words else []
                 } for i, segment in enumerate(segments)],
                 "language": info.language
@@ -1744,7 +1748,7 @@ def save_audio_segment(
     sas_audio_folder,
     sas_metadata,
     sas_max_duration,
-    _sas_buffer,
+    sas_buffer,
     sas_too_long_files,
     sas_target_language,
 ):
@@ -1756,9 +1760,10 @@ def save_audio_segment(
     sas_absolute_path = os.path.join(sas_audio_folder, sas_audio_file_name)
     os.makedirs(os.path.dirname(sas_absolute_path), exist_ok=True)
 
-    # Extract audio segment
+    # Extract audio segment, adding tail buffer to avoid cutting words short
     sas_audio_start = int(sas_sr * sas_start_time)
-    sas_audio_end = int(sas_sr * sas_end_time)
+    sas_audio_end = min(
+        int(sas_sr * (sas_end_time + sas_buffer)), sas_audio.size(-1))
     sas_audio_segment = sas_audio[sas_audio_start:sas_audio_end].unsqueeze(0)
 
     # Handle long audio segments
@@ -1818,9 +1823,31 @@ def process_transcription_result(
     ptr_sentence_start = None
     ptr_first_word = True
     ptr_current_words = []
+    ptr_last_end_time = 0  # Track last word end time for final sentence
 
     for ptr_segment in ptr_result["segments"]:
-        if "words" not in ptr_segment:
+        # Handle segments without word-level timestamps
+        if "words" not in ptr_segment or not ptr_segment["words"]:
+            # Fallback: save the entire segment as one block if no words available
+            segment_text = ptr_segment.get("text", "").strip()
+            if segment_text:
+                save_audio_segment(
+                    ptr_audio,
+                    ptr_sr,
+                    ptr_segment.get("start", 0),
+                    ptr_segment.get("end", 0),
+                    segment_text,
+                    ptr_audio_file_name_without_ext,
+                    ptr_i,
+                    ptr_speaker_name,
+                    ptr_audio_folder,
+                    ptr_metadata,
+                    ptr_max_duration,
+                    ptr_buffer,
+                    ptr_too_long_files,
+                    ptr_target_language,
+                )
+                ptr_i += 1
             continue
 
         for ptr_word_info in ptr_segment["words"]:
@@ -1830,6 +1857,7 @@ def process_transcription_result(
 
             ptr_start_time = ptr_word_info.get("start", 0)
             ptr_end_time = ptr_word_info.get("end", 0)
+            ptr_last_end_time = ptr_end_time  # Track for final sentence
 
             if ptr_create_bpe_tokenizer:
                 ptr_whisper_words.append(ptr_word)
@@ -1876,6 +1904,25 @@ def process_transcription_result(
                 ptr_first_word = True
                 ptr_current_words = []
                 ptr_sentence = ""
+
+    # Save any remaining sentence after the loop ends
+    if ptr_sentence and ptr_sentence_start is not None:
+        save_audio_segment(
+            ptr_audio,
+            ptr_sr,
+            ptr_sentence_start,
+            ptr_last_end_time,
+            ptr_sentence,
+            ptr_audio_file_name_without_ext,
+            ptr_i,
+            ptr_speaker_name,
+            ptr_audio_folder,
+            ptr_metadata,
+            ptr_max_duration,
+            ptr_buffer,
+            ptr_too_long_files,
+            ptr_target_language,
+        )
 
 
 def process_audio_with_vad(wav, sr, vad_model, get_speech_timestamps):
@@ -1951,7 +1998,7 @@ def handle_duplicates(
 
         text = "".join([segment.text for segment in segments])
         confidence = sum(
-            word.confidence for segment in segments for word in (segment.words or []))
+            word.probability for segment in segments for word in (segment.words or []))
         word_count = sum(len(segment.words)
                          if segment.words else 0 for segment in segments)
 
@@ -2047,6 +2094,7 @@ def load_and_display_mismatches():
 
         mismatches = []
         missing_files = []
+        matches = []
         total_files = metadata_df.shape[0]
 
         if vat_progress is not None:
@@ -2105,16 +2153,29 @@ def load_and_display_mismatches():
                     "full_path": audio_path,
                     "row_index": row["row_index"],
                     "source_csv": row["source_csv"],
+                    "is_mismatch": True,
                 }
                 debug_print(
                     f"Mismatch entry keys: {mismatch_entry.keys()}", "VALIDATION", is_info=True)
                 mismatches.append(mismatch_entry)
+            else:
+                matches.append({
+                    "expected_text": row["text"],
+                    "transcribed_text": transcribed_text,
+                    "filename": audio_file_name,
+                    "full_path": audio_path,
+                    "row_index": row["row_index"],
+                    "source_csv": row["source_csv"],
+                    "is_mismatch": False,
+                })
 
             if vat_progress is not None:
                 vat_progress((index + 1, total_files), desc="Processing files")
 
         debug_print(
             f"Total mismatches found: {len(mismatches)}", "GENERAL", is_info=True)
+        debug_print(
+            f"Total matches found: {len(matches)}", "GENERAL", is_info=True)
         if mismatches:
             debug_print("Sample mismatch entry:", "VALIDATION", is_info=True)
             debug_print(str(mismatches[0]), "VALIDATION", is_info=True)
@@ -2131,7 +2192,7 @@ def load_and_display_mismatches():
                 "GENERAL")
             for file_name in missing_files:
                 debug_print(f"- {file_name}", "GENERAL")
-        return mismatches
+        return mismatches, matches
 
     vat_progress = gr.Progress(track_tqdm=True)
 
@@ -2142,7 +2203,7 @@ def load_and_display_mismatches():
         and VALIDATE_WHISPER_MODEL
         and VALIDATE_TARGET_LANGUAGE
     ):
-        mismatches = validate_audio_transcriptions(
+        mismatches, matches = validate_audio_transcriptions(
             [VALIDATE_TRAIN_METADATA_PATH, VALIDATE_EVAL_METADATA_PATH],
             VALIDATE_AUDIO_FOLDER,
             VALIDATE_WHISPER_MODEL,
@@ -2150,19 +2211,26 @@ def load_and_display_mismatches():
             vat_progress,
         )
 
+        # Mismatches first, then matches
+        all_entries = mismatches + matches
+
+        if not all_entries:
+            debug_print("No files found!", "GENERAL", is_info=True)
+            empty_df = pd.DataFrame(columns=["expected_text", "transcribed_text", "filename",
+                                             "full_path", "row_index", "source_csv", "is_mismatch"])
+            display_df = pd.DataFrame(
+                columns=["expected_text", "transcribed_text", "filename"])
+            display_df.loc[0] = ["No files found", "No files found", "N/A"]
+            return empty_df, display_df, "No files found!"
+
+        status_msg = f"{len(mismatches)} mismatch(es), {len(matches)} match(es)"
         if not mismatches:
             debug_print("No transcription mismatches found!",
                         "GENERAL", is_info=True)
-            empty_df = pd.DataFrame(columns=["expected_text", "transcribed_text", "filename",
-                                             "full_path", "row_index", "source_csv"])
-            display_df = pd.DataFrame(
-                columns=["expected_text", "transcribed_text", "filename"])
-            display_df.loc[0] = ["No bad transcriptions",
-                                 "No bad transcriptions", "N/A"]
-            return empty_df, display_df, "No transcription mismatches found - all transcriptions match!"
+            status_msg = f"All {len(matches)} transcriptions match!"
 
-        # Convert mismatches list to DataFrame
-        df = pd.DataFrame(mismatches)
+        # Convert to DataFrame
+        df = pd.DataFrame(all_entries)
 
         # Ensure all fields are single values, not series
         for col in df.columns:
@@ -2183,7 +2251,15 @@ def load_and_display_mismatches():
         display_df = df[["expected_text",
                          "transcribed_text", "filename"]].copy()
 
-        return df, display_df, ""
+        # Style mismatch rows with dark red background
+        def style_rows(row):
+            if df.loc[row.name, "is_mismatch"]:
+                return ["background-color: #8B0000; color: white"] * len(row)
+            return [""] * len(row)
+
+        styled_df = display_df.style.apply(style_rows, axis=1)
+
+        return df, styled_df, status_msg
     else:
         empty_df = pd.DataFrame(
             columns=[
@@ -2191,6 +2267,62 @@ def load_and_display_mismatches():
                 "Transcribed Text",
                 "Filename"])
         return empty_df, empty_df, "Please generate your dataset first"
+
+
+def delete_audio_file(df, current_idx):
+    """Delete the selected audio file and remove its row from the CSV and display DataFrame."""
+    if current_idx is None or df is None:
+        return {
+            mismatch_table: df[["expected_text", "transcribed_text", "filename"]] if df is not None else None,
+            save_status: "Please select a row first",
+            audio_player: None,
+            state: df,
+        }
+    try:
+        if isinstance(current_idx, list):
+            current_idx = current_idx[0]
+        row = df.iloc[int(current_idx)]
+        audio_path = str(row["full_path"]).strip()
+        csv_path = str(row["source_csv"]).strip()
+        row_index = int(row["row_index"])
+
+        # Delete the audio file
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+
+        # Remove row from CSV
+        csv_df = pd.read_csv(csv_path, sep="|")
+        csv_df = csv_df.drop(index=row_index).reset_index(drop=True)
+        csv_df.to_csv(csv_path, sep="|", index=False)
+
+        # Remove row from display DataFrame
+        df = df.drop(index=int(current_idx)).reset_index(drop=True)
+        display_df = df[["expected_text",
+                         "transcribed_text", "filename"]].copy()
+
+        def style_rows(row):
+            if df.loc[row.name, "is_mismatch"]:
+                return ["background-color: #8B0000; color: white"] * len(row)
+            return [""] * len(row)
+
+        styled_df = display_df.style.apply(style_rows, axis=1)
+
+        return {
+            mismatch_table: styled_df,
+            save_status: f"Deleted {os.path.basename(audio_path)} and removed from CSV",
+            audio_player: None,
+            state: df,
+        }
+    except Exception as e:
+        debug_print(
+            f"Error deleting file: {str(e)}", "DATA_PROCESS", is_error=True)
+        traceback.print_exc()
+        return {
+            mismatch_table: df[["expected_text", "transcribed_text", "filename"]],
+            save_status: f"Error deleting file: {str(e)}",
+            audio_player: None,
+            state: df,
+        }
 
 
 def save_correction_to_csv(csv_path, row_index, new_text):
@@ -4078,6 +4210,7 @@ if __name__ == "__main__":
                         datatype=["str", "str", "str"],
                         interactive=False,
                         wrap=True,
+                        label="Validation Results (mismatches highlighted in red)",
                     )
 
                 with gr.Column(scale=1):
@@ -4099,6 +4232,7 @@ if __name__ == "__main__":
                         label="Manual Edit", interactive=True, visible=False)
                     current_index = gr.Number(visible=False)
                     save_button = gr.Button("Save Audio and Correction")
+                    delete_button = gr.Button("Delete File", variant="stop")
                     save_status = gr.Textbox(
                         label="Save Status", interactive=False)
 
@@ -4197,6 +4331,12 @@ if __name__ == "__main__":
                     current_expected,
                     save_status,
                     audio_player],
+            )
+
+            delete_button.click(
+                delete_audio_file,
+                inputs=[state, current_index],
+                outputs=[mismatch_table, save_status, audio_player, state],
             )
 
             # Store both display and full DataFrame
