@@ -10,7 +10,7 @@ inputimeout>=1.0.4
 Jinja2>=3.1.4
 librosa>=0.10.2.post1
 local_attention==1.9.10
-openai-whisper
+faster-whisper
 onnxruntime-gpu>=1.18.1
 pydantic==2.10.6
 python-Levenshtein>=0.25.1

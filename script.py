@@ -84,7 +84,7 @@ from requests.exceptions import RequestException
 from tqdm import tqdm
 import torch
 try:
-    import whisper
+    from faster_whisper import WhisperModel
     import soundfile as sf
     import plotly.graph_objects as go
     from scipy import signal as scipy_signal
@@ -119,6 +119,8 @@ this_dir = Path(__file__).parent.resolve()
 TGWUI_AVAILABLE = False
 
 # pylint: disable=import-outside-toplevel
+
+
 def output_modifier(string, state):
     """Modify chat output (required for TGWUI)"""
     try:
@@ -212,12 +214,13 @@ try:
     TGWUI_AVAILABLE = True
 except ImportError:
 
-    class DummyShared: # pylint: disable=too-few-public-methods
+    class DummyShared:  # pylint: disable=too-few-public-methods
         "fake class relating to how we import or dont import TGWUI's remote extension"
         processing_message = ""
 
-    class DummyState: # pylint: disable=too-few-public-methods
+    class DummyState:  # pylint: disable=too-few-public-methods
         "fake class relating to how we import or dont import TGWUI's remote extension"
+
         def __init__(self):
             self.mode = "chat"  # Add default mode
 
@@ -260,6 +263,7 @@ def initialize_configs():
 
 # pylint: enable=import-outside-toplevel
 
+
 # Load in configs
 config, tts_engines_config, new_engines_config = initialize_configs()
 config.save()  # Force the config file to save in case it was missing new any settings
@@ -269,32 +273,44 @@ config.save()  # Force the config file to save in case it was missing new any se
 #########################################
 _state = {
     'process': None,
-    'running_on_google_colab': False, # Are we running on a Google Colab Server?
-    'tunnel_url_1': None, # Used for Google Colab and finding the tunnel URL for API address
-    'tunnel_url_2': None, # Used for Google Colab and finding the tunnel URL for Gradio address
-    'running_in_docker': False, # Are we running on a Docker Server?
-    'docker_url': f"http://localhost:{config.api_def.api_port_number}", # The inital URL used by docker for API communication in gradio
-    'alltalk_protocol': "http://", # HTTP is always used, bar Docker or Google Colab. Can be configured here though
-    'alltalk_ip_port': f"127.0.0.1:{config.api_def.api_port_number}", # IP/Port used for Docker, Google Colab or default
+    'running_on_google_colab': False,  # Are we running on a Google Colab Server?
+    'tunnel_url_1': None,  # Used for Google Colab and finding the tunnel URL for API address
+    # Used for Google Colab and finding the tunnel URL for Gradio address
+    'tunnel_url_2': None,
+    'running_in_docker': False,  # Are we running on a Docker Server?
+    # The inital URL used by docker for API communication in gradio
+    'docker_url': f"http://localhost:{config.api_def.api_port_number}",
+    # HTTP is always used, bar Docker or Google Colab. Can be configured here though
+    'alltalk_protocol': "http://",
+    # IP/Port used for Docker, Google Colab or default
+    'alltalk_ip_port': f"127.0.0.1:{config.api_def.api_port_number}",
     'my_current_url': "null",
-    'srv_models_available': None, # The current models available for the current TTS engine, pulled from the tts_server's API
-    'srv_current_model_loaded': None, # The current model loaded, Initally loaded from central config and later pulled from the tts_server's API
-    'srv_engines_available': None, # The current TTS engines available, Initally loaded from central config and later pulled from the tts_server's API
-    'srv_current_engine_loaded': None, # The current TTS engines loaded in, Initally loaded from central config and later pulled from the tts_server's API
-    'gradio_languages_list': None, # The list of languauges disaplyed in the Gradio interface.
-    'whisper_model': None, # Used to track the whisper model used for dictation etc
-    'proxy_manager': None # Used for the Proxy manager
+    # The current models available for the current TTS engine, pulled from the tts_server's API
+    'srv_models_available': None,
+    # The current model loaded, Initally loaded from central config and later pulled from the tts_server's API
+    'srv_current_model_loaded': None,
+    # The current TTS engines available, Initally loaded from central config and later pulled from the tts_server's API
+    'srv_engines_available': None,
+    # The current TTS engines loaded in, Initally loaded from central config and later pulled from the tts_server's API
+    'srv_current_engine_loaded': None,
+    # The list of languauges disaplyed in the Gradio interface.
+    'gradio_languages_list': None,
+    'whisper_model': None,  # Used to track the whisper model used for dictation etc
+    'proxy_manager': None  # Used for the Proxy manager
 }
 
 ############################################################
 # START-UP # Populate _state Engine info - Gradio Needs it #
 ############################################################
+
+
 def initialize_engine_state(_state):
     """Initialize engine state from central config"""
     _state['srv_current_engine_loaded'] = tts_engines_config.engine_loaded
     _state['srv_engines_available'] = tts_engines_config.get_engine_names_available()
     _state['srv_current_model_loaded'] = tts_engines_config.selected_model
     return _state
+
 
 # Call this after creating _state
 _state = initialize_engine_state(_state)
@@ -316,6 +332,7 @@ RED = "\033[91m"
 GREEN = "\033[92m"
 RESET = "\033[0m"
 
+
 def print_message(message, message_type="standard", component="TTS"):
     """Centralized print function for AllTalk messages
     Args:
@@ -336,7 +353,8 @@ def print_message(message, message_type="standard", component="TTS"):
                 f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} Function entry:{GREEN}{message_parts[1]}{RESET} script.py"
             )
         else:
-            print(f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} {message}")
+            print(
+                f"{prefix}{BLUE}Debug{RESET} {YELLOW}{message_type}{RESET} {message}")
 
     elif message_type == "debug":
         print(f"{prefix}{BLUE}Debug{RESET} {message}")
@@ -412,19 +430,19 @@ def update_settings_at(
         return "Settings updated successfully!"
     except (AttributeError, TypeError) as e:
         print_message(
-            f"Configuration structure error: {str(e)}", 
+            f"Configuration structure error: {str(e)}",
             message_type="error"
         )
         return "Error updating settings: Invalid configuration structure"
     except (OSError, IOError) as e:
         print_message(
-            f"File system error while saving configuration: {str(e)}", 
+            f"File system error while saving configuration: {str(e)}",
             message_type="error"
         )
         return "Error saving settings: File system error"
     except ValueError as e:
         print_message(
-            f"Invalid value provided for configuration: {str(e)}", 
+            f"Invalid value provided for configuration: {str(e)}",
             message_type="error"
         )
         return "Error updating settings: Invalid value provided"
@@ -479,19 +497,19 @@ def update_settings_api(
         return "Default API settings updated successfully!"
     except (AttributeError, TypeError) as e:
         print_message(
-            f"Configuration structure error: {str(e)}", 
+            f"Configuration structure error: {str(e)}",
             message_type="error"
         )
         return "Error updating settings: Invalid configuration structure"
     except (OSError, IOError) as e:
         print_message(
-            f"File system error while saving configuration: {str(e)}", 
+            f"File system error while saving configuration: {str(e)}",
             message_type="error"
         )
         return "Error saving settings: File system error"
     except ValueError as e:
         print_message(
-            f"Invalid value provided for configuration: {str(e)}", 
+            f"Invalid value provided for configuration: {str(e)}",
             message_type="error"
         )
         return "Error updating settings: Invalid value provided"
@@ -614,7 +632,8 @@ def update_rvc_settings(
                     print(
                         f"[{config.branding}TTS] Downloading {file}..."
                     )  # Print statement for terminal
-                    download_file(file_urls[file], os.path.join(base_dir, file))
+                    download_file(file_urls[file],
+                                  os.path.join(base_dir, file))
             download_result = (
                 "All RVC Base Files are present."
                 if len(file_urls) > 0
@@ -642,6 +661,7 @@ def update_rvc_settings(
         return_message = "Error with RVC files: File system error"
     print_message(error_msg, message_type="error")
     return return_message
+
 
 def update_proxy_settings(
     proxy_enabled,
@@ -679,10 +699,13 @@ def update_proxy_settings(
         print_message("Proxy Settings Saved")
         return "Proxy settings updated successfully!"
     except Exception as e:
-        print_message(f"Error updating proxy settings: {str(e)}", message_type="error")
+        print_message(
+            f"Error updating proxy settings: {str(e)}", message_type="error")
         return f"Error updating proxy settings: {str(e)}"
 
 # Add to your state dictionary initialization
+
+
 def initialize_proxy_state(_state):
     """Initialize proxy state"""
     config = AlltalkConfig.get_instance()
@@ -694,6 +717,8 @@ def initialize_proxy_state(_state):
     return _state
 
 # Modify your existing initialize_engine_state function:
+
+
 def initialize_engine_state(_state):
     """Initialize engine state from central config"""
     _state = initialize_proxy_state(_state)  # Add proxy initialization
@@ -701,6 +726,7 @@ def initialize_engine_state(_state):
     _state['srv_engines_available'] = tts_engines_config.get_engine_names_available()
     _state['srv_current_model_loaded'] = tts_engines_config.selected_model
     return _state
+
 
 ###########################################################################
 # START-UP # Silence Character Normaliser when it checks the Ready Status #
@@ -765,7 +791,7 @@ this_script_dir = this_script_path.parent
 this_current_folder = this_script_dir.name
 if "-" in this_current_folder:
     print_message("")
-    print_message( # pylint: disable=line-too-long
+    print_message(  # pylint: disable=line-too-long
         "The current folder name contains a dash ('\033[93m-\033[0m') and this causes errors/issues. Please ensure",
         message_type="warning",
     )
@@ -785,6 +811,8 @@ if "-" in this_current_folder:
 ##############################################
 # START-UP # Check if we are on Google Colab #
 ##############################################
+
+
 def check_google_colab():
     """
     Test if we are running on a google colab server
@@ -795,7 +823,8 @@ def check_google_colab():
         return True
     except ImportError:
         return False
-    
+
+
 _state['running_on_google_colab'] = check_google_colab()
 
 ###############################################################################
@@ -807,7 +836,8 @@ try:
     from modules.ui import create_refresh_button
     from modules.utils import gradio
 
-    print_message("\033[92mStart-up Mode     : \033[93mText-gen-webui mode\033[0m")
+    print_message(
+        "\033[92mStart-up Mode     : \033[93mText-gen-webui mode\033[0m")
     running_in_standalone = False
     running_in_tgwui = True
 except ModuleNotFoundError:
@@ -820,12 +850,14 @@ except ModuleNotFoundError:
 ######################################################
 # START-UP # Check if this is a first time start-up  #
 ######################################################
+
+
 def run_firsttime_script(tts_model=None):
     """
     Run the first time startup script based on the current environment
     (Google Colab, standalone, or TGWUI). Optionally, pass a TTS model
     argument to the script for direct configuration.
-    
+
     Args:
         tts_model (str): Optional. TTS model to set up ('piper', 'vits', 'xtts', or 'none').
     """
@@ -837,13 +869,15 @@ def run_firsttime_script(tts_model=None):
         if _state['running_on_google_colab']:
             firstrun_script_path = "/content/alltalk_tts/system/config/firstrun.py"
         elif running_in_standalone:
-            firstrun_script_path = os.path.join(this_dir, "system", "config", "firstrun.py")
+            firstrun_script_path = os.path.join(
+                this_dir, "system", "config", "firstrun.py")
         elif running_in_tgwui:
             firstrun_script_path = os.path.join(
                 this_dir, "system", "config", "firstrun_tgwui.py"
             )
         else:
-            firstrun_script_path = os.path.join(this_dir, "system", "config", "firstrun.py")
+            firstrun_script_path = os.path.join(
+                this_dir, "system", "config", "firstrun.py")
         # Prepare the subprocess command
         command = [sys.executable, firstrun_script_path]
         # Append the --tts_model argument if provided
@@ -865,8 +899,10 @@ def run_firsttime_script(tts_model=None):
         error_msg = f"Invalid argument passed to first-time setup script: {str(e)}"
         print_message(error_msg, message_type="error")
 
+
 # Add argparse for command-line arguments
-parser = argparse.ArgumentParser(description="Run the first-time setup script.")
+parser = argparse.ArgumentParser(
+    description="Run the first-time setup script.")
 parser.add_argument(
     "--tts_model",
     type=str,
@@ -894,7 +930,8 @@ def delete_old_files(folder_path, amt_days_to_keep):
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
-            file_creation_time = datetime.fromtimestamp(os.path.getctime(file_path))
+            file_creation_time = datetime.fromtimestamp(
+                os.path.getctime(file_path))
             age = current_time - file_creation_time
             if age > timedelta(days=amt_days_to_keep):
                 os.remove(file_path)
@@ -927,7 +964,8 @@ def format_datetime(iso_str):
     def _ordinal(n):
         """Helper function to convert numbers to ordinal form (1st, 2nd, 3rd, etc)"""
         debug_func_entry()
-        suffix = "th" if 4 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+        suffix = "th" if 4 <= n % 100 <= 20 else {
+            1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
         return f"{n}{suffix}"
 
     dt = datetime.strptime(iso_str, "%Y-%m-%dT%H:%M:%SZ")
@@ -937,12 +975,12 @@ def format_datetime(iso_str):
 def fetch_latest_commit_sha_and_date(owner, repo, branch):
     """
     Fetch the latest commit SHA and date from a GitHub repository branch.
-    
+
     Args:
         owner (str): GitHub repository owner
         repo (str): Repository name 
         branch (str): Branch name to check
-        
+
     Returns:
         tuple: (commit_sha, commit_date) or (None, None) if fetch fails
     """
@@ -980,7 +1018,8 @@ def read_or_initialize_sha(file_path, owner, repo, branch):
             return current_data.get("last_known_commit_sha")
     else:
         # File doesn't exist, fetch the latest SHA and create the file
-        current_commit_sha, _ = fetch_latest_commit_sha_and_date(owner, repo, branch)
+        current_commit_sha, _ = fetch_latest_commit_sha_and_date(
+            owner, repo, branch)
         if current_commit_sha:
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump({"last_known_commit_sha": current_commit_sha}, file)
@@ -1011,7 +1050,8 @@ latest_commit_sha, latest_commit_date = fetch_latest_commit_sha_and_date(
 )
 
 formatted_date = (
-    format_datetime(latest_commit_date) if latest_commit_date else "an unknown date"
+    format_datetime(
+        latest_commit_date) if latest_commit_date else "an unknown date"
 )
 
 if latest_commit_sha and latest_commit_sha != last_known_commit_sha:
@@ -1029,7 +1069,7 @@ elif latest_commit_sha == last_known_commit_sha:
 ##################################################
 # START-UP # Configure the subprocess handler ####
 ##################################################
-def signal_handler(sig, frame): # pylint: disable=unused-argument
+def signal_handler(sig, frame):  # pylint: disable=unused-argument
     """Handle Ctrl+C signal by saving config, terminating subprocess, and exiting gracefully."""
     debug_func_entry()
     config.save()
@@ -1041,6 +1081,7 @@ def signal_handler(sig, frame): # pylint: disable=unused-argument
         _state["process"].wait()  # Wait for the subprocess to finish
     sys.exit(0)
 
+
 #####################################################################
 # START-UP # Start the Subprocess and Check for Google Colab/Docker #
 #####################################################################
@@ -1049,7 +1090,8 @@ if check_google_colab():
     try:
         with open("/content/alltalk_tts/googlecolab.json", "r", encoding="utf-8") as f:
             data = json.load(f)
-            _state['tunnel_url_1'], _state['tunnel_url_2'] = data.get("google_ip_address", [None, None])
+            _state['tunnel_url_1'], _state['tunnel_url_2'] = data.get(
+                "google_ip_address", [None, None])
     except FileNotFoundError:
         print_message("Could not find IP address")
         _state['tunnel_url_1'], _state['tunnel_url_2'] = None, None
@@ -1079,7 +1121,8 @@ if os.path.isfile("/.dockerenv") and "google.colab" not in sys.modules:
         "environment, you will need to somehow make these accessable, depending on your scenario:"
     )
     print_message(" 1. A Local Area Network (LAN) scenario:")
-    print_message("    - Ensure you've exposed the Gradio and API ports correctly.")
+    print_message(
+        "    - Ensure you've exposed the Gradio and API ports correctly.")
     print_message("    - The application should work as expected.")
     print_message("2. Internet/Remotely accessed scenario:")
     print_message(
@@ -1212,8 +1255,10 @@ else:
 
 if _state['running_on_google_colab']:
     print_message("")
-    print_message("\033[94mAPI Address :\033[00m \033[92m" + _state['tunnel_url_1'] + "\033[00m")
-    print_message("\033[94mGradio Light:\033[00m \033[92m" + _state['tunnel_url_2'] + "\033[00m")
+    print_message("\033[94mAPI Address :\033[00m \033[92m" +
+                  _state['tunnel_url_1'] + "\033[00m")
+    print_message("\033[94mGradio Light:\033[00m \033[92m" +
+                  _state['tunnel_url_2'] + "\033[00m")
     print_message(
         "\033[94mGradio Dark :\033[00m \033[92m"
         + _state['tunnel_url_2']
@@ -1284,7 +1329,8 @@ def check_espeak_ng():
                 "Then close this command prompt window and open a new",
                 message_type="warning",
             )
-            print_message("command prompt, before re-starting.", message_type="warning")
+            print_message("command prompt, before re-starting.",
+                          message_type="warning")
         elif platform.system() == "Darwin":  # macOS
             print_espeak_warning(
                 "macOS", "\033[93mHomebrew: brew install espeak-ng\033[0m"
@@ -1296,10 +1342,10 @@ def check_espeak_ng():
             )
     except subprocess.CalledProcessError:
         # Handle cases where `espeak-ng` exists but fails to run
-        print_message("Error running espeak-ng. Please check the installation.", message_type="error")
+        print_message(
+            "Error running espeak-ng. Please check the installation.", message_type="error")
 
     print_message("")
-
 
 
 check_espeak_ng()
@@ -1351,7 +1397,8 @@ def check_subprocess_status():
 ###################################################################
 # START-UP # Register the termination code to be executed at exit #
 ###################################################################
-atexit.register(lambda: _state["process"].terminate() if _state["process"].poll() is None else None)
+atexit.register(lambda: _state["process"].terminate(
+) if _state["process"].poll() is None else None)
 
 ##########################
 # Setup global variables #
@@ -1369,6 +1416,8 @@ tts_model_loaded = None
 #########################
 # Endpoint API Builders #
 #########################
+
+
 def build_url(endpoint, include_api=True):
     """
     Build URL for standard API endpoints using static predefined URLs.
@@ -1617,6 +1666,8 @@ get_alltalk_settings()
 #############################
 #### TTS STOP GENERATION ####
 #############################
+
+
 def stop_generate_tts():
     """
     Sends a stop TTS generation request
@@ -1689,6 +1740,7 @@ def send_reload_request(value_sent):
     params = {"tts_method": value_sent}
     return send_api_request("/api/reload", params=params)
 
+
 #################################
 #### Proxy Interface Manager ####
 #################################
@@ -1696,13 +1748,16 @@ if _state.get('proxy_manager') is None:
     _state['proxy_manager'] = ProxyManager(AlltalkConfig)
     if config.proxy_settings.proxy_enabled and config.proxy_settings.start_on_startup:
         _state['proxy_manager'].start_proxy()
-        
+
 ########################################
 #### Whisper Transcription Handling ####
 ########################################
 # pylint: disable=too-few-public-methods
+
+
 class TranscriptionProgress:
     """Track progress of Whisper's audio transcription tasks including file counts and completion status."""
+
     def __init__(self):
         self.current_file = ""
         self.total_files = 0
@@ -1740,7 +1795,8 @@ def setup_directories(setup_script_dir):
 
     for directory in [base_dir, uploads_dir, output_dir]:
         os.makedirs(directory, exist_ok=True)
-        print_message(f"Created/verified directory: {directory}", "debug_transcribe")
+        print_message(
+            f"Created/verified directory: {directory}", "debug_transcribe")
 
     return base_dir, uploads_dir, output_dir
 
@@ -1753,7 +1809,8 @@ def validate_audio_file(file_path):
     mime_type = mimetypes.guess_type(file_path)[0]
 
     print_message(f"Validating file: {file_path}", "debug_transcribe")
-    print_message(f"File size: {file_size/1024/1024:.1f}MB", "debug_transcribe")
+    print_message(
+        f"File size: {file_size/1024/1024:.1f}MB", "debug_transcribe")
     print_message(f"File extension: {file_ext}", "debug_transcribe")
     print_message(f"MIME type: {mime_type}", "debug_transcribe")
 
@@ -1806,7 +1863,8 @@ def create_output_directory(base_dir, prefix=""):
     dir_name = f"{prefix}_{timestamp}" if prefix else timestamp
     output_dir = os.path.join(base_dir, "output", dir_name)
     os.makedirs(output_dir, exist_ok=True)
-    print_message(f"Created output directory: {output_dir}", "debug_transcribe")
+    print_message(
+        f"Created output directory: {output_dir}", "debug_transcribe")
     return output_dir
 
 
@@ -1823,10 +1881,12 @@ def delete_uploaded_files():
     """Delete all files in the uploads directory"""
     debug_func_entry()
     del_upload_script_dir = os.path.dirname(os.path.abspath(__file__))
-    uploads_dir = os.path.join(del_upload_script_dir, "transcriptions", "uploads")
+    uploads_dir = os.path.join(
+        del_upload_script_dir, "transcriptions", "uploads")
     deleted_count = 0
 
-    print_message(f"Attempting to delete files in: {uploads_dir}", "debug_transcribe")
+    print_message(
+        f"Attempting to delete files in: {uploads_dir}", "debug_transcribe")
 
     if os.path.exists(uploads_dir):
         for file in os.listdir(uploads_dir):
@@ -1888,7 +1948,8 @@ def process_audio_files(
     output_format,
     delete_after,
     prefix="",
-    gradio_progress=gr.Progress(track_tqdm=True), # pylint: disable=unused-argument  # Used by tqdm for progress tracking
+    gradio_progress=gr.Progress(
+        track_tqdm=True),  # pylint: disable=unused-argument  # Used by tqdm for progress tracking
 ):
     """Process multiple audio files and return paths to transcription files"""
     debug_func_entry()
@@ -1924,7 +1985,8 @@ def process_audio_files(
 
             if errors:
                 for error in errors:
-                    validation_messages.append(f"Skipping {file_name}: {error}")
+                    validation_messages.append(
+                        f"Skipping {file_name}: {error}")
                 continue
 
             validation_messages.extend(
@@ -1934,20 +1996,23 @@ def process_audio_files(
             # Copy file to uploads directory
             upload_path = os.path.join(uploads_dir, file_name)
             shutil.copy2(audio_file, upload_path)
-            print_message(f"Copied to uploads: {upload_path}", "debug_transcribe")
+            print_message(
+                f"Copied to uploads: {upload_path}", "debug_transcribe")
             processed_files.append(upload_path)
 
         if not processed_files:
-            msg = "No valid files to process\n" + "\n".join(validation_messages)
+            msg = "No valid files to process\n" + \
+                "\n".join(validation_messages)
             print_message(msg, "error")
             return None, msg
 
         # Load model
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print_message(
-            f"Loading Whisper model {model_size} on {device}", "debug_transcribe"
+            f"Loading Faster-Whisper model {model_size} on {device}", "debug_transcribe"
         )
-        _state['whisper_model'] = whisper.load_model(model_size, device=device)
+        _state['whisper_model'] = WhisperModel(
+            model_size, device=device, compute_type="float16" if device == "cuda" else "float32")
 
         output_files = []
         metadata = []
@@ -1960,10 +2025,22 @@ def process_audio_files(
             try:
                 whisper_progress.current_file = Path(audio_file).name
                 whisper_progress.completed_files = idx
-                print_message(f"Transcribing: {audio_file}", "debug_transcribe")
+                print_message(
+                    f"Transcribing: {audio_file}", "debug_transcribe")
 
                 # Transcribe audio
-                result = _state['whisper_model'].transcribe(audio_file)
+                segments, info = _state['whisper_model'].transcribe(audio_file)
+
+                # Convert to OpenAI Whisper-like format for compatibility
+                result = {
+                    "text": "".join([segment.text for segment in segments]),
+                    "segments": [{
+                        "id": i,
+                        "start": segment.start,
+                        "end": segment.end,
+                        "text": segment.text
+                    } for i, segment in enumerate(segments)]
+                }
 
                 # Create output file
                 base_output_path = create_output_filename(
@@ -2010,7 +2087,7 @@ def process_audio_files(
                         f"Deleted audio file: {audio_file}", "debug_transcribe"
                     )
 
-            except (whisper.RuntimeError, torch.cuda.OutOfMemoryError) as e:
+            except (RuntimeError, torch.cuda.OutOfMemoryError) as e:
                 error_msg = f"Error in transcription of {Path(audio_file).name}: {str(e)}"
                 print_message(error_msg, "error")
                 validation_messages.append(error_msg)
@@ -2043,7 +2120,8 @@ def process_audio_files(
                 indent=4,
             )
 
-        print_message(f"Created summary file: {summary_path}", "debug_transcribe")
+        print_message(
+            f"Created summary file: {summary_path}", "debug_transcribe")
 
         # Create ZIP file containing all outputs
         zip_path = os.path.join(
@@ -2096,7 +2174,8 @@ def process_audio_files(
 def reset_audio_stream_handlers(dictate_audio, state, text_output, audio_plot):
     """Reset handlers for the dictation audio input."""
     if not isinstance(dictate_audio, gr.Audio):
-        print_message("Error: 'dictate_audio' is not a valid Gradio Audio component.", "error")
+        print_message(
+            "Error: 'dictate_audio' is not a valid Gradio Audio component.", "error")
         return
 
     # Clear existing handlers
@@ -2109,11 +2188,13 @@ def reset_audio_stream_handlers(dictate_audio, state, text_output, audio_plot):
 
     # Re-add the handlers # Ignore them being undefined
     dictate_audio.start_recording(
-        fn=on_start_recording, inputs=[state], outputs=[state] # pylint: disable=undefined-variable
+        fn=on_start_recording, inputs=[state], outputs=[
+            state]  # pylint: disable=undefined-variable
     ).success(fn=None, js="() => {console.log('Recording started');}")
 
     dictate_audio.stop_recording(
-        fn=on_stop_recording, inputs=[state], outputs=[state] # pylint: disable=undefined-variable
+        fn=on_stop_recording, inputs=[state], outputs=[
+            state]  # pylint: disable=undefined-variable
     ).success(fn=None, js="() => {console.log('Recording stopped');}")
 
     dictate_audio.stream(
@@ -2129,7 +2210,8 @@ def setup_transcription_directory():
     """Setup directory for saving transcriptions"""
     debug_func_entry()
     trans_script_dir = os.path.dirname(os.path.abspath(__file__))
-    transcripts_dir = os.path.join(trans_script_dir, "transcriptions", "live_dictation")
+    transcripts_dir = os.path.join(
+        trans_script_dir, "transcriptions", "live_dictation")
     os.makedirs(transcripts_dir, exist_ok=True)
     return transcripts_dir
 
@@ -2147,11 +2229,13 @@ def create_transcript_file(directory, prefix=""):
 
 
 def load_whisper_model(model_name):
-    """Load the Whisper model"""
+    """Load the Faster-Whisper model"""
     debug_func_entry()
-    print_message(f"Loading Whisper model: {model_name}", "debug_transcribe")
+    print_message(
+        f"Loading Faster-Whisper model: {model_name}", "debug_transcribe")
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    _state['whisper_model'] = whisper.load_model(model_name, device=device)
+    _state['whisper_model'] = WhisperModel(
+        model_name, device=device, compute_type="float16" if device == "cuda" else "float32")
     print_message(f"Model loaded on {device}", "debug_transcribe")
     return _state['whisper_model']
 
@@ -2224,6 +2308,7 @@ def identify_speaker(segments):
 
     return current_speaker
 
+
 def visualize_audio_levels(
     audio_data,
     sample_rate=16000,  # Default sample rate for Whisper
@@ -2240,7 +2325,7 @@ def visualize_audio_levels(
     # Calculate RMS values for each window
     windows = range(0, len(audio_data) - window_size, stride)
     rms_values = [
-        np.sqrt(np.mean(audio_data[i : i + window_size] ** 2)) for i in windows
+        np.sqrt(np.mean(audio_data[i: i + window_size] ** 2)) for i in windows
     ]
 
     # Calculate time points in seconds
@@ -2258,7 +2343,8 @@ def visualize_audio_levels(
 
     # Add audio levels line
     fig.add_trace(
-        go.Scatter(x=time_points, y=rms_values, mode="lines", name="Audio Level")
+        go.Scatter(x=time_points, y=rms_values,
+                   mode="lines", name="Audio Level")
     )
 
     # Add optional dynamic range visualization (e.g., warning thresholds)
@@ -2321,7 +2407,8 @@ def process_audio(audio, state):
 
         # Resample to 16kHz if needed
         if sample_rate != 16000:
-            print_message(f"Resampling from {sample_rate} to 16000", "debug_transcribe")
+            print_message(
+                f"Resampling from {sample_rate} to 16000", "debug_transcribe")
             number_of_samples = round(len(audio_data) * 16000 / sample_rate)
             audio_data = scipy_signal.resample(audio_data, number_of_samples).astype(
                 np.float32
@@ -2343,14 +2430,24 @@ def process_audio(audio, state):
             print_message(error_msg, "error")
             return default_return
 
-        # Process with Whisper
-        result = _state['whisper_model'].transcribe(
+        # Process with Faster-Whisper
+        segments, info = _state['whisper_model'].transcribe(
             audio_data,
             language=state.get("source_language", "auto"),
-            task="translate" if state.get("translate_to_english") else "transcribe",
-            temperature=0.0,
-            condition_on_previous_text=True,
+            task="translate" if state.get(
+                "translate_to_english") else "transcribe"
         )
+
+        # Convert to OpenAI Whisper-like format
+        result = {
+            "text": "".join([segment.text for segment in segments]),
+            "segments": [{
+                "id": i,
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text
+            } for i, segment in enumerate(segments)]
+        }
 
         transcribed_text = result["text"].strip()
 
@@ -2406,12 +2503,14 @@ def process_audio(audio, state):
     print_message(error_msg, "error")
     return default_return
 
+
 def create_srt_file(segments, filename):
     """Create an SRT file from segments"""
     debug_func_entry()
     srt_content = create_srt_content(segments)
     with open(filename, "w", encoding="utf-8") as open_srt_f:
         open_srt_f.write(srt_content)
+
 
 def save_transcript(state, format_type):
     """Save transcript in specified format"""
@@ -2449,7 +2548,8 @@ def save_transcript(state, format_type):
         with open(json_filename, "w", encoding="utf-8") as save_transcript_f:
             json.dump(metadata, save_transcript_f, indent=2)
 
-    print_message(f"Saved transcript to: {state['output_file']}", "debug_transcribe")
+    print_message(
+        f"Saved transcript to: {state['output_file']}", "debug_transcribe")
 
 
 def start_new_dictation(
@@ -2504,7 +2604,8 @@ def start_new_dictation(
             },
         }
 
-        print_message(f"Started new transcription: {output_file}", "debug_transcribe")
+        print_message(
+            f"Started new transcription: {output_file}", "debug_transcribe")
         message = "Model loaded! Click the microphone icon to start/stop recording."
 
         return (
@@ -2532,18 +2633,21 @@ def start_new_dictation(
         gr.update(interactive=False),
     )
 
+
 def finish_dictation(state, dictate_audio, text_output, audio_plot):
     """End dictation and cleanup."""
     debug_func_entry()
 
     if state is not None:
-        print_message(f"Finished dictation: {state.get('output_file', 'Unknown')}", "debug_transcribe")
+        print_message(
+            f"Finished dictation: {state.get('output_file', 'Unknown')}", "debug_transcribe")
         save_transcript(state, state.get("export_format", "txt"))
         state["is_active"] = False
 
     # Reset the audio stream handlers only if dictate_audio is a valid component
     if isinstance(dictate_audio, gr.Audio):
-        reset_audio_stream_handlers(dictate_audio, state, text_output, audio_plot)
+        reset_audio_stream_handlers(
+            dictate_audio, state, text_output, audio_plot)
 
     # Clean up the model
     if 'whisper_model' in _state:
@@ -2585,7 +2689,8 @@ if gradio_enabled is True:
     # Add the directory containing the module to the system path
     sys.path.insert(0, str(this_dir / "system" / "gradio_pages" / "themes"))
     # Import the module dynamically
-    spec = importlib.util.spec_from_file_location("loadThemes", themesmodule_path)
+    spec = importlib.util.spec_from_file_location(
+        "loadThemes", themesmodule_path)
     loadThemes = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(loadThemes)
     # Load the theme list from JSON file
@@ -2629,7 +2734,8 @@ if gradio_enabled is True:
         debug_func_entry()
         try:
             if package:
-                new_module = importlib.import_module(module_path, package=package)
+                new_module = importlib.import_module(
+                    module_path, package=package)
             else:
                 new_module = importlib.import_module(module_path)
             return new_module
@@ -2639,7 +2745,8 @@ if gradio_enabled is True:
             )
             return None
         except (ImportError, SyntaxError) as e:
-            print_message(f"Error importing {module_path}: {str(e)}", message_type="error")
+            print_message(
+                f"Error importing {module_path}: {str(e)}", message_type="error")
             return None
 
     def load_engine_configs(_state):
@@ -2653,14 +2760,18 @@ if gradio_enabled is True:
             module = dynamic_import(module_name, base_package)
             if module:
                 # Load the engine's config from its JSON file
-                json_file_path = os.path.join(this_dir, "system", "tts_engines", engine_name, "model_settings.json")
+                json_file_path = os.path.join(
+                    this_dir, "system", "tts_engines", engine_name, "model_settings.json")
                 try:
                     with open(json_file_path, "r", encoding="utf-8") as config_file:
-                        globals()[f"{engine_name}_model_config_data"] = json.load(config_file)
+                        globals()[f"{engine_name}_model_config_data"] = json.load(
+                            config_file)
                 except FileNotFoundError:
-                    print_message(f"Could not find settings file for {engine_name}")
+                    print_message(
+                        f"Could not find settings file for {engine_name}")
                 except json.JSONDecodeError:
-                    print_message("Invalid JSON in settings file for {engine_name}")
+                    print_message(
+                        "Invalid JSON in settings file for {engine_name}")
 
     # Call this before creating the Gradio interface to dynamically import TTS Engine pages
     load_engine_configs(_state)
@@ -2681,16 +2792,17 @@ if gradio_enabled is True:
 
         # Build stream choices if streaming is available
         if _state['srv_settings_capabilities']['streaming_capable']:
-            gen_choices = [("Standard", "false"), ("Streaming (Disable Narrator)", "true")]
+            gen_choices = [("Standard", "false"),
+                           ("Streaming (Disable Narrator)", "true")]
         else:
             gen_choices = [("Standard", "false")]
 
         # Set language label based on capability
         language_label = "Languages" if _state[
             'srv_settings_capabilities'
-            ][
-                'languages_capable'
-                ] else "Model not multi language"
+        ][
+            'languages_capable'
+        ] else "Model not multi language"
 
         # Handle default voices if they're not in available voices
         current_character_voice = _state['srv_character_voice']
@@ -2712,17 +2824,28 @@ if gradio_enabled is True:
         # Return all Gradio component updates
         return (
             gr.Dropdown(choices=gen_choices, interactive=True),
-            gr.Dropdown(choices=_state['srv_current_voices'], value=current_character_voice, interactive=True),
-            gr.Dropdown(choices=_state['srv_current_rvcvoices'], value=rvc_character_voice, interactive=True),
-            gr.Dropdown(choices=_state['srv_current_voices'], value=current_narrator_voice, interactive=True),
-            gr.Dropdown(choices=_state['srv_current_rvcvoices'], value=rvc_narrator_voice, interactive=True),
-            gr.Slider(interactive=_state['srv_settings_capabilities']['generationspeed_capable']),
-            gr.Slider(interactive=_state['srv_settings_capabilities']['pitch_capable']),
-            gr.Slider(interactive=_state['srv_settings_capabilities']['temperature_capable']),
-            gr.Slider(interactive=_state['srv_settings_capabilities']['repetitionpenalty_capable']),
-            gr.Dropdown(interactive=_state['srv_settings_capabilities']['languages_capable'], label=language_label),
-            gr.Dropdown(choices=_state['srv_models_available'], value=_state['srv_current_model_loaded']),
-            gr.Dropdown(choices=_state['srv_engines_available'], value=_state['srv_current_engine_loaded'])
+            gr.Dropdown(choices=_state['srv_current_voices'],
+                        value=current_character_voice, interactive=True),
+            gr.Dropdown(choices=_state['srv_current_rvcvoices'],
+                        value=rvc_character_voice, interactive=True),
+            gr.Dropdown(choices=_state['srv_current_voices'],
+                        value=current_narrator_voice, interactive=True),
+            gr.Dropdown(choices=_state['srv_current_rvcvoices'],
+                        value=rvc_narrator_voice, interactive=True),
+            gr.Slider(
+                interactive=_state['srv_settings_capabilities']['generationspeed_capable']),
+            gr.Slider(
+                interactive=_state['srv_settings_capabilities']['pitch_capable']),
+            gr.Slider(
+                interactive=_state['srv_settings_capabilities']['temperature_capable']),
+            gr.Slider(
+                interactive=_state['srv_settings_capabilities']['repetitionpenalty_capable']),
+            gr.Dropdown(interactive=_state['srv_settings_capabilities']
+                        ['languages_capable'], label=language_label),
+            gr.Dropdown(choices=_state['srv_models_available'],
+                        value=_state['srv_current_model_loaded']),
+            gr.Dropdown(choices=_state['srv_engines_available'],
+                        value=_state['srv_current_engine_loaded'])
         )
 
     ######################################################################################
@@ -2738,7 +2861,7 @@ if gradio_enabled is True:
 
         Returns:
             tuple: Success message and updated UI elements
-            
+
         Raises:
             RequestsConnectionError: If unable to connect to TTS engine
             TimeoutError: If engine doesn't become ready within retry limit
@@ -2846,16 +2969,16 @@ if gradio_enabled is True:
 
         # Submit the paths to the API endpoint
         voice2rvc_response = requests.post(
-                voice2rvc_url,
-                data={
-                    "input_tts_path": str(input_tts_path),
-                    "output_rvc_path": str(output_rvc_path),
-                    "pth_name": rvc_voice,
-                    "pitch": rvc_pitch,
-                    "method": str(rvc_f0method),
-                },
-                timeout=(5, 30)  # 5 sec connect timeout, 30 sec read timeout
-            )
+            voice2rvc_url,
+            data={
+                "input_tts_path": str(input_tts_path),
+                "output_rvc_path": str(output_rvc_path),
+                "pth_name": rvc_voice,
+                "pitch": rvc_pitch,
+                "method": str(rvc_f0method),
+            },
+            timeout=(5, 30)  # 5 sec connect timeout, 30 sec read timeout
+        )
 
         if voice2rvc_response.status_code == 200:
             result = voice2rvc_response.json()
@@ -2882,12 +3005,15 @@ if gradio_enabled is True:
         debug_func_entry()
         try:
             print_message("")
-            print_message("\033[94mChanging model loaded. Please wait.\033[00m")
+            print_message(
+                "\033[94mChanging model loaded. Please wait.\033[00m")
             print_message("")
             model_loaded_url = build_url("reload")
             payload = {"tts_method": new_selected_model}
-            model_loaded_response = requests.post(model_loaded_url, params=payload, timeout=(5, 30))
-            model_loaded_response.raise_for_status()  # Raises an HTTPError for bad responses
+            model_loaded_response = requests.post(
+                model_loaded_url, params=payload, timeout=(5, 30))
+            # Raises an HTTPError for bad responses
+            model_loaded_response.raise_for_status()
             # Update the tts_engines.json file
             tts_engines_file = os.path.join(
                 this_dir, "system", "tts_engines", "tts_engines.json"
@@ -2918,7 +3044,8 @@ if gradio_enabled is True:
 
     debugging_options = config.debugging
     debugging_choices = list(vars(debugging_options).keys())
-    default_values = [key for key, value in vars(debugging_options).items() if value]
+    default_values = [key for key, value in vars(
+        debugging_options).items() if value]
 
     def generate_tts(
         gen_text,
@@ -3009,7 +3136,8 @@ if gradio_enabled is True:
         for i, key in enumerate(keys):
             # Use └─ for the last item, and ├─ for others
             prefix = "└─" if i == len(keys) - 1 else "├─"
-            print_message(f"{prefix} {key}: {tts_data[key]}", message_type="debug_tts_variables")
+            print_message(
+                f"{prefix} {key}: {tts_data[key]}", message_type="debug_tts_variables")
         print_message(
             f"API Url being used: {api_url}", message_type="debug_tts_variables"
         )
@@ -3018,7 +3146,8 @@ if gradio_enabled is True:
         retries = 0
         while retries < max_retries:
             try:
-                tts_response = requests.post(api_url, data=tts_data, timeout=60)
+                tts_response = requests.post(
+                    api_url, data=tts_data, timeout=60)
                 tts_response.raise_for_status()
                 result = tts_response.json()
 
@@ -3043,17 +3172,21 @@ if gradio_enabled is True:
                         error_message = "Request timed out after maximum retries"
                     elif isinstance(e, json.JSONDecodeError):
                         error_message = "Failed to parse API response"
-                        print_message(f"Error Details: {str(e)}", message_type="error")
-                        print_message(f"Raw response: {tts_response.content}", message_type="error")
+                        print_message(
+                            f"Error Details: {str(e)}", message_type="error")
+                        print_message(
+                            f"Raw response: {tts_response.content}", message_type="error")
                     elif isinstance(e, RequestException):
                         error_message = "An error occurred while communicating with the API"
-                        print_message(f"Error Details: {str(e)}", message_type="error")
-                    print_message(f"Error: {error_message}", message_type="error")
+                        print_message(
+                            f"Error Details: {str(e)}", message_type="error")
+                    print_message(
+                        f"Error: {error_message}", message_type="error")
                     return None, str(error_message)
                 if isinstance(e, RequestException):
                     time.sleep(retry_delay)
 
-    def alltalk_gradio(): # pylint: disable=too-many-statements, too-many-branches
+    def alltalk_gradio():  # pylint: disable=too-many-statements, too-many-branches
         """
         Setup the main gradio interface for AllTalk
         """
@@ -3078,7 +3211,8 @@ if gradio_enabled is True:
 
             if request:
                 host = request.headers.get("host", "Unknown")
-                _state['my_current_url'] = host.split(":")[0]  # Split the host by ":" and take the first part
+                # Split the host by ":" and take the first part
+                _state['my_current_url'] = host.split(":")[0]
                 _state['my_current_url'] = f"{_state['my_current_url']}:{config.api_def.api_port_number}"
                 return None
 
@@ -3089,7 +3223,7 @@ if gradio_enabled is True:
             theme=selected_theme,
             title="AllTalk",
             analytics_enabled=False,
-        ) as app: # pylint: disable=redefined-outer-name
+        ) as app:  # pylint: disable=redefined-outer-name
             with gr.Row():
                 gr.Markdown("## AllTalk TTS V2")
                 gr.Markdown("")
@@ -3133,7 +3267,8 @@ if gradio_enabled is True:
                     update_btn = gr.Button(
                         "Click here to hide welcome screen on the next startup"
                     )
-                    update_btn.click(fn=modify_config, inputs=None, outputs=None)
+                    update_btn.click(fn=modify_config,
+                                     inputs=None, outputs=None)
             with gr.Tab("Generate TTS"):
                 with gr.Row():
                     gen_text = gr.Textbox(label="Text Input", lines=6)
@@ -3276,12 +3411,14 @@ if gradio_enabled is True:
                         rvcgen_char.change(
                             fn=update_visibility,
                             inputs=[rvcgen_char, rvcgen_narr],
-                            outputs=[rvcat_default_pitch_gr, rvcat_narrator_pitch_gr],
+                            outputs=[rvcat_default_pitch_gr,
+                                     rvcat_narrator_pitch_gr],
                         )
                         rvcgen_narr.change(
                             fn=update_visibility,
                             inputs=[rvcgen_char, rvcgen_narr],
-                            outputs=[rvcat_default_pitch_gr, rvcat_narrator_pitch_gr],
+                            outputs=[rvcat_default_pitch_gr,
+                                     rvcat_narrator_pitch_gr],
                         )
 
                 with gr.Accordion("Advanced Engine/Model Settings", open=False):
@@ -3460,9 +3597,11 @@ if gradio_enabled is True:
                         autoplay=True,
                         scale=3,
                     )
-                    output_message = gr.Textbox(label="Status/Result", lines=5, scale=1)
+                    output_message = gr.Textbox(
+                        label="Status/Result", lines=5, scale=1)
                 with gr.Row():
-                    dark_mode_btn = gr.Button("Light/Dark Mode", variant="primary")
+                    dark_mode_btn = gr.Button(
+                        "Light/Dark Mode", variant="primary")
                     refresh_button = gr.Button(
                         "Refresh Server Settings", elem_id="refresh_button"
                     )
@@ -3527,7 +3666,7 @@ if gradio_enabled is True:
                     at_update_dropdowns,
                     None,
                     [gen_stream, gen_char, rvcgen_char, gen_narr, rvcgen_narr, gen_speed, gen_pitch,
-                    gen_temperature, gen_repetition, gen_lang, model_choices_gr, engine_choices],
+                     gen_temperature, gen_repetition, gen_lang, model_choices_gr, engine_choices],
                 )
                 stop_button.click(
                     stop_generate_tts, inputs=[], outputs=[output_message]
@@ -3704,13 +3843,13 @@ if gradio_enabled is True:
                                 )
                                 model_choices = gr.Dropdown(
                                     choices=[
-                                    "tiny",
-                                    "base",
-                                    "small",
-                                    "medium",
-                                    "turbo",
-                                    "large-v3",
-                                    "large-v3-turbo",
+                                        "tiny",
+                                        "base",
+                                        "small",
+                                        "medium",
+                                        "turbo",
+                                        "large-v3",
+                                        "large-v3-turbo",
                                     ],
                                     value="turbo",
                                     label="Whisper Model Size",
@@ -3724,7 +3863,8 @@ if gradio_enabled is True:
                                 )
                             with gr.Row():
                                 delete_btn = gr.Button("Delete Uploaded Audio")
-                                process_btn = gr.Button("Transcribe", variant="primary")
+                                process_btn = gr.Button(
+                                    "Transcribe", variant="primary")
                             with gr.Row():
                                 status_output = gr.Textbox(
                                     label="Processing Status", lines=2
@@ -3778,7 +3918,8 @@ if gradio_enabled is True:
                     )
                 )
                 # Reverse the dictionary for lookups (Full Name -> Code)
-                name_to_code = {name: code for code, name in sorted_languages.items()}
+                name_to_code = {name: code for code,
+                                name in sorted_languages.items()}
 
                 def process_language(language_name):
                     # Convert selected language name back to its 2-digit code
@@ -3821,7 +3962,8 @@ if gradio_enabled is True:
                         scale=2,
                     )
                     start_btn = gr.Button("Load Model", variant="primary")
-                    finish_btn = gr.Button("Finish & Unload", interactive=False)
+                    finish_btn = gr.Button(
+                        "Finish & Unload", interactive=False)
 
                 with gr.Accordion(
                     "Advanced Settings (Change Before Loading The Model)", open=False
@@ -3879,7 +4021,8 @@ if gradio_enabled is True:
                                 return (
                                     gr.update(value=main_enable),  # bandpass
                                     gr.update(value=main_enable),  # noise
-                                    gr.update(value=main_enable),  # compression
+                                    # compression
+                                    gr.update(value=main_enable),
                                     state_dict,
                                 )
                             return (
@@ -3893,7 +4036,8 @@ if gradio_enabled is True:
                             """Main should only be checked if all individuals are checked"""
                             if not state_dict["processing"]:
                                 state_dict["processing"] = True
-                                ret = gr.update(value=all([bandpass, noise, compress]))
+                                ret = gr.update(
+                                    value=all([bandpass, noise, compress]))
                                 state_dict["processing"] = False
                                 return ret, state_dict
                             return gr.update(), state_dict
@@ -3919,7 +4063,8 @@ if gradio_enabled is True:
                                     compression,
                                     checkbox_state,
                                 ],
-                                outputs=[enable_audio_processing, checkbox_state],
+                                outputs=[enable_audio_processing,
+                                         checkbox_state],
                             )
 
                     with gr.Row():
@@ -3997,12 +4142,14 @@ if gradio_enabled is True:
                         bandpass_low,
                         bandpass_high,
                     ],
-                    outputs=[state, text_output, dictate_audio, start_btn, finish_btn],
+                    outputs=[state, text_output,
+                             dictate_audio, start_btn, finish_btn],
                 )
 
                 finish_btn.click(
                     fn=finish_dictation,
-                    inputs=[state, dictate_audio, text_output, audio_plot],  # Pass the actual components
+                    inputs=[state, dictate_audio, text_output,
+                            audio_plot],  # Pass the actual components
                     outputs=[
                         state,               # Update the state
                         text_output,         # Update the transcription text output
@@ -4010,7 +4157,6 @@ if gradio_enabled is True:
                         finish_btn,          # Update the finish button
                     ],
                 )
-
 
                 def on_start_recording(state):
                     if state and state.get("is_active"):
@@ -4023,7 +4169,6 @@ if gradio_enabled is True:
                         print_message("Recording stopped", "debug_transcribe")
                         state["is_recording"] = False
                     return state
-
 
                 dictate_audio.start_recording(
                     fn=on_start_recording, inputs=[state], outputs=[state]
@@ -4145,7 +4290,8 @@ if gradio_enabled is True:
                             themes_select.change(
                                 fn=update_theme_selection,
                                 inputs=[themes_select],
-                                outputs=[gr.Textbox(label="Gradio Selection Result")],
+                                outputs=[gr.Textbox(
+                                    label="Gradio Selection Result")],
                             )
                     with gr.Row():
                         with gr.Column():
@@ -4157,7 +4303,8 @@ if gradio_enabled is True:
                         with gr.Column():
                             # pylint: disable=line-too-long
                             gradio_interface = gr.Dropdown(
-                                choices={"Enabled": "true", "Disabled": "false"},
+                                choices={"Enabled": "true",
+                                         "Disabled": "false"},
                                 label="Gradio Interface",
                                 value=(
                                     "Enabled" if config.gradio_interface else "Disabled"
@@ -4270,7 +4417,8 @@ if gradio_enabled is True:
                                         minimum=1,
                                         maximum=20,
                                         step=1,
-                                        value=int(config.api_def.api_length_stripping),
+                                        value=int(
+                                            config.api_def.api_length_stripping),
                                         scale=2,
                                         label="Minimum Sentence Length",
                                     )
@@ -4278,7 +4426,8 @@ if gradio_enabled is True:
                                         minimum=50,
                                         maximum=10000,
                                         step=50,
-                                        value=int(config.api_def.api_max_characters),
+                                        value=int(
+                                            config.api_def.api_max_characters),
                                         scale=2,
                                         label="Maximum Request Characters",
                                     )
@@ -4337,7 +4486,8 @@ if gradio_enabled is True:
                                         ),
                                     )
                                     api_text_not_inside = gr.Dropdown(
-                                        choices=["character", "narrator", "silent"],
+                                        choices=["character",
+                                                 "narrator", "silent"],
                                         label="Text-Not-Inside Handling",
                                         allow_custom_value=True,
                                         value=config.api_def.api_text_not_inside,
@@ -4363,7 +4513,8 @@ if gradio_enabled is True:
                                         ),
                                     )
                                     api_autoplay = gr.Dropdown(
-                                        choices=["Play locally", "Play remotely"],
+                                        choices=["Play locally",
+                                                 "Play remotely"],
                                         label="Playback Location",
                                         allow_custom_value=True,
                                         value=(
@@ -4377,7 +4528,8 @@ if gradio_enabled is True:
                                         maximum=0.9,
                                         step=0.1,
                                         label="Remote Playback Volume",
-                                        value=float(config.api_def.api_autoplay_volume),
+                                        value=float(
+                                            config.api_def.api_autoplay_volume),
                                     )
                     with gr.Row():
                         with gr.Column(scale=2):
@@ -4395,7 +4547,8 @@ if gradio_enabled is True:
                                         output_message = gr.Textbox(
                                             label="Status", interactive=False
                                         )
-                                        submit_button = gr.Button("Update Settings")
+                                        submit_button = gr.Button(
+                                            "Update Settings")
                     # Help Accordions
                     with gr.Accordion("HELP - 🎯 Quick Start Guide", open=False):
                         gr.Markdown(
@@ -4488,8 +4641,10 @@ if gradio_enabled is True:
                             current_narr = current_voices[0] if current_voices else ""
 
                         return (
-                            gr.Dropdown(choices=current_voices, value=current_char, interactive=True),
-                            gr.Dropdown(choices=current_voices, value=current_narr, interactive=True)
+                            gr.Dropdown(choices=current_voices,
+                                        value=current_char, interactive=True),
+                            gr.Dropdown(choices=current_voices,
+                                        value=current_narr, interactive=True)
                         )
 
                 def gr_update_rvc_settings(
@@ -4571,7 +4726,8 @@ if gradio_enabled is True:
                                     value=rvc_narr_model_file_default,
                                     allow_custom_value=True,
                                 )
-                                rvc_refresh_button = gr.Button("Refresh Model Choices")
+                                rvc_refresh_button = gr.Button(
+                                    "Refresh Model Choices")
                         with gr.Column(scale=0):
                             # pylint: disable=line-too-long
                             rvc_enabled = gr.Checkbox(
@@ -4748,7 +4904,8 @@ if gradio_enabled is True:
                             )
 
                 with gr.Tab("SSL Proxy Server"):
-                    _proxy_interface = create_proxy_interface(_state['proxy_manager'])
+                    _proxy_interface = create_proxy_interface(
+                        _state['proxy_manager'])
                     with gr.Accordion("HELP - 🎯 Proxy Quick Start Guide", open=False):
                         gr.Markdown(
                             AllTalkHelpContent.PROXY, elem_classes="custom-markdown"
@@ -4761,7 +4918,7 @@ if gradio_enabled is True:
                             gr.Markdown(
                                 AllTalkHelpContent.PROXY2,
                                 elem_classes="custom-markdown",
-                            )   
+                            )
 
                 with gr.Tab("Text-generation-webui Settings"):
                     with gr.Row():
@@ -4838,7 +4995,7 @@ if gradio_enabled is True:
                     )
 
                 disk_space_page = get_disk_interface()
-                disk_space_page()                           
+                disk_space_page()
 
             if config.gradio_pages.TTS_Engines_Settings_page:
                 with gr.Tab("TTS Engines Settings"):
@@ -4856,12 +5013,14 @@ if gradio_enabled is True:
                             module = dynamic_import(module_name, base_package)
                             if module:
                                 with gr.Tab(f"{engine_name.capitalize()} TTS"):
-                                    gr.Markdown(f"### &nbsp;&nbsp;{engine_name.capitalize()} TTS")
+                                    gr.Markdown(
+                                        f"### &nbsp;&nbsp;{engine_name.capitalize()} TTS")
                                     getattr(
                                         module,
                                         f"{engine_name}_at_gradio_settings_page"
                                     )(
-                                        globals()[f"{engine_name}_model_config_data"]
+                                        globals()[
+                                            f"{engine_name}_model_config_data"]
                                     )
 
             if config.gradio_pages.alltalk_documentation_page:
@@ -4948,7 +5107,8 @@ if gradio_enabled is True:
 #########################################
 # START-UP # Final Splash before Gradio #
 #########################################
-print_message("Please use \033[91mCtrl+C\033[0m when exiting AllTalk otherwise a")
+print_message(
+    "Please use \033[91mCtrl+C\033[0m when exiting AllTalk otherwise a")
 print_message("subprocess may continue running in the background.")
 print_message("")
 print_message("Server Ready")

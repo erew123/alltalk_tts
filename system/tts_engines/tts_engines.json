@@ -1,6 +1,4 @@
 {
-    "engine_loaded": "piper",
-    "selected_model": "piper",
     "engines_available": [
         {
             "name": "parler",
@@ -22,5 +20,7 @@
             "name": "f5tts",
             "selected_model": "f5tts - f5tts_v1"
         }
-    ]
+    ],
+    "engine_loaded": "xtts",
+    "selected_model": "xtts - xttsv2_2.0.3"
 }
