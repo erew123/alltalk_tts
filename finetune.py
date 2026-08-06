@@ -3956,6 +3956,9 @@ if __name__ == "__main__":
                             "I cannot find any mp3, wav or flac files in the folder called 'put-voice-samples-in-here'",
                             "",
                             "",
+                            "",
+                            "",
+                            "",
                         )
 
                     try:
@@ -3980,6 +3983,9 @@ if __name__ == "__main__":
                             f"The data processing was interrupted due to an error!! Please check the console to verify the full error message! \n Error summary: {pd_error}",
                             "",
                             "",
+                            "",
+                            "",
+                            "",
                         )
 
                     clear_gpu_cache()
@@ -3993,7 +3999,7 @@ if __name__ == "__main__":
                             pd_message,
                             level="DATA_PROCESS",
                             is_warning=True)
-                        return pd_message, "", ""
+                        return pd_message, "", "", "", "", ""
 
                     # Final GPU cleanup
                     get_gpu_memory()
