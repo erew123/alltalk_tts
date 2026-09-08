@@ -1,0 +1,10 @@
+# Qwen3-TTS engine dependencies
+#
+# INSTALL STEPS:
+#   pip install -r system/tts_engines/qwen3tts/requirements.txt
+#
+# The engine will also auto-install qwen-tts on first model load if it's missing.
+
+qwen-tts
+soundfile
+requests

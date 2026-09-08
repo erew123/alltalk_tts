@@ -81,7 +81,8 @@ else:
                     if os.path.exists(out_file_path):
                         continue
 
-                    feats = read_wave(wav_file_path, normalize=saved_cfg.task.normalize)
+                    cfg_normalize = getattr(getattr(saved_cfg, "task", None), "normalize", False) if not isinstance(saved_cfg, dict) else False
+                    feats = read_wave(wav_file_path, normalize=cfg_normalize)
                     padding_mask = torch.BoolTensor(feats.shape).fill_(False)
                     inputs = {
                         "source": feats.to(device),

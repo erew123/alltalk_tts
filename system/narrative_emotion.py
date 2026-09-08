@@ -135,6 +135,39 @@ class NarrativeEmotionDetector:
         '<laugh>', '<chuckle>', '<sigh>', '<cough>', '<sniffle>', '<groan>', '<yawn>', '<gasp>'
     }
 
+    # Voxtral TTS emotion-to-voice-style mapping
+    # Voxtral handles emotion via reference audio steering, not text tags.
+    # This maps detected emotions to the most expressive preset voice style.
+    # The mapping returns a preferred voice style suffix; the engine selects
+    # the best matching preset voice (e.g., "cheerful" -> cheerful_female).
+    VOXTRAL_EMOTION_MAP = {
+        'happy': 'cheerful',
+        'joyful': 'cheerful',
+        'excited': 'cheerful',
+        'laughing': 'cheerful',
+        'amused': 'cheerful',
+        'cheerful': 'cheerful',
+        'angry': 'casual',
+        'furious': 'casual',
+        'frustrated': 'casual',
+        'shouting': 'casual',
+        'yelling': 'casual',
+        'sad': 'neutral',
+        'depressed': 'neutral',
+        'sobbing': 'neutral',
+        'crying loudly': 'neutral',
+        'nervous': 'neutral',
+        'anxious': 'neutral',
+        'scared': 'neutral',
+        'whispering': 'neutral',
+        'soft tone': 'neutral',
+        'surprised': 'cheerful',
+        'sarcastic': 'casual',
+        'serious': 'neutral',
+        'confident': 'casual',
+        'neutral': 'neutral',
+    }
+
     def __init__(self, config=None):
         """
         Initialize the detector.
@@ -573,6 +606,57 @@ Answer with just ONE word (the emotion):"""
 
         return results
 
+    def apply_voxtral_voice_emotion(self, current_voice: str, emotions: Set[str]) -> str:
+        """
+        Select an appropriate Voxtral voice style based on detected emotion.
+
+        Voxtral handles emotion via reference audio steering rather than text tags.
+        This method maps detected emotions to the best-matching preset voice style.
+        If the current voice already has the right style, it is returned unchanged.
+
+        Args:
+            current_voice: The current Voxtral voice code (e.g., "neutral_male")
+            emotions: Set of detected emotions
+
+        Returns:
+            The voice code to use (may be different if emotion suggests a style change)
+        """
+        if not emotions or not current_voice:
+            return current_voice
+
+        # Determine the gender from the current voice
+        gender = None
+        if current_voice.endswith('_female'):
+            gender = 'female'
+        elif current_voice.endswith('_male'):
+            gender = 'male'
+        else:
+            # Non-English voices (e.g., fr_female) or unknown format — keep as-is
+            return current_voice
+
+        # Get the preferred style from the first matched emotion
+        preferred_style = None
+        for emotion in emotions:
+            if emotion in self.VOXTRAL_EMOTION_MAP:
+                preferred_style = self.VOXTRAL_EMOTION_MAP[emotion]
+                break
+
+        if not preferred_style:
+            return current_voice
+
+        # Build the target voice code
+        target_voice = f"{preferred_style}_{gender}"
+
+        # Only switch if the target is a valid English preset voice
+        valid_english_voices = {
+            'casual_female', 'casual_male', 'cheerful_female',
+            'neutral_female', 'neutral_male',
+        }
+        if target_voice in valid_english_voices:
+            return target_voice
+
+        return current_voice
+
     def apply_emotions_to_text(
         self,
         text: str,
@@ -585,10 +669,10 @@ Answer with just ONE word (the emotion):"""
         Args:
             text: The text to modify
             emotions: Set of detected emotions
-            engine_type: 'fishspeech', 'orpheus', or 'parler'
+            engine_type: 'fishspeech', 'orpheus', 'voxtral', or 'parler'
 
         Returns:
-            Modified text with emotion markers (Fish Speech/Orpheus) or original text (Parler)
+            Modified text with emotion markers (Fish Speech/Orpheus) or original text (Parler/Voxtral)
         """
         # Use compound emotions if detection_mode is set to 'compound'
         if self.detection_mode == 'compound':
@@ -599,7 +683,7 @@ Answer with just ONE word (the emotion):"""
             return self.apply_fish_speech_markers(text, emotions)
         elif engine_type == 'orpheus':
             return self.apply_orpheus_markers(text, emotions)
-        # For Parler, emotions are applied to voice description, not text
+        # For Voxtral and Parler, emotions are applied to voice selection/description, not text
         return text
 
 

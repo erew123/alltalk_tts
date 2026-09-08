@@ -1,0 +1,20 @@
+{
+    "_comment": "custom_voice_presets are used by CustomVoice models (speaker + instruct + language). voice_design_presets are used by the VoiceDesign model (instruct + language only, no speaker). Both are fully editable from the Custom Voice Presets / Voice Design Presets tabs on this engine's settings page -- this is the 'custom voice properties' system. Base-model voice cloning does not use this file; drop .wav + matching .reference.txt pairs into the voices/ folder instead.",
+    "custom_voice_presets": [
+        {"preset_name": "Vivian", "speaker": "Vivian", "instruct": "", "language": "Auto", "description": "Bright, edgy young female (Chinese)"},
+        {"preset_name": "Serena", "speaker": "Serena", "instruct": "", "language": "Auto", "description": "Warm, gentle young female (Chinese)"},
+        {"preset_name": "Uncle_Fu", "speaker": "Uncle_Fu", "instruct": "", "language": "Auto", "description": "Seasoned male, low mellow timbre (Chinese)"},
+        {"preset_name": "Dylan", "speaker": "Dylan", "instruct": "", "language": "Auto", "description": "Youthful Beijing male (Chinese - Beijing dialect)"},
+        {"preset_name": "Eric", "speaker": "Eric", "instruct": "", "language": "Auto", "description": "Lively Chengdu male (Chinese - Sichuan dialect)"},
+        {"preset_name": "Ryan", "speaker": "Ryan", "instruct": "", "language": "Auto", "description": "Dynamic male, strong rhythm (English)"},
+        {"preset_name": "Aiden", "speaker": "Aiden", "instruct": "", "language": "Auto", "description": "Sunny American male (English)"},
+        {"preset_name": "Ono_Anna", "speaker": "Ono_Anna", "instruct": "", "language": "Auto", "description": "Playful Japanese female (Japanese)"},
+        {"preset_name": "Sohee", "speaker": "Sohee", "instruct": "", "language": "Auto", "description": "Warm Korean female (Korean)"},
+        {"preset_name": "Ryan_Angry", "speaker": "Ryan", "instruct": "Speak with sharp, furious anger.", "language": "Auto", "description": "Example custom voice property: Ryan, angry"},
+        {"preset_name": "Vivian_Whisper", "speaker": "Vivian", "instruct": "Speak softly, as a hushed whisper.", "language": "Auto", "description": "Example custom voice property: Vivian, whispering"}
+    ],
+    "voice_design_presets": [
+        {"preset_name": "Bright_Assistant", "instruct": "A bright, friendly female assistant voice with a warm, moderate pitch and clear articulation.", "language": "Auto", "description": "Example voice design preset"},
+        {"preset_name": "Deep_Narrator", "instruct": "A deep, calm male narrator voice, slow-paced and authoritative.", "language": "Auto", "description": "Example voice design preset"}
+    ]
+}

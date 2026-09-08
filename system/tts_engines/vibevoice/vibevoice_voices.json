@@ -1,0 +1,14 @@
+{
+  "_comment": "Voices are auto-discovered from the voices/ subdirectory at runtime — any .wav file in that folder becomes a usable voice. This file is only a curated descriptions list for the Voice Browser; deleting/adding entries here does not affect what voices are usable.",
+  "voices": [
+    {"voice_name": "EN - Carter (man)", "voice_code": "en-Carter_man", "language": "en", "gender": "male", "style": "narration", "description": "English male, clear narration timbre. Default character voice."},
+    {"voice_name": "EN - Alice (woman)", "voice_code": "en-Alice_woman", "language": "en", "gender": "female", "style": "narration", "description": "English female, warm narration timbre. Default narrator voice."},
+    {"voice_name": "EN - Frank (man)", "voice_code": "en-Frank_man", "language": "en", "gender": "male", "style": "conversational", "description": "English male, conversational tone."},
+    {"voice_name": "EN - Maya (woman)", "voice_code": "en-Maya_woman", "language": "en", "gender": "female", "style": "conversational", "description": "English female, conversational tone."},
+    {"voice_name": "EN - Mary (woman, bgm)", "voice_code": "en-Mary_woman_bgm", "language": "en", "gender": "female", "style": "musical", "description": "English female with background music — expressive/singing capable."},
+    {"voice_name": "IN - Samuel (man)", "voice_code": "in-Samuel_man", "language": "in", "gender": "male", "style": "narration", "description": "Indian-accented English male."},
+    {"voice_name": "ZH - Anchen (man, bgm)", "voice_code": "zh-Anchen_man_bgm", "language": "zh", "gender": "male", "style": "musical", "description": "Mandarin Chinese male with background music."},
+    {"voice_name": "ZH - Bowen (man)", "voice_code": "zh-Bowen_man", "language": "zh", "gender": "male", "style": "narration", "description": "Mandarin Chinese male."},
+    {"voice_name": "ZH - Xinran (woman)", "voice_code": "zh-Xinran_woman", "language": "zh", "gender": "female", "style": "narration", "description": "Mandarin Chinese female."}
+  ]
+}

@@ -97,6 +97,7 @@ class VC(object):
         self.t_center = self.sr * self.x_center
         self.t_max = self.sr * self.x_max
         self.device = config.device
+        self.synth_device = getattr(config, "synth_device", config.device)
         self.ref_freqs = [
             65.41,
             82.41,
@@ -461,14 +462,11 @@ class VC(object):
         #print(f"inputs source device: {inputs['source'].device}")
         #print(f"output_layer: {inputs['output_layer']}")
         t0 = ttime()
-        #print("Pipeline vc STEP 1:")
         with torch.no_grad():
             logits = model.extract_features(**inputs)
-            #print(f"logits type: {type(logits)}")
-            #print(f"logits length: {len(logits)}")
-            #print(f"logits[0] shape: {logits[0].shape}")
             feats = model.final_proj(logits[0]) if self.__version == "v1" else logits[0]
-            #print(f"feats shape after final_proj or logits[0]: {feats.shape}")
+        _t_hubert = ttime()
+        print(f"[RVC Profile] HuBERT extract_features: {_t_hubert - t0:.3f}s")
         #print("Pipeline vc STEP 1a:")
         if protect < 0.5 and pitch is not None and pitchf is not None:
             #print("Cloning feats to feats0")
@@ -548,27 +546,27 @@ class VC(object):
         #print(f"p_len tensor: {p_len}")
         #print(f"p_len device: {p_len.device}")
         #print("Pipeline vc p_len is:", p_len)
+        # Move tensors to synth_device (MPS on Apple Silicon, CUDA on Nvidia)
+        sd = self.synth_device
+        _t_synth_start = ttime()
         with torch.no_grad():
             if pitch is not None and pitchf is not None:
                 audio1 = (
-                    (self.__net_g.infer(feats, p_len, pitch, pitchf, sid)[0][0, 0])
+                    (self.__net_g.infer(feats.to(sd), p_len.to(sd), pitch.to(sd), pitchf.to(sd), sid.to(sd))[0][0, 0])
                     .data.cpu()
                     .float()
                     .numpy()
                 )
             else:
                 audio1 = (
-                    (self.__net_g.infer(feats, p_len, sid)[0][0, 0]).data.cpu().float().numpy()
+                    (self.__net_g.infer(feats.to(sd), p_len.to(sd), sid.to(sd))[0][0, 0]).data.cpu().float().numpy()
                 )
-        #print(f"audio1 shape: {audio1.shape}")
         del feats, p_len, padding_mask
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         t2 = ttime()
-        #print(f"Pipeline vc time breakdown:")
-        #print(f"  Step 1: {t1 - t0:.3f}s")
-        #print(f"  Step 2: {t2 - t1:.3f}s")
-        #print(f"  Total: {t2 - t0:.3f}s")
+        print(f"[RVC Profile] Synthesis (net_g.infer): {t2 - _t_synth_start:.3f}s")
+        print(f"[RVC Profile] vc() total: {t2 - t0:.3f}s")
         #print("Leaving pipeline vc")
         return audio1
 
@@ -636,6 +634,7 @@ class VC(object):
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = None, None
         if self.__if_f0 == 1:
+            _t_f0_start = ttime()
             pitch, pitchf = self.get_f0(
                 input_audio_path,
                 audio_pad,
@@ -647,6 +646,8 @@ class VC(object):
                 f0autotune,
                 inp_f0,
             )
+            _t_f0_end = ttime()
+            print(f"[RVC Profile] F0 extraction ({f0_method}): {_t_f0_end - _t_f0_start:.3f}s")
             pitch = pitch[:p_len]
             pitchf = pitchf[:p_len]
             if self.device == "mps":

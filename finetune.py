@@ -2,6 +2,17 @@
 XTTS finetune module for training and customizing text-to-speech models. 
 Provides functionality for dataset creation, model training, and inference.
 """
+# Disable third-party telemetry before any imports
+import os
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"          # Hugging Face Hub
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"  # Transformers advisory warnings
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"        # Gradio analytics
+os.environ["TRAINER_TELEMETRY"] = "0"                   # Coqui Trainer
+os.environ["DO_NOT_TRACK"] = "1"                        # General opt-out (consort.dev standard)
+os.environ["ACCELERATE_DISABLE_TELEMETRY"] = "1"        # HuggingFace Accelerate
+os.environ["DIFFUSERS_NO_ADVISORY_WARNINGS"] = "1"      # Diffusers advisory warnings
+os.environ["BITSANDBYTES_NOWELCOME"] = "1"              # bitsandbytes welcome message/telemetry
+
 # Standard Library Imports
 import argparse
 import datetime
@@ -66,9 +77,6 @@ warnings.filterwarnings(
     "ignore",
     message="Failed to launch Triton kernels, likely due to missing CUDA toolkit")
 
-# Disable Gradio Analytics
-os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
-
 # Try to Import Whisper, Install if Not Found
 try:
     import whisper
@@ -100,8 +108,6 @@ theme = gr.themes.Default()
 gradio_temp_dir = this_dir / "finetune" / "gradio_temp"
 os.environ["GRADIO_TEMP_DIR"] = str(gradio_temp_dir)
 
-# Environment Variables
-os.environ["TRAINER_TELEMETRY"] = "0"
 out_path = default_path
 
 # Progress Tracking

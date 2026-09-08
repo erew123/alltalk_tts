@@ -35,8 +35,17 @@ being offered on MEM.
 For the latest updates and documentation, please visit:
 https://github.com/erew123/alltalk_tts
 """
-
+# Disable third-party telemetry before any imports
 import os
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"          # Hugging Face Hub
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"  # Transformers advisory warnings
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"        # Gradio analytics
+os.environ["TRAINER_TELEMETRY"] = "0"                   # Coqui Trainer
+os.environ["DO_NOT_TRACK"] = "1"                        # General opt-out (consort.dev standard)
+os.environ["ACCELERATE_DISABLE_TELEMETRY"] = "1"        # HuggingFace Accelerate
+os.environ["DIFFUSERS_NO_ADVISORY_WARNINGS"] = "1"      # Diffusers advisory warnings
+os.environ["BITSANDBYTES_NOWELCOME"] = "1"              # bitsandbytes welcome message/telemetry
+
 import io
 import sys
 import time

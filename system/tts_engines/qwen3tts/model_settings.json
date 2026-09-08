@@ -1,0 +1,51 @@
+{
+    "model_details": {
+        "manufacturer_name": "Alibaba Cloud (Qwen Team)",
+        "manufacturer_website": "https://github.com/QwenLM/Qwen3-TTS",
+        "model_description": "Qwen3-TTS is Alibaba's open-source text-to-speech series, available in 0.6B and 1.7B '12Hz' checkpoints across three variants: CustomVoice (built-in speakers steered by a natural-language 'instruct' property for emotion/style), VoiceDesign (free-form natural-language voice descriptions, 1.7B only), and Base (3-second reference-audio voice cloning). CustomVoice/VoiceDesign 'voices' are configurable Custom Voice Presets (speaker + instruct + language) editable from this settings page. Base-model voice cloning uses .wav + matching .reference.txt pairs dropped into the engine's voices folder. Requires the 'qwen-tts' pip package. Output is mono WAV."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": false,
+        "languages_capable": true,
+        "lowvram_capable": false,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": false,
+        "streaming_capable": false,
+        "temperature_capable": false,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "Vivian",
+        "def_narrator_voice": "Serena",
+        "deepspeed_enabled": false,
+        "engine_installed": false,
+        "generationspeed_set": 1.0,
+        "lowvram_enabled": false,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 10,
+        "temperature_set": 0.75,
+        "device": "auto",
+        "attn_implementation": "auto",
+        "model_variant": "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+        "default_language": "Auto",
+        "backend_type": "local",
+        "api_url": "http://localhost:8100",
+        "api_key": "",
+        "api_response_format": "wav",
+        "api_timeout": 120
+    },
+    "openai_voices": {
+        "alloy": "Ryan",
+        "echo": "Aiden",
+        "fable": "Uncle_Fu",
+        "nova": "Serena",
+        "onyx": "Dylan",
+        "shimmer": "Vivian"
+    }
+}

@@ -7,6 +7,17 @@ It supports features like streaming, file format transcoding, and real-time conf
 
 Github: https://github.com/erew123/
 """
+# Disable third-party telemetry before any imports
+import os
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"          # Hugging Face Hub
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"  # Transformers advisory warnings
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"        # Gradio analytics
+os.environ["TRAINER_TELEMETRY"] = "0"                   # Coqui Trainer
+os.environ["DO_NOT_TRACK"] = "1"                        # General opt-out (consort.dev standard)
+os.environ["ACCELERATE_DISABLE_TELEMETRY"] = "1"        # HuggingFace Accelerate
+os.environ["DIFFUSERS_NO_ADVISORY_WARNINGS"] = "1"      # Diffusers advisory warnings
+os.environ["BITSANDBYTES_NOWELCOME"] = "1"              # bitsandbytes welcome message/telemetry
+
 import warnings
 from contextlib import asynccontextmanager
 import argparse
@@ -238,7 +249,7 @@ model_change_lock = Lock()
 ##############################
 # API Endpoint - /api/reload #
 ##############################
-@app.route("/api/reload", methods=["POST"])
+@app.post("/api/reload")
 async def apifunction_reload(request: Request):
     """Handle API request to change TTS model."""
     debug_func_entry()
@@ -1427,21 +1438,23 @@ def standard_filtering(text_input):
 #################################################################
 # /api/tts-generate Generation API Endpoint Narration Combining #
 #################################################################
-def combine(output_file_timestamp, output_file_name, audio_files, target_sample_rate=44100, delete_originals=True):
+def combine(output_file_timestamp, output_file_name, audio_files, target_sample_rate=44100, delete_originals=True, inter_segment_gap_seconds=0.25):
     """
     Combine multiple audio files into one, with optional resampling and timestamping.
-    
+
     Args:
         output_file_timestamp (bool): Whether to add timestamp to output filename
         output_file_name (str): Base name for output file
         audio_files (list): List of audio files to combine
         target_sample_rate (int, optional): Target sample rate for output. Defaults to 44100.
         delete_originals (bool, optional): Whether to delete original files after combining. Defaults to False.
+        inter_segment_gap_seconds (float, optional): Silence inserted between consecutive segments. Defaults to 0.25s.
     """
     debug_func_entry()
 
     audio = np.array([])
     processed_files = []  # Keep track of successfully processed files
+    gap_samples = max(0, int(target_sample_rate * inter_segment_gap_seconds))
 
     try:
         for audio_file in audio_files:
@@ -1460,7 +1473,15 @@ def combine(output_file_timestamp, output_file_name, audio_files, target_sample_
                 print_message(f"Resampling file from {current_sample_rate} to {target_sample_rate} Hz", "debug_concat", "TTS")
                 audio_data = librosa.resample(audio_data, orig_sr=current_sample_rate, target_sr=target_sample_rate)
 
-            audio = audio_data if audio.size == 0 else np.concatenate((audio, audio_data))
+            if audio.size == 0:
+                audio = audio_data
+            else:
+                if gap_samples > 0:
+                    silence_shape = (gap_samples,) if audio_data.ndim == 1 else (gap_samples, audio_data.shape[1])
+                    silence = np.zeros(silence_shape, dtype=audio_data.dtype)
+                    audio = np.concatenate((audio, silence, audio_data))
+                else:
+                    audio = np.concatenate((audio, audio_data))
             processed_files.append(normalized_audio_file)  # Add to processed files list
 
         # Prepare output paths
@@ -1960,6 +1981,8 @@ async def tts_process_narrator_mode(params: dict, text_input: str) -> Tuple[Path
             engine_type = 'orpheus'
         elif 'parler' in engine_loaded:
             engine_type = 'parler'
+        elif 'voxtral' in engine_loaded:
+            engine_type = 'voxtral'
         else:
             engine_type = 'other'
         processed_parts = emotion_detector.process_segments(processed_parts, engine_type)
@@ -1982,12 +2005,24 @@ async def tts_process_narrator_mode(params: dict, text_input: str) -> Tuple[Path
         if not voice_to_use:
             continue
 
-        # Apply emotions to text for Fish Speech engine
+        # Apply emotions to text or voice for supported engines
         text_to_generate = part
         if emotions and emotion_detector:
-            engine_type = 'fishspeech' if 'fishspeech' in tts_engines_config.engine_loaded else 'other'
+            engine_loaded_lower = tts_engines_config.engine_loaded.lower()
+            if 'fishspeech' in engine_loaded_lower:
+                engine_type = 'fishspeech'
+            elif 'orpheus' in engine_loaded_lower:
+                engine_type = 'orpheus'
+            elif 'voxtral' in engine_loaded_lower:
+                engine_type = 'voxtral'
+            else:
+                engine_type = 'other'
             text_to_generate = emotion_detector.apply_emotions_to_text(part, emotions, engine_type)
-            if text_to_generate != part:
+            # For Voxtral, apply emotion to voice selection instead of text
+            if engine_type == 'voxtral':
+                voice_to_use = emotion_detector.apply_voxtral_voice_emotion(voice_to_use, emotions)
+                print_message(f"Voxtral emotion voice: {voice_to_use} (emotions: {emotions})", "debug_tts", "GEN")
+            elif text_to_generate != part:
                 print_message(f"Applied emotions {emotions} to text", "debug_tts", "GEN")
 
         output_file = await tts_generate_part(text_to_generate, voice_to_use, params, emotions if emotion_detector else None)
@@ -2108,7 +2143,7 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
 
     cleaned_text = tts_clean_text(text_input, params['text_filtering'])
 
-    # Apply narrative emotion detection if enabled (for Fish Speech or Orpheus)
+    # Apply narrative emotion detection if enabled (for Fish Speech, Orpheus, or Voxtral)
     if config.narrative_emotion.enabled:
         engine_loaded = tts_engines_config.engine_loaded.lower()
         engine_type = None
@@ -2116,13 +2151,20 @@ async def tts_process_standard_mode(params: dict, text_input: str) -> Union[Stre
             engine_type = 'fishspeech'
         elif 'orpheus' in engine_loaded:
             engine_type = 'orpheus'
+        elif 'voxtral' in engine_loaded:
+            engine_type = 'voxtral'
 
         if engine_type:
             emotion_detector = NarrativeEmotionDetector(config)
             emotions = emotion_detector.detect_emotions(cleaned_text)
             if emotions:
                 cleaned_text = emotion_detector.apply_emotions_to_text(cleaned_text, emotions, engine_type)
-                print_message(f"Applied emotions {emotions} to text (engine: {engine_type})", "debug_tts", "GEN")
+                # For Voxtral, apply emotion to voice selection instead of text
+                if engine_type == 'voxtral':
+                    params['character_voice_gen'] = emotion_detector.apply_voxtral_voice_emotion(params['character_voice_gen'], emotions)
+                    print_message(f"Voxtral emotion voice: {params['character_voice_gen']} (emotions: {emotions})", "debug_tts", "GEN")
+                else:
+                    print_message(f"Applied emotions {emotions} to text (engine: {engine_type})", "debug_tts", "GEN")
 
     if config.debugging.debug_fullttstext:
         print_message(cleaned_text, component="TTS")
@@ -2195,10 +2237,15 @@ async def tts_finalize_output(audio_files: List[Path], params: dict) -> Tuple[Pa
     """Combine audio files and handle final processing."""
     debug_func_entry()
 
+    try:
+        gap_seconds = float(getattr(config.api_def, 'api_inter_segment_gap_seconds', 0.25))
+    except (TypeError, ValueError):
+        gap_seconds = 0.25
     output_file_path, output_file_url, output_cache_url = combine(
         params['output_file_timestamp'],
         params['output_file_name'],
-        audio_files
+        audio_files,
+        inter_segment_gap_seconds=gap_seconds,
     )
 
     model_format = str(model_engine.audio_format).lower()

@@ -4,6 +4,7 @@ import time
 import torch
 import logging
 import faiss
+faiss.omp_set_num_threads(1)  # Prevent FAISS segfault on macOS ARM64
 import numpy as np
 import soundfile as sf
 import librosa
@@ -34,7 +35,11 @@ config = Config()
 
 @lru_cache
 def load_hubert(embedder_model):
+    from time import time as _t
+    _t0 = _t()
     models, _, _ = load_embedding(embedder_model)
+    _t1 = _t()
+    print(f"[RVC Profile] load_embedding: {_t1 - _t0:.3f}s")
     hubert_model = models[0]
     hubert_model = hubert_model.to(config.device)
     if config.is_half:
@@ -42,6 +47,7 @@ def load_hubert(embedder_model):
     else:
         hubert_model = hubert_model.float()
     hubert_model.eval()
+    print(f"[RVC Profile] HuBERT model ready on {config.device}: {_t() - _t0:.3f}s")
     return hubert_model
 
 def voice_conversion(
@@ -214,7 +220,7 @@ def get_vc(weight_root, sid, file_index=None, training_data_size=10000, debug_rv
         else:
             net_g = SynthesizerTrnMs768NSFsid_nono(*cpt["config"])
     net_g.load_state_dict(cpt["weight"], strict=False)
-    net_g.eval().to(config.device)
+    net_g.eval().to(getattr(config, "synth_device", config.device))
     if config.is_half:
         net_g = net_g.half()
     else:

@@ -1,0 +1,24 @@
+{
+  "voices": [
+    {"voice_name": "EN - Casual Female", "voice_code": "casual_female", "language": "en", "gender": "female", "style": "casual", "description": "English casual female voice"},
+    {"voice_name": "EN - Casual Male", "voice_code": "casual_male", "language": "en", "gender": "male", "style": "casual", "description": "English casual male voice"},
+    {"voice_name": "EN - Cheerful Female", "voice_code": "cheerful_female", "language": "en", "gender": "female", "style": "cheerful", "description": "English cheerful female voice"},
+    {"voice_name": "EN - Neutral Female", "voice_code": "neutral_female", "language": "en", "gender": "female", "style": "neutral", "description": "English neutral female voice"},
+    {"voice_name": "EN - Neutral Male", "voice_code": "neutral_male", "language": "en", "gender": "male", "style": "neutral", "description": "English neutral male voice"},
+    {"voice_name": "FR - Female", "voice_code": "fr_female", "language": "fr", "gender": "female", "style": "neutral", "description": "French female voice"},
+    {"voice_name": "FR - Male", "voice_code": "fr_male", "language": "fr", "gender": "male", "style": "neutral", "description": "French male voice"},
+    {"voice_name": "DE - Female", "voice_code": "de_female", "language": "de", "gender": "female", "style": "neutral", "description": "German female voice"},
+    {"voice_name": "DE - Male", "voice_code": "de_male", "language": "de", "gender": "male", "style": "neutral", "description": "German male voice"},
+    {"voice_name": "ES - Female", "voice_code": "es_female", "language": "es", "gender": "female", "style": "neutral", "description": "Spanish female voice"},
+    {"voice_name": "ES - Male", "voice_code": "es_male", "language": "es", "gender": "male", "style": "neutral", "description": "Spanish male voice"},
+    {"voice_name": "IT - Female", "voice_code": "it_female", "language": "it", "gender": "female", "style": "neutral", "description": "Italian female voice"},
+    {"voice_name": "IT - Male", "voice_code": "it_male", "language": "it", "gender": "male", "style": "neutral", "description": "Italian male voice"},
+    {"voice_name": "PT - Female", "voice_code": "pt_female", "language": "pt", "gender": "female", "style": "neutral", "description": "Portuguese female voice"},
+    {"voice_name": "PT - Male", "voice_code": "pt_male", "language": "pt", "gender": "male", "style": "neutral", "description": "Portuguese male voice"},
+    {"voice_name": "NL - Female", "voice_code": "nl_female", "language": "nl", "gender": "female", "style": "neutral", "description": "Dutch female voice"},
+    {"voice_name": "NL - Male", "voice_code": "nl_male", "language": "nl", "gender": "male", "style": "neutral", "description": "Dutch male voice"},
+    {"voice_name": "AR - Male", "voice_code": "ar_male", "language": "ar", "gender": "male", "style": "neutral", "description": "Arabic male voice"},
+    {"voice_name": "HI - Female", "voice_code": "hi_female", "language": "hi", "gender": "female", "style": "neutral", "description": "Hindi female voice"},
+    {"voice_name": "HI - Male", "voice_code": "hi_male", "language": "hi", "gender": "male", "style": "neutral", "description": "Hindi male voice"}
+  ]
+}

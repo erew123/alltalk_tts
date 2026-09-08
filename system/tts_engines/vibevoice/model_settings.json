@@ -1,0 +1,60 @@
+{
+    "model_details": {
+        "manufacturer_name": "Microsoft (community fork)",
+        "manufacturer_website": "https://github.com/vibevoice-community/VibeVoice",
+        "model_description": "VibeVoice is a long-form, multi-speaker text-to-speech model from Microsoft Research. The 1.5B variant can synthesise up to 90 minutes of conversational speech with up to 4 distinct speakers via 'Speaker N:' scripts and per-speaker WAV reference audio. The original Microsoft repository removed the TTS inference code in Sept 2025; this engine loads the model via the maintained community fork at vibevoice-community/VibeVoice. Output is 24 kHz mono WAV. Apache/MIT licenses for code; Microsoft Research license for weights."
+    },
+    "model_capabilties": {
+        "audio_format": "wav",
+        "deepspeed_capable": false,
+        "generationspeed_capable": false,
+        "languages_capable": true,
+        "lowvram_capable": false,
+        "multimodel_capable": true,
+        "repetitionpenalty_capable": false,
+        "streaming_capable": false,
+        "temperature_capable": false,
+        "multivoice_capable": true,
+        "pitch_capable": false,
+        "windows_capable": true,
+        "linux_capable": true,
+        "mac_capable": true
+    },
+    "settings": {
+        "def_character_voice": "en-Alice_woman",
+        "def_narrator_voice": "en-Alice_woman",
+        "def_character_voice_realtime": "en-Grace_woman",
+        "def_narrator_voice_realtime": "en-Grace_woman",
+        "deepspeed_enabled": false,
+        "engine_installed": false,
+        "generationspeed_set": 1.0,
+        "lowvram_enabled": false,
+        "pitch_set": 0,
+        "repetitionpenalty_set": 10,
+        "temperature_set": 0.75,
+        "cfg_scale": 1.5,
+        "ddpm_inference_steps": 10,
+        "device": "auto",
+        "attn_implementation": "auto",
+        "model_variant": "microsoft/VibeVoice-1.5b",
+        "backend_type": "local",
+        "api_url": "http://localhost:8100",
+        "api_key": "",
+        "api_response_format": "wav",
+        "api_timeout": 120,
+        "speaker_voice_map": {
+            "Speaker 1": "en-Carter_man",
+            "Speaker 2": "en-Alice_woman",
+            "Speaker 3": "en-Frank_man",
+            "Speaker 4": "en-Maya_woman"
+        }
+    },
+    "openai_voices": {
+        "alloy": "en-Carter_man",
+        "echo": "en-Frank_man",
+        "fable": "en-Alice_woman",
+        "nova": "en-Maya_woman",
+        "onyx": "en-Carter_man",
+        "shimmer": "en-Alice_woman"
+    }
+}

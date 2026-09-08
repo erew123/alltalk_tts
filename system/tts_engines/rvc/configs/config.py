@@ -26,6 +26,7 @@ def singleton_variable(func):
 class Config:
     def __init__(self):
         self.device = "cuda:0"
+        self.synth_device = "cuda:0"  # may differ on MPS (synth on CPU)
         self.is_half = True
         self.use_jit = False
         self.n_cpu = 0
@@ -115,13 +116,15 @@ class Config:
                 with open(preprocess_path, "w") as f:
                     f.write(strr)
         elif self.has_mps():
-            print("No supported Nvidia GPU found")
-            self.device = self.instead = "mps"
+            print("No supported Nvidia GPU found, using MPS for synthesis")
+            self.device = self.instead = "cpu"
+            self.synth_device = "mps"
             self.is_half = False
             self.use_fp32_config()
         else:
             print("No supported Nvidia GPU found")
             self.device = self.instead = "cpu"
+            self.synth_device = "cpu"
             self.is_half = False
             self.use_fp32_config()
 

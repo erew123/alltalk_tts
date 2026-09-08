@@ -571,8 +571,6 @@ class GeneratorNSF(torch.nn.Module):
         x = self.conv_pre(x)
         if g is not None:
             x = x + self.cond(g)
-        # torch.jit.script() does not support direct indexing of torch modules
-        # That's why I wrote this
         for i, (ups, noise_convs) in enumerate(zip(self.ups, self.noise_convs)):
             if i < self.num_upsamples:
                 x = F.leaky_relu(x, self.lrelu_slope)

@@ -31,6 +31,18 @@
         {
             "name": "orpheus",
             "selected_model": "orpheus - orpheus-3b-0.1-ft"
+        },
+        {
+            "name": "voxtral",
+            "selected_model": "voxtral - voxtral-tts-2603"
+        },
+        {
+            "name": "vibevoice",
+            "selected_model": "vibevoice - VibeVoice-1.5b"
+        },
+        {
+            "name": "qwen3tts",
+            "selected_model": "qwen3tts - Qwen3-TTS-12Hz-1.7B-CustomVoice"
         }
     ],
     "engine_loaded": "kokoro",

@@ -1,0 +1,372 @@
+#!/bin/bash
+
+ALLTALK_DIR="/Users/adriancurtin/Documents/GitHub/alltalk_tts"
+ALLTALK_PORT=7851
+ALLTALK_URL="http://localhost:$ALLTALK_PORT"
+
+# Conda environment paths
+CONDA_ROOT="${ALLTALK_DIR}/alltalk_environment/conda"
+ENV_DIR="${ALLTALK_DIR}/env"
+
+alltalk_status() {
+    if curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is running on port $ALLTALK_PORT"
+        return 0
+    else
+        echo "AllTalk is not running"
+        return 1
+    fi
+}
+
+alltalk_start() {
+    if curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is already running"
+        return 0
+    fi
+
+    echo "Starting AllTalk..."
+
+    # Check if conda environment exists
+    if [ ! -d "$ENV_DIR" ]; then
+        echo "Error: Conda environment not found at $ENV_DIR"
+        echo "Please run the AllTalk setup first."
+        return 1
+    fi
+
+    # Start in background with conda environment
+    (
+        cd "$ALLTALK_DIR"
+        source "${CONDA_ROOT}/etc/profile.d/conda.sh"
+        conda activate "$ENV_DIR"
+        export PYTHONNOUSERSITE=1
+        unset PYTHONPATH
+        unset PYTHONHOME
+        python tts_server.py > /tmp/alltalk.log 2>&1
+    ) &
+
+    # Wait for startup (up to 60 seconds)
+    echo -n "Waiting for server"
+    for i in {1..60}; do
+        if curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+            echo ""
+            echo "AllTalk started successfully"
+            return 0
+        fi
+        echo -n "."
+        sleep 1
+    done
+
+    echo ""
+    echo "AllTalk failed to start within 60 seconds."
+    echo "Check logs: /tmp/alltalk.log"
+    return 1
+}
+
+alltalk_stop() {
+    PID=$(lsof -ti:$ALLTALK_PORT 2>/dev/null)
+    if [ -z "$PID" ]; then
+        echo "AllTalk is not running"
+        return 0
+    fi
+
+    echo "Stopping AllTalk (PID: $PID)..."
+    kill -9 $PID 2>/dev/null
+    sleep 1
+
+    # Verify stopped
+    if lsof -ti:$ALLTALK_PORT > /dev/null 2>&1; then
+        echo "Failed to stop AllTalk"
+        return 1
+    else
+        echo "AllTalk stopped"
+        return 0
+    fi
+}
+
+alltalk_say() {
+    local text="$1"
+    local voice="$2"
+    local language="${3:-en}"
+    local rvc_voice="${4:-Disabled}"
+
+    if [ -z "$text" ]; then
+        echo "Usage: alltalk say \"text\" [voice] [language] [rvc_voice]"
+        echo ""
+        echo "Examples:"
+        echo "  alltalk say \"Hello world\""
+        echo "  alltalk say \"Hello world\" af_heart"
+        echo "  alltalk say \"Bonjour\" af_heart fr"
+        echo "  alltalk say \"Hello\" af_heart en Female.pth"
+        echo ""
+        echo "Use 'alltalk voices' to list TTS voices"
+        echo "Use 'alltalk rvcvoices' to list RVC voices"
+        return 1
+    fi
+
+    # Check if server is running
+    if ! curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is not running. Start it with: alltalk start"
+        return 1
+    fi
+
+    # If no voice specified, use engine-specific default
+    if [ -z "$voice" ]; then
+        local current_engine=$(curl -s "${ALLTALK_URL}/api/currentsettings" | sed -n 's/.*"current_engine_loaded":"\([^"]*\)".*/\1/p')
+
+        case "$current_engine" in
+            kokoro)
+                voice="af_heart"
+                ;;
+            *)
+                # For other engines, get the first available voice
+                voice=$(curl -s "${ALLTALK_URL}/api/voices" | sed -n 's/.*"voices":\["\([^"]*\)".*/\1/p')
+                ;;
+        esac
+
+        if [ -z "$voice" ]; then
+            echo "Error: Could not determine default voice"
+            return 1
+        fi
+    fi
+
+    # Generate TTS
+    response=$(curl -s -X POST "${ALLTALK_URL}/api/tts-generate" \
+        -F "text_input=$text" \
+        -F "character_voice_gen=$voice" \
+        -F "language=$language" \
+        -F "rvccharacter_voice_gen=$rvc_voice")
+
+    # Check for error
+    if echo "$response" | grep -q "generate-failure"; then
+        echo "Error generating audio: $response"
+        return 1
+    fi
+
+    # Extract audio URL
+    audio_url=$(echo "$response" | sed -n 's/.*"output_file_url":"\([^"]*\)".*/\1/p')
+
+    if [ -z "$audio_url" ]; then
+        echo "Error: Could not extract audio URL from response"
+        echo "Response: $response"
+        return 1
+    fi
+
+    # Download and play
+    tmpfile=$(mktemp /tmp/alltalk_XXXXXX.wav)
+    curl -s "${ALLTALK_URL}${audio_url}" -o "$tmpfile"
+
+    if [ ! -s "$tmpfile" ]; then
+        echo "Error: Downloaded audio file is empty"
+        rm -f "$tmpfile"
+        return 1
+    fi
+
+    afplay "$tmpfile"
+    rm -f "$tmpfile"
+}
+
+alltalk_voices() {
+    # Check if server is running
+    if ! curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is not running. Start it with: alltalk start"
+        return 1
+    fi
+
+    echo "Available voices:"
+    curl -s "${ALLTALK_URL}/api/voices" | sed 's/.*"voices":\[\([^]]*\)\].*/\1/' | tr ',' '\n' | tr -d '"' | sed 's/^/  /'
+}
+
+alltalk_rvcvoices() {
+    # Check if server is running
+    if ! curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is not running. Start it with: alltalk start"
+        return 1
+    fi
+
+    echo "Available RVC voices:"
+    curl -s "${ALLTALK_URL}/api/rvcvoices" | sed 's/.*"rvcvoices":\[\([^]]*\)\].*/\1/' | tr ',' '\n' | tr -d '"' | sed 's/^/  /'
+}
+
+alltalk_cache() {
+    # Check if server is running
+    if ! curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is not running. Start it with: alltalk start"
+        return 1
+    fi
+
+    echo "Pre-caching all voices (this will download voice files from HuggingFace)..."
+    echo ""
+
+    # Get list of voices
+    local voices=$(curl -s "${ALLTALK_URL}/api/voices" | sed 's/.*"voices":\[\([^]]*\)\].*/\1/' | tr -d '"' | tr ',' ' ')
+    local total=$(echo $voices | wc -w | tr -d ' ')
+    local count=0
+
+    for voice in $voices; do
+        count=$((count + 1))
+        echo -n "[$count/$total] Caching $voice... "
+
+        # Generate a short TTS to trigger download (output to /dev/null)
+        response=$(curl -s -X POST "${ALLTALK_URL}/api/tts-generate" \
+            -F "text_input=test" \
+            -F "character_voice_gen=$voice" \
+            -F "language=en")
+
+        if echo "$response" | grep -q "generate-success"; then
+            echo "done"
+        else
+            echo "failed"
+        fi
+    done
+
+    echo ""
+    echo "Voice caching complete."
+}
+
+alltalk_logs() {
+    if [ -f /tmp/alltalk.log ]; then
+        tail -f /tmp/alltalk.log
+    else
+        echo "No log file found at /tmp/alltalk.log"
+        return 1
+    fi
+}
+
+alltalk_engine() {
+    local engine="$1"
+
+    # Check if server is running
+    if ! curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+        echo "AllTalk is not running. Start it with: alltalk start"
+        return 1
+    fi
+
+    # Get current settings
+    local settings=$(curl -s "${ALLTALK_URL}/api/currentsettings")
+    local current=$(echo "$settings" | sed -n 's/.*"current_engine_loaded":"\([^"]*\)".*/\1/p')
+    local available=$(echo "$settings" | sed -n 's/.*"engines_available":\[\([^]]*\)\].*/\1/p' | tr -d '"' | tr ',' ' ')
+
+    # If no engine specified, show current and available
+    if [ -z "$engine" ]; then
+        echo "Current engine: $current"
+        echo ""
+        echo "Available engines:"
+        for eng in $available; do
+            if [ "$eng" = "$current" ]; then
+                echo "  $eng (active)"
+            else
+                echo "  $eng"
+            fi
+        done
+        return 0
+    fi
+
+    # Check if requested engine is available
+    local found=false
+    for eng in $available; do
+        if [ "$eng" = "$engine" ]; then
+            found=true
+            break
+        fi
+    done
+
+    if [ "$found" = false ]; then
+        echo "Error: Engine '$engine' not found"
+        echo "Available engines: $available"
+        return 1
+    fi
+
+    # Check if already using this engine
+    if [ "$engine" = "$current" ]; then
+        echo "Already using engine: $engine"
+        return 0
+    fi
+
+    # Switch engine
+    echo "Switching to engine: $engine"
+    echo "This will restart the server..."
+
+    response=$(curl -s -X POST "${ALLTALK_URL}/api/enginereload?engine=$engine")
+
+    # Wait for server to come back up
+    sleep 2
+    echo -n "Waiting for server"
+    for i in {1..60}; do
+        if curl -s "${ALLTALK_URL}/api/ready" 2>/dev/null | grep -q "Ready"; then
+            echo ""
+            # Verify engine switched
+            local new_engine=$(curl -s "${ALLTALK_URL}/api/currentsettings" | sed -n 's/.*"current_engine_loaded":"\([^"]*\)".*/\1/p')
+            echo "Engine switched to: $new_engine"
+            return 0
+        fi
+        echo -n "."
+        sleep 1
+    done
+
+    echo ""
+    echo "Server did not come back up. Check logs: alltalk logs"
+    return 1
+}
+
+# Main command router
+case "$1" in
+    start)
+        alltalk_start
+        ;;
+    stop)
+        alltalk_stop
+        ;;
+    restart)
+        alltalk_stop
+        sleep 2
+        alltalk_start
+        ;;
+    status)
+        alltalk_status
+        ;;
+    say)
+        shift
+        alltalk_say "$@"
+        ;;
+    voices)
+        alltalk_voices
+        ;;
+    rvcvoices)
+        alltalk_rvcvoices
+        ;;
+    cache)
+        alltalk_cache
+        ;;
+    engine)
+        shift
+        alltalk_engine "$@"
+        ;;
+    logs)
+        alltalk_logs
+        ;;
+    *)
+        echo "AllTalk TTS CLI"
+        echo ""
+        echo "Usage: alltalk <command> [options]"
+        echo ""
+        echo "Commands:"
+        echo "  start              Start the AllTalk server"
+        echo "  stop               Stop the AllTalk server"
+        echo "  restart            Restart the AllTalk server"
+        echo "  status             Check if server is running"
+        echo "  say \"text\" [voice] [lang] [rvc]  Generate and play TTS"
+        echo "  voices             List available TTS voices"
+        echo "  rvcvoices          List available RVC voices"
+        echo "  cache              Pre-download all voice files for offline use"
+        echo "  engine             Show current engine and available engines"
+        echo "  engine <name>      Switch to a different TTS engine"
+        echo "  logs               Tail the server logs"
+        echo ""
+        echo "Examples:"
+        echo "  alltalk start"
+        echo "  alltalk say \"Hello world\""
+        echo "  alltalk say \"Hello\" af_heart en Female.pth"
+        echo "  alltalk engine xtts"
+        exit 1
+        ;;
+esac
